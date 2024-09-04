@@ -14,6 +14,7 @@
 #include <pybind11/pytypes.h>
 #include <pybind11/stl.h>
 
+#include <cstdint>
 #include <functional>
 #include <string>
 
@@ -42,10 +43,13 @@ void network(pybind11::module& m, const std::string& network_name)
 
         ;
 
+    py::implicitly_convertible<py::int_, mockturtle::node<Ntk>>();
+
     /**
      * Network signal.
      */
     py::class_<mockturtle::signal<Ntk>>(m, fmt::format("{}Signal", network_name).c_str())
+        .def(py::init<const uint64_t, const bool>(), "index"_a, "complement"_a)
         .def("__hash__", [](const mockturtle::signal<Ntk>& s) { return std::hash<mockturtle::signal<Ntk>>{}(s); })
         .def("__repr__", [](const mockturtle::signal<Ntk>& s)
              { return fmt::format("Signal({}{})", s.complement ? "!" : "", s.index); })
@@ -57,8 +61,6 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("complement", [](const mockturtle::signal<Ntk>& s) { return !s; })
 
         ;
-
-    py::implicitly_convertible<py::int_, mockturtle::node<Ntk>>();
 
     /**
      * Network.
@@ -72,6 +74,7 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("num_pos", &Ntk::num_pos)
         .def("get_node", &Ntk::get_node, "s"_a)
         .def("make_signal", &Ntk::make_signal, "n"_a)
+        .def("is_complemented", &Ntk::is_complemented, "s"_a)
 
         .def("nodes",
              [](const Ntk& ntk)
@@ -136,26 +139,6 @@ void network(pybind11::module& m, const std::string& network_name)
         .def(
             "po_index", [](const Ntk& ntk, const mockturtle::signal<Ntk>& s) { return ntk.po_index(s); }, "s"_a)
         .def("po_at", [](const Ntk& ntk, const uint32_t index) { return ntk.po_at(index); }, "index"_a);
-
-    //    /**
-    //     * Network parsing function.
-    //     */
-    //    m.def(
-    //        fmt::format("read_{}", network_name).c_str(),
-    //        [](const std::string& filename) -> Ntk
-    //        {
-    //            auto reader = fiction::network_reader<std::shared_ptr<Ntk>>(filename, std::cout);
-    //
-    //            if (const auto ntks = reader.get_networks(); !ntks.empty())
-    //            {
-    //                auto ntk = *ntks.front();
-    //                ntk.substitute_po_signals();
-    //                return ntk;
-    //            }
-    //
-    //            throw std::runtime_error("Could not parse specification file");
-    //        },
-    //        "filename"_a);
 }
 
 }  // namespace detail
