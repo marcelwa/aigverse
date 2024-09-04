@@ -9,6 +9,7 @@ on:
   push:
     branches: [ 'main' ]
     paths:
+      - 'bindings/aigverse/**'
       - '**/*.py'
       - '**/*.hpp'
       - '**/*.cpp'
@@ -19,6 +20,7 @@ on:
   pull_request:
     branches: [ 'main' ]
     paths:
+      - 'bindings/aigverse/**'
       - '**/*.py'
       - '**/*.hpp'
       - '**/*.cpp'
