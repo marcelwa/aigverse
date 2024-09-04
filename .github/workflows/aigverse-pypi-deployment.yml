@@ -1,0 +1,144 @@
+# this file is heavily based on https://github.com/cda-tum/qmap/blob/main/.github/workflows/deploy.yml
+
+name: 🐍 • Packaging
+
+on:
+  release:
+    types: [ published ]
+  merge_group:
+  push:
+    branches: [ 'main' ]
+    paths:
+      - '**/*.py'
+      - '**/*.hpp'
+      - '**/*.cpp'
+      - '**/*.cmake'
+      - '**/CMakeLists.txt'
+      - 'libs/**'
+      - '.github/workflows/aigverse-pypi-deployment.yml'
+  pull_request:
+    branches: [ 'main' ]
+    paths:
+      - '**/*.py'
+      - '**/*.hpp'
+      - '**/*.cpp'
+      - '**/*.cmake'
+      - '**/CMakeLists.txt'
+      - 'libs/**'
+      - '.github/workflows/aigverse-pypi-deployment.yml'
+  workflow_dispatch:
+  workflow_run:
+    workflows: [ "aigverse Docstring Generator" ]
+    types:
+      - completed
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build_wheels:
+    name: 🎡 Wheels for ${{ matrix.python }} on ${{ matrix.config.os }} (${{ matrix.config.arch }})
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { os: ubuntu-22.04, arch: x64 }
+          - { os: macos-13, arch: x64 }
+          - { os: macos-14, arch: arm64 }
+          - { os: windows-2019, arch: x64 }
+        python: ['cp38', 'cp39', 'cp310', 'cp311', 'cp312']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: '${{matrix.config.os}}-aigverse'
+          variant: ccache
+          save: true
+          max-size: 10G
+
+      - if: runner.os == 'Linux'
+        name: Setup mold
+        uses: rui314/setup-mold@v1
+
+      - if: ${{ matrix.config.arch == 'arm64' }}
+        name: Set Architecture to arm64 if necessary
+        run: echo "CIBW_ARCHS_MACOS=arm64" >> $GITHUB_ENV
+
+      - name: Build wheel
+        uses: pypa/cibuildwheel@v2.20.0
+        env:
+          CIBW_BUILD: ${{ matrix.python }}-*
+          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=10.15
+          CIBW_TEST_EXTRAS: test
+          CIBW_TEST_COMMAND: 'python -m unittest discover --start-directory {project} --verbose'
+
+      - name: Upload wheel as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.config.os }}-${{ matrix.config.arch }}-${{ matrix.python }}
+          path: ./wheelhouse/*.whl
+          overwrite: true
+
+  build_sdist:
+    name: 📦 Build Source Distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone respository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: 'ubuntu-latest-aigverse'
+          variant: ccache
+          save: true
+          max-size: 10G
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Build sdist
+        run: pipx run build --sdist
+
+      - name: Test sdist
+        run: z3=${{env.ENABLE_Z3}} pip install dist/*.tar.gz --verbose
+
+      - name: Upload sdist as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cibw-sdist
+          path: dist/*.tar.gz
+          overwrite: true
+
+  publish_to_pypi:
+    needs: [ build_wheels, build_sdist ]
+    runs-on: ubuntu-latest
+    name: 🚀 Publish to PyPI
+    if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - name: Download the previously stored artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - name: Deploy to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_DEPLOY_TOKEN }}
+          skip-existing: true
+          verbose: true
