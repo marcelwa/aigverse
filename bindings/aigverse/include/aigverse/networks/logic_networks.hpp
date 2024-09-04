@@ -34,6 +34,11 @@ void network(pybind11::module& m, const std::string& network_name)
      */
     py::class_<mockturtle::node<Ntk>>(m, fmt::format("{}Node", network_name).c_str())
         .def("__hash__", [](const mockturtle::node<Ntk>& n) { return std::hash<mockturtle::node<Ntk>>{}(n); })
+        .def("__repr__", [](const mockturtle::node<Ntk>& n) { return fmt::format("Node({})", n); })
+
+        .def("__eq__", [](const mockturtle::node<Ntk>& n1, const mockturtle::node<Ntk>& n2) { return n1 == n2; })
+        .def("__ne__", [](const mockturtle::node<Ntk>& n1, const mockturtle::node<Ntk>& n2) { return n1 != n2; })
+        .def("__lt__", [](const mockturtle::node<Ntk>& n1, const mockturtle::node<Ntk>& n2) { return n1 < n2; })
 
         ;
 
@@ -42,6 +47,14 @@ void network(pybind11::module& m, const std::string& network_name)
      */
     py::class_<mockturtle::signal<Ntk>>(m, fmt::format("{}Signal", network_name).c_str())
         .def("__hash__", [](const mockturtle::signal<Ntk>& s) { return std::hash<mockturtle::signal<Ntk>>{}(s); })
+        .def("__repr__", [](const mockturtle::signal<Ntk>& s)
+             { return fmt::format("Signal({}{})", s.complement ? "!" : "", s.index); })
+
+        .def("__eq__", [](const mockturtle::signal<Ntk>& s1, const mockturtle::signal<Ntk>& s2) { return s1 == s2; })
+        .def("__ne__", [](const mockturtle::signal<Ntk>& s1, const mockturtle::signal<Ntk>& s2) { return s1 != s2; })
+        .def("__lt__", [](const mockturtle::signal<Ntk>& s1, const mockturtle::signal<Ntk>& s2) { return s1 < s2; })
+
+        .def("complement", [](const mockturtle::signal<Ntk>& s) { return !s; })
 
         ;
 
@@ -57,6 +70,8 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("num_gates", &Ntk::num_gates)
         .def("num_pis", &Ntk::num_pis)
         .def("num_pos", &Ntk::num_pos)
+        .def("get_node", &Ntk::get_node, "s"_a)
+        .def("make_signal", &Ntk::make_signal, "n"_a)
 
         .def("nodes",
              [](const Ntk& ntk)
