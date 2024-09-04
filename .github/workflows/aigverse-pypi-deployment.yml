@@ -55,7 +55,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -96,7 +96,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -116,7 +116,7 @@ jobs:
         run: pipx run build --sdist
 
       - name: Test sdist
-        run: z3=${{env.ENABLE_Z3}} pip install dist/*.tar.gz --verbose
+        run: pip install dist/*.tar.gz --verbose
 
       - name: Upload sdist as an artifact
         uses: actions/upload-artifact@v4
