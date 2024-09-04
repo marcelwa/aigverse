@@ -50,7 +50,7 @@ jobs:
           - { os: macos-13, arch: x64 }
           - { os: macos-14, arch: arm64 }
           - { os: windows-2019, arch: x64 }
-        python: ['cp38', 'cp39', 'cp310', 'cp311', 'cp312']
+        python: [ 'cp38', 'cp39', 'cp310', 'cp311', 'cp312' ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -97,6 +97,9 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 1
+
+      - name: Initialize and update submodules
+        run: git submodule update --init --recursive
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
