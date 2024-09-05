@@ -2,6 +2,7 @@
 // Created by marcel on 04.09.24.
 //
 
+#include "aigverse/adapters/edge_list.hpp"
 #include "aigverse/io/read_aiger.hpp"
 #include "aigverse/io/write_aiger.hpp"
 #include "aigverse/networks/logic_networks.hpp"
@@ -25,4 +26,9 @@ PYBIND11_MODULE(aigverse, m)
      */
     aigverse::read_aiger(m);
     aigverse::write_aiger(m);
+
+    /**
+     * Adapters
+     */
+    aigverse::to_edge_list(m);
 }
