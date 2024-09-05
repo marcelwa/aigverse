@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aigverse"
-version = "0.0.2"
+version = "0.0.3"
 description = "A Python library for working with logic networks, synthesis, and optimization."
 readme = "README.md"
 authors = [
