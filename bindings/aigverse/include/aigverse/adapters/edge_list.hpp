@@ -13,6 +13,7 @@
 #include <pybind11/stl.h>
 
 #include <cstdint>
+#include <iostream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -129,6 +130,25 @@ struct edge_list
     std::vector<edge<Ntk>> edges{};
 };
 
+template <typename Ntk>
+[[nodiscard]] edge_list<Ntk> to_edge_list(const Ntk& ntk, const int64_t regular_weight = 0,
+                                          const int64_t inverted_weight = 1) noexcept
+{
+    auto el = edge_list<Ntk>(ntk);
+
+    ntk.foreach_node(
+        [&ntk, regular_weight, inverted_weight, &el](const auto& n)
+        {
+            ntk.foreach_fanin(n,
+                              [&ntk, regular_weight, inverted_weight, &el, &n](const auto& f) {
+                                  el.edges.push_back(edge<Ntk>(
+                                      ntk.get_node(f), n, ntk.is_complemented(f) ? inverted_weight : regular_weight));
+                              });
+        });
+
+    return el;
+}
+
 namespace detail
 {
 
@@ -195,6 +215,8 @@ void ntk_edge_list(pybind11::module& m, const std::string& network_name)
         ;
 
     py::implicitly_convertible<py::list, edge_list<Ntk>>();
+
+    m.def("to_edge_list", &to_edge_list<Ntk>, "ntk"_a, "regular_weight"_a = 0, "inverted_weight"_a = 1);
 }
 
 }  // namespace detail
@@ -239,7 +261,7 @@ struct formatter<aigverse::edge_list<Ntk>>
     template <typename FormatContext>
     auto format(const aigverse::edge_list<Ntk>& el, FormatContext& ctx)
     {
-        return format_to(ctx.out(), "[{}]", el.edges);
+        return format_to(ctx.out(), "{}", el.edges);
     }
 };
 

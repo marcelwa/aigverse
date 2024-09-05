@@ -121,6 +121,21 @@ from aigverse import write_aiger
 write_aiger(aig, "example.aig")
 ```
 
+### Exporting Edge Lists
+
+You can export the AIG as an edge list, which is useful for integration with graph libraries like NetworkX.
+
+```python
+from aigverse import to_edge_list
+
+# Export the AIG as an edge list
+edges = to_edge_list(aig)
+print(edges)
+
+# Convert to list of tuples
+edges = [(e.source, e.target, e.weight) for e in edges]
+```
+
 ## Contributing
 
 Contributions are welcome! If you’d like to contribute to `aigverse`, please submit a pull request or open an issue. If

@@ -66,9 +66,39 @@ class EdgeTest(unittest.TestCase):
         with self.assertRaises(IndexError):
             edge_list[3] = AigEdge(7, 8, 9)
 
+        self.assertEqual(edge_list.__repr__(), "EdgeList({Edge(s:4,t:5,w:6), Edge(s:5,t:6,w:7), Edge(s:6,t:7,w:8)})")
+
         edge_list.clear()
 
         self.assertEqual(len(edge_list), 0)
+
+        self.assertEqual(edge_list.__repr__(), "EdgeList({})")
+
+    def test_aig_to_edge_list(self):
+        aig = Aig()
+
+        x1 = aig.create_pi()
+        x2 = aig.create_pi()
+        x3 = aig.create_pi()
+
+        y1 = aig.create_and(x1, ~x2)
+        y2 = aig.create_and(x2, x3)
+        y3 = aig.create_and(~y1, y2)
+
+        aig.create_po(y3)
+
+        edge_list = to_edge_list(aig)
+
+        self.assertIs(type(edge_list), AigEdgeList)
+
+        self.assertEqual(len(edge_list), 6)
+
+        self.assertIn(AigEdge(1, 4, 0), edge_list)
+        self.assertIn(AigEdge(2, 5, 0), edge_list)
+        self.assertIn(AigEdge(2, 4, 1), edge_list)
+        self.assertIn(AigEdge(3, 5, 0), edge_list)
+        self.assertIn(AigEdge(4, 6, 1), edge_list)
+        self.assertIn(AigEdge(5, 6, 0), edge_list)
 
 
 if __name__ == '__main__':
