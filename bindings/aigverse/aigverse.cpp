@@ -3,6 +3,7 @@
 //
 
 #include "aigverse/io/read_aiger.hpp"
+#include "aigverse/io/write_aiger.hpp"
 #include "aigverse/networks/logic_networks.hpp"
 
 #include <pybind11/pybind11.h>
@@ -23,4 +24,5 @@ PYBIND11_MODULE(aigverse, m)
      * I/O
      */
     aigverse::read_aiger(m);
+    aigverse::write_aiger(m);
 }

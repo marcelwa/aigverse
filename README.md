@@ -94,18 +94,31 @@ for fanin in aig.fanins(f_and):
     print(f"Fanin of {f_and}: {fanin}")
 ```
 
-### Parse AIGER Files
+### AIGER Files
 
-You can read and write AIGER files using `aigverse`. Here's an example of parsing an AIGER file as an AIG network.
+You can read and write (ASCII) [AIGER](https://fmv.jku.at/aiger/) files.
+
+#### Parsing
 
 ```python
-from aigverse import read_aiger_into_aig
+from aigverse import read_aiger_into_aig, read_ascii_aiger_into_aig
 
-# Read an AIGER file into an AIG network
-aig = read_aiger_into_aig("example.aig")
+# Read AIGER files into AIG networks
+aig1 = read_aiger_into_aig("example.aig")
+aig2 = read_ascii_aiger_into_aig("example.aag")
 
-# Print the size of the AIG network
-print(f"AIG Size: {aig.size()}")
+# Print the size of the AIGs
+print(f"AIG Size: {aig1.size()}")
+print(f"AIG Size: {aig2.size()}")
+```
+
+#### Writing
+
+```python
+from aigverse import write_aiger
+
+# Write an AIG network to an AIGER file
+write_aiger(aig, "example.aig")
 ```
 
 ## Contributing
@@ -116,4 +129,3 @@ appreciate feedback and suggestions for improving the library.
 ## License
 
 `aigverse` is available under the MIT License.
-
