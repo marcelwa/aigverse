@@ -1,12 +1,12 @@
 from aigverse import *
+
 import unittest
 import os
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class TestAig(unittest.TestCase):
-
+class TestReadAiger(unittest.TestCase):
     def test_read_aiger_into_aig(self):
         aig = read_aiger_into_aig(dir_path + "/../resources/mux21.aig")
 
@@ -35,18 +35,11 @@ class TestAig(unittest.TestCase):
         self.assertEqual(aig.fanins(3), [])
         self.assertEqual(aig.fanins(5), [aig.make_signal(2), aig.make_signal(3)])
         self.assertEqual(aig.fanins(5), [AigSignal(2, 0), AigSignal(3, 0)])
-        self.assertEqual(aig.fanins(6), [aig.make_signal(4).complement(), aig.make_signal(5).complement()])
+        self.assertEqual(aig.fanins(6), [~aig.make_signal(4), ~aig.make_signal(5)])
         self.assertEqual(aig.fanins(6), [AigSignal(4, 1), AigSignal(5, 1)])
 
         with self.assertRaises(RuntimeError):
             aig = read_aiger_into_aig(dir_path + "/mux41.aig")
-
-    def test_is_gate_functions(self):
-        network = read_aiger_into_aig(dir_path + "/../resources/mux21.aig")
-
-        for i in network.nodes():
-            self.assertFalse(network.is_maj(i))
-            self.assertFalse(network.is_xor(i))
 
 
 if __name__ == '__main__':

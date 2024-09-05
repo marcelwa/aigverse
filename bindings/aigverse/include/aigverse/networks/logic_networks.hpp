@@ -11,7 +11,6 @@
 #include <mockturtle/networks/xag.hpp>
 #include <mockturtle/traits.hpp>
 #include <pybind11/pybind11.h>
-#include <pybind11/pytypes.h>
 #include <pybind11/stl.h>
 
 #include <cstdint>
@@ -50,6 +49,9 @@ void network(pybind11::module& m, const std::string& network_name)
      */
     py::class_<mockturtle::signal<Ntk>>(m, fmt::format("{}Signal", network_name).c_str())
         .def(py::init<const uint64_t, const bool>(), "index"_a, "complement"_a)
+        .def("get_index", [](const mockturtle::signal<Ntk>& s) { return s.index; })
+        .def("get_complement", [](const mockturtle::signal<Ntk>& s) { return s.complement; })
+
         .def("__hash__", [](const mockturtle::signal<Ntk>& s) { return std::hash<mockturtle::signal<Ntk>>{}(s); })
         .def("__repr__", [](const mockturtle::signal<Ntk>& s)
              { return fmt::format("Signal({}{})", s.complement ? "!" : "", s.index); })
@@ -58,7 +60,10 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("__ne__", [](const mockturtle::signal<Ntk>& s1, const mockturtle::signal<Ntk>& s2) { return s1 != s2; })
         .def("__lt__", [](const mockturtle::signal<Ntk>& s1, const mockturtle::signal<Ntk>& s2) { return s1 < s2; })
 
-        .def("complement", [](const mockturtle::signal<Ntk>& s) { return !s; })
+        .def("__invert__", [](const mockturtle::signal<Ntk>& s) { return !s; })
+        .def("__pos__", [](const mockturtle::signal<Ntk>& s) { return +s; })
+        .def("__neg__", [](const mockturtle::signal<Ntk>& s) { return -s; })
+        .def("__xor__", [](const mockturtle::signal<Ntk>& s, const bool complement) { return s ^ complement; })
 
         ;
 
@@ -68,13 +73,56 @@ void network(pybind11::module& m, const std::string& network_name)
     py::class_<Ntk>(m, network_name.c_str())
         .def(py::init<>())
 
+        .def("clone", &Ntk::clone)
+
         .def("size", &Ntk::size)
         .def("num_gates", &Ntk::num_gates)
         .def("num_pis", &Ntk::num_pis)
+        .def("num_cis", &Ntk::num_cis)
         .def("num_pos", &Ntk::num_pos)
+        .def("num_cos", &Ntk::num_cos)
+
         .def("get_node", &Ntk::get_node, "s"_a)
         .def("make_signal", &Ntk::make_signal, "n"_a)
         .def("is_complemented", &Ntk::is_complemented, "s"_a)
+        .def("node_to_index", &Ntk::node_to_index, "n"_a)
+        .def("index_to_node", &Ntk::index_to_node, "index"_a)
+
+        .def("pi_index", &Ntk::pi_index, "n"_a)
+        .def("pi_at", &Ntk::pi_at, "index"_a)
+        .def("po_index", &Ntk::po_index, "s"_a)
+        .def("po_at", &Ntk::po_at, "index"_a)
+        .def("ci_index", &Ntk::ci_index, "n"_a)
+        .def("ci_at", &Ntk::ci_at, "index"_a)
+        .def("co_index", &Ntk::co_index, "s"_a)
+        .def("co_at", &Ntk::co_at, "index"_a)
+
+        .def("get_constant", &Ntk::get_constant, "value"_a)
+
+        .def("create_pi", &Ntk::create_pi)
+        .def("create_po", &Ntk::create_po, "f"_a)
+
+        .def("create_buf", &Ntk::create_buf, "a"_a)
+        .def("create_not", &Ntk::create_not, "a"_a)
+
+        .def("create_and", &Ntk::create_and, "a"_a, "b"_a)
+        .def("create_nand", &Ntk::create_nand, "a"_a, "b"_a)
+        .def("create_or", &Ntk::create_or, "a"_a, "b"_a)
+        .def("create_nor", &Ntk::create_nor, "a"_a, "b"_a)
+        .def("create_xor", &Ntk::create_xor, "a"_a, "b"_a)
+        .def("create_xnor", &Ntk::create_xnor, "a"_a, "b"_a)
+        .def("create_lt", &Ntk::create_lt, "a"_a, "b"_a)
+        .def("create_le", &Ntk::create_le, "a"_a, "b"_a)
+
+        .def("create_maj", &Ntk::create_maj, "a"_a, "b"_a, "c"_a)
+        .def("create_ite", &Ntk::create_ite, "cond"_a, "f_then"_a, "f_else"_a)
+        .def("create_xor3", &Ntk::create_xor3, "a"_a, "b"_a, "c"_a)
+
+        .def("create_nary_and", &Ntk::create_nary_and, "fs"_a)
+        .def("create_nary_or", &Ntk::create_nary_or, "fs"_a)
+        .def("create_nary_xor", &Ntk::create_nary_xor, "fs"_a)
+
+        .def("clone_node", &Ntk::clone_node, "other"_a, "source"_a, "children"_a)
 
         .def("nodes",
              [](const Ntk& ntk)
@@ -108,6 +156,22 @@ void network(pybind11::module& m, const std::string& network_name)
                  ntk.foreach_po([&pos](const auto& po) { pos.push_back(po); });
                  return pos;
              })
+        .def("cis",
+             [](const Ntk& ntk)
+             {
+                 std::vector<mockturtle::node<Ntk>> cis{};
+                 cis.reserve(ntk.num_cis());
+                 ntk.foreach_ci([&cis](const auto& ci) { cis.push_back(ci); });
+                 return cis;
+             })
+        .def("cos",
+             [](const Ntk& ntk)
+             {
+                 std::vector<mockturtle::signal<Ntk>> cos{};
+                 cos.reserve(ntk.num_cos());
+                 ntk.foreach_co([&cos](const auto& co) { cos.push_back(co); });
+                 return cos;
+             })
         .def(
             "fanins",
             [](const Ntk& ntk, const mockturtle::node<Ntk>& n)
@@ -127,6 +191,8 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("is_constant", &Ntk::is_constant, "n"_a)
         .def("is_pi", &Ntk::is_pi, "n"_a)
 
+        .def("has_and", &Ntk::has_and, "a"_a, "b"_a)
+
         // for some reason, the is_* functions need redefinition to match with Ntk
         .def(
             "is_and", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_and(n); }, "n"_a)
@@ -137,8 +203,15 @@ void network(pybind11::module& m, const std::string& network_name)
         .def(
             "is_maj", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_maj(n); }, "n"_a)
         .def(
-            "po_index", [](const Ntk& ntk, const mockturtle::signal<Ntk>& s) { return ntk.po_index(s); }, "s"_a)
-        .def("po_at", [](const Ntk& ntk, const uint32_t index) { return ntk.po_at(index); }, "index"_a);
+            "is_ite", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_ite(n); }, "n"_a)
+        .def(
+            "is_xor3", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_xor3(n); }, "n"_a)
+        .def(
+            "is_nary_and", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_nary_and(n); }, "n"_a)
+        .def(
+            "is_nary_or", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_nary_or(n); }, "n"_a)
+
+        ;
 }
 
 }  // namespace detail
