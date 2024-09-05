@@ -41,6 +41,18 @@ class TestReadAiger(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             aig = read_aiger_into_aig(dir_path + "/mux41.aig")
 
+    def test_read_ascii_aiger_into_aig(self):
+        aig = read_ascii_aiger_into_aig(dir_path + "/../resources/or.aag")
+
+        self.assertEqual(aig.size(), 4)
+        self.assertEqual(aig.nodes(), [i for i in range(4)])
+        self.assertEqual(aig.num_gates(), 1)
+        self.assertEqual(aig.gates(), [3])
+        self.assertEqual(aig.pis(), [1, 2])
+
+        with self.assertRaises(RuntimeError):
+            aig = read_ascii_aiger_into_aig(dir_path + "/and.aag")
+
 
 if __name__ == '__main__':
     unittest.main()
