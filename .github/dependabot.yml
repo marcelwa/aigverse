@@ -29,7 +29,7 @@ updates:
       - "marcelwa"
 
   - package-ecosystem: "pip"
-    directory: "/docs/"
+    directory: "/"
     groups:
       documentation:
         patterns:
