@@ -62,6 +62,58 @@ class TestAigResubstitution(unittest.TestCase):
 
         self.assertFalse(equivalence_checking(aig1, aig2))
 
+    def test_equivalent_node_merger(self):
+        # x0 * !(!x0 * !x1) == > x0 (reduction of 2 nodes)
+        aig1 = Aig()
+        x0 = aig1.create_pi()
+        x1 = aig1.create_pi()
+        n0 = aig1.create_and(~x0, ~x1)
+        n1 = aig1.create_and(x0, ~n0)
+        aig1.create_po(n1)
+
+        aig_before = aig1.clone()
+
+        aig_resubstitution(aig1)
+
+        self.assertEqual(aig1.size(), aig_before.size() - 2)
+
+        self.assertTrue(equivalence_checking(aig1, aig_before))
+
+    def test_positive_divisor_substitution(self):
+        # x1 * ( x0 * x1 ) ==> x0 * x1 (reduction of 1 node)
+        aig2 = Aig()
+        x0 = aig2.create_pi()
+        x1 = aig2.create_pi()
+        n0 = aig2.create_and(x0, x1)
+        n1 = aig2.create_and(x1, n0)
+        aig2.create_po(n1)
+
+        aig_before = aig2.clone()
+
+        aig_resubstitution(aig2)
+
+        self.assertEqual(aig2.size(), aig_before.size() - 1)
+
+        self.assertTrue(equivalence_checking(aig2, aig_before))
+
+    def test_negative_divisor_substitution(self):
+        # !x0 * !(!x0 * !x1) == > !x0 * x1 * (reduction of 2 nodes)
+
+        aig = Aig()
+        x0 = aig.create_pi()
+        x1 = aig.create_pi()
+        n0 = aig.create_and(~x0, ~x1)
+        n1 = aig.create_and(x0, ~n0)
+        aig.create_po(n1)
+
+        aig_before = aig.clone()
+
+        aig_resubstitution(aig)
+
+        self.assertEqual(aig.size(), aig_before.size() - 2)
+
+        self.assertTrue(equivalence_checking(aig, aig_before))
+
     def test_parameters(self):
         aig = Aig()
 

@@ -9,6 +9,7 @@
 #include <lorina/aiger.hpp>
 #include <lorina/diagnostics.hpp>
 #include <mockturtle/algorithms/aig_resub.hpp>
+#include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/resubstitution.hpp>
 #include <mockturtle/networks/aig.hpp>
 #include <pybind11/pybind11.h>
@@ -47,6 +48,8 @@ void resubstitution(pybind11::module& m)
             params.preserve_depth                 = preserve_depth;
 
             mockturtle::aig_resubstitution(ntk, params);
+
+            ntk = mockturtle::cleanup_dangling(ntk);
         },
         "ntk"_a, "max_pis"_a = 8, "max_divisors"_a = 150, "max_inserts"_a = 2, "skip_fanout_limit_for_roots"_a = 1000,
         "skip_fanout_limit_for_divisors"_a = 100, "verbose"_a = false, "use_dont_cares"_a = false, "window_size"_a = 12,
