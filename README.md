@@ -94,6 +94,41 @@ for fanin in aig.fanins(f_and):
     print(f"Fanin of {f_and}: {fanin}")
 ```
 
+### Logic Optimization
+
+You can optimize AIGs using various algorithms. For example, you can perform resubstitution to simplify logic using
+shared divisors.
+
+```python
+from aigverse import aig_resubstitution
+
+# Clone the AIG network for size comparison
+aig_clone = aig.copy()
+
+# Optimize the AIG using resubstitution
+aig_resubstitution(aig)
+
+# Print the size of the unoptimized and optimized AIGs
+print(f"Original AIG Size:  {aig_clone.size()}")
+print(f"Optimized AIG Size: {aig.size()}")
+```
+
+### Equivalence Checking
+
+Equivalence of AIGs (e.g., after optimization) can be checked using SAT-based equivalence checking.
+
+```python
+from aigverse import equivalence_checking
+
+# Perform equivalence checking
+equiv = equivalence_checking(aig1, aig2)
+
+if equiv:
+    print("AIGs are equivalent!")
+else:
+    print("AIGs are NOT equivalent!")
+```
+
 ### AIGER Files
 
 You can read and write (ASCII) [AIGER](https://fmv.jku.at/aiger/) files.
@@ -138,7 +173,7 @@ edges = [(e.source, e.target, e.weight) for e in edges]
 
 ## Contributing
 
-Contributions are welcome! If you’d like to contribute to `aigverse`, please submit a pull request or open an issue. If
+Contributions are welcome! If you'd like to contribute to `aigverse`, please submit a pull request or open an issue. If
 appreciate feedback and suggestions for improving the library.
 
 ## License
