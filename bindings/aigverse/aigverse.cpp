@@ -3,6 +3,8 @@
 //
 
 #include "aigverse/adapters/edge_list.hpp"
+#include "aigverse/algorithms/equivalence_checking.hpp"
+#include "aigverse/algorithms/resubstitution.hpp"
 #include "aigverse/io/read_aiger.hpp"
 #include "aigverse/io/write_aiger.hpp"
 #include "aigverse/networks/logic_networks.hpp"
@@ -20,6 +22,12 @@ PYBIND11_MODULE(aigverse, m)
      * Networks
      */
     aigverse::logic_networks(m);
+
+    /**
+     * Algorithms
+     */
+    aigverse::equivalence_checking(m);
+    aigverse::resubstitution(m);
 
     /**
      * I/O
