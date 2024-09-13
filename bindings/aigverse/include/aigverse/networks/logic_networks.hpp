@@ -10,6 +10,7 @@
 #include <mockturtle/networks/mig.hpp>
 #include <mockturtle/networks/xag.hpp>
 #include <mockturtle/traits.hpp>
+#include <mockturtle/views/depth_view.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -81,6 +82,13 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("num_cis", &Ntk::num_cis)
         .def("num_pos", &Ntk::num_pos)
         .def("num_cos", &Ntk::num_cos)
+
+        .def("num_levels",
+             [](const Ntk& ntk) -> uint32_t
+             {
+                 mockturtle::depth_view depth_ntk{ntk};
+                 return depth_ntk.depth();
+             })
 
         .def("get_node", &Ntk::get_node, "s"_a)
         .def("make_signal", &Ntk::make_signal, "n"_a)
