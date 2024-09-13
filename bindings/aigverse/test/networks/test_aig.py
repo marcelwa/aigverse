@@ -290,6 +290,7 @@ class TestAig(unittest.TestCase):
         self.assertTrue(hasattr(aig, 'num_pis'))
         self.assertTrue(hasattr(aig, 'num_pos'))
         self.assertTrue(hasattr(aig, 'num_gates'))
+        self.assertTrue(hasattr(aig, 'num_levels'))
         self.assertTrue(hasattr(aig, 'fanin_size'))
         self.assertTrue(hasattr(aig, 'fanout_size'))
 
@@ -297,13 +298,19 @@ class TestAig(unittest.TestCase):
         x1 = aig.create_pi()
         x2 = aig.create_pi()
 
+        self.assertEqual(aig.num_levels(), 0)
+
         # Create AND and OR gates
         f1 = aig.create_and(x1, x2)
         f2 = aig.create_or(x1, x2)
 
+        self.assertEqual(aig.num_levels(), 0)
+
         # Create primary outputs
         aig.create_po(f1)
         aig.create_po(f2)
+
+        self.assertEqual(aig.num_levels(), 1)
 
         # Check structural properties
         self.assertEqual(aig.size(), 5)
