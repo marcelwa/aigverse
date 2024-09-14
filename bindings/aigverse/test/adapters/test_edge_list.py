@@ -35,6 +35,8 @@ class EdgeTest(unittest.TestCase):
 
         self.assertEqual(edge.__repr__(), "Edge(s:1,t:2,w:3)")
 
+
+class EdgeListTest(unittest.TestCase):
     def test_aig_edge_list(self):
         edge_list = AigEdgeList(Aig())
 
@@ -74,7 +76,39 @@ class EdgeTest(unittest.TestCase):
 
         self.assertEqual(edge_list.__repr__(), "EdgeList({})")
 
-    def test_aig_to_edge_list(self):
+
+class ToEdgeListTest(unittest.TestCase):
+    def test_minimal_aig_to_edge_list(self):
+        aig = Aig()
+
+        x1 = aig.create_pi()  # 1
+        x2 = aig.create_pi()  # 2
+        aig.create_po(x1)
+        aig.create_po(~x2)
+
+        edge_list = to_edge_list(aig)
+
+        self.assertIs(type(edge_list), AigEdgeList)
+        self.assertEqual(len(edge_list), 0)  # No edges since there are no AND gates
+
+    def test_constant_aig_to_edge_list(self):
+        # AIG with all inverted inputs
+        aig = Aig()
+
+        x0 = aig.create_pi()  # 1
+        x1 = aig.create_pi()  # 2
+        n0 = aig.create_and(~x0, ~x1)  # 3
+        aig.create_po(n0)
+
+        # custom weights
+        edge_list = to_edge_list(aig, regular_weight=5, inverted_weight=-5)
+
+        self.assertIs(type(edge_list), AigEdgeList)
+        self.assertEqual(len(edge_list), 2)
+        self.assertIn(AigEdge(1, 3, -5), edge_list)  # ~x0 to AND gate
+        self.assertIn(AigEdge(2, 3, -5), edge_list)  # ~x1 to AND gate
+
+    def test_simple_aig_to_edge_list(self):
         aig = Aig()
 
         x1 = aig.create_pi()
@@ -87,6 +121,7 @@ class EdgeTest(unittest.TestCase):
 
         aig.create_po(y3)
 
+        # default weights
         edge_list = to_edge_list(aig)
 
         self.assertIs(type(edge_list), AigEdgeList)
@@ -99,6 +134,65 @@ class EdgeTest(unittest.TestCase):
         self.assertIn(AigEdge(3, 5, 0), edge_list)
         self.assertIn(AigEdge(4, 6, 1), edge_list)
         self.assertIn(AigEdge(5, 6, 0), edge_list)
+
+    def test_constant_node_aig_to_edge_list(self):
+        aig = Aig()
+
+        x0 = aig.create_pi()  # 1
+        x1 = aig.create_pi()  # 2
+        n0 = aig.create_and(x0, x1)  # 3
+        aig.create_po(x0)  # Direct PO from PI
+        aig.create_po(n0)
+
+        # custom weights
+        edge_list = to_edge_list(aig, regular_weight=7, inverted_weight=-7)
+
+        self.assertIs(type(edge_list), AigEdgeList)
+        self.assertEqual(len(edge_list), 2)
+        self.assertIn(AigEdge(1, 3, 7), edge_list)  # x0 to AND gate
+        self.assertIn(AigEdge(2, 3, 7), edge_list)  # x1 to AND gate
+
+    def test_medium_aig_to_edge_list(self):
+        aig = Aig()
+
+        x0 = aig.create_pi()  # 1
+        x1 = aig.create_pi()  # 2
+        x2 = aig.create_pi()  # 3
+        x3 = aig.create_pi()  # 4
+        n0 = aig.create_and(~x2, x3)  # 5
+        n1 = aig.create_and(~x2, n0)  # 6
+        n2 = aig.create_and(x3, ~n1)  # 7
+        n3 = aig.create_and(x0, ~x1)  # 8
+        n4 = aig.create_and(~n2, n3)  # 9
+        n5 = aig.create_and(x1, ~n2)  # 10
+        n6 = aig.create_and(~n4, ~n5)  # 11
+        n7 = aig.create_and(n1, n3)  # 12
+        aig.create_po(n6)
+        aig.create_po(n7)
+
+        # custom weights
+        edge_list = to_edge_list(aig, regular_weight=10, inverted_weight=-10)
+
+        self.assertIs(type(edge_list), AigEdgeList)
+
+        self.assertEqual(len(edge_list), 16)
+
+        self.assertIn(AigEdge(3, 5, -10), edge_list)
+        self.assertIn(AigEdge(4, 5, 10), edge_list)
+        self.assertIn(AigEdge(3, 6, -10), edge_list)
+        self.assertIn(AigEdge(5, 6, 10), edge_list)
+        self.assertIn(AigEdge(4, 7, 10), edge_list)
+        self.assertIn(AigEdge(6, 7, -10), edge_list)
+        self.assertIn(AigEdge(1, 8, 10), edge_list)
+        self.assertIn(AigEdge(2, 8, -10), edge_list)
+        self.assertIn(AigEdge(7, 9, -10), edge_list)
+        self.assertIn(AigEdge(8, 9, 10), edge_list)
+        self.assertIn(AigEdge(2, 10, 10), edge_list)
+        self.assertIn(AigEdge(7, 10, -10), edge_list)
+        self.assertIn(AigEdge(9, 11, -10), edge_list)
+        self.assertIn(AigEdge(10, 11, -10), edge_list)
+        self.assertIn(AigEdge(6, 12, 10), edge_list)
+        self.assertIn(AigEdge(8, 12, 10), edge_list)
 
 
 if __name__ == '__main__':
