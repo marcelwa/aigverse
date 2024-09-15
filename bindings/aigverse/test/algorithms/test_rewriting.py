@@ -120,7 +120,7 @@ class TestAigRewriting(unittest.TestCase):
 
         aig2 = aig.clone()
 
-        aig_cut_rewriting(aig, cut_size=4, cut_limit=8, minimize_truth_table=False, allow_zero_gain=True,
+        aig_cut_rewriting(aig, cut_size=8, cut_limit=12, minimize_truth_table=False, allow_zero_gain=True,
                           use_dont_cares=True, min_cand_cut_size=4, min_cand_cut_size_override=5, preserve_depth=True,
                           verbose=True, very_verbose=True)
 

@@ -29,7 +29,7 @@ void rewriting(pybind11::module& m)
 
     m.def(
         "aig_cut_rewriting",
-        [](Ntk& ntk, const uint32_t cut_size = 6, const uint32_t cut_limit = 12, const bool minimize_truth_table = true,
+        [](Ntk& ntk, const uint32_t cut_size = 4, const uint32_t cut_limit = 8, const bool minimize_truth_table = true,
            const bool allow_zero_gain = false, const bool use_dont_cares = false, const uint32_t min_cand_cut_size = 3,
            const std::optional<uint32_t> min_cand_cut_size_override = std::nullopt, const bool preserve_depth = false,
            const bool verbose = false, const bool very_verbose = false) -> void
@@ -51,7 +51,7 @@ void rewriting(pybind11::module& m)
 
             ntk = mockturtle::cut_rewriting(ntk, aig_npn_resyn_engine, params);
         },
-        "ntk"_a, "cut_size"_a = 6, "cut_limit"_a = 12, "minimize_truth_table"_a = true, "allow_zero_gain"_a = false,
+        "ntk"_a, "cut_size"_a = 4, "cut_limit"_a = 8, "minimize_truth_table"_a = true, "allow_zero_gain"_a = false,
         "use_dont_cares"_a = false, "min_cand_cut_size"_a = 3, "min_cand_cut_size_override"_a = std::nullopt,
         "preserve_depth"_a = false, "verbose"_a = false, "very_verbose"_a = false)
 
