@@ -132,16 +132,7 @@ print(f"Optimized AIG Size: {aig.size()}")
 
 ### Equivalence Checking
 
-Equivalence
-of
-AIGs(e.g., after
-optimization) can
-be
-checked
-using
-SAT - based
-equivalence
-checking.
+Equivalence of AIGs (e.g., after optimization) can be checked using SAT-based equivalence checking.
 
 ```python
 from aigverse import equivalence_checking
