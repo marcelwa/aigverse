@@ -6,8 +6,6 @@
 #define AIGVERSE_RESUBSTITUTION_HPP
 
 #include <fmt/format.h>
-#include <lorina/aiger.hpp>
-#include <lorina/diagnostics.hpp>
 #include <mockturtle/algorithms/aig_resub.hpp>
 #include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/resubstitution.hpp>
@@ -16,7 +14,6 @@
 #include <pybind11/stl.h>
 
 #include <cstdint>
-#include <string>
 
 namespace aigverse
 {
