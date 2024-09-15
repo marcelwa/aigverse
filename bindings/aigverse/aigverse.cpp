@@ -4,6 +4,7 @@
 
 #include "aigverse/adapters/edge_list.hpp"
 #include "aigverse/algorithms/equivalence_checking.hpp"
+#include "aigverse/algorithms/refactoring.hpp"
 #include "aigverse/algorithms/resubstitution.hpp"
 #include "aigverse/io/read_aiger.hpp"
 #include "aigverse/io/write_aiger.hpp"
@@ -27,6 +28,7 @@ PYBIND11_MODULE(aigverse, m)
      * Algorithms
      */
     aigverse::equivalence_checking(m);
+    aigverse::refactoring(m);
     aigverse::resubstitution(m);
 
     /**

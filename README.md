@@ -113,6 +113,23 @@ print(f"Original AIG Size:  {aig_clone.size()}")
 print(f"Optimized AIG Size: {aig.size()}")
 ```
 
+Similarly, refactoring collapses maximmal fanout-free cones (MFFCs) into truth tables and resynthesizes them into new
+structures.
+
+```python
+from aigverse import sop_refactoring
+
+# Clone the AIG network for size comparison
+aig_clone = aig.copy()
+
+# Optimize the AIG using SOP refactoring
+sop_refactoring(aig)
+
+# Print the size of the unoptimized and optimized AIGs
+print(f"Original AIG Size:  {aig_clone.size()}")
+print(f"Optimized AIG Size: {aig.size()}")
+```
+
 ### Equivalence Checking
 
 Equivalence of AIGs (e.g., after optimization) can be checked using SAT-based equivalence checking.
