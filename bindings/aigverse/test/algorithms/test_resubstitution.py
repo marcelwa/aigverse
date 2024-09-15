@@ -97,7 +97,7 @@ class TestAigResubstitution(unittest.TestCase):
         self.assertTrue(equivalence_checking(aig2, aig_before))
 
     def test_negative_divisor_substitution(self):
-        # !x0 * !(!x0 * !x1) == > !x0 * x1 * (reduction of 2 nodes)
+        # !x0 * !(!x0 * !x1) == > !x0 * x1 (reduction of 2 nodes)
         aig = Aig()
         x0 = aig.create_pi()
         x1 = aig.create_pi()
