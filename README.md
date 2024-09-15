@@ -97,33 +97,19 @@ for fanin in aig.fanins(f_and):
 ### Logic Optimization
 
 You can optimize AIGs using various algorithms. For example, you can perform resubstitution to simplify logic using
-shared divisors.
+shared divisors. Similarly, refactoring collapses maximmal fanout-free cones (MFFCs) into truth tables and resynthesizes
+them into new structures. Cut rewriting optimizes the AIG by replacing cuts with improved ones from a pre-computed NPN
+database.
 
 ```python
-from aigverse import aig_resubstitution
+from aigverse import aig_resubstitution, sop_refactoring, aig_cut_rewriting
 
 # Clone the AIG network for size comparison
 aig_clone = aig.copy()
 
-# Optimize the AIG using resubstitution
-aig_resubstitution(aig)
-
-# Print the size of the unoptimized and optimized AIGs
-print(f"Original AIG Size:  {aig_clone.size()}")
-print(f"Optimized AIG Size: {aig.size()}")
-```
-
-Similarly, refactoring collapses maximmal fanout-free cones (MFFCs) into truth tables and resynthesizes them into new
-structures.
-
-```python
-from aigverse import sop_refactoring
-
-# Clone the AIG network for size comparison
-aig_clone = aig.copy()
-
-# Optimize the AIG using SOP refactoring
-sop_refactoring(aig)
+# Optimize the AIG with several optimization algorithms
+for optimization in [aig_resubstitution, sop_refactorting, aig_cut_rewriting]:
+    optimization(aig)
 
 # Print the size of the unoptimized and optimized AIGs
 print(f"Original AIG Size:  {aig_clone.size()}")
