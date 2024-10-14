@@ -5,13 +5,11 @@
 #ifndef AIGVERSE_RESUBSTITUTION_HPP
 #define AIGVERSE_RESUBSTITUTION_HPP
 
-#include <fmt/format.h>
 #include <mockturtle/algorithms/aig_resub.hpp>
 #include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/resubstitution.hpp>
 #include <mockturtle/networks/aig.hpp>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
 #include <cstdint>
 
