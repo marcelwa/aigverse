@@ -6,7 +6,6 @@
 #define AIGVERSE_WRITE_AIGER_HPP
 
 #include <fmt/format.h>
-#include <lorina/aiger.hpp>
 #include <mockturtle/io/write_aiger.hpp>
 #include <mockturtle/networks/aig.hpp>
 #include <pybind11/pybind11.h>

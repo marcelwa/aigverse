@@ -83,13 +83,6 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("num_pos", &Ntk::num_pos)
         .def("num_cos", &Ntk::num_cos)
 
-        .def("num_levels",
-             [](const Ntk& ntk) -> uint32_t
-             {
-                 mockturtle::depth_view depth_ntk{ntk};
-                 return depth_ntk.depth();
-             })
-
         .def("get_node", &Ntk::get_node, "s"_a)
         .def("make_signal", &Ntk::make_signal, "n"_a)
         .def("is_complemented", &Ntk::is_complemented, "s"_a)
@@ -218,6 +211,23 @@ void network(pybind11::module& m, const std::string& network_name)
             "is_nary_and", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_nary_and(n); }, "n"_a)
         .def(
             "is_nary_or", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_nary_or(n); }, "n"_a)
+
+        ;
+
+    /**
+     * Depth Network.
+     */
+    using DepthNtk = mockturtle::depth_view<Ntk>;
+    py::class_<DepthNtk, Ntk>(m, fmt::format("Depth{}", network_name).c_str())
+        .def(py::init<>())
+        .def(py::init<const Ntk&>(), "ntk"_a)
+        .def(py::init<const DepthNtk&>(), "ntk"_a)
+
+        .def("num_levels", &DepthNtk::depth)
+        .def("level", &DepthNtk::level, "n"_a)
+        .def("is_on_critical_path", &DepthNtk::is_on_critical_path, "n"_a)
+        .def("update_levels", &DepthNtk::update_levels)
+        .def("create_po", &DepthNtk::create_po, "f"_a)
 
         ;
 }

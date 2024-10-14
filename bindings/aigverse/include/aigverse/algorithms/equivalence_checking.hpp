@@ -5,8 +5,6 @@
 #ifndef AIGVERSE_EQUIVALENCE_CHECKING_HPP
 #define AIGVERSE_EQUIVALENCE_CHECKING_HPP
 
-#include <fmt/format.h>
-#include <lorina/aiger.hpp>
 #include <lorina/diagnostics.hpp>
 #include <mockturtle/algorithms/equivalence_checking.hpp>
 #include <mockturtle/algorithms/miter.hpp>
@@ -17,7 +15,6 @@
 #include <cstdint>
 #include <optional>
 #include <stdexcept>
-#include <string>
 
 namespace aigverse
 {
