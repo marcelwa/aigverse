@@ -94,6 +94,20 @@ for fanin in aig.fanins(f_and):
     print(f"Fanin of {f_and}: {fanin}")
 ```
 
+### Depth and Level Computation
+
+You can compute the depth of the AIG network and the level of each node. Depth information is useful for estimating the
+critical path delay of a respective circuit.
+
+```python
+from aigverse import DepthAig
+
+depth_aig = DepthAig(aig)
+print(f"Depth: {depth_aig.num_levels()}")
+for node in aig.nodes():
+    print(f"Level of {node}: {depth_aig.level(node)}")
+```
+
 ### Logic Optimization
 
 You can optimize AIGs using various algorithms. For example, you can perform resubstitution to simplify logic using

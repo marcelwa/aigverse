@@ -290,7 +290,6 @@ class TestAig(unittest.TestCase):
         self.assertTrue(hasattr(aig, 'num_pis'))
         self.assertTrue(hasattr(aig, 'num_pos'))
         self.assertTrue(hasattr(aig, 'num_gates'))
-        self.assertTrue(hasattr(aig, 'num_levels'))
         self.assertTrue(hasattr(aig, 'fanin_size'))
         self.assertTrue(hasattr(aig, 'fanout_size'))
 
@@ -298,19 +297,13 @@ class TestAig(unittest.TestCase):
         x1 = aig.create_pi()
         x2 = aig.create_pi()
 
-        self.assertEqual(aig.num_levels(), 0)
-
         # Create AND and OR gates
         f1 = aig.create_and(x1, x2)
         f2 = aig.create_or(x1, x2)
 
-        self.assertEqual(aig.num_levels(), 0)
-
         # Create primary outputs
         aig.create_po(f1)
         aig.create_po(f2)
-
-        self.assertEqual(aig.num_levels(), 1)
 
         # Check structural properties
         self.assertEqual(aig.size(), 5)
@@ -525,6 +518,54 @@ class TestAig(unittest.TestCase):
             mask |= (1 << aig.get_node(s))
             break  # Stop after first iteration
         self.assertEqual(mask, 2)
+
+
+class TestDepthAig(unittest.TestCase):
+    def test_depth_aig(self):
+        aig = DepthAig()
+
+        self.assertTrue(hasattr(aig, 'num_levels'))
+        self.assertTrue(hasattr(aig, 'level'))
+        self.assertTrue(hasattr(aig, 'is_on_critical_path'))
+        self.assertTrue(hasattr(aig, 'update_levels'))
+        self.assertTrue(hasattr(aig, 'create_po'))
+
+        # Create primary inputs
+        x1 = aig.create_pi()
+        x2 = aig.create_pi()
+        x3 = aig.create_pi()
+
+        self.assertEqual(aig.num_levels(), 0)
+
+        # Create AND gates
+        n4 = aig.create_and(~x1, x2)
+        n5 = aig.create_and(x1, n4)
+        n6 = aig.create_and(x3, n5)
+        n7 = aig.create_and(n4, x2)
+        n8 = aig.create_and(~n5, ~n7)
+        n9 = aig.create_and(~n8, n4)
+
+        # Create primary outputs
+        aig.create_po(n6)
+        aig.create_po(n9)
+
+        # Check the depth of the AIG
+        self.assertEqual(aig.num_levels(), 4)
+
+        self.assertEqual(aig.level(aig.get_node(x1)), 0)
+        self.assertEqual(aig.level(aig.get_node(x2)), 0)
+        self.assertEqual(aig.level(aig.get_node(x3)), 0)
+        self.assertEqual(aig.level(aig.get_node(n4)), 1)
+        self.assertEqual(aig.level(aig.get_node(n5)), 2)
+        self.assertEqual(aig.level(aig.get_node(n6)), 3)
+        self.assertEqual(aig.level(aig.get_node(n7)), 2)
+        self.assertEqual(aig.level(aig.get_node(n8)), 3)
+        self.assertEqual(aig.level(aig.get_node(n9)), 4)
+
+        # Copy constructor
+        aig2 = DepthAig(aig)
+
+        self.assertEqual(aig2.num_levels(), 4)
 
 
 if __name__ == '__main__':
