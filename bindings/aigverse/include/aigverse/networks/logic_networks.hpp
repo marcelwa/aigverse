@@ -211,7 +211,7 @@ void network(pybind11::module& m, const std::string& network_name)
         .def(
             "is_nary_or", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_nary_or(n); }, "n"_a)
 
-        ;
+        .def("cleanup_dangling", [](Ntk& ntk) { ntk = mockturtle::cleanup_dangling(ntk); });
 
     /**
      * Depth Network.
