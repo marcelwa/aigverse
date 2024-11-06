@@ -2,8 +2,8 @@
 // Created by marcel on 06.11.24.
 //
 
-#ifndef TRUTH_TABLE_HPP
-#define TRUTH_TABLE_HPP
+#ifndef AIGVERSE_TRUTH_TABLE_HPP
+#define AIGVERSE_TRUTH_TABLE_HPP
 
 #include <fmt/format.h>
 #include <kitty/bit_operations.hpp>
@@ -190,4 +190,4 @@ inline void truth_table(pybind11::module& m)
 
 }  // namespace aigverse
 
-#endif  // TRUTH_TABLE_HPP
+#endif  // AIGVERSE_TRUTH_TABLE_HPP

@@ -2,8 +2,8 @@
 // Created by marcel on 06.11.24.
 //
 
-#ifndef SIMULATION_HPP
-#define SIMULATION_HPP
+#ifndef AIGVERSE_SIMULATION_HPP
+#define AIGVERSE_SIMULATION_HPP
 
 #include <mockturtle/algorithms/simulation.hpp>
 #include <mockturtle/networks/aig.hpp>
@@ -62,4 +62,4 @@ inline void simulation(pybind11::module& m)
 
 }  // namespace aigverse
 
-#endif  // SIMULATION_HPP
+#endif  // AIGVERSE_SIMULATION_HPP
