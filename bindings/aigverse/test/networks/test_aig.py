@@ -1,4 +1,4 @@
-from aigverse import Aig, AigSignal, DepthAig
+from aigverse import Aig, AigSignal, DepthAig, equivalence_checking
 
 import unittest
 
@@ -518,6 +518,37 @@ class TestAig(unittest.TestCase):
             mask |= (1 << aig.get_node(s))
             break  # Stop after first iteration
         self.assertEqual(mask, 2)
+
+    def test_cleanup_dangling(self):
+        aig = Aig()
+
+        # Create primary inputs
+        x1 = aig.create_pi()
+        x2 = aig.create_pi()
+        x3 = aig.create_pi()
+
+        # Create AND gates
+        n4 = aig.create_and(x1, x2)
+        n5 = aig.create_and(x2, x3)
+        n6 = aig.create_and(x1, x3)
+        n7 = aig.create_and(n4, n5)
+
+        # Create primary outputs
+        aig.create_po(n6)
+
+        # Check the size of the AIG
+        self.assertEqual(aig.size(), 8)
+
+        # Copy the AIG
+        aig_copy = aig.clone()
+
+        aig.cleanup_dangling()
+
+        # Check the size of the AIG after cleanup
+        self.assertEqual(aig.size(), 5)
+
+        # Check equivalence of the original and cleaned up AIG
+        self.assertTrue(equivalence_checking(aig, aig_copy))
 
 
 class TestDepthAig(unittest.TestCase):
