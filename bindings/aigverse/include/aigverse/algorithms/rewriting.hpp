@@ -5,9 +5,10 @@
 #ifndef AIGVERSE_REWRITING_HPP
 #define AIGVERSE_REWRITING_HPP
 
+#include "aigverse/types.hpp"
+
 #include <mockturtle/algorithms/cut_rewriting.hpp>
 #include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
-#include <mockturtle/networks/aig.hpp>
 #include <pybind11/pybind11.h>
 
 #include <cstdint>
@@ -43,8 +44,7 @@ void rewriting(pybind11::module& m)
             params.verbose                                 = verbose;
             params.very_verbose                            = very_verbose;
 
-            const mockturtle::xag_npn_resynthesis<Ntk, mockturtle::aig_network,
-                                                  mockturtle::xag_npn_db_kind::aig_complete>
+            const mockturtle::xag_npn_resynthesis<Ntk, aigverse::aig, mockturtle::xag_npn_db_kind::aig_complete>
                 aig_npn_resyn_engine{};
 
             ntk = mockturtle::cut_rewriting(ntk, aig_npn_resyn_engine, params);
@@ -60,7 +60,7 @@ void rewriting(pybind11::module& m)
 
 inline void rewriting(pybind11::module& m)
 {
-    detail::rewriting<mockturtle::aig_network>(m);
+    detail::rewriting<aigverse::aig>(m);
 }
 
 }  // namespace aigverse

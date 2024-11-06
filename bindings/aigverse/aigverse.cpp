@@ -30,7 +30,7 @@ PYBIND11_MODULE(aigverse, m)
     /**
      * Truth tables.
      */
-    aigverse::truth_table(m);
+    aigverse::truth_tables(m);
 
     /**
      * Algorithms

@@ -5,10 +5,11 @@
 #ifndef AIGVERSE_REFACTORING_HPP
 #define AIGVERSE_REFACTORING_HPP
 
+#include "aigverse/types.hpp"
+
 #include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/node_resynthesis/sop_factoring.hpp>
 #include <mockturtle/algorithms/refactoring.hpp>
-#include <mockturtle/networks/aig.hpp>
 #include <pybind11/pybind11.h>
 
 #include <cstdint>
@@ -53,7 +54,7 @@ void refactoring(pybind11::module& m)
 
 inline void refactoring(pybind11::module& m)
 {
-    detail::refactoring<mockturtle::aig_network>(m);
+    detail::refactoring<aigverse::aig>(m);
 }
 
 }  // namespace aigverse

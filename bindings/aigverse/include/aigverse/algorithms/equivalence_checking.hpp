@@ -5,10 +5,10 @@
 #ifndef AIGVERSE_EQUIVALENCE_CHECKING_HPP
 #define AIGVERSE_EQUIVALENCE_CHECKING_HPP
 
-#include <lorina/diagnostics.hpp>
+#include "aigverse/types.hpp"
+
 #include <mockturtle/algorithms/equivalence_checking.hpp>
 #include <mockturtle/algorithms/miter.hpp>
-#include <mockturtle/networks/aig.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -32,7 +32,7 @@ void equivalence_checking(pybind11::module& m)
         [](const Spec& spec, const Impl& impl, const uint32_t conflict_limit = 0,
            const bool functional_reduction = true, const bool verbose = false) -> std::optional<bool>
         {
-            const auto miter = mockturtle::miter<mockturtle::aig_network, Spec, Impl>(spec, impl);
+            const auto miter = mockturtle::miter<aigverse::aig, Spec, Impl>(spec, impl);
 
             if (!miter.has_value())
             {
@@ -55,7 +55,7 @@ void equivalence_checking(pybind11::module& m)
 
 inline void equivalence_checking(pybind11::module& m)
 {
-    detail::equivalence_checking<mockturtle::aig_network, mockturtle::aig_network>(m);
+    detail::equivalence_checking<aigverse::aig, aigverse::aig>(m);
 }
 
 }  // namespace aigverse

@@ -5,6 +5,8 @@
 #ifndef AIGVERSE_TRUTH_TABLE_HPP
 #define AIGVERSE_TRUTH_TABLE_HPP
 
+#include "aigverse/types.hpp"
+
 #include <fmt/format.h>
 #include <kitty/bit_operations.hpp>
 #include <kitty/dynamic_truth_table.hpp>
@@ -22,7 +24,7 @@ namespace aigverse
 namespace detail
 {
 
-inline void truth_table(pybind11::module& m)
+inline void truth_tables(pybind11::module& m)
 {
     namespace py = pybind11;
     using namespace pybind11::literals;
@@ -183,9 +185,9 @@ inline void truth_table(pybind11::module& m)
 
 }  // namespace detail
 
-inline void truth_table(pybind11::module& m)
+inline void truth_tables(pybind11::module& m)
 {
-    detail::truth_table(m);
+    detail::truth_tables(m);
 }
 
 }  // namespace aigverse

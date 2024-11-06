@@ -5,10 +5,11 @@
 #ifndef AIGVERSE_RESUBSTITUTION_HPP
 #define AIGVERSE_RESUBSTITUTION_HPP
 
+#include "aigverse/types.hpp"
+
 #include <mockturtle/algorithms/aig_resub.hpp>
 #include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/resubstitution.hpp>
-#include <mockturtle/networks/aig.hpp>
 #include <pybind11/pybind11.h>
 
 #include <cstdint>
@@ -57,7 +58,7 @@ void resubstitution(pybind11::module& m)
 
 inline void resubstitution(pybind11::module& m)
 {
-    detail::resubstitution<mockturtle::aig_network>(m);
+    detail::resubstitution<aigverse::aig>(m);
 }
 
 }  // namespace aigverse

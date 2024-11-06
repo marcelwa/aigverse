@@ -5,8 +5,9 @@
 #ifndef AIGVERSE_SIMULATION_HPP
 #define AIGVERSE_SIMULATION_HPP
 
+#include "aigverse/types.hpp"
+
 #include <mockturtle/algorithms/simulation.hpp>
-#include <mockturtle/networks/aig.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -56,8 +57,8 @@ void simulation(pybind11::module& m)
 
 inline void simulation(pybind11::module& m)
 {
-    detail::simulation<mockturtle::aig_network>(m);
-    detail::simulation<mockturtle::depth_view<mockturtle::aig_network>>(m);
+    detail::simulation<aigverse::aig>(m);
+    detail::simulation<aigverse::depth_aig>(m);
 }
 
 }  // namespace aigverse
