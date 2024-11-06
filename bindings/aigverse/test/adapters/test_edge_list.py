@@ -68,13 +68,13 @@ class EdgeListTest(unittest.TestCase):
         with self.assertRaises(IndexError):
             edge_list[3] = AigEdge(7, 8, 9)
 
-        self.assertEqual(edge_list.__repr__(), "EdgeList({Edge(s:4,t:5,w:6), Edge(s:5,t:6,w:7), Edge(s:6,t:7,w:8)})")
+        self.assertEqual(edge_list.__repr__(), "EdgeList([Edge(s:4,t:5,w:6), Edge(s:5,t:6,w:7), Edge(s:6,t:7,w:8)])")
 
         edge_list.clear()
 
         self.assertEqual(len(edge_list), 0)
 
-        self.assertEqual(edge_list.__repr__(), "EdgeList({})")
+        self.assertEqual(edge_list.__repr__(), "EdgeList([])")
 
 
 class ToEdgeListTest(unittest.TestCase):

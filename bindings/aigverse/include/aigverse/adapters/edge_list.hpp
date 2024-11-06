@@ -242,7 +242,7 @@ struct formatter<aigverse::edge<Ntk>>
     }
 
     template <typename FormatContext>
-    auto format(const aigverse::edge<Ntk>& e, FormatContext& ctx)
+    auto format(const aigverse::edge<Ntk>& e, FormatContext& ctx) const
     {
         return format_to(ctx.out(), "Edge(s:{},t:{},w:{})", e.source, e.target, e.weight);
     }
@@ -259,7 +259,7 @@ struct formatter<aigverse::edge_list<Ntk>>
     }
 
     template <typename FormatContext>
-    auto format(const aigverse::edge_list<Ntk>& el, FormatContext& ctx)
+    auto format(const aigverse::edge_list<Ntk>& el, FormatContext& ctx) const
     {
         return format_to(ctx.out(), "{}", el.edges);
     }
