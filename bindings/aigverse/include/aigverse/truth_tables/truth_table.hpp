@@ -9,6 +9,7 @@
 #include <kitty/bit_operations.hpp>
 #include <kitty/dynamic_truth_table.hpp>
 #include <kitty/hash.hpp>
+#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -33,15 +34,15 @@ inline void truth_table(pybind11::module& m)
         .def(py::init<uint32_t>(), "num_vars"_a,
              "Create a TruthTable with 'num_vars' variables with all bits set to 0.")
 
+        // Operators
+        .def(py::self == py::self, "other"_a)
+        .def(py::self != py::self, "other"_a)
+        .def(py::self < py::self, "other"_a)
+
         // Method bindings
         .def("num_vars", &dyn_tt::num_vars, "Returns the number of variables.")
         .def("num_blocks", &dyn_tt::num_blocks, "Returns the number of blocks.")
         .def("num_bits", &dyn_tt::num_bits, "Returns the number of bits.")
-
-        // Iterator for Pythonic iteration over bits
-        .def(
-            "__iter__", [](dyn_tt& self) { return py::make_iterator(self.begin(), self.end()); },
-            py::keep_alive<0, 1>(), "Iterate over truth table bits in ascending order.")
 
         // Operator= for assigning other truth tables
         .def(
@@ -143,6 +144,8 @@ inline void truth_table(pybind11::module& m)
 
         .def("count_ones", &kitty::count_ones<dyn_tt>, "Counts ones in truth table.")
         .def("count_zeroes", &kitty::count_zeros<dyn_tt>, "Counts zeroes in truth table.")
+
+        .def("is_const0", &kitty::is_const0<dyn_tt>, "Checks if the truth table is constant 0.")
 
         // Representations
         .def(
