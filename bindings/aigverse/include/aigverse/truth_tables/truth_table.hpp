@@ -145,7 +145,9 @@ inline void truth_table(pybind11::module& m)
         .def("count_ones", &kitty::count_ones<dyn_tt>, "Counts ones in truth table.")
         .def("count_zeroes", &kitty::count_zeros<dyn_tt>, "Counts zeroes in truth table.")
 
-        .def("is_const0", &kitty::is_const0<dyn_tt>, "Checks if the truth table is constant 0.")
+        .def(
+            "is_const0", [](const dyn_tt& self) -> bool { return kitty::is_const0(self); },
+            "Checks if the truth table is constant 0.")
 
         // Representations
         .def(
