@@ -1,4 +1,4 @@
-from aigverse import *
+from aigverse import Aig, AigSignal, DepthAig
 
 import unittest
 

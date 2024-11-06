@@ -1,4 +1,4 @@
-from aigverse import *
+from aigverse import Aig, AigEdge, AigEdgeList, to_edge_list
 
 import unittest
 

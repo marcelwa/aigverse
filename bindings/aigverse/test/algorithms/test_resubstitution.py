@@ -1,4 +1,4 @@
-from aigverse import *
+from aigverse import Aig, aig_resubstitution, equivalence_checking
 
 import unittest
 
