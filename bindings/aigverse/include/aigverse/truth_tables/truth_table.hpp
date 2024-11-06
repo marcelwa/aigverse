@@ -148,11 +148,14 @@ inline void truth_table(pybind11::module& m)
         .def(
             "is_const0", [](const dyn_tt& self) -> bool { return kitty::is_const0(self); },
             "Checks if the truth table is constant 0.")
+        .def(
+            "is_const1", [](const dyn_tt& self) -> bool { return kitty::is_const0(kitty::unary_not(self)); },
+            "Checks if the truth table is constant 1.")
 
         // Representations
         .def(
             "__repr__",
-            [](const dyn_tt& self) -> std::string { return fmt::format("TruthTable <variables={}>", self.num_vars()); },
+            [](const dyn_tt& self) -> std::string { return fmt::format("TruthTable <vars={}>", self.num_vars()); },
             "Returns an abstract string representation of the truth table.")
         .def(
             "to_binary",

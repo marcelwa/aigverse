@@ -1,6 +1,7 @@
 from aigverse import TruthTable
 
 import unittest
+import copy
 
 
 class TestTruthTable(unittest.TestCase):
@@ -12,6 +13,101 @@ class TestTruthTable(unittest.TestCase):
 
         self.assertEqual(tt_d, TruthTable(5))
         self.assertTrue(tt_d.is_const0())
+
+    def test_shallow_copy(self):
+        # Create an original TruthTable and modify it
+        tt_original = TruthTable(5)
+        tt_original.create_nth_var(0)  # Set to the projection of the 0th variable
+
+        # Make a shallow copy
+        tt_shallow = copy.copy(tt_original)
+
+        # Verify that the shallow copy has the same properties as the original
+        self.assertEqual(tt_original.to_binary(), tt_shallow.to_binary())
+        self.assertEqual(tt_original.num_vars(), tt_shallow.num_vars())
+
+        # Modify the shallow copy and check that the original remains unchanged
+        tt_shallow.clear()
+        self.assertNotEqual(tt_original.to_binary(), tt_shallow.to_binary())
+
+    def test_deep_copy(self):
+        # Create an original TruthTable and modify it
+        tt_original = TruthTable(5)
+        tt_original.create_nth_var(1)  # Set to the projection of the 1st variable
+
+        # Make a deep copy
+        tt_deep = copy.deepcopy(tt_original)
+
+        # Verify that the deep copy has the same properties as the original
+        self.assertEqual(tt_original.to_binary(), tt_deep.to_binary())
+        self.assertEqual(tt_original.num_vars(), tt_deep.num_vars())
+
+        # Modify the deep copy and check that the original remains unchanged
+        tt_deep.clear()
+        self.assertNotEqual(tt_original.to_binary(), tt_deep.to_binary())
+
+    def test_assignment_operator(self):
+        # Create two distinct TruthTables
+        tt_original = TruthTable(2)
+        tt_copy = TruthTable(2)
+
+        # Set the original to a specific pattern and assign it to tt_copy
+        tt_original.create_from_binary_string("1100")
+        tt_copy.__assign__(tt_original)
+
+        # Verify that tt_copy now matches tt_original
+        self.assertEqual(tt_copy.to_binary(), tt_original.to_binary())
+
+        # Modify tt_copy and ensure tt_original remains unaffected
+        tt_copy.clear()
+        self.assertNotEqual(tt_copy.to_binary(), tt_original.to_binary())
+
+    def test_equality_operator(self):
+        # Create two identical TruthTables
+        tt1 = TruthTable(2)
+        tt2 = TruthTable(2)
+        tt1.create_from_binary_string("1010")
+        tt2.create_from_binary_string("1010")
+
+        # Verify that they are considered equal
+        self.assertTrue(tt1 == tt2)
+
+        # Modify one of them and verify they are no longer equal
+        tt2.flip_bit(0)
+        self.assertFalse(tt1 == tt2)
+
+    def test_inequality_operator(self):
+        # Create two different TruthTables
+        tt1 = TruthTable(2)
+        tt2 = TruthTable(2)
+        tt1.create_from_binary_string("1100")
+        tt2.create_from_binary_string("1010")
+
+        # Verify that they are considered not equal
+        self.assertTrue(tt1 != tt2)
+
+        # Modify one of them to match the other and verify they are now equal
+        tt2.create_from_binary_string("1100")
+        self.assertFalse(tt1 != tt2)
+
+    def test_less_than_operator(self):
+        # Create two TruthTables with different binary representations
+        tt1 = TruthTable(2)
+        tt2 = TruthTable(2)
+        tt1.create_from_binary_string("0110")
+        tt2.create_from_binary_string("1000")
+
+        # Verify that tt1 is less than tt2
+        self.assertTrue(tt1 < tt2)
+
+        # Swap the binary values and verify tt1 is no longer less than tt2
+        tt1.create_from_binary_string("1000")
+        tt2.create_from_binary_string("0110")
+        self.assertFalse(tt1 < tt2)
+
+        # If they are identical, tt1 < tt2 should be False
+        tt2.create_from_binary_string("1000")
+        self.assertFalse(tt1 < tt2)
 
     def test_create_nth_var5(self):
         tt_d = TruthTable(5)
@@ -43,6 +139,14 @@ class TestTruthTable(unittest.TestCase):
             "fffffffefffefee8fffefee8fee8e880fffefee8fee8e880fee8e880e8808000fffefee8fee8e880fee8e880e8808000fee8e880e8808000e880800080000000",
             tt_d_str.to_hex())
 
+    def test_repr(self):
+        self.assertEqual(repr(TruthTable(0)), "TruthTable <vars=0>")
+        self.assertEqual(repr(TruthTable(1)), "TruthTable <vars=1>")
+        self.assertEqual(repr(TruthTable(2)), "TruthTable <vars=2>")
+        self.assertEqual(repr(TruthTable(3)), "TruthTable <vars=3>")
+        self.assertEqual(repr(TruthTable(4)), "TruthTable <vars=4>")
+        self.assertEqual(repr(TruthTable(5)), "TruthTable <vars=5>")
+
     def test_create_constants(self):
         tt_s = TruthTable(0)
         self.assertEqual(tt_s.num_vars(), 0)
@@ -51,9 +155,12 @@ class TestTruthTable(unittest.TestCase):
         tt_s.create_from_hex_string("0")
         self.assertEqual(tt_s.to_binary(), "0")
         self.assertTrue(tt_s.is_const0())
+        self.assertFalse(tt_s.is_const1())
 
         tt_s.create_from_hex_string("1")
         self.assertEqual(tt_s.to_binary(), "1")
+        self.assertTrue(tt_s.is_const1())
+        self.assertFalse(tt_s.is_const0())
 
     def test_create_one_variable_functions(self):
         tt_s = TruthTable(1)
