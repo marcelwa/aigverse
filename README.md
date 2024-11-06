@@ -236,6 +236,15 @@ for i, tt in enumerate(tts):
     print(f"PO{i}: {tt.to_binary()}")
 ```
 
+#### Exporting as Lists of Lists
+
+For some machine learning applications, it may be useful to export the truth table as a list of lists.
+
+```python
+# Export the truth table as a list of lists
+tt_list = [[int(tt.get_bit(i)) for i in range(tt.num_bits())] for tt in tts]
+```
+
 ## Contributing
 
 Contributions are welcome! If you'd like to contribute to `aigverse`, please submit a pull request or open an issue. If
