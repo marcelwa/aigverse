@@ -7,6 +7,7 @@
 #include "aigverse/algorithms/refactoring.hpp"
 #include "aigverse/algorithms/resubstitution.hpp"
 #include "aigverse/algorithms/rewriting.hpp"
+#include "aigverse/algorithms/simulation.hpp"
 #include "aigverse/io/read_aiger.hpp"
 #include "aigverse/io/write_aiger.hpp"
 #include "aigverse/networks/logic_networks.hpp"
@@ -38,6 +39,7 @@ PYBIND11_MODULE(aigverse, m)
     aigverse::refactoring(m);
     aigverse::resubstitution(m);
     aigverse::rewriting(m);
+    aigverse::simulation(m);
 
     /**
      * I/O
