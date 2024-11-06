@@ -18,7 +18,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Set the project name and version
 project(
   aigverse
-  VERSION 0.0.9
+  VERSION 0.0.10
   DESCRIPTION
     "A Python library for working with logic networks, synthesis, and optimization."
   HOMEPAGE_URL "https://github.com/marcelwa/aigverse"
