@@ -83,7 +83,7 @@ with open(README_PATH, encoding="utf8") as readme_file:
 
 setup(
     name='aigverse',
-    version='0.0.9',
+    version='0.0.10',
     author='Marcel Walter',
     author_email='marcel.walter@tum.de',
     description='A Python library for working with logic networks, synthesis, and optimization.',
