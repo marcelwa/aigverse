@@ -5,10 +5,9 @@
 #ifndef AIGVERSE_LOGIC_NETWORKS_HPP
 #define AIGVERSE_LOGIC_NETWORKS_HPP
 
+#include "aigverse/types.hpp"
+
 #include <fmt/format.h>
-#include <mockturtle/networks/aig.hpp>
-#include <mockturtle/networks/mig.hpp>
-#include <mockturtle/networks/xag.hpp>
 #include <mockturtle/traits.hpp>
 #include <mockturtle/views/depth_view.hpp>
 #include <pybind11/pybind11.h>
@@ -239,9 +238,9 @@ inline void logic_networks(pybind11::module& m)
     /**
      * Logic networks.
      */
-    detail::network<mockturtle::aig_network>(m, "Aig");
-    //        detail::network<mockturtle::mig_network>(m, "Mig");
-    //        detail::network<mockturtle::xag_network>(m, "Xag");
+    detail::network<aigverse::aig>(m, "Aig");
+    //        detail::network<aigverse::mig>(m, "Mig");
+    //        detail::network<aigverse::xag>(m, "Xag");
 }
 
 }  // namespace aigverse

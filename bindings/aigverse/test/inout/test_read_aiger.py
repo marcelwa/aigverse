@@ -1,4 +1,4 @@
-from aigverse import *
+from aigverse import AigSignal, read_aiger_into_aig, read_ascii_aiger_into_aig
 
 import unittest
 import os

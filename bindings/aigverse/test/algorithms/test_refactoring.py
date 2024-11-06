@@ -1,4 +1,4 @@
-from aigverse import *
+from aigverse import Aig, sop_refactoring, equivalence_checking
 
 import unittest
 

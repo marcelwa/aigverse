@@ -90,8 +90,9 @@ for gate in aig.gates():
     print(f"Gate: {gate}")
 
 # Iterate over the fanins of a node
-for fanin in aig.fanins(f_and):
-    print(f"Fanin of {f_and}: {fanin}")
+n_and = aig.get_node(f_and)
+for fanin in aig.fanins(n_and):
+    print(f"Fanin of {n_and}: {fanin}")
 ```
 
 ### Depth and Level Computation
@@ -119,10 +120,10 @@ database.
 from aigverse import aig_resubstitution, sop_refactoring, aig_cut_rewriting
 
 # Clone the AIG network for size comparison
-aig_clone = aig.copy()
+aig_clone = aig.clone()
 
 # Optimize the AIG with several optimization algorithms
-for optimization in [aig_resubstitution, sop_refactorting, aig_cut_rewriting]:
+for optimization in [aig_resubstitution, sop_refactoring, aig_cut_rewriting]:
     optimization(aig)
 
 # Print the size of the unoptimized and optimized AIGs
@@ -186,6 +187,53 @@ print(edges)
 
 # Convert to list of tuples
 edges = [(e.source, e.target, e.weight) for e in edges]
+```
+
+### Truth Tables
+
+Small Boolean functions can be efficiently represented using truth tables. `aigverse` enables the creation and
+manipulation of truth tables by wrapping a portion of the [kitty](https://github.com/msoeken/kitty) library.
+
+#### Creation
+
+```python
+from aigverse import TruthTable
+
+# Initialize a truth table with 3 variables
+tt = TruthTable(3)
+# Create a truth table from a hex string representing the MAJ function
+tt.create_from_hex_string("e8")
+```
+
+#### Manipulation
+
+```python
+# Flip each bit in the truth table
+for i in range(tt.num_bits()):
+    print(f"Flipping bit {int(tt.get_bit(i))}")
+    tt.flip_bit(i)
+
+# Print a binary string representation of the truth table
+print(tt.to_binary())
+
+# Clear the truth table
+tt.clear()
+
+# Check if the truth table is constant 0
+print(tt.is_const0())
+```
+
+#### Symbolic Simulation of AIGs
+
+```python
+from aigverse import simulate
+
+# Obtain the truth table of each AIG output
+tts = simulate(aig)
+
+# Print the truth tables
+for i, tt in enumerate(tts):
+    print(f"PO{i}: {tt.to_binary()}")
 ```
 
 ## Contributing

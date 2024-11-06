@@ -5,16 +5,17 @@
 #ifndef AIGVERSE_EDGE_LIST_HPP
 #define AIGVERSE_EDGE_LIST_HPP
 
+#include "aigverse/types.hpp"
+
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include <mockturtle/networks/aig.hpp>
 #include <mockturtle/traits.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 #include <cstdint>
-#include <iostream>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -223,7 +224,7 @@ void ntk_edge_list(pybind11::module& m, const std::string& network_name)
 
 inline void to_edge_list(pybind11::module& m)
 {
-    detail::ntk_edge_list<mockturtle::aig_network>(m, "Aig");
+    detail::ntk_edge_list<aigverse::aig>(m, "Aig");
 }
 
 }  // namespace aigverse

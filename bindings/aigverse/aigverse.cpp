@@ -7,9 +7,11 @@
 #include "aigverse/algorithms/refactoring.hpp"
 #include "aigverse/algorithms/resubstitution.hpp"
 #include "aigverse/algorithms/rewriting.hpp"
+#include "aigverse/algorithms/simulation.hpp"
 #include "aigverse/io/read_aiger.hpp"
 #include "aigverse/io/write_aiger.hpp"
 #include "aigverse/networks/logic_networks.hpp"
+#include "aigverse/truth_tables/truth_table.hpp"
 
 #include <pybind11/pybind11.h>
 
@@ -26,12 +28,18 @@ PYBIND11_MODULE(aigverse, m)
     aigverse::logic_networks(m);
 
     /**
+     * Truth tables.
+     */
+    aigverse::truth_tables(m);
+
+    /**
      * Algorithms
      */
     aigverse::equivalence_checking(m);
     aigverse::refactoring(m);
     aigverse::resubstitution(m);
     aigverse::rewriting(m);
+    aigverse::simulation(m);
 
     /**
      * I/O
