@@ -93,6 +93,7 @@ setup(
     url='https://github.com/marcelwa/aigverse',
     ext_modules=[CMakeExtension('aigverse')],
     cmdclass={"build_ext": CMakeBuild},
+    package_data={"aigverse": ["*.pyi"]},
     zip_safe=False,
     python_requires=">=3.8",
     classifiers=[
