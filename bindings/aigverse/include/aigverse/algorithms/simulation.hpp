@@ -50,7 +50,9 @@ void simulation(pybind11::module& m)
                 throw;
             }
         },
-        "network"_a);
+        "network"_a)
+
+        ;
 }
 
 }  // namespace detail
@@ -58,7 +60,6 @@ void simulation(pybind11::module& m)
 inline void simulation(pybind11::module& m)
 {
     detail::simulation<aigverse::aig>(m);
-    detail::simulation<aigverse::depth_aig>(m);
 }
 
 }  // namespace aigverse

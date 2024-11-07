@@ -33,6 +33,7 @@ void network(pybind11::module& m, const std::string& network_name)
      * Network node.
      */
     py::class_<mockturtle::node<Ntk>>(m, fmt::format("{}Node", network_name).c_str())
+        .def(py::init<const uint64_t>(), "index"_a)
         .def("__hash__", [](const mockturtle::node<Ntk>& n) { return std::hash<mockturtle::node<Ntk>>{}(n); })
         .def("__repr__", [](const mockturtle::node<Ntk>& n) { return fmt::format("Node({})", n); })
 
