@@ -17,7 +17,7 @@
 
 #define PYBIND11_DETAILED_ERROR_MESSAGES
 
-PYBIND11_MODULE(aigverse, m)
+PYBIND11_MODULE(aigverse, m, pybind11::mod_gil_not_used())
 {
     // docstring
     m.doc() = "A Python library for working with logic networks, synthesis, and optimization.";
