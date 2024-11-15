@@ -1,6 +1,7 @@
-from aigverse import Aig, equivalence_checking
-
 import unittest
+
+import pytest
+from aigverse import Aig, equivalence_checking
 
 
 class TestEquivalenceChecking(unittest.TestCase):
@@ -8,7 +9,7 @@ class TestEquivalenceChecking(unittest.TestCase):
         aig1 = Aig()
         aig2 = Aig()
 
-        self.assertTrue(equivalence_checking(aig1, aig2))
+        assert equivalence_checking(aig1, aig2)
 
     def test_simple_aigs(self):
         aig1 = Aig()
@@ -30,12 +31,12 @@ class TestEquivalenceChecking(unittest.TestCase):
         aig2.create_po(and2)
         aig2.create_po(b2)
 
-        self.assertTrue(equivalence_checking(aig1, aig2))
-        self.assertTrue(equivalence_checking(aig1, aig1.clone()))
+        assert equivalence_checking(aig1, aig2)
+        assert equivalence_checking(aig1, aig1.clone())
 
         aig2.create_po(a1)
 
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             equivalence_checking(aig1, aig2)
 
     def test_aig_and_its_negated_copy(self):
@@ -55,8 +56,8 @@ class TestEquivalenceChecking(unittest.TestCase):
 
         aig2.create_po(~and3)
 
-        self.assertFalse(equivalence_checking(aig1, aig2))
+        assert not equivalence_checking(aig1, aig2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,6 @@
-from aigverse import Aig, DepthAig, TruthTable, simulate
-
 import unittest
+
+from aigverse import Aig, DepthAig, TruthTable, simulate
 
 
 class TestSimulation(unittest.TestCase):
@@ -9,7 +9,7 @@ class TestSimulation(unittest.TestCase):
 
         sim = simulate(aig)
 
-        self.assertEqual(len(sim), 0)
+        assert len(sim) == 0
 
     def test_const0_aig(self):
         aig = Aig()
@@ -21,8 +21,8 @@ class TestSimulation(unittest.TestCase):
         const0 = TruthTable(0)
         const0.create_from_binary_string("0")
 
-        self.assertEqual(len(sim), 1)
-        self.assertEqual(sim[0], const0)
+        assert len(sim) == 1
+        assert sim[0] == const0
 
     def test_const1_aig(self):
         aig = Aig()
@@ -34,8 +34,8 @@ class TestSimulation(unittest.TestCase):
         const1 = TruthTable(0)
         const1.create_from_binary_string("1")
 
-        self.assertEqual(len(sim), 1)
-        self.assertEqual(sim[0], const1)
+        assert len(sim) == 1
+        assert sim[0] == const1
 
     def test_and_aig(self):
         aig = Aig()
@@ -52,8 +52,8 @@ class TestSimulation(unittest.TestCase):
         conjunction = TruthTable(2)
         conjunction.create_from_binary_string("1000")
 
-        self.assertEqual(len(sim), 1)
-        self.assertEqual(sim[0], conjunction)
+        assert len(sim) == 1
+        assert sim[0] == conjunction
 
     def test_or_aig(self):
         aig = Aig()
@@ -70,8 +70,8 @@ class TestSimulation(unittest.TestCase):
         disjunction = TruthTable(2)
         disjunction.create_from_binary_string("1110")
 
-        self.assertEqual(len(sim), 1)
-        self.assertEqual(sim[0], disjunction)
+        assert len(sim) == 1
+        assert sim[0] == disjunction
 
     def test_maj_aig(self):
         aig = Aig()
@@ -89,8 +89,8 @@ class TestSimulation(unittest.TestCase):
         majority = TruthTable(3)
         majority.create_from_hex_string("e8")
 
-        self.assertEqual(len(sim), 1)
-        self.assertEqual(sim[0], majority)
+        assert len(sim) == 1
+        assert sim[0] == majority
 
     def test_multi_output_aig(self):
         # also test DepthAig
@@ -114,10 +114,10 @@ class TestSimulation(unittest.TestCase):
             disjunction = TruthTable(2)
             disjunction.create_from_binary_string("1110")
 
-            self.assertEqual(len(sim), 2)
-            self.assertEqual(sim[0], conjunction)
-            self.assertEqual(sim[1], disjunction)
+            assert len(sim) == 2
+            assert sim[0] == conjunction
+            assert sim[1] == disjunction
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

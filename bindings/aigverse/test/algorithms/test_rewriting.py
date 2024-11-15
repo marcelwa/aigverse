@@ -1,6 +1,6 @@
-from aigverse import Aig, aig_cut_rewriting, equivalence_checking
-
 import unittest
+
+from aigverse import Aig, aig_cut_rewriting, equivalence_checking
 
 
 class TestAigRewriting(unittest.TestCase):
@@ -10,7 +10,7 @@ class TestAigRewriting(unittest.TestCase):
 
         aig_cut_rewriting(aig1)
 
-        self.assertTrue(equivalence_checking(aig1, aig2))
+        assert equivalence_checking(aig1, aig2)
 
     def test_simple_aigs(self):
         aig1 = Aig()
@@ -34,8 +34,8 @@ class TestAigRewriting(unittest.TestCase):
 
         aig_cut_rewriting(aig1)
 
-        self.assertTrue(equivalence_checking(aig1, aig2))
-        self.assertTrue(equivalence_checking(aig1, aig1.clone()))
+        assert equivalence_checking(aig1, aig2)
+        assert equivalence_checking(aig1, aig1.clone())
 
     def test_aig_and_its_negated_copy(self):
         aig1 = Aig()
@@ -56,11 +56,11 @@ class TestAigRewriting(unittest.TestCase):
 
         aig_cut_rewriting(aig1)
 
-        self.assertFalse(equivalence_checking(aig1, aig2))
+        assert not equivalence_checking(aig1, aig2)
 
         aig_cut_rewriting(aig2)
 
-        self.assertFalse(equivalence_checking(aig1, aig2))
+        assert not equivalence_checking(aig1, aig2)
 
     def test_equivalent_node_merger(self):
         # x0 * !(!x0 * !x1) == > x0
@@ -75,7 +75,7 @@ class TestAigRewriting(unittest.TestCase):
 
         aig_cut_rewriting(aig1)
 
-        self.assertTrue(equivalence_checking(aig1, aig_before))
+        assert equivalence_checking(aig1, aig_before)
 
     def test_positive_divisor_substitution(self):
         # x1 * ( x0 * x1 ) ==> x0 * x1
@@ -90,7 +90,7 @@ class TestAigRewriting(unittest.TestCase):
 
         aig_cut_rewriting(aig2)
 
-        self.assertTrue(equivalence_checking(aig2, aig_before))
+        assert equivalence_checking(aig2, aig_before)
 
     def test_negative_divisor_substitution(self):
         # !x0 * !(!x0 * !x1) == > !x0 * x1
@@ -105,7 +105,7 @@ class TestAigRewriting(unittest.TestCase):
 
         aig_cut_rewriting(aig)
 
-        self.assertTrue(equivalence_checking(aig, aig_before))
+        assert equivalence_checking(aig, aig_before)
 
     def test_parameters(self):
         aig = Aig()
@@ -120,12 +120,22 @@ class TestAigRewriting(unittest.TestCase):
 
         aig2 = aig.clone()
 
-        aig_cut_rewriting(aig, cut_size=8, cut_limit=12, minimize_truth_table=False, allow_zero_gain=True,
-                          use_dont_cares=True, min_cand_cut_size=4, min_cand_cut_size_override=5, preserve_depth=True,
-                          verbose=True, very_verbose=True)
+        aig_cut_rewriting(
+            aig,
+            cut_size=8,
+            cut_limit=12,
+            minimize_truth_table=False,
+            allow_zero_gain=True,
+            use_dont_cares=True,
+            min_cand_cut_size=4,
+            min_cand_cut_size_override=5,
+            preserve_depth=True,
+            verbose=True,
+            very_verbose=True,
+        )
 
-        self.assertTrue(equivalence_checking(aig, aig2))
+        assert equivalence_checking(aig, aig2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

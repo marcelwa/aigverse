@@ -1,6 +1,6 @@
-from aigverse import Aig, sop_refactoring, equivalence_checking
-
 import unittest
+
+from aigverse import Aig, equivalence_checking, sop_refactoring
 
 
 class TestAigRefactoring(unittest.TestCase):
@@ -10,7 +10,7 @@ class TestAigRefactoring(unittest.TestCase):
 
         sop_refactoring(aig1)
 
-        self.assertTrue(equivalence_checking(aig1, aig2))
+        assert equivalence_checking(aig1, aig2)
 
     def test_simple_aigs(self):
         aig1 = Aig()
@@ -34,8 +34,8 @@ class TestAigRefactoring(unittest.TestCase):
 
         sop_refactoring(aig1)
 
-        self.assertTrue(equivalence_checking(aig1, aig2))
-        self.assertTrue(equivalence_checking(aig1, aig1.clone()))
+        assert equivalence_checking(aig1, aig2)
+        assert equivalence_checking(aig1, aig1.clone())
 
     def test_aig_and_its_negated_copy(self):
         aig1 = Aig()
@@ -56,11 +56,11 @@ class TestAigRefactoring(unittest.TestCase):
 
         sop_refactoring(aig1)
 
-        self.assertFalse(equivalence_checking(aig1, aig2))
+        assert not equivalence_checking(aig1, aig2)
 
         sop_refactoring(aig2)
 
-        self.assertFalse(equivalence_checking(aig1, aig2))
+        assert not equivalence_checking(aig1, aig2)
 
     def test_equivalent_node_merger(self):
         # x0 * !(!x0 * !x1) == > x0 (reduction of 2 nodes)
@@ -75,9 +75,9 @@ class TestAigRefactoring(unittest.TestCase):
 
         sop_refactoring(aig1)
 
-        self.assertEqual(aig1.size(), aig_before.size() - 2)
+        assert aig1.size() == aig_before.size() - 2
 
-        self.assertTrue(equivalence_checking(aig1, aig_before))
+        assert equivalence_checking(aig1, aig_before)
 
     def test_positive_divisor_substitution(self):
         # x1 * ( x0 * x1 ) ==> x0 * x1 (reduction of 1 node)
@@ -92,9 +92,9 @@ class TestAigRefactoring(unittest.TestCase):
 
         sop_refactoring(aig2)
 
-        self.assertEqual(aig2.size(), aig_before.size() - 1)
+        assert aig2.size() == aig_before.size() - 1
 
-        self.assertTrue(equivalence_checking(aig2, aig_before))
+        assert equivalence_checking(aig2, aig_before)
 
     def test_negative_divisor_substitution(self):
         # !x0 * !(!x0 * !x1) == > !x0 * x1 (reduction of 2 nodes)
@@ -109,9 +109,9 @@ class TestAigRefactoring(unittest.TestCase):
 
         sop_refactoring(aig)
 
-        self.assertEqual(aig.size(), aig_before.size() - 2)
+        assert aig.size() == aig_before.size() - 2
 
-        self.assertTrue(equivalence_checking(aig, aig_before))
+        assert equivalence_checking(aig, aig_before)
 
     def test_parameters(self):
         aig = Aig()
@@ -126,11 +126,12 @@ class TestAigRefactoring(unittest.TestCase):
 
         aig2 = aig.clone()
 
-        sop_refactoring(aig, max_pis=2, allow_zero_gain=True, use_reconvergence_cut=False, use_dont_cares=True,
-                        verbose=True)
+        sop_refactoring(
+            aig, max_pis=2, allow_zero_gain=True, use_reconvergence_cut=False, use_dont_cares=True, verbose=True
+        )
 
-        self.assertTrue(equivalence_checking(aig, aig2))
+        assert equivalence_checking(aig, aig2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

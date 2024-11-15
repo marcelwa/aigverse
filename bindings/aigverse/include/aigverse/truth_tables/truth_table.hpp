@@ -113,27 +113,27 @@ inline void truth_tables(pybind11::module& m)
 
         .def(
             "create_from_hex_string",
-            [](dyn_tt& self, const std::string& hex) -> void
+            [](dyn_tt& self, const std::string& hexadecimal) -> void
             {
                 if (self.num_vars() < 2)
                 {
-                    if (hex.size() != 1)
+                    if (hexadecimal.size() != 1)
                     {
                         throw std::runtime_error(
                             "Number of characters in hex string must be one fourth the number of bits in "
                             "the truth table.");
                     }
                 }
-                else if ((hex.size() << 2u) != self.num_bits())
+                else if ((hexadecimal.size() << 2u) != self.num_bits())
                 {
                     throw std::runtime_error(
                         "Number of characters in hex string must be one fourth the number of bits in "
                         "the truth table.");
                 }
 
-                kitty::create_from_hex_string(self, hex);
+                kitty::create_from_hex_string(self, hexadecimal);
             },
-            "hex"_a,
+            "hexadecimal"_a,
             "Constructs truth table from hexadecimal string. Note that the first character in the string "
             "represents the four most significant bit in the truth table. For example, the 3-input majority "
             "function is represented by the binary string 'E8' or 'e8'. The number of characters in 'hex' "
