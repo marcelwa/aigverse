@@ -4,33 +4,33 @@ name: 🐍 • Packaging
 
 on:
   release:
-    types: [ published ]
+    types: [published]
   merge_group:
   push:
-    branches: [ 'main' ]
+    branches: ["main"]
     paths:
-      - 'bindings/aigverse/**'
-      - '**/*.py'
-      - '**/*.hpp'
-      - '**/*.cpp'
-      - '**/*.cmake'
-      - '**/CMakeLists.txt'
-      - 'libs/**'
-      - '.github/workflows/aigverse-pypi-deployment.yml'
+      - "bindings/aigverse/**"
+      - "**/*.py"
+      - "**/*.hpp"
+      - "**/*.cpp"
+      - "**/*.cmake"
+      - "**/CMakeLists.txt"
+      - "libs/**"
+      - ".github/workflows/aigverse-pypi-deployment.yml"
   pull_request:
-    branches: [ 'main' ]
+    branches: ["main"]
     paths:
-      - 'bindings/aigverse/**'
-      - '**/*.py'
-      - '**/*.hpp'
-      - '**/*.cpp'
-      - '**/*.cmake'
-      - '**/CMakeLists.txt'
-      - 'libs/**'
-      - '.github/workflows/aigverse-pypi-deployment.yml'
+      - "bindings/aigverse/**"
+      - "**/*.py"
+      - "**/*.hpp"
+      - "**/*.cpp"
+      - "**/*.cmake"
+      - "**/CMakeLists.txt"
+      - "libs/**"
+      - ".github/workflows/aigverse-pypi-deployment.yml"
   workflow_dispatch:
   workflow_run:
-    workflows: [ "aigverse Docstring Generator" ]
+    workflows: ["aigverse Docstring Generator"]
     types:
       - completed
 
@@ -50,7 +50,7 @@ jobs:
           - { os: macos-13, arch: x64 }
           - { os: macos-14, arch: arm64 }
           - { os: windows-2019, arch: x64 }
-        python: [ 'cp38', 'cp39', 'cp310', 'cp311', 'cp312', 'cp313' ]
+        python: ["cp38", "cp39", "cp310", "cp311", "cp312", "cp313"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -60,7 +60,7 @@ jobs:
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: '${{matrix.config.os}}-aigverse'
+          key: "${{matrix.config.os}}-aigverse"
           variant: ccache
           save: true
           max-size: 10G
@@ -79,7 +79,7 @@ jobs:
           CIBW_BUILD: ${{ matrix.python }}-*
           CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=10.15
           CIBW_TEST_EXTRAS: test
-          CIBW_TEST_COMMAND: 'python -m unittest discover --start-directory {project} --verbose'
+          CIBW_TEST_COMMAND: "python -m unittest discover --start-directory {project} --verbose"
 
       - name: Upload wheel as an artifact
         uses: actions/upload-artifact@v4
@@ -101,7 +101,7 @@ jobs:
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: 'ubuntu-latest-aigverse'
+          key: "ubuntu-latest-aigverse"
           variant: ccache
           save: true
           max-size: 10G
@@ -109,8 +109,8 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
-          cache: 'pip'
+          python-version: "3.13"
+          cache: "pip"
 
       - name: Build sdist
         run: pipx run build --sdist
@@ -126,7 +126,7 @@ jobs:
           overwrite: true
 
   publish_to_pypi:
-    needs: [ build_wheels, build_sdist ]
+    needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     name: 🚀 Publish to PyPI
     if: github.event_name == 'release' && github.event.action == 'published'
