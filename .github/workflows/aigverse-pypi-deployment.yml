@@ -138,9 +138,15 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - name: Generate artifact attestation for sdist and wheel(s)
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: "dist/*"
+
       - name: Deploy to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_DEPLOY_TOKEN }}
           skip-existing: true
           verbose: true
+          attestations: true
