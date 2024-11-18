@@ -110,44 +110,8 @@ jobs:
           path: wheelhouse/*.whl
           overwrite: true
 
-  build_wheels_emulation:
-    name: 🎡 Wheels for ${{ matrix.arch }}
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        # build wheels for all supported Python versions on all platforms that require emulation
-        arch: ["s390x", "ppc64le", "aarch64"]
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: recursive
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: "latest"
-          enable-cache: true
-
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21
-        env:
-          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
-          CIBW_TEST_SKIP: "cp*"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: cibw-wheels-${{ matrix.arch }}-${{ strategy.job-index }}
-          path: wheelhouse/*.whl
-
   publish_to_pypi:
-    needs: [build_sdist, build_wheels, build_wheels_emulation]
+    needs: [build_sdist, build_wheels]
     runs-on: ubuntu-latest
     name: 🚀 Publish to PyPI
     if: github.event_name == 'release' && github.event.action == 'published'
