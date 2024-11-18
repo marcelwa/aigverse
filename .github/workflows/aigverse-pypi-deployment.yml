@@ -87,7 +87,7 @@ jobs:
           save: true
           max-size: 10G
 
-      - if: runner.os == "Linux"
+      - if: runner.os == 'Linux'
         name: Setup mold
         uses: rui314/setup-mold@v1
 
