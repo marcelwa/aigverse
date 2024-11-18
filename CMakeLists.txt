@@ -15,10 +15,9 @@ endif()
 # compiling with PCH enabled
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Set the project name and version
+# Set the project name and description
 project(
   aigverse
-  VERSION 0.0.11
   DESCRIPTION
     "A Python library for working with logic networks, synthesis, and optimization."
   HOMEPAGE_URL "https://github.com/marcelwa/aigverse"
