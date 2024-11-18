@@ -11,7 +11,7 @@ ci:
   autoupdate_commit_msg: "⬆️ Bump pre-commit hooks"
   autofix_commit_msg: "🎨 Incorporated pre-commit fixes"
 
-exclude: "^libs/|^benchmarks/|bindings/aigverse/include/aigverse/pybind11_mkdoc_docstrings.hpp"
+exclude: "^libs/"
 
 repos:
   # Standard hooks
