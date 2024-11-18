@@ -65,7 +65,7 @@ jobs:
           overwrite: true
 
   build_wheels:
-    name: 🎡 Wheels for ${{ matrix.runs-on }}
+    name: 🛞 Wheels for ${{ matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}
 
     strategy:
