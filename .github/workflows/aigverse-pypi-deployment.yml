@@ -147,7 +147,7 @@ jobs:
           path: wheelhouse/*.whl
 
   publish_to_pypi:
-    needs: [build_wheels, build_sdist]
+    needs: [build_sdist, build_wheels, build_wheels_emulation]
     runs-on: ubuntu-latest
     name: 🚀 Publish to PyPI
     if: github.event_name == 'release' && github.event.action == 'published'
