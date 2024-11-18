@@ -171,4 +171,4 @@ jobs:
           password: ${{ secrets.PYPI_DEPLOY_TOKEN }}
           skip-existing: true
           verbose: true
-          attestation: true
+          attestations: true
