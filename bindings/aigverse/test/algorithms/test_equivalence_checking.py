@@ -1,6 +1,7 @@
 import unittest
 
 import pytest
+
 from aigverse import Aig, equivalence_checking
 
 

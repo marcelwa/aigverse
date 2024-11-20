@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 import pytest
+
 from aigverse import AigSignal, read_aiger_into_aig, read_ascii_aiger_into_aig
 
 dir_path = Path(os.path.realpath(__file__)).parent
