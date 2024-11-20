@@ -9,6 +9,8 @@ set_property(TARGET aigverse PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if (MSVC)
     target_compile_options(aigverse PRIVATE /utf-8)
+    add_definitions(-D_WIN32_WINNT=0x0A00)
+    add_definitions(-DUNICODE -D_UNICODE)
 endif()
 
 # Install directive for scikit-build-core
