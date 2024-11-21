@@ -41,7 +41,7 @@ requires-python = ">=3.8"
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = ["pytest>=7.2"]
+test = ["pytest>=7.2", "aigverse"]
 
 [project.urls]
 Source = "https://github.com/marcelwa/aigverse"
@@ -86,6 +86,7 @@ sdist.exclude = [
     "**/experiment",
     "**/experiments",
     "**/examples",
+    "**/include",
     "**/cmake-build-**",
     "**/docs",
     "**/plots",
@@ -97,6 +98,8 @@ sdist.exclude = [
     "**.out",
     "**.log",
     "**.xml",
+    "**CMakelist.txt",
+    "**__pycache__"
 ]
 
 [[tool.scikit-build.overrides]]
@@ -109,6 +112,14 @@ cmake.define.DISABLE_GIL = "1"
 
 [tool.setuptools_scm]
 write_to = "bindings/aigverse/_version.py"
+
+
+[tool.pytest.ini_options]
+minversion = "7.2"
+testpaths = ["test/python"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
+log_cli_level = "INFO"
+xfail_strict = true
 
 
 [tool.cibuildwheel]
