@@ -116,7 +116,7 @@ write_to = "bindings/aigverse/_version.py"
 
 [tool.pytest.ini_options]
 minversion = "7.2"
-testpaths = ["test/python"]
+testpaths = ["bindings/aigverse/test"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
 xfail_strict = true
