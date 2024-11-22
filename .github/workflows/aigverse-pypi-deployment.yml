@@ -1,4 +1,4 @@
-# this file is heavily based on https://github.com/cda-tum/qmap/blob/main/.github/workflows/deploy.yml
+# this file is heavily based on https://github.com/cda-tum/mqt-workflows/blob/main/.github/workflows/reusable-python-packaging.yml
 
 name: 🐍 • Packaging
 
