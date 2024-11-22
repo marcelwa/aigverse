@@ -88,7 +88,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: "${{matrix.runs-on}}-aigverse"
-          variant: ccache
+          windows_compile_environment: msvc
           save: true
           max-size: 10G
 
