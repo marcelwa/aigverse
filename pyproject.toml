@@ -66,7 +66,7 @@ build-dir = "build/{wheel_tag}/{build_type}"
 wheel.packages = ["bindings/aigverse"]
 
 # Only build the Python bindings target
-build.targets = ["aigverse"]
+build.targets = ["pyaigverse"]
 
 # Only install the Python package component
 install.components = ["aigverse_Python"]

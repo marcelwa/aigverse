@@ -1,7 +1,7 @@
 """Bindings for aigverse."""
 
 from ._version import version as __version__
-from .aigverse import (
+from .pyaigverse import (
     Aig,
     AigEdge,
     AigEdgeList,
