@@ -16,6 +16,7 @@ on:
       - "**/*.cmake"
       - "**/CMakeLists.txt"
       - "libs/**"
+      - "pyproject.toml"
       - ".github/workflows/aigverse-pypi-deployment.yml"
   pull_request:
     branches: ["main"]
@@ -27,6 +28,7 @@ on:
       - "**/*.cmake"
       - "**/CMakeLists.txt"
       - "libs/**"
+      - "pyproject.toml"
       - ".github/workflows/aigverse-pypi-deployment.yml"
   workflow_dispatch:
 
