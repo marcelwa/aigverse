@@ -110,6 +110,19 @@ inherit.cmake.define = "append"
 cmake.define.DISABLE_GIL = "1"
 
 
+[tool.check-sdist]
+sdist-only = ["bindings/aigverse/_version.py"]
+git-only = [
+    "docs/*",
+    "libs/*",
+    "test/*",
+    ".idea/*",
+]
+default-ignore = true
+mode = "git"
+build-backend = "auto"
+
+
 [tool.setuptools_scm]
 write_to = "bindings/aigverse/_version.py"
 

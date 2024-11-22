@@ -81,7 +81,8 @@ jobs:
       - name: Setup mold
         uses: rui314/setup-mold@v1
 
-      - uses: hynek/build-and-inspect-python-package@v2
+      - name: Inspect the package
+        uses: hynek/build-and-inspect-python-package@v2
 
   python-tests:
     name: 🐍 ${{ matrix.runs-on }}
