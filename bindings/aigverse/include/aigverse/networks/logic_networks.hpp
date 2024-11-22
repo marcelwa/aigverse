@@ -32,39 +32,76 @@ void network(pybind11::module& m, const std::string& network_name)
     /**
      * Network node.
      */
-    py::class_<mockturtle::node<Ntk>>(m, fmt::format("{}Node", network_name).c_str())
+    using Node = mockturtle::node<Ntk>;
+    py::class_<Node>(m, fmt::format("{}Node", network_name).c_str())
         .def(py::init<const uint64_t>(), "index"_a)
-        .def("__hash__", [](const mockturtle::node<Ntk>& n) { return std::hash<mockturtle::node<Ntk>>{}(n); })
-        .def("__repr__", [](const mockturtle::node<Ntk>& n) { return fmt::format("Node({})", n); })
+        .def("__hash__", [](const Node& n) { return std::hash<Node>{}(n); })
+        .def("__repr__", [](const Node& n) { return fmt::format("Node({})", n); })
 
-        .def("__eq__", [](const mockturtle::node<Ntk>& n1, const mockturtle::node<Ntk>& n2) { return n1 == n2; })
-        .def("__ne__", [](const mockturtle::node<Ntk>& n1, const mockturtle::node<Ntk>& n2) { return n1 != n2; })
-        .def("__lt__", [](const mockturtle::node<Ntk>& n1, const mockturtle::node<Ntk>& n2) { return n1 < n2; })
+        .def("__eq__",
+             [](const Node& self, const py::object& other) -> bool
+             {
+                 if (!py::isinstance<Node>(other))
+                 {
+                     return false;
+                 }
+
+                 return self == other.cast<const Node>();
+             })
+        .def("__ne__",
+             [](const Node& self, const py::object& other) -> bool
+             {
+                 if (!py::isinstance<Node>(other))
+                 {
+                     return false;
+                 }
+
+                 return self != other.cast<const Node>();
+             })
+        .def("__lt__", [](const Node& n1, const Node& n2) { return n1 < n2; })
 
         ;
 
-    py::implicitly_convertible<py::int_, mockturtle::node<Ntk>>();
+    py::implicitly_convertible<py::int_, Node>();
 
     /**
      * Network signal.
      */
-    py::class_<mockturtle::signal<Ntk>>(m, fmt::format("{}Signal", network_name).c_str())
+    using Signal = mockturtle::signal<Ntk>;
+    py::class_<Signal>(m, fmt::format("{}Signal", network_name).c_str())
         .def(py::init<const uint64_t, const bool>(), "index"_a, "complement"_a)
-        .def("get_index", [](const mockturtle::signal<Ntk>& s) { return s.index; })
-        .def("get_complement", [](const mockturtle::signal<Ntk>& s) { return s.complement; })
+        .def("get_index", [](const Signal& s) { return s.index; })
+        .def("get_complement", [](const Signal& s) { return s.complement; })
 
-        .def("__hash__", [](const mockturtle::signal<Ntk>& s) { return std::hash<mockturtle::signal<Ntk>>{}(s); })
-        .def("__repr__", [](const mockturtle::signal<Ntk>& s)
-             { return fmt::format("Signal({}{})", s.complement ? "!" : "", s.index); })
+        .def("__hash__", [](const Signal& s) { return std::hash<Signal>{}(s); })
+        .def("__repr__", [](const Signal& s) { return fmt::format("Signal({}{})", s.complement ? "!" : "", s.index); })
 
-        .def("__eq__", [](const mockturtle::signal<Ntk>& s1, const mockturtle::signal<Ntk>& s2) { return s1 == s2; })
-        .def("__ne__", [](const mockturtle::signal<Ntk>& s1, const mockturtle::signal<Ntk>& s2) { return s1 != s2; })
-        .def("__lt__", [](const mockturtle::signal<Ntk>& s1, const mockturtle::signal<Ntk>& s2) { return s1 < s2; })
+        .def("__eq__",
+             [](const Signal& self, const py::object& other) -> bool
+             {
+                 if (!py::isinstance<Signal>(other))
+                 {
+                     return false;
+                 }
 
-        .def("__invert__", [](const mockturtle::signal<Ntk>& s) { return !s; })
-        .def("__pos__", [](const mockturtle::signal<Ntk>& s) { return +s; })
-        .def("__neg__", [](const mockturtle::signal<Ntk>& s) { return -s; })
-        .def("__xor__", [](const mockturtle::signal<Ntk>& s, const bool complement) { return s ^ complement; })
+                 return self == other.cast<const Signal>();
+             })
+        .def("__ne__",
+             [](const Signal& self, const py::object& other) -> bool
+             {
+                 if (!py::isinstance<Signal>(other))
+                 {
+                     return false;
+                 }
+
+                 return self != other.cast<const Signal>();
+             })
+        .def("__lt__", [](const Signal& s1, const Signal& s2) { return s1 < s2; })
+
+        .def("__invert__", [](const Signal& s) { return !s; })
+        .def("__pos__", [](const Signal& s) { return +s; })
+        .def("__neg__", [](const Signal& s) { return -s; })
+        .def("__xor__", [](const Signal& s, const bool complement) { return s ^ complement; })
 
         ;
 
@@ -128,7 +165,7 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("nodes",
              [](const Ntk& ntk)
              {
-                 std::vector<mockturtle::node<Ntk>> nodes{};
+                 std::vector<Node> nodes{};
                  nodes.reserve(ntk.size());
                  ntk.foreach_node([&nodes](const auto& n) { nodes.push_back(n); });
                  return nodes;
@@ -136,7 +173,7 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("gates",
              [](const Ntk& ntk)
              {
-                 std::vector<mockturtle::node<Ntk>> gates{};
+                 std::vector<Node> gates{};
                  gates.reserve(ntk.num_gates());
                  ntk.foreach_gate([&gates](const auto& g) { gates.push_back(g); });
                  return gates;
@@ -144,7 +181,7 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("pis",
              [](const Ntk& ntk)
              {
-                 std::vector<mockturtle::node<Ntk>> pis{};
+                 std::vector<Node> pis{};
                  pis.reserve(ntk.num_pis());
                  ntk.foreach_pi([&pis](const auto& pi) { pis.push_back(pi); });
                  return pis;
@@ -152,7 +189,7 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("pos",
              [](const Ntk& ntk)
              {
-                 std::vector<mockturtle::signal<Ntk>> pos{};
+                 std::vector<Signal> pos{};
                  pos.reserve(ntk.num_pos());
                  ntk.foreach_po([&pos](const auto& po) { pos.push_back(po); });
                  return pos;
@@ -160,7 +197,7 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("cis",
              [](const Ntk& ntk)
              {
-                 std::vector<mockturtle::node<Ntk>> cis{};
+                 std::vector<Node> cis{};
                  cis.reserve(ntk.num_cis());
                  ntk.foreach_ci([&cis](const auto& ci) { cis.push_back(ci); });
                  return cis;
@@ -168,16 +205,16 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("cos",
              [](const Ntk& ntk)
              {
-                 std::vector<mockturtle::signal<Ntk>> cos{};
+                 std::vector<Signal> cos{};
                  cos.reserve(ntk.num_cos());
                  ntk.foreach_co([&cos](const auto& co) { cos.push_back(co); });
                  return cos;
              })
         .def(
             "fanins",
-            [](const Ntk& ntk, const mockturtle::node<Ntk>& n)
+            [](const Ntk& ntk, const Node& n)
             {
-                std::vector<mockturtle::signal<Ntk>> fanins{};
+                std::vector<Signal> fanins{};
                 fanins.reserve(ntk.fanin_size(n));
                 ntk.foreach_fanin(n, [&fanins](const auto& f) { fanins.push_back(f); });
                 return fanins;
@@ -185,9 +222,9 @@ void network(pybind11::module& m, const std::string& network_name)
             "n"_a)
 
         .def(
-            "fanin_size", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.fanin_size(n); }, "n"_a)
+            "fanin_size", [](const Ntk& ntk, const Node& n) { return ntk.fanin_size(n); }, "n"_a)
         .def(
-            "fanout_size", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.fanout_size(n); }, "n"_a)
+            "fanout_size", [](const Ntk& ntk, const Node& n) { return ntk.fanout_size(n); }, "n"_a)
 
         .def("is_constant", &Ntk::is_constant, "n"_a)
         .def("is_pi", &Ntk::is_pi, "n"_a)
@@ -196,21 +233,21 @@ void network(pybind11::module& m, const std::string& network_name)
 
         // for some reason, the is_* functions need redefinition to match with Ntk
         .def(
-            "is_and", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_and(n); }, "n"_a)
+            "is_and", [](const Ntk& ntk, const Node& n) { return ntk.is_and(n); }, "n"_a)
         .def(
-            "is_or", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_or(n); }, "n"_a)
+            "is_or", [](const Ntk& ntk, const Node& n) { return ntk.is_or(n); }, "n"_a)
         .def(
-            "is_xor", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_xor(n); }, "n"_a)
+            "is_xor", [](const Ntk& ntk, const Node& n) { return ntk.is_xor(n); }, "n"_a)
         .def(
-            "is_maj", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_maj(n); }, "n"_a)
+            "is_maj", [](const Ntk& ntk, const Node& n) { return ntk.is_maj(n); }, "n"_a)
         .def(
-            "is_ite", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_ite(n); }, "n"_a)
+            "is_ite", [](const Ntk& ntk, const Node& n) { return ntk.is_ite(n); }, "n"_a)
         .def(
-            "is_xor3", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_xor3(n); }, "n"_a)
+            "is_xor3", [](const Ntk& ntk, const Node& n) { return ntk.is_xor3(n); }, "n"_a)
         .def(
-            "is_nary_and", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_nary_and(n); }, "n"_a)
+            "is_nary_and", [](const Ntk& ntk, const Node& n) { return ntk.is_nary_and(n); }, "n"_a)
         .def(
-            "is_nary_or", [](const Ntk& ntk, const mockturtle::node<Ntk>& n) { return ntk.is_nary_or(n); }, "n"_a)
+            "is_nary_or", [](const Ntk& ntk, const Node& n) { return ntk.is_nary_or(n); }, "n"_a)
 
         .def("cleanup_dangling", [](Ntk& ntk) { ntk = mockturtle::cleanup_dangling(ntk); });
 
