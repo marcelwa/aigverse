@@ -62,8 +62,8 @@ jobs:
           version: "latest"
           enable-cache: true
 
-      #      - name: Run mypy
-      #        run: uvx --with pre-commit-uv pre-commit run -a mypy
+      - name: Run mypy
+        run: uvx --with pre-commit-uv pre-commit run -a mypy
 
       - name: Run check-sdist
         run: uvx check-sdist --inject-junk
