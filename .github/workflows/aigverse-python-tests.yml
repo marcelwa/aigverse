@@ -78,11 +78,20 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: "${{matrix.runs-on}}-aigverse"
+          save: true
+          max-size: 10G
+
       - name: Setup mold
         uses: rui314/setup-mold@v1
 
       - name: Inspect the package
         uses: hynek/build-and-inspect-python-package@v2
+        with:
+          skip-wheel: "true"
 
   python-tests:
     name: 🐍 ${{ matrix.runs-on }}
