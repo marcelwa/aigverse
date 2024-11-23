@@ -102,6 +102,12 @@ sdist.exclude = [
     "**__pycache__"
 ]
 
+[tool.scikit-build.cmake.define]
+MOCKTURTLE_EXAMPLES = "OFF"
+AIGVERSE_ENABLE_IPO = "ON"
+AIGVERSE_ENABLE_PCH = "ON"
+AIGVERSE_ENABLE_UNITY_BUILD = "ON"
+
 [[tool.scikit-build.overrides]]
 if.python-version = ">=3.13"
 if.abi-flags = "t"
