@@ -93,12 +93,14 @@ sdist.exclude = [
     "**/test",
     "**/tests",
     "**/nauty",
+    "**.cpp",
+    "**.hpp",
     "**.pdf",
     "**.ans",
     "**.out",
     "**.log",
     "**.xml",
-    "**CMakelist.txt",
+    "**CMakeList.txt",
     "**__pycache__"
 ]
 
