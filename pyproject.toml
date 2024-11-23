@@ -86,6 +86,7 @@ sdist.exclude = [
     "**/experiments",
     "**/examples",
     "**/include",
+    "**/libs",
     "**/cmake-build-**",
     "**/docs",
     "**/plots",
