@@ -83,6 +83,9 @@ jobs:
 
       - name: Set up MSVC development environment (Windows only)
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          vsversion: 2022
+          toolset: 14.34
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
