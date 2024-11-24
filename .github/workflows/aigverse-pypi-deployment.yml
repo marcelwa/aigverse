@@ -81,16 +81,15 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Set up MSVC development environment (Windows only)
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          toolset: 19.41
+      #      - name: Set up MSVC development environment (Windows only)
+      #        uses: ilammy/msvc-dev-cmd@v1
+      #        with:
+      #          toolset: 19.41
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: "${{matrix.runs-on}}-aigverse"
-          windows_compile_environment: msvc
           save: true
           max-size: 10G
 
