@@ -150,7 +150,6 @@ manylinux-x86_64-image = "manylinux_2_28"
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
 [tool.cibuildwheel.windows]
-before-build = "pip install delvewheel>=1.7.3"
 environment = { CMAKE_GENERATOR = "Ninja" }
 
 [[tool.cibuildwheel.overrides]]
