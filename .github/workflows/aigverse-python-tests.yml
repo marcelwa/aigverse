@@ -75,16 +75,16 @@ jobs:
       matrix:
         runs-on: [ubuntu-latest, macos-13, macos-14, windows-latest]
     steps:
-      - name: Clone respository
+      - name: Clone Repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Set up MSVC development environment (Windows only)
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          toolset: "17.4"
+      #      - name: Set up MSVC development environment (Windows only)
+      #        uses: ilammy/msvc-dev-cmd@v1
+      #        with:
+      #          toolset: "17.4"
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
