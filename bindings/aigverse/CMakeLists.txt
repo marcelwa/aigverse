@@ -9,7 +9,6 @@ set_property(TARGET pyaigverse PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if (MSVC)
     target_compile_options(pyaigverse PRIVATE /utf-8)
-    target_compile_definitions(pyaigverse PRIVATE _WIN32)
     add_definitions(-DUNICODE -D_UNICODE)
 endif()
 
