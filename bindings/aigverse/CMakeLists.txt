@@ -9,6 +9,7 @@ set_property(TARGET pyaigverse PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if (MSVC)
     target_compile_options(pyaigverse PRIVATE /utf-8)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_WIN32")
     add_definitions(-DUNICODE -D_UNICODE)
 endif()
 
