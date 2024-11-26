@@ -2,7 +2,7 @@
 # Project (https://github.com/lefticus/cpp_starter_project) and CMake Template
 # (https://github.com/cpp-best-practices/cmake_template)
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.21...3.29)
 
 # Only set the CMAKE_CXX_STANDARD if it is not set by someone else
 if(NOT DEFINED CMAKE_CXX_STANDARD)
@@ -15,10 +15,9 @@ endif()
 # compiling with PCH enabled
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Set the project name and version
+# Set the project name and description
 project(
   aigverse
-  VERSION 0.0.11
   DESCRIPTION
     "A Python library for working with logic networks, synthesis, and optimization."
   HOMEPAGE_URL "https://github.com/marcelwa/aigverse"

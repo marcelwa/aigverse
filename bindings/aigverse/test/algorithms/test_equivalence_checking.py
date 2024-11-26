@@ -1,62 +1,59 @@
+import pytest
+
 from aigverse import Aig, equivalence_checking
 
-import unittest
+
+def test_empty_aigs():
+    aig1 = Aig()
+    aig2 = Aig()
+
+    assert equivalence_checking(aig1, aig2)
 
 
-class TestEquivalenceChecking(unittest.TestCase):
-    def test_empty_aigs(self):
-        aig1 = Aig()
-        aig2 = Aig()
+def test_simple_aigs():
+    aig1 = Aig()
+    aig2 = Aig()
 
-        self.assertTrue(equivalence_checking(aig1, aig2))
+    a1 = aig1.create_pi()
+    b1 = aig1.create_pi()
 
-    def test_simple_aigs(self):
-        aig1 = Aig()
-        aig2 = Aig()
+    and1 = aig1.create_and(a1, b1)
 
-        a1 = aig1.create_pi()
-        b1 = aig1.create_pi()
+    aig1.create_po(and1)
+    aig1.create_po(b1)
 
-        and1 = aig1.create_and(a1, b1)
+    a2 = aig2.create_pi()
+    b2 = aig2.create_pi()
 
-        aig1.create_po(and1)
-        aig1.create_po(b1)
+    and2 = aig2.create_and(a2, b2)
 
-        a2 = aig2.create_pi()
-        b2 = aig2.create_pi()
+    aig2.create_po(and2)
+    aig2.create_po(b2)
 
-        and2 = aig2.create_and(a2, b2)
+    assert equivalence_checking(aig1, aig2)
+    assert equivalence_checking(aig1, aig1.clone())
 
-        aig2.create_po(and2)
-        aig2.create_po(b2)
+    aig2.create_po(a1)
 
-        self.assertTrue(equivalence_checking(aig1, aig2))
-        self.assertTrue(equivalence_checking(aig1, aig1.clone()))
-
-        aig2.create_po(a1)
-
-        with self.assertRaises(RuntimeError):
-            equivalence_checking(aig1, aig2)
-
-    def test_aig_and_its_negated_copy(self):
-        aig1 = Aig()
-
-        a1 = aig1.create_pi()
-        b1 = aig1.create_pi()
-        c1 = aig1.create_pi()
-
-        and1 = aig1.create_and(a1, b1)
-        and2 = aig1.create_and(~a1, c1)
-        and3 = aig1.create_and(and1, and2)
-
-        aig2 = aig1.clone()
-
-        aig1.create_po(and3)
-
-        aig2.create_po(~and3)
-
-        self.assertFalse(equivalence_checking(aig1, aig2))
+    with pytest.raises(RuntimeError):
+        equivalence_checking(aig1, aig2)
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_aig_and_its_negated_copy():
+    aig1 = Aig()
+
+    a1 = aig1.create_pi()
+    b1 = aig1.create_pi()
+    c1 = aig1.create_pi()
+
+    and1 = aig1.create_and(a1, b1)
+    and2 = aig1.create_and(~a1, c1)
+    and3 = aig1.create_and(and1, and2)
+
+    aig2 = aig1.clone()
+
+    aig1.create_po(and3)
+
+    aig2.create_po(~and3)
+
+    assert not equivalence_checking(aig1, aig2)

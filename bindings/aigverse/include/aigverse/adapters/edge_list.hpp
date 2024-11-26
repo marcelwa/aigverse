@@ -53,7 +53,7 @@ struct edge
      * @param other Edge to compare with.
      * @return True if the edges are equal, false otherwise.
      */
-    [[nodiscard]] constexpr bool operator==(const edge<Ntk>& other) const noexcept
+    [[nodiscard]] constexpr bool operator==(const edge& other) const noexcept
     {
         return source == other.source && target == other.target && weight == other.weight;
     }
@@ -63,7 +63,7 @@ struct edge
      * @param other Edge to compare with.
      * @return True if the edges are not equal, false otherwise.
      */
-    [[nodiscard]] constexpr bool operator!=(const edge<Ntk>& other) const noexcept
+    [[nodiscard]] constexpr bool operator!=(const edge& other) const noexcept
     {
         return !(*this == other);
     }
@@ -163,38 +163,58 @@ void ntk_edge_list(pybind11::module& m, const std::string& network_name)
     /**
      * Edge.
      */
-    py::class_<edge<Ntk>>(m, fmt::format("{}Edge", network_name).c_str())
+    using Edge = edge<Ntk>;
+    py::class_<Edge>(m, fmt::format("{}Edge", network_name).c_str())
         .def(py::init<>())
         .def(py::init<const mockturtle::node<Ntk>&, const mockturtle::node<Ntk>&, const int64_t>(), "source"_a,
              "target"_a, "weight"_a = 0)
-        .def_readwrite("source", &edge<Ntk>::source)
-        .def_readwrite("target", &edge<Ntk>::target)
-        .def_readwrite("weight", &edge<Ntk>::weight)
-        .def("__repr__", [](const edge<Ntk>& e) { return fmt::format("{}", e); })
-        .def("__eq__", [](const edge<Ntk>& e1, const edge<Ntk>& e2) { return e1 == e2; })
-        .def("__ne__", [](const edge<Ntk>& e1, const edge<Ntk>& e2) { return e1 != e2; })
+        .def_readwrite("source", &Edge::source)
+        .def_readwrite("target", &Edge::target)
+        .def_readwrite("weight", &Edge::weight)
+        .def("__repr__", [](const Edge& e) { return fmt::format("{}", e); })
+        .def("__eq__",
+             [](const Edge& self, const py::object& other) -> bool
+             {
+                 if (!py::isinstance<Edge>(other))
+                 {
+                     return false;
+                 }
+
+                 return self == other.cast<const Edge>();
+             })
+        .def("__ne__",
+             [](const Edge& self, const py::object& other) -> bool
+             {
+                 if (!py::isinstance<Edge>(other))
+                 {
+                     return false;
+                 }
+
+                 return self != other.cast<const Edge>();
+             })
 
         ;
 
-    py::implicitly_convertible<py::tuple, edge<Ntk>>();
+    py::implicitly_convertible<py::tuple, Edge>();
 
     /**
      * Edge list.
      */
-    py::class_<edge_list<Ntk>>(m, fmt::format("{}EdgeList", network_name).c_str())
+    using EdgeList = edge_list<Ntk>;
+    py::class_<EdgeList>(m, fmt::format("{}EdgeList", network_name).c_str())
         .def(py::init<>())
         .def(py::init<const Ntk&>(), "ntk"_a)
-        .def(py::init<const Ntk&, const std::vector<edge<Ntk>>&>(), "ntk"_a, "edges"_a)
-        .def_readwrite("ntk", &edge_list<Ntk>::ntk)
-        .def_readwrite("edges", &edge_list<Ntk>::edges)
+        .def(py::init<const Ntk&, const std::vector<Edge>&>(), "ntk"_a, "edges"_a)
+        .def_readwrite("ntk", &EdgeList::ntk)
+        .def_readwrite("edges", &EdgeList::edges)
         .def(
-            "append", [](edge_list<Ntk>& el, const edge<Ntk>& e) { el.edges.push_back(e); }, "edge"_a)
-        .def("clear", [](edge_list<Ntk>& el) { el.edges.clear(); })
+            "append", [](EdgeList& el, const Edge& e) { el.edges.push_back(e); }, "edge"_a)
+        .def("clear", [](EdgeList& el) { el.edges.clear(); })
         .def(
-            "__iter__", [](const edge_list<Ntk>& el) { return py::make_iterator(el.edges); }, py::keep_alive<0, 1>())
-        .def("__len__", [](const edge_list<Ntk>& el) { return el.edges.size(); })
+            "__iter__", [](const EdgeList& el) { return py::make_iterator(el.edges); }, py::keep_alive<0, 1>())
+        .def("__len__", [](const EdgeList& el) { return el.edges.size(); })
         .def("__getitem__",
-             [](const edge_list<Ntk>& el, const std::size_t index)
+             [](const EdgeList& el, const std::size_t index)
              {
                  if (index >= el.edges.size())
                  {
@@ -204,19 +224,20 @@ void ntk_edge_list(pybind11::module& m, const std::string& network_name)
                  return el.edges[index];
              })
         .def("__setitem__",
-             [](edge_list<Ntk>& el, const std::size_t index, const edge<Ntk>& e)
+             [](EdgeList& el, const std::size_t index, const Edge& e)
              {
                  if (index >= el.edges.size())
                  {
                      throw py::index_error();
                  }
+
                  el.edges[index] = e;
              })
-        .def("__repr__", [](const edge_list<Ntk>& el) { return fmt::format("EdgeList({})", el); })
+        .def("__repr__", [](const EdgeList& el) { return fmt::format("EdgeList({})", el); })
 
         ;
 
-    py::implicitly_convertible<py::list, edge_list<Ntk>>();
+    py::implicitly_convertible<py::list, EdgeList>();
 
     m.def("to_edge_list", &to_edge_list<Ntk>, "ntk"_a, "regular_weight"_a = 0, "inverted_weight"_a = 1);
 }
