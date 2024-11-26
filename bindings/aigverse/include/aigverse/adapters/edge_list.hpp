@@ -141,7 +141,8 @@ template <typename Ntk>
         [&ntk, regular_weight, inverted_weight, &el](const auto& n)
         {
             ntk.foreach_fanin(n,
-                              [&ntk, regular_weight, inverted_weight, &el, &n](const auto& f) {
+                              [&ntk, regular_weight, inverted_weight, &el, &n](const auto& f)
+                              {
                                   el.edges.push_back(edge<Ntk>(
                                       ntk.get_node(f), n, ntk.is_complemented(f) ? inverted_weight : regular_weight));
                               });
