@@ -283,7 +283,7 @@ def test_aig_clone_node() -> None:
     assert aig2.size() == 4
 
     # Verify the fanin nodes are not complemented
-    for fanin in aig2.fanins(f2):
+    for fanin in aig2.fanins(aig2.get_node(f2)):
         assert not aig2.is_complemented(fanin)
 
 
