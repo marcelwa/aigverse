@@ -24,11 +24,7 @@ PYTHON_ALL_VERSIONS = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 # since we use `--no-build-isolation` to install the package in editable mode
 # and get better caching performance. This only concerns dependencies that are
 # not available via wheels on PyPI (i.e., only as source distributions).
-BUILD_REQUIREMENTS = [
-    "scikit-build-core>=0.10.1",
-    "setuptools_scm>=8.1",
-    "pybind11>=2.13.5",
-]
+BUILD_REQUIREMENTS = ["scikit-build-core>=0.10.1", "setuptools_scm>=8.1"]
 
 if os.environ.get("CI", None):
     nox.options.error_on_missing_interpreters = True

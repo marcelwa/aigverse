@@ -3,14 +3,14 @@ import pytest
 from aigverse import Aig, equivalence_checking
 
 
-def test_empty_aigs():
+def test_empty_aigs() -> None:
     aig1 = Aig()
     aig2 = Aig()
 
     assert equivalence_checking(aig1, aig2)
 
 
-def test_simple_aigs():
+def test_simple_aigs() -> None:
     aig1 = Aig()
     aig2 = Aig()
 
@@ -39,7 +39,7 @@ def test_simple_aigs():
         equivalence_checking(aig1, aig2)
 
 
-def test_aig_and_its_negated_copy():
+def test_aig_and_its_negated_copy() -> None:
     aig1 = Aig()
 
     a1 = aig1.create_pi()

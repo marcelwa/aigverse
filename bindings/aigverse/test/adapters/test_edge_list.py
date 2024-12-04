@@ -3,7 +3,7 @@ import pytest
 from aigverse import Aig, AigEdge, AigEdgeList, to_edge_list
 
 
-def test_aig_edge():
+def test_aig_edge() -> None:
     null_edge = AigEdge()
 
     assert type(null_edge) is AigEdge
@@ -35,7 +35,7 @@ def test_aig_edge():
     assert (repr(edge)) == "Edge(s:1,t:2,w:3)"
 
 
-def test_aig_edge_list():
+def test_aig_edge_list() -> None:
     edge_list = AigEdgeList(Aig())
 
     assert type(edge_list) is AigEdgeList
@@ -75,7 +75,7 @@ def test_aig_edge_list():
     assert (repr(edge_list)) == "EdgeList([])"
 
 
-def test_minimal_aig_to_edge_list():
+def test_minimal_aig_to_edge_list() -> None:
     aig = Aig()
 
     x1 = aig.create_pi()  # 1
@@ -89,7 +89,7 @@ def test_minimal_aig_to_edge_list():
     assert len(edge_list) == 0  # No edges since there are no AND gates
 
 
-def test_constant_aig_to_edge_list():
+def test_constant_aig_to_edge_list() -> None:
     # AIG with all inverted inputs
     aig = Aig()
 
@@ -107,7 +107,7 @@ def test_constant_aig_to_edge_list():
     assert AigEdge(2, 3, -5) in edge_list  # ~x1 to AND gate
 
 
-def test_simple_aig_to_edge_list():
+def test_simple_aig_to_edge_list() -> None:
     aig = Aig()
 
     x1 = aig.create_pi()
@@ -135,7 +135,7 @@ def test_simple_aig_to_edge_list():
     assert AigEdge(5, 6, 0) in edge_list
 
 
-def test_constant_node_aig_to_edge_list():
+def test_constant_node_aig_to_edge_list() -> None:
     aig = Aig()
 
     x0 = aig.create_pi()  # 1
@@ -153,7 +153,7 @@ def test_constant_node_aig_to_edge_list():
     assert AigEdge(2, 3, 7) in edge_list  # x1 to AND gate
 
 
-def test_medium_aig_to_edge_list():
+def test_medium_aig_to_edge_list() -> None:
     aig = Aig()
 
     x0 = aig.create_pi()  # 1
