@@ -1,12 +1,17 @@
-from aigverse import Aig, DepthAig, TruthTable, simulate
+from aigverse import Aig, DepthAig, TruthTable, simulate, simulate_nodes
 
 
 def test_empty_aig() -> None:
     aig = Aig()
 
-    sim = simulate(aig)
+    tt = simulate(aig)
 
-    assert len(sim) == 0
+    assert len(tt) == 0
+
+    n_map = simulate_nodes(aig)
+
+    assert len(n_map) == 1
+    assert n_map[0].is_const0()
 
 
 def test_const0_aig() -> None:
@@ -16,11 +21,13 @@ def test_const0_aig() -> None:
 
     sim = simulate(aig)
 
-    const0 = TruthTable(0)
-    const0.create_from_binary_string("0")
-
     assert len(sim) == 1
-    assert sim[0] == const0
+    assert sim[0].is_const0()
+
+    n_map = simulate_nodes(aig)
+
+    assert len(n_map) == 1
+    assert n_map[0].is_const0()
 
 
 def test_const1_aig() -> None:
@@ -30,11 +37,13 @@ def test_const1_aig() -> None:
 
     sim = simulate(aig)
 
-    const1 = TruthTable(0)
-    const1.create_from_binary_string("1")
-
     assert len(sim) == 1
-    assert sim[0] == const1
+    assert sim[0].is_const1()
+
+    n_map = simulate_nodes(aig)
+
+    assert len(n_map) == 1
+    assert n_map[0].is_const0()  # node tt is still const0
 
 
 def test_and_aig() -> None:
@@ -55,6 +64,19 @@ def test_and_aig() -> None:
     assert len(sim) == 1
     assert sim[0] == conjunction
 
+    n_map = simulate_nodes(aig)
+
+    id_tt_a = TruthTable(2)
+    id_tt_a.create_from_binary_string("1010")
+    id_tt_b = TruthTable(2)
+    id_tt_b.create_from_binary_string("1100")
+
+    assert len(n_map) == 4
+    assert n_map[0].is_const0()
+    assert n_map[1] == id_tt_a
+    assert n_map[2] == id_tt_b
+    assert n_map[3] == conjunction
+
 
 def test_or_aig() -> None:
     aig = Aig()
@@ -74,6 +96,21 @@ def test_or_aig() -> None:
     assert len(sim) == 1
     assert sim[0] == disjunction
 
+    n_map = simulate_nodes(aig)
+
+    id_tt_a = TruthTable(2)
+    id_tt_a.create_nth_var(0)
+    id_tt_b = TruthTable(2)
+    id_tt_b.create_nth_var(1)
+
+    assert len(n_map) == 4
+    assert n_map[0].is_const0()
+    assert n_map[1] == id_tt_a
+    assert n_map[2] == id_tt_b
+    # we're expecting a disjunction at the PO but the last node is a negated disjunction (NAND)
+    # because the PO's inverted signal is not taken into account in the node simulation
+    assert n_map[3] == ~disjunction
+
 
 def test_maj_aig() -> None:
     aig = Aig()
@@ -89,10 +126,32 @@ def test_maj_aig() -> None:
     sim = simulate(aig)
 
     majority = TruthTable(3)
-    majority.create_from_hex_string("e8")
+    majority.create_majority()
+
+    print(f"MAJ: {majority.to_binary()}")
 
     assert len(sim) == 1
     assert sim[0] == majority
+
+    n_map = simulate_nodes(aig)
+
+    id_tt_a = TruthTable(3)
+    id_tt_a.create_from_binary_string("10101010")
+    id_tt_b = TruthTable(3)
+    id_tt_b.create_from_binary_string("11001100")
+    id_tt_c = TruthTable(3)
+    id_tt_c.create_from_binary_string("11110000")
+
+    for i in range(len(n_map)):
+        print(f"Node {i}: {n_map[i].to_binary()}")
+
+    assert len(n_map) == 8
+    assert n_map[0].is_const0()
+    assert n_map[1] == id_tt_a
+    assert n_map[2] == id_tt_b
+    assert n_map[3] == id_tt_c
+    # we're expecting a negated MAJ at the node because the PO's inverted signal is not taken into account
+    assert n_map[7] == ~majority
 
 
 def test_multi_output_aig() -> None:
