@@ -11,6 +11,7 @@
 #include "aigverse/io/read_aiger.hpp"
 #include "aigverse/io/write_aiger.hpp"
 #include "aigverse/networks/logic_networks.hpp"
+#include "aigverse/truth_tables/operations.hpp"
 #include "aigverse/truth_tables/truth_table.hpp"
 
 #include <pybind11/pybind11.h>
@@ -31,6 +32,7 @@ PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())
      * Truth tables.
      */
     aigverse::truth_tables(m);
+    aigverse::truth_table_operations(m);
 
     /**
      * Algorithms

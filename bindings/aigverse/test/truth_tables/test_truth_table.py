@@ -1,6 +1,6 @@
 import copy
 
-from aigverse import TruthTable
+from aigverse import TruthTable, cofactor0, cofactor1, ternary_majority
 
 
 def test_create() -> None:
@@ -239,6 +239,94 @@ def test_count_ones_large() -> None:
 
         # Compare with count_ones result
         assert ctr == tt.count_ones()
+
+
+def test_simple_operators() -> None:
+    a = TruthTable(2)
+    a.create_from_binary_string("1001")
+
+    b = TruthTable(2)
+    b.create_from_binary_string("1100")
+
+    a_and_b = TruthTable(2)
+    a_and_b.create_from_binary_string("1000")
+
+    a_or_b = TruthTable(2)
+    a_or_b.create_from_binary_string("1101")
+
+    a_xor_b = TruthTable(2)
+    a_xor_b.create_from_binary_string("0101")
+
+    assert a & b == a_and_b
+    assert a | b == a_or_b
+    assert a ^ b == a_xor_b
+    assert a ^ b == (a | b) & ~(a & b)
+
+
+def test_complex_operators() -> None:
+    a = TruthTable(7)
+    b = TruthTable(7)
+    c = TruthTable(7)
+    d = TruthTable(7)
+    e = TruthTable(7)
+    f = TruthTable(7)
+    g = TruthTable(7)
+
+    a.create_nth_var(0)
+    b.create_nth_var(1)
+    c.create_nth_var(2)
+    d.create_nth_var(3)
+    e.create_nth_var(4)
+    f.create_nth_var(5)
+    g.create_nth_var(6)
+
+    maj7 = TruthTable(7)
+    maj7.create_majority()
+
+    def special_func(
+        a: TruthTable, b: TruthTable, c: TruthTable, d: TruthTable, e: TruthTable, f: TruthTable
+    ) -> TruthTable:
+        abc = ternary_majority(a, b, c)
+        return ternary_majority(abc, d, ternary_majority(e, f, abc))
+
+    # Check symmetry in variables {a, b, c}
+    assert special_func(a, b, c, d, e, f) == special_func(a, c, b, d, e, f)
+    assert special_func(a, b, c, d, e, f) == special_func(b, a, c, d, e, f)
+    assert special_func(a, b, c, d, e, f) == special_func(b, c, a, d, e, f)
+    assert special_func(a, b, c, d, e, f) == special_func(c, a, b, d, e, f)
+    assert special_func(a, b, c, d, e, f) == special_func(c, b, a, d, e, f)
+
+    # Check symmetry in variables {d, e, f}
+    assert special_func(a, b, c, d, e, f) == special_func(a, b, c, d, f, e)
+    assert special_func(a, b, c, d, e, f) == special_func(a, b, c, e, d, f)
+    assert special_func(a, b, c, d, e, f) == special_func(a, b, c, e, f, d)
+    assert special_func(a, b, c, d, e, f) == special_func(a, b, c, f, d, e)
+    assert special_func(a, b, c, d, e, f) == special_func(a, b, c, f, e, d)
+
+    sf0 = special_func(a, b, c, d, e, f)
+    sf1 = special_func(d, e, f, a, b, c)
+
+    th0 = cofactor0(maj7, 6)  # threshold-4 function
+    th1 = cofactor1(maj7, 6)  # threshold-3 function
+    te = th1 & ~th0  # =3 function
+
+    assert (~th0 | (sf0 & sf1)).is_const1()
+    assert (th0 | (~sf0 | ~sf1)).is_const1()
+    assert (~th1 | (sf0 | sf1)).is_const1()
+    assert (th1 | (~sf0 & ~sf1)).is_const1()
+
+    factor1 = d ^ e ^ f
+    factor2 = a ^ b ^ c
+
+    assert sf0 == ((factor1 & th1) ^ (~factor1 & th0))
+    assert sf1 == ((factor1 & th0) ^ (~factor1 & th1))
+    assert sf0 == ((factor2 & th0) ^ (~factor2 & th1))
+    assert sf1 == ((factor2 & th1) ^ (~factor2 & th0))
+
+    assert sf0 == (th0 | (factor1 & te))
+    assert sf1 == (th0 | (factor2 & te))
+
+    assert ternary_majority(sf0, g, sf1) == maj7
 
 
 def test_print_binary() -> None:
