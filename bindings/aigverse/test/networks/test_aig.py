@@ -1,7 +1,7 @@
 from aigverse import Aig, AigSignal, DepthAig, equivalence_checking
 
 
-def test_aig_constants():
+def test_aig_constants() -> None:
     aig = Aig()
     assert aig.size() == 1
     assert aig.num_gates() == 0
@@ -37,7 +37,7 @@ def test_aig_constants():
     assert c0 == +c0
 
 
-def test_aig_primary_inputs():
+def test_aig_primary_inputs() -> None:
     aig = Aig()
 
     # Ensure the create_pi function exists in AIG
@@ -99,7 +99,7 @@ def test_aig_primary_inputs():
     assert a.get_complement() == 1
 
 
-def test_aig_primary_outputs():
+def test_aig_primary_outputs() -> None:
     aig = Aig()
 
     # Ensure the create_po function exists in AIG
@@ -132,7 +132,7 @@ def test_aig_primary_outputs():
     assert pos[2] == ~x1
 
 
-def test_aig_unary_operations():
+def test_aig_unary_operations() -> None:
     aig = Aig()
 
     # Ensure the create_buf and create_not functions exist in AIG
@@ -157,7 +157,7 @@ def test_aig_unary_operations():
     assert f2 == ~x1
 
 
-def test_aig_binary_operations():
+def test_aig_binary_operations() -> None:
     aig = Aig()
 
     # Ensure the binary operation functions exist in AIG
@@ -203,7 +203,7 @@ def test_aig_binary_operations():
     assert f5 == ~f6
 
 
-def test_aig_hash_nodes():
+def test_aig_hash_nodes() -> None:
     aig = Aig()
 
     # Create two primary inputs
@@ -222,7 +222,7 @@ def test_aig_hash_nodes():
     assert aig.get_node(f) == aig.get_node(g)
 
 
-def test_aig_clone_network():
+def test_aig_clone_network() -> None:
     # Ensure the clone method exists in AIG
     assert hasattr(Aig, "clone")
 
@@ -253,7 +253,7 @@ def test_aig_clone_network():
     assert aig_clone.num_gates() == 1
 
 
-def test_aig_clone_node():
+def test_aig_clone_node() -> None:
     # Ensure the clone_node method exists in AIG
     assert hasattr(Aig, "clone_node")
 
@@ -287,7 +287,7 @@ def test_aig_clone_node():
         assert not aig2.is_complemented(fanin)
 
 
-def test_aig_structural_properties():
+def test_aig_structural_properties() -> None:
     aig = Aig()
 
     # Ensure the structural property methods exist in AIG
@@ -329,7 +329,7 @@ def test_aig_structural_properties():
     assert aig.fanout_size(aig.get_node(f2)) == 1
 
 
-def test_aig_has_and():
+def test_aig_has_and() -> None:
     aig = Aig()
 
     # Create primary inputs
@@ -359,7 +359,7 @@ def test_aig_has_and():
     assert aig.has_and(~n7, ~n5) == n8
 
 
-def test_aig_node_signal_iteration():
+def test_aig_node_signal_iteration() -> None:
     aig = Aig()
 
     # Ensure the structural iteration methods exist in AIG
@@ -385,20 +385,20 @@ def test_aig_node_signal_iteration():
     mask = 0
     counter = 0
     for i, n in enumerate(aig.nodes()):
-        mask |= 1 << n
+        mask |= 1 << aig.node_to_index(n)
         counter += i
     assert mask == 31
     assert counter == 10
 
     mask = 0
     for n in aig.nodes():
-        mask |= 1 << n
+        mask |= 1 << aig.node_to_index(n)
     assert mask == 31
 
     mask = 0
     counter = 0
     for i, n in enumerate(aig.nodes()):
-        mask |= 1 << n
+        mask |= 1 << aig.node_to_index(n)
         counter += i
         break  # Stop after first iteration
     assert mask == 1
@@ -406,7 +406,7 @@ def test_aig_node_signal_iteration():
 
     mask = 0
     for n in aig.nodes():
-        mask |= 1 << n
+        mask |= 1 << aig.node_to_index(n)
         break  # Stop after first iteration
     assert mask == 1
 
@@ -414,20 +414,20 @@ def test_aig_node_signal_iteration():
     mask = 0
     counter = 0
     for i, n in enumerate(aig.pis()):
-        mask |= 1 << n
+        mask |= 1 << aig.node_to_index(n)
         counter += i
     assert mask == 6
     assert counter == 1
 
     mask = 0
     for n in aig.pis():
-        mask |= 1 << n
+        mask |= 1 << aig.node_to_index(n)
     assert mask == 6
 
     mask = 0
     counter = 0
     for i, n in enumerate(aig.pis()):
-        mask |= 1 << n
+        mask |= 1 << aig.node_to_index(n)
         counter += i
         break  # Stop after first iteration
     assert mask == 2
@@ -435,7 +435,7 @@ def test_aig_node_signal_iteration():
 
     mask = 0
     for n in aig.pis():
-        mask |= 1 << n
+        mask |= 1 << aig.node_to_index(n)
         break  # Stop after first iteration
     assert mask == 2
 
@@ -443,20 +443,20 @@ def test_aig_node_signal_iteration():
     mask = 0
     counter = 0
     for i, s in enumerate(aig.pos()):
-        mask |= 1 << aig.get_node(s)
+        mask |= 1 << aig.node_to_index(aig.get_node(s))
         counter += i
     assert mask == 24
     assert counter == 1
 
     mask = 0
     for s in aig.pos():
-        mask |= 1 << aig.get_node(s)
+        mask |= 1 << aig.node_to_index(aig.get_node(s))
     assert mask == 24
 
     mask = 0
     counter = 0
     for i, s in enumerate(aig.pos()):
-        mask |= 1 << aig.get_node(s)
+        mask |= 1 << aig.node_to_index(aig.get_node(s))
         counter += i
         break  # Stop after first iteration
     assert mask == 8
@@ -464,7 +464,7 @@ def test_aig_node_signal_iteration():
 
     mask = 0
     for s in aig.pos():
-        mask |= 1 << aig.get_node(s)
+        mask |= 1 << aig.node_to_index(aig.get_node(s))
         break  # Stop after first iteration
     assert mask == 8
 
@@ -472,20 +472,20 @@ def test_aig_node_signal_iteration():
     mask = 0
     counter = 0
     for i, n in enumerate(aig.gates()):
-        mask |= 1 << n
+        mask |= 1 << aig.node_to_index(n)
         counter += i
     assert mask == 24
     assert counter == 1
 
     mask = 0
     for n in aig.gates():
-        mask |= 1 << n
+        mask |= 1 << aig.node_to_index(n)
     assert mask == 24
 
     mask = 0
     counter = 0
     for i, n in enumerate(aig.gates()):
-        mask |= 1 << n
+        mask |= 1 << aig.node_to_index(n)
         counter += i
         break  # Stop after first iteration
     assert mask == 8
@@ -493,7 +493,7 @@ def test_aig_node_signal_iteration():
 
     mask = 0
     for n in aig.gates():
-        mask |= 1 << n
+        mask |= 1 << aig.node_to_index(n)
         break  # Stop after first iteration
     assert mask == 8
 
@@ -501,20 +501,20 @@ def test_aig_node_signal_iteration():
     mask = 0
     counter = 0
     for i, s in enumerate(aig.fanins(aig.get_node(f1))):
-        mask |= 1 << aig.get_node(s)
+        mask |= 1 << aig.node_to_index(aig.get_node(s))
         counter += i
     assert mask == 6
     assert counter == 1
 
     mask = 0
     for s in aig.fanins(aig.get_node(f1)):
-        mask |= 1 << aig.get_node(s)
+        mask |= 1 << aig.node_to_index(aig.get_node(s))
     assert mask == 6
 
     mask = 0
     counter = 0
     for i, s in enumerate(aig.fanins(aig.get_node(f1))):
-        mask |= 1 << aig.get_node(s)
+        mask |= 1 << aig.node_to_index(aig.get_node(s))
         counter += i
         break  # Stop after first iteration
     assert mask == 2
@@ -522,12 +522,12 @@ def test_aig_node_signal_iteration():
 
     mask = 0
     for s in aig.fanins(aig.get_node(f1)):
-        mask |= 1 << aig.get_node(s)
+        mask |= 1 << aig.node_to_index(aig.get_node(s))
         break  # Stop after first iteration
     assert mask == 2
 
 
-def test_cleanup_dangling():
+def test_cleanup_dangling() -> None:
     aig = Aig()
 
     # Create primary inputs
@@ -559,7 +559,7 @@ def test_cleanup_dangling():
     assert equivalence_checking(aig, aig_copy)
 
 
-def test_depth_aig():
+def test_depth_aig() -> None:
     aig = DepthAig()
 
     assert hasattr(aig, "num_levels")

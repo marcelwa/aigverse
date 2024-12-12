@@ -1,7 +1,7 @@
 from aigverse import Aig, aig_cut_rewriting, equivalence_checking
 
 
-def test_empty_aigs():
+def test_empty_aigs() -> None:
     aig1 = Aig()
     aig2 = aig1.clone()
 
@@ -10,7 +10,7 @@ def test_empty_aigs():
     assert equivalence_checking(aig1, aig2)
 
 
-def test_simple_aigs():
+def test_simple_aigs() -> None:
     aig1 = Aig()
     aig2 = Aig()
 
@@ -36,7 +36,7 @@ def test_simple_aigs():
     assert equivalence_checking(aig1, aig1.clone())
 
 
-def test_aig_and_its_negated_copy():
+def test_aig_and_its_negated_copy() -> None:
     aig1 = Aig()
 
     a1 = aig1.create_pi()
@@ -62,7 +62,7 @@ def test_aig_and_its_negated_copy():
     assert not equivalence_checking(aig1, aig2)
 
 
-def test_equivalent_node_merger():
+def test_equivalent_node_merger() -> None:
     # x0 * !(!x0 * !x1) == > x0
     aig1 = Aig()
     x0 = aig1.create_pi()
@@ -78,7 +78,7 @@ def test_equivalent_node_merger():
     assert equivalence_checking(aig1, aig_before)
 
 
-def test_positive_divisor_substitution():
+def test_positive_divisor_substitution() -> None:
     # x1 * ( x0 * x1 ) ==> x0 * x1
     aig2 = Aig()
     x0 = aig2.create_pi()
@@ -94,7 +94,7 @@ def test_positive_divisor_substitution():
     assert equivalence_checking(aig2, aig_before)
 
 
-def test_negative_divisor_substitution():
+def test_negative_divisor_substitution() -> None:
     # !x0 * !(!x0 * !x1) == > !x0 * x1
     aig = Aig()
     x0 = aig.create_pi()
@@ -110,7 +110,7 @@ def test_negative_divisor_substitution():
     assert equivalence_checking(aig, aig_before)
 
 
-def test_parameters():
+def test_parameters() -> None:
     aig = Aig()
 
     a = aig.create_pi()

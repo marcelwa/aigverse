@@ -3,7 +3,7 @@ import copy
 from aigverse import TruthTable
 
 
-def test_create():
+def test_create() -> None:
     tt_d = TruthTable(5)
     assert tt_d.num_vars() == 5
     assert tt_d.num_bits() == 32
@@ -12,7 +12,7 @@ def test_create():
     assert tt_d.is_const0()
 
 
-def test_shallow_copy():
+def test_shallow_copy() -> None:
     # Create an original TruthTable and modify it
     tt_original = TruthTable(5)
     tt_original.create_nth_var(0)  # Set to the projection of the 0th variable
@@ -29,7 +29,7 @@ def test_shallow_copy():
     assert tt_original.to_binary() != tt_shallow.to_binary()
 
 
-def test_deep_copy():
+def test_deep_copy() -> None:
     # Create an original TruthTable and modify it
     tt_original = TruthTable(5)
     tt_original.create_nth_var(1)  # Set to the projection of the 1st variable
@@ -46,7 +46,7 @@ def test_deep_copy():
     assert tt_original.to_binary() != tt_deep.to_binary()
 
 
-def test_assignment_operator():
+def test_assignment_operator() -> None:
     # Create two distinct TruthTables
     tt_original = TruthTable(2)
     tt_copy = TruthTable(2)
@@ -63,7 +63,7 @@ def test_assignment_operator():
     assert tt_copy.to_binary() != tt_original.to_binary()
 
 
-def test_equality_operator():
+def test_equality_operator() -> None:
     # Create two identical TruthTables
     tt1 = TruthTable(2)
     tt2 = TruthTable(2)
@@ -78,7 +78,7 @@ def test_equality_operator():
     assert tt1 != tt2
 
 
-def test_inequality_operator():
+def test_inequality_operator() -> None:
     # Create two different TruthTables
     tt1 = TruthTable(2)
     tt2 = TruthTable(2)
@@ -93,7 +93,7 @@ def test_inequality_operator():
     assert tt1 == tt2
 
 
-def test_less_than_operator():
+def test_less_than_operator() -> None:
     # Create two TruthTables with different binary representations
     tt1 = TruthTable(2)
     tt2 = TruthTable(2)
@@ -113,7 +113,7 @@ def test_less_than_operator():
     assert not tt1 < tt2
 
 
-def test_create_nth_var5():
+def test_create_nth_var5() -> None:
     tt_d = TruthTable(5)
     expected_patterns = [
         "10101010101010101010101010101010",  # Variable 0 projection
@@ -128,14 +128,14 @@ def test_create_nth_var5():
         assert tt_d.to_binary() == expected_patterns[i]
 
 
-def test_create_from_binary_string():
+def test_create_from_binary_string() -> None:
     tt_d_str = TruthTable(3)
     tt_d_str.create_from_binary_string("11101000")
 
     assert tt_d_str.to_binary() == "11101000"
 
 
-def test_create_from_hex_string():
+def test_create_from_hex_string() -> None:
     hex_str = "FFFFFFFEFFFEFEE8FFFEFEE8FEE8E880FFFEFEE8FEE8E880FEE8E880E8808000FFFEFEE8FEE8E880FEE8E880E8808000FEE8E880E8808000E880800080000000"
     tt_d_str = TruthTable(9)
 
@@ -147,7 +147,7 @@ def test_create_from_hex_string():
     )
 
 
-def test_repr():
+def test_repr() -> None:
     assert repr(TruthTable(0)) == "TruthTable <vars=0>"
     assert repr(TruthTable(1)) == "TruthTable <vars=1>"
     assert repr(TruthTable(2)) == "TruthTable <vars=2>"
@@ -156,7 +156,7 @@ def test_repr():
     assert repr(TruthTable(5)) == "TruthTable <vars=5>"
 
 
-def test_create_constants():
+def test_create_constants() -> None:
     tt_s = TruthTable(0)
     assert tt_s.num_vars() == 0
     assert tt_s.num_bits() == 1
@@ -172,7 +172,7 @@ def test_create_constants():
     assert not tt_s.is_const0()
 
 
-def test_create_one_variable_functions():
+def test_create_one_variable_functions() -> None:
     tt_s = TruthTable(1)
     assert tt_s.num_vars() == 1
     assert tt_s.num_bits() == 2
@@ -183,27 +183,25 @@ def test_create_one_variable_functions():
         assert tt_s.to_binary() == expected_bin
 
 
-def test_create_random():
+def test_create_random() -> None:
     tt_d5 = TruthTable(5)
     tt_d5.create_random()
-    print("Random TruthTable for 5 variables:", tt_d5.to_binary())
 
     tt_d7 = TruthTable(7)
     tt_d7.create_random()
-    print("Random TruthTable for 7 variables:", tt_d7.to_binary())
 
     # A dummy assertion to enable output during testing
     assert True
 
 
-def test_all_initially_zero():
+def test_all_initially_zero() -> None:
     tt_s = TruthTable(5)
 
     for i in range(tt_s.num_bits()):
         assert tt_s.get_bit(i) == 0
 
 
-def test_set_get_clear():
+def test_set_get_clear() -> None:
     tt_s = TruthTable(5)
 
     for i in range(tt_s.num_bits()):
@@ -217,7 +215,7 @@ def test_set_get_clear():
         assert tt_s.get_bit(i) == 0
 
 
-def test_count_ones_small():
+def test_count_ones_small() -> None:
     tt = TruthTable(5)
 
     for _ in range(100):
@@ -230,7 +228,7 @@ def test_count_ones_small():
         assert ctr == tt.count_ones()
 
 
-def test_count_ones_large():
+def test_count_ones_large() -> None:
     tt = TruthTable(9)
 
     for _ in range(100):
@@ -243,7 +241,7 @@ def test_count_ones_large():
         assert ctr == tt.count_ones()
 
 
-def test_print_binary():
+def test_print_binary() -> None:
     # Test binary conversion from hex input
     tt = TruthTable(0)
     tt.create_from_hex_string("0")
@@ -277,7 +275,7 @@ def test_print_binary():
     assert tt.to_binary() == expected_binary
 
 
-def test_print_hex():
+def test_print_hex() -> None:
     # Test hex conversion from hex input
     tt = TruthTable(0)
     tt.create_from_hex_string("0")
@@ -307,7 +305,7 @@ def test_print_hex():
     assert tt.to_hex() == long_hex.lower()
 
 
-def test_hash():
+def test_hash() -> None:
     counts = {}
 
     for _ in range(10):

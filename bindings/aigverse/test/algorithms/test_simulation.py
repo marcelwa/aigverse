@@ -1,7 +1,7 @@
 from aigverse import Aig, DepthAig, TruthTable, simulate
 
 
-def test_empty_aig():
+def test_empty_aig() -> None:
     aig = Aig()
 
     sim = simulate(aig)
@@ -9,7 +9,7 @@ def test_empty_aig():
     assert len(sim) == 0
 
 
-def test_const0_aig():
+def test_const0_aig() -> None:
     aig = Aig()
 
     aig.create_po(aig.make_signal(0))
@@ -23,7 +23,7 @@ def test_const0_aig():
     assert sim[0] == const0
 
 
-def test_const1_aig():
+def test_const1_aig() -> None:
     aig = Aig()
 
     aig.create_po(~aig.make_signal(0))
@@ -37,7 +37,7 @@ def test_const1_aig():
     assert sim[0] == const1
 
 
-def test_and_aig():
+def test_and_aig() -> None:
     aig = Aig()
 
     a = aig.create_pi()
@@ -56,7 +56,7 @@ def test_and_aig():
     assert sim[0] == conjunction
 
 
-def test_or_aig():
+def test_or_aig() -> None:
     aig = Aig()
 
     a = aig.create_pi()
@@ -75,7 +75,7 @@ def test_or_aig():
     assert sim[0] == disjunction
 
 
-def test_maj_aig():
+def test_maj_aig() -> None:
     aig = Aig()
 
     a = aig.create_pi()
@@ -95,7 +95,7 @@ def test_maj_aig():
     assert sim[0] == majority
 
 
-def test_multi_output_aig():
+def test_multi_output_aig() -> None:
     # also test DepthAig
     for ntk in [Aig, DepthAig]:
         aig = ntk()

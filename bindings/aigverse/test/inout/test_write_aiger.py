@@ -6,7 +6,7 @@ from aigverse import Aig, read_aiger_into_aig, write_aiger
 dir_path = Path(os.path.realpath(__file__)).parent
 
 
-def test_write_aiger():
+def test_write_aiger() -> None:
     aig = Aig()
     x1 = aig.create_pi()
     x2 = aig.create_pi()

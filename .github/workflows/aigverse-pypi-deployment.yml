@@ -130,7 +130,7 @@ jobs:
           merge-multiple: true
 
       - name: Generate artifact attestation for sdist and wheel(s)
-        uses: actions/attest-build-provenance@v1.4.4
+        uses: actions/attest-build-provenance@v2.0.0
         with:
           subject-path: "dist/*"
 
