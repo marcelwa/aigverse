@@ -226,7 +226,7 @@ print(tt.is_const0())
 #### Symbolic Simulation of AIGs
 
 ```python
-from aigverse import simulate
+from aigverse import simulate, simulate_nodes
 
 # Obtain the truth table of each AIG output
 tts = simulate(aig)
@@ -234,6 +234,13 @@ tts = simulate(aig)
 # Print the truth tables
 for i, tt in enumerate(tts):
     print(f"PO{i}: {tt.to_binary()}")
+
+# Obtain the truth tables of each node in the AIG
+n_to_tt = simulate_nodes(aig)
+
+# Print the truth tables of each node
+for node, tt in n_to_tt.items():
+    print(f"Node {node}: {tt.to_binary()}")
 ```
 
 #### Exporting as Lists of Lists
