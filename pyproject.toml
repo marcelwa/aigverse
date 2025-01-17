@@ -158,6 +158,7 @@ select = "*-macosx_arm64"
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
 [tool.uv]
+required-version = ">=0.5.20"
 reinstall-package = ["aigverse"]
 
 
@@ -165,7 +166,6 @@ reinstall-package = ["aigverse"]
 [tool.mypy]
 files = ["bindings/aigverse/", "noxfile.py"]
 mypy_path = ["$MYPY_CONFIG_FILE_DIR/bindings"]
-python_version = "3.8"
 warn_unused_configs = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 strict = true
