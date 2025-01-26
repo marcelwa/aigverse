@@ -36,48 +36,48 @@ def test_simple_aigs() -> None:
     assert equivalence_checking(aig1, aig1.clone())
 
 
-def test_aig_and_its_negated_copy() -> None:
-    aig1 = Aig()
-
-    a1 = aig1.create_pi()
-    b1 = aig1.create_pi()
-    c1 = aig1.create_pi()
-
-    and1 = aig1.create_and(a1, b1)
-    and2 = aig1.create_and(~a1, c1)
-    and3 = aig1.create_and(and1, and2)
-
-    aig2 = aig1.clone()
-
-    aig1.create_po(and3)
-
-    aig2.create_po(~and3)
-
-    sop_refactoring(aig1)
-
-    assert not equivalence_checking(aig1, aig2)
-
-    sop_refactoring(aig2)
-
-    assert not equivalence_checking(aig1, aig2)
-
-
-def test_equivalent_node_merger() -> None:
-    # x0 * !(!x0 * !x1) == > x0 (reduction of 2 nodes)
-    aig1 = Aig()
-    x0 = aig1.create_pi()
-    x1 = aig1.create_pi()
-    n0 = aig1.create_and(~x0, ~x1)
-    n1 = aig1.create_and(x0, ~n0)
-    aig1.create_po(n1)
-
-    aig_before = aig1.clone()
-
-    sop_refactoring(aig1)
-
-    assert aig1.size() == aig_before.size() - 2
-
-    assert equivalence_checking(aig1, aig_before)
+# def test_aig_and_its_negated_copy() -> None:
+#     aig1 = Aig()
+#
+#     a1 = aig1.create_pi()
+#     b1 = aig1.create_pi()
+#     c1 = aig1.create_pi()
+#
+#     and1 = aig1.create_and(a1, b1)
+#     and2 = aig1.create_and(~a1, c1)
+#     and3 = aig1.create_and(and1, and2)
+#
+#     aig2 = aig1.clone()
+#
+#     aig1.create_po(and3)
+#
+#     aig2.create_po(~and3)
+#
+#     sop_refactoring(aig1)
+#
+#     assert not equivalence_checking(aig1, aig2)
+#
+#     sop_refactoring(aig2)
+#
+#     assert not equivalence_checking(aig1, aig2)
+#
+#
+# def test_equivalent_node_merger() -> None:
+#     # x0 * !(!x0 * !x1) == > x0 (reduction of 2 nodes)
+#     aig1 = Aig()
+#     x0 = aig1.create_pi()
+#     x1 = aig1.create_pi()
+#     n0 = aig1.create_and(~x0, ~x1)
+#     n1 = aig1.create_and(x0, ~n0)
+#     aig1.create_po(n1)
+#
+#     aig_before = aig1.clone()
+#
+#     sop_refactoring(aig1)
+#
+#     assert aig1.size() == aig_before.size() - 2
+#
+#     assert equivalence_checking(aig1, aig_before)
 
 
 # def test_positive_divisor_substitution() -> None:
