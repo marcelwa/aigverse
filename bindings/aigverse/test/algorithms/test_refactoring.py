@@ -70,13 +70,23 @@ def test_equivalent_node_merger() -> None:
     n1 = aig1.create_and(x0, ~n0)
     aig1.create_po(n1)
 
+    print("created AIG")
+
     aig_before = aig1.clone()
+
+    print("cloned AIG")
 
     sop_refactoring(aig1)
 
+    print("refactored AIG")
+
     assert aig1.size() == aig_before.size() - 2
 
+    print("asserted size")
+
     assert equivalence_checking(aig1, aig_before)
+
+    print("asserted equivalence")
 
 
 # def test_positive_divisor_substitution() -> None:
