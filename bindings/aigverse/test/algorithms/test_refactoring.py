@@ -36,31 +36,32 @@ def test_simple_aigs() -> None:
     assert equivalence_checking(aig1, aig1.clone())
 
 
-# def test_aig_and_its_negated_copy() -> None:
-#     aig1 = Aig()
-#
-#     a1 = aig1.create_pi()
-#     b1 = aig1.create_pi()
-#     c1 = aig1.create_pi()
-#
-#     and1 = aig1.create_and(a1, b1)
-#     and2 = aig1.create_and(~a1, c1)
-#     and3 = aig1.create_and(and1, and2)
-#
-#     aig2 = aig1.clone()
-#
-#     aig1.create_po(and3)
-#
-#     aig2.create_po(~and3)
-#
-#     sop_refactoring(aig1)
-#
-#     assert not equivalence_checking(aig1, aig2)
-#
-#     sop_refactoring(aig2)
-#
-#     assert not equivalence_checking(aig1, aig2)
-#
+def test_aig_and_its_negated_copy() -> None:
+    aig1 = Aig()
+
+    a1 = aig1.create_pi()
+    b1 = aig1.create_pi()
+    c1 = aig1.create_pi()
+
+    and1 = aig1.create_and(a1, b1)
+    and2 = aig1.create_and(~a1, c1)
+    and3 = aig1.create_and(and1, and2)
+
+    aig2 = aig1.clone()
+
+    aig1.create_po(and3)
+
+    aig2.create_po(~and3)
+
+    sop_refactoring(aig1)
+
+    assert not equivalence_checking(aig1, aig2)
+
+    sop_refactoring(aig2)
+
+    assert not equivalence_checking(aig1, aig2)
+
+
 #
 # def test_equivalent_node_merger() -> None:
 #     # x0 * !(!x0 * !x1) == > x0 (reduction of 2 nodes)
