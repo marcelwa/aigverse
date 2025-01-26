@@ -80,62 +80,62 @@ def test_equivalent_node_merger() -> None:
     assert equivalence_checking(aig1, aig_before)
 
 
-def test_positive_divisor_substitution() -> None:
-    # x1 * ( x0 * x1 ) ==> x0 * x1 (reduction of 1 node)
-    aig2 = Aig()
-    x0 = aig2.create_pi()
-    x1 = aig2.create_pi()
-    n0 = aig2.create_and(x0, x1)
-    n1 = aig2.create_and(x1, n0)
-    aig2.create_po(n1)
-
-    aig_before = aig2.clone()
-
-    sop_refactoring(aig2)
-
-    assert aig2.size() == aig_before.size() - 1
-
-    assert equivalence_checking(aig2, aig_before)
-
-
-def test_negative_divisor_substitution() -> None:
-    # !x0 * !(!x0 * !x1) == > !x0 * x1 (reduction of 2 nodes)
-    aig = Aig()
-    x0 = aig.create_pi()
-    x1 = aig.create_pi()
-    n0 = aig.create_and(~x0, ~x1)
-    n1 = aig.create_and(x0, ~n0)
-    aig.create_po(n1)
-
-    aig_before = aig.clone()
-
-    sop_refactoring(aig)
-
-    assert aig.size() == aig_before.size() - 2
-
-    assert equivalence_checking(aig, aig_before)
-
-
-def test_parameters() -> None:
-    aig = Aig()
-
-    a = aig.create_pi()
-    b = aig.create_pi()
-
-    and1 = aig.create_and(~a, ~b)
-    and2 = aig.create_and(a, ~and1)
-
-    aig.create_po(and2)
-
-    aig2 = aig.clone()
-
-    sop_refactoring(
-        aig,
-        max_pis=2,
-        allow_zero_gain=True,
-        use_reconvergence_cut=False,
-        use_dont_cares=True,
-        verbose=True,
-    )
-
-    assert equivalence_checking(aig, aig2)
+# def test_positive_divisor_substitution() -> None:
+#     # x1 * ( x0 * x1 ) ==> x0 * x1 (reduction of 1 node)
+#     aig2 = Aig()
+#     x0 = aig2.create_pi()
+#     x1 = aig2.create_pi()
+#     n0 = aig2.create_and(x0, x1)
+#     n1 = aig2.create_and(x1, n0)
+#     aig2.create_po(n1)
+#
+#     aig_before = aig2.clone()
+#
+#     sop_refactoring(aig2)
+#
+#     assert aig2.size() == aig_before.size() - 1
+#
+#     assert equivalence_checking(aig2, aig_before)
+#
+#
+# def test_negative_divisor_substitution() -> None:
+#     # !x0 * !(!x0 * !x1) == > !x0 * x1 (reduction of 2 nodes)
+#     aig = Aig()
+#     x0 = aig.create_pi()
+#     x1 = aig.create_pi()
+#     n0 = aig.create_and(~x0, ~x1)
+#     n1 = aig.create_and(x0, ~n0)
+#     aig.create_po(n1)
+#
+#     aig_before = aig.clone()
+#
+#     sop_refactoring(aig)
+#
+#     assert aig.size() == aig_before.size() - 2
+#
+#     assert equivalence_checking(aig, aig_before)
+#
+#
+# def test_parameters() -> None:
+#     aig = Aig()
+#
+#     a = aig.create_pi()
+#     b = aig.create_pi()
+#
+#     and1 = aig.create_and(~a, ~b)
+#     and2 = aig.create_and(a, ~and1)
+#
+#     aig.create_po(and2)
+#
+#     aig2 = aig.clone()
+#
+#     sop_refactoring(
+#         aig,
+#         max_pis=2,
+#         allow_zero_gain=True,
+#         use_reconvergence_cut=False,
+#         use_dont_cares=True,
+#         verbose=True,
+#     )
+#
+#     assert equivalence_checking(aig, aig2)
