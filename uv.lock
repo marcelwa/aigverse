@@ -3,7 +3,6 @@ requires-python = ">=3.8"
 
 [[package]]
 name = "aigverse"
-version = "0.0.12.dev14+g3ceb815"
 source = { editable = "." }
 
 [package.optional-dependencies]
@@ -12,7 +11,10 @@ test = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pytest", marker = "extra == 'test'", specifier = ">=7.2" }]
+requires-dist = [
+    { name = "aigverse", marker = "extra == 'test'" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=7.2" },
+]
 
 [[package]]
 name = "colorama"

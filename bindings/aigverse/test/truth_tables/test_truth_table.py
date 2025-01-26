@@ -284,7 +284,12 @@ def test_complex_operators() -> None:
     maj7.create_majority()
 
     def special_func(
-        a: TruthTable, b: TruthTable, c: TruthTable, d: TruthTable, e: TruthTable, f: TruthTable
+        a: TruthTable,
+        b: TruthTable,
+        c: TruthTable,
+        d: TruthTable,
+        e: TruthTable,
+        f: TruthTable,
     ) -> TruthTable:
         abc = ternary_majority(a, b, c)
         return ternary_majority(abc, d, ternary_majority(e, f, abc))
