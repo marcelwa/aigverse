@@ -42,7 +42,11 @@ void refactoring(pybind11::module& m)
 
             mockturtle::refactoring(ntk, sop_resyn_engine, params);
 
+            std::cout << "performed refactoring" << std::endl;
+
             ntk = mockturtle::cleanup_dangling(ntk);
+
+            std::cout << "performed cleaning up dangling nodes" << std::endl;
         },
         "ntk"_a, "max_pis"_a = 6, "allow_zero_gain"_a = false, "use_reconvergence_cut"_a = false,
         "use_dont_cares"_a = false, "verbose"_a = false)
