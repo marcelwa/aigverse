@@ -38,7 +38,11 @@ void refactoring(pybind11::module& m)
             params.use_dont_cares        = use_dont_cares;
             params.verbose               = verbose;
 
+            std::cout << "set parameters" << std::endl;
+
             mockturtle::sop_factoring<Ntk> sop_resyn_engine{};
+
+            std::cout << "created SOP refactoring engine" << std::endl;
 
             mockturtle::refactoring(ntk, sop_resyn_engine, params);
 
