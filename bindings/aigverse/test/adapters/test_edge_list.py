@@ -78,15 +78,29 @@ def test_aig_edge_list() -> None:
 def test_minimal_aig_to_edge_list() -> None:
     aig = Aig()
 
-    x1 = aig.create_pi()  # 1
-    x2 = aig.create_pi()  # 2
-    aig.create_po(x1)
-    aig.create_po(~x2)
+    aig.create_pi()  # 1
+    aig.create_pi()  # 2
 
     edge_list = to_edge_list(aig)
 
     assert type(edge_list) is AigEdgeList
-    assert len(edge_list) == 0  # No edges since there are no AND gates
+    assert len(edge_list) == 0  # No edges since there are no AND gates or POs
+
+
+def test_no_and_aig_to_edge_list() -> None:
+    aig = Aig()
+
+    x1 = aig.create_pi()  # 1
+    x2 = aig.create_pi()  # 2
+    aig.create_po(x1)  # 3
+    aig.create_po(~x2)  # 4
+
+    edge_list = to_edge_list(aig)
+
+    assert type(edge_list) is AigEdgeList
+    assert len(edge_list) == 2
+    assert AigEdge(1, 3, 0) in edge_list  # x1 to PO
+    assert AigEdge(2, 4, 1) in edge_list  # ~x2 to PO
 
 
 def test_constant_aig_to_edge_list() -> None:
@@ -96,36 +110,37 @@ def test_constant_aig_to_edge_list() -> None:
     x0 = aig.create_pi()  # 1
     x1 = aig.create_pi()  # 2
     n0 = aig.create_and(~x0, ~x1)  # 3
-    aig.create_po(n0)
+    aig.create_po(n0)  # 4
 
     # custom weights
     edge_list = to_edge_list(aig, regular_weight=5, inverted_weight=-5)
 
     assert type(edge_list) is AigEdgeList
-    assert len(edge_list) == 2
+    assert len(edge_list) == 3
     assert AigEdge(1, 3, -5) in edge_list  # ~x0 to AND gate
     assert AigEdge(2, 3, -5) in edge_list  # ~x1 to AND gate
+    assert AigEdge(3, 4, 5) in edge_list  # AND gate to PO
 
 
 def test_simple_aig_to_edge_list() -> None:
     aig = Aig()
 
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    x3 = aig.create_pi()
+    x1 = aig.create_pi()  # 1
+    x2 = aig.create_pi()  # 2
+    x3 = aig.create_pi()  # 3
 
-    y1 = aig.create_and(x1, ~x2)
-    y2 = aig.create_and(x2, x3)
-    y3 = aig.create_and(~y1, y2)
+    y1 = aig.create_and(x1, ~x2)  # 4
+    y2 = aig.create_and(x2, x3)  # 5
+    y3 = aig.create_and(~y1, y2)  # 6
 
-    aig.create_po(y3)
+    aig.create_po(y3)  # 7
 
     # default weights
     edge_list = to_edge_list(aig)
 
     assert type(edge_list) is AigEdgeList
 
-    assert len(edge_list) == 6
+    assert len(edge_list) == 7
 
     assert AigEdge(1, 4, 0) in edge_list
     assert AigEdge(2, 5, 0) in edge_list
@@ -133,6 +148,7 @@ def test_simple_aig_to_edge_list() -> None:
     assert AigEdge(3, 5, 0) in edge_list
     assert AigEdge(4, 6, 1) in edge_list
     assert AigEdge(5, 6, 0) in edge_list
+    assert AigEdge(6, 7, 0) in edge_list
 
 
 def test_constant_node_aig_to_edge_list() -> None:
@@ -141,16 +157,18 @@ def test_constant_node_aig_to_edge_list() -> None:
     x0 = aig.create_pi()  # 1
     x1 = aig.create_pi()  # 2
     n0 = aig.create_and(x0, x1)  # 3
-    aig.create_po(x0)  # Direct PO from PI
-    aig.create_po(n0)
+    aig.create_po(x0)  # 4
+    aig.create_po(n0)  # 5
 
     # custom weights
     edge_list = to_edge_list(aig, regular_weight=7, inverted_weight=-7)
 
     assert type(edge_list) is AigEdgeList
-    assert len(edge_list) == 2
+    assert len(edge_list) == 4
     assert AigEdge(1, 3, 7) in edge_list  # x0 to AND gate
     assert AigEdge(2, 3, 7) in edge_list  # x1 to AND gate
+    assert AigEdge(1, 4, 7) in edge_list  # AND gate to PO
+    assert AigEdge(3, 5, 7) in edge_list  # AND gate to PO
 
 
 def test_medium_aig_to_edge_list() -> None:
@@ -168,15 +186,15 @@ def test_medium_aig_to_edge_list() -> None:
     n5 = aig.create_and(x1, ~n2)  # 10
     n6 = aig.create_and(~n4, ~n5)  # 11
     n7 = aig.create_and(n1, n3)  # 12
-    aig.create_po(n6)
-    aig.create_po(n7)
+    aig.create_po(n6)  # 13
+    aig.create_po(n7)  # 14
 
     # custom weights
     edge_list = to_edge_list(aig, regular_weight=10, inverted_weight=-10)
 
     assert type(edge_list) is AigEdgeList
 
-    assert len(edge_list) == 16
+    assert len(edge_list) == 18
 
     assert AigEdge(3, 5, -10) in edge_list
     assert AigEdge(4, 5, 10) in edge_list
@@ -194,3 +212,5 @@ def test_medium_aig_to_edge_list() -> None:
     assert AigEdge(10, 11, -10) in edge_list
     assert AigEdge(6, 12, 10) in edge_list
     assert AigEdge(8, 12, 10) in edge_list
+    assert AigEdge(11, 13, 10) in edge_list
+    assert AigEdge(12, 14, 10) in edge_list
