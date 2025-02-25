@@ -73,7 +73,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest, macos-13, macos-14, windows-latest]
+        runs-on:
+          [ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-15, windows-latest]
     steps:
       - name: Clone Repository
         uses: actions/checkout@v4
@@ -98,8 +99,5 @@ jobs:
           version: "latest"
           enable-cache: true
 
-      - name: Setup nox
-        uses: wntrblm/nox@2024.10.09
-
       - name: 🐍 Test
-        run: nox -s tests --verbose
+        run: uvx nox -s tests --verbose
