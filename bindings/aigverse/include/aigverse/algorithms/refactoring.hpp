@@ -42,7 +42,11 @@ void refactoring(pybind11::module& m)
 
             mockturtle::refactoring(ntk, sop_resyn_engine, params);
 
-            ntk = mockturtle::cleanup_dangling(ntk);
+            // create a temporary network with dangling nodes cleaned up
+            auto cleaned = mockturtle::cleanup_dangling(ntk);
+
+            // copy the cleaned network back to the original network
+            ntk = std::move(cleaned);
         },
         "ntk"_a, "max_pis"_a = 6, "allow_zero_gain"_a = false, "use_reconvergence_cut"_a = false,
         "use_dont_cares"_a = false, "verbose"_a = false)
