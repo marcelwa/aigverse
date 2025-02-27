@@ -102,8 +102,8 @@ sdist.exclude = [
 [tool.scikit-build.cmake.define]
 MOCKTURTLE_EXAMPLES = "OFF"
 AIGVERSE_ENABLE_IPO = "OFF"
-AIGVERSE_ENABLE_PCH = "OFF"
-AIGVERSE_ENABLE_UNITY_BUILD = "OFF"
+AIGVERSE_ENABLE_PCH = "ON"
+AIGVERSE_ENABLE_UNITY_BUILD = "ON"
 
 [[tool.scikit-build.overrides]]
 if.platform-system = "linux"
