@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Clone respository
+      - name: Clone repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -57,9 +57,6 @@ jobs:
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@v5
-        with:
-          version: "latest"
-          enable-cache: true
 
       - name: Run mypy
         run: uvx --with pre-commit-uv pre-commit run -a mypy
@@ -94,12 +91,6 @@ jobs:
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@v5
-        with:
-          version: "latest"
-          enable-cache: true
-
-      - name: Setup nox
-        uses: wntrblm/nox@2025.02.09
 
       - name: 🐍 Test
-        run: nox -s tests --verbose
+        run: uvx nox -s tests --verbose
