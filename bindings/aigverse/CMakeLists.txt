@@ -1,4 +1,6 @@
 pybind11_add_module(pyaigverse
+        # Prefer thin LTO if available
+        THIN_LTO
         aigverse.cpp)
 target_link_libraries(pyaigverse PRIVATE mockturtle)
 target_include_directories(pyaigverse

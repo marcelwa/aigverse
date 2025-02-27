@@ -101,7 +101,7 @@ sdist.exclude = [
 
 [tool.scikit-build.cmake.define]
 MOCKTURTLE_EXAMPLES = "OFF"
-AIGVERSE_ENABLE_IPO = "OFF"
+AIGVERSE_ENABLE_IPO = "ON"
 AIGVERSE_ENABLE_PCH = "ON"
 AIGVERSE_ENABLE_UNITY_BUILD = "ON"
 
