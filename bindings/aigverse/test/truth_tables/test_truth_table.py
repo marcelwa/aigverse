@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 
 from aigverse import TruthTable, cofactor0, cofactor1, ternary_majority
@@ -136,14 +138,17 @@ def test_create_from_binary_string() -> None:
 
 
 def test_create_from_hex_string() -> None:
-    hex_str = "FFFFFFFEFFFEFEE8FFFEFEE8FEE8E880FFFEFEE8FEE8E880FEE8E880E8808000FFFEFEE8FEE8E880FEE8E880E8808000FEE8E880E8808000E880800080000000"
+    hex_str = (
+        "FFFFFFFEFFFEFEE8FFFEFEE8FEE8E880FFFEFEE8FEE8E880FEE8E880E8808000"
+        "FFFEFEE8FEE8E880FEE8E880E8808000FEE8E880E8808000E880800080000000"
+    )
     tt_d_str = TruthTable(9)
 
     tt_d_str.create_from_hex_string(hex_str)
 
-    assert (
-        tt_d_str.to_hex()
-        == "fffffffefffefee8fffefee8fee8e880fffefee8fee8e880fee8e880e8808000fffefee8fee8e880fee8e880e8808000fee8e880e8808000e880800080000000"
+    assert tt_d_str.to_hex() == (
+        "fffffffefffefee8fffefee8fee8e880fffefee8fee8e880fee8e880e8808000"
+        "fffefee8fee8e880fee8e880e8808000fee8e880e8808000e880800080000000"
     )
 
 
@@ -284,7 +289,12 @@ def test_complex_operators() -> None:
     maj7.create_majority()
 
     def special_func(
-        a: TruthTable, b: TruthTable, c: TruthTable, d: TruthTable, e: TruthTable, f: TruthTable
+        a: TruthTable,
+        b: TruthTable,
+        c: TruthTable,
+        d: TruthTable,
+        e: TruthTable,
+        f: TruthTable,
     ) -> TruthTable:
         abc = ternary_majority(a, b, c)
         return ternary_majority(abc, d, ternary_majority(e, f, abc))

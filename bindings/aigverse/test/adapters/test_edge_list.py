@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 from aigverse import Aig, AigEdge, AigEdgeList, to_edge_list
