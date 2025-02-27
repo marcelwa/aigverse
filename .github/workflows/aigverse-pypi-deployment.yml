@@ -54,9 +54,6 @@ jobs:
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@v5
-        with:
-          version: "latest"
-          enable-cache: true
 
       - name: Build sdist
         run: uv build --sdist
@@ -102,9 +99,6 @@ jobs:
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@v5
-        with:
-          version: "latest"
-          enable-cache: true
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22
