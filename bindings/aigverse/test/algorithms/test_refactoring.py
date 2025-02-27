@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from aigverse import Aig, equivalence_checking, sop_refactoring
 
 

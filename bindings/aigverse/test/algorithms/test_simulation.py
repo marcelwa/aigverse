@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from aigverse import Aig, DepthAig, TruthTable, simulate, simulate_nodes
 
 
