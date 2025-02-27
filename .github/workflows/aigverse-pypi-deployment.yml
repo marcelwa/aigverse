@@ -53,7 +53,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
           enable-cache: true
@@ -101,7 +101,7 @@ jobs:
         uses: rui314/setup-mold@v1
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
           enable-cache: true
@@ -130,7 +130,7 @@ jobs:
           merge-multiple: true
 
       - name: Generate artifact attestation for sdist and wheel(s)
-        uses: actions/attest-build-provenance@v2.1.0
+        uses: actions/attest-build-provenance@v2.2.2
         with:
           subject-path: "dist/*"
 
