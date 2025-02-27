@@ -22,11 +22,13 @@ repos:
       - id: check-case-conflict
       - id: check-docstring-first
       - id: check-merge-conflict
+      - id: check-symlinks
       - id: check-toml
       - id: check-yaml
       - id: debug-statements
       - id: end-of-file-fixer
       - id: mixed-line-ending
+      - id: requirements-txt-fixer
       - id: trailing-whitespace
 
   # Handle unwanted unicode characters
@@ -35,6 +37,12 @@ repos:
     hooks:
       - id: fix-ligatures
       - id: fix-smartquotes
+
+  # Check for spelling
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.29.5
+    hooks:
+      - id: typos
 
   # Check for common RST mistakes
   - repo: https://github.com/pre-commit/pygrep-hooks

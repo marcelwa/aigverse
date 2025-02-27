@@ -21,7 +21,7 @@ macro(detect_architecture)
       set(VCVARSALL_ARCH x64)
       message(
         STATUS
-          "Unkown architecture CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR_LOWER} - using x64"
+          "Unknown architecture CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR_LOWER} - using x64"
       )
     endif()
   endif()
