@@ -57,9 +57,6 @@ jobs:
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
-          enable-cache: true
 
       - name: Run mypy
         run: uvx --with pre-commit-uv pre-commit run -a mypy
@@ -95,9 +92,6 @@ jobs:
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
-          enable-cache: true
 
       - name: 🐍 Test
         run: uvx nox -s tests --verbose

@@ -137,15 +137,25 @@ template <typename Ntk>
 {
     auto el = edge_list<Ntk>(ntk);
 
+    // constants, primary inputs, and regular nodes
     ntk.foreach_node(
         [&ntk, regular_weight, inverted_weight, &el](const auto& n)
         {
             ntk.foreach_fanin(n,
                               [&ntk, regular_weight, inverted_weight, &el, &n](const auto& f)
                               {
-                                  el.edges.push_back(edge<Ntk>(
-                                      ntk.get_node(f), n, ntk.is_complemented(f) ? inverted_weight : regular_weight));
+                                  el.edges.push_back(
+                                      edge<Ntk>(ntk.node_to_index(ntk.get_node(f)), ntk.node_to_index(n),
+                                                ntk.is_complemented(f) ? inverted_weight : regular_weight));
                               });
+        });
+
+    // primary outputs
+    ntk.foreach_po(
+        [&ntk, regular_weight, inverted_weight, &el](const auto& po)
+        {
+            el.edges.push_back(edge<Ntk>(ntk.node_to_index(ntk.get_node(po)), ntk.size() + ntk.po_index(po),
+                                         ntk.is_complemented(po) ? inverted_weight : regular_weight));
         });
 
     return el;
