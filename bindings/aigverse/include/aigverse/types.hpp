@@ -7,6 +7,7 @@
 
 #include <kitty/dynamic_truth_table.hpp>
 #include <mockturtle/networks/aig.hpp>
+#include <mockturtle/networks/sequential.hpp>
 #include <mockturtle/views/depth_view.hpp>
 
 namespace aigverse
@@ -19,7 +20,11 @@ using aig = mockturtle::aig_network;
 /**
  * Alias for the depth AIG.
  */
-using depth_aig = mockturtle::depth_view<mockturtle::aig_network>;
+using depth_aig = mockturtle::depth_view<aig>;
+/**
+ * Alias for the sequential AIG.
+ */
+using sequential_aig = mockturtle::sequential<aig>;
 /**
  * Alias for the truth table.
  */

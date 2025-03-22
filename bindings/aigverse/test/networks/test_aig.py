@@ -9,6 +9,7 @@ def test_aig_constants() -> None:
     assert aig.num_gates() == 0
     assert aig.num_pis() == 0
     assert aig.num_pos() == 0
+    assert aig.is_combinational()
 
     assert aig.nodes() == [0]
     assert aig.gates() == []

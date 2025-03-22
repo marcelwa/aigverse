@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <functional>
 #include <string>
+#include <utility>
 
 namespace aigverse
 {
@@ -116,9 +117,7 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("size", &Ntk::size)
         .def("num_gates", &Ntk::num_gates)
         .def("num_pis", &Ntk::num_pis)
-        .def("num_cis", &Ntk::num_cis)
         .def("num_pos", &Ntk::num_pos)
-        .def("num_cos", &Ntk::num_cos)
 
         .def("get_node", &Ntk::get_node, "s"_a)
         .def("make_signal", &Ntk::make_signal, "n"_a)
@@ -130,15 +129,13 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("pi_at", &Ntk::pi_at, "index"_a)
         .def("po_index", &Ntk::po_index, "s"_a)
         .def("po_at", &Ntk::po_at, "index"_a)
-        .def("ci_index", &Ntk::ci_index, "n"_a)
-        .def("ci_at", &Ntk::ci_at, "index"_a)
-        .def("co_index", &Ntk::co_index, "s"_a)
-        .def("co_at", &Ntk::co_at, "index"_a)
 
         .def("get_constant", &Ntk::get_constant, "value"_a)
 
         .def("create_pi", &Ntk::create_pi)
         .def("create_po", &Ntk::create_po, "f"_a)
+
+        .def("is_combinational", &Ntk::is_combinational)
 
         .def("create_buf", &Ntk::create_buf, "a"_a)
         .def("create_not", &Ntk::create_not, "a"_a)
@@ -194,22 +191,6 @@ void network(pybind11::module& m, const std::string& network_name)
                  ntk.foreach_po([&pos](const auto& po) { pos.push_back(po); });
                  return pos;
              })
-        .def("cis",
-             [](const Ntk& ntk)
-             {
-                 std::vector<Node> cis{};
-                 cis.reserve(ntk.num_cis());
-                 ntk.foreach_ci([&cis](const auto& ci) { cis.push_back(ci); });
-                 return cis;
-             })
-        .def("cos",
-             [](const Ntk& ntk)
-             {
-                 std::vector<Signal> cos{};
-                 cos.reserve(ntk.num_cos());
-                 ntk.foreach_co([&cos](const auto& co) { cos.push_back(co); });
-                 return cos;
-             })
         .def(
             "fanins",
             [](const Ntk& ntk, const Node& n)
@@ -252,7 +233,7 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("cleanup_dangling", [](Ntk& ntk) { ntk = mockturtle::cleanup_dangling(ntk); });
 
     /**
-     * Depth Network.
+     * Depth network.
      */
     using DepthNtk = mockturtle::depth_view<Ntk>;
     py::class_<DepthNtk, Ntk>(m, fmt::format("Depth{}", network_name).c_str())
@@ -265,6 +246,99 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("is_on_critical_path", &DepthNtk::is_on_critical_path, "n"_a)
         .def("update_levels", &DepthNtk::update_levels)
         .def("create_po", &DepthNtk::create_po, "f"_a)
+
+        ;
+
+    /**
+     * Network register.
+     */
+    using Register = mockturtle::register_t;
+    py::class_<Register>(m, fmt::format("{}Register", network_name).c_str())
+        .def(py::init<>())
+        .def(py::init<const Register&>(), "register"_a)
+        .def_readwrite("control", &Register::control)
+        .def_readwrite("init", &Register::init)
+        .def_readwrite("type", &Register::type)
+
+        ;
+
+    /**
+     * Sequential network.
+     */
+    using SequentialNtk = mockturtle::sequential<Ntk>;
+    py::class_<SequentialNtk, Ntk>(m, fmt::format("Sequential{}", network_name).c_str())
+        .def(py::init<>())
+
+        .def("create_ro", &SequentialNtk::create_ro)
+        .def("create_ri", &SequentialNtk::create_ri, "f"_a)
+
+        .def("is_ci", &SequentialNtk::is_ci, "n"_a)
+        .def("is_ro", &SequentialNtk::is_ro, "n"_a)
+
+        .def("is_combinational", &SequentialNtk::is_combinational)
+
+        .def("num_cis", &SequentialNtk::num_cis)
+        .def("num_cos", &SequentialNtk::num_cos)
+        .def("num_registers", &SequentialNtk::num_registers)
+
+        .def("ci_at", &SequentialNtk::ci_at, "index"_a)
+        .def("co_at", &SequentialNtk::co_at, "index"_a)
+        .def("ro_at", &SequentialNtk::ro_at, "index"_a)
+        .def("ri_at", &SequentialNtk::ri_at, "index"_a)
+
+        .def("ci_index", &SequentialNtk::ci_index, "n"_a)
+        .def("co_index", &SequentialNtk::co_index, "s"_a)
+        .def("ro_index", &SequentialNtk::ro_index, "n"_a)
+        .def("ri_index", &SequentialNtk::ri_index, "s"_a)
+        .def("ro_to_ri", &SequentialNtk::ro_to_ri, "s"_a)
+        .def("ri_to_ro", &SequentialNtk::ri_to_ro, "s"_a)
+
+        .def("cis",
+             [](const SequentialNtk& ntk)
+             {
+                 std::vector<Node> cis{};
+                 cis.reserve(ntk.num_cis());
+                 ntk.foreach_ci([&cis](const auto& ci) { cis.push_back(ci); });
+                 return cis;
+             })
+        .def("cos",
+             [](const SequentialNtk& ntk)
+             {
+                 std::vector<Signal> cos{};
+                 cos.reserve(ntk.num_cos());
+                 ntk.foreach_co([&cos](const auto& co) { cos.push_back(co); });
+                 return cos;
+             })
+
+        .def("ros",
+             [](const SequentialNtk& ntk)
+             {
+                 std::vector<Node> ros{};
+                 ros.reserve(ntk.num_registers());
+                 ntk.foreach_ro([&ros](const auto& ro) { ros.push_back(ro); });
+                 return ros;
+             })
+
+        .def("ris",
+             [](const SequentialNtk& ntk)
+             {
+                 std::vector<Signal> ris{};
+                 ris.reserve(ntk.num_registers());
+                 ntk.foreach_ri([&ris](const auto& ri) { ris.push_back(ri); });
+                 return ris;
+             })
+
+        .def("registers",
+             [](const SequentialNtk& ntk)
+             {
+                 std::vector<std::pair<Signal, Node>> ris{};
+                 ris.reserve(ntk.num_registers());
+                 ntk.foreach_ri([&ris](const auto& ri, const auto& ro) { ris.emplace_back(ri, ro); });
+                 return ris;
+             })
+
+        .def("set_register", &SequentialNtk::set_register, "index"_a, "reg"_a)
+        .def("register_at", &SequentialNtk::register_at, "index"_a)
 
         ;
 }
