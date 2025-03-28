@@ -22,11 +22,13 @@ repos:
       - id: check-case-conflict
       - id: check-docstring-first
       - id: check-merge-conflict
+      - id: check-symlinks
       - id: check-toml
       - id: check-yaml
       - id: debug-statements
       - id: end-of-file-fixer
       - id: mixed-line-ending
+      - id: requirements-txt-fixer
       - id: trailing-whitespace
 
   # Handle unwanted unicode characters
@@ -35,6 +37,12 @@ repos:
     hooks:
       - id: fix-ligatures
       - id: fix-smartquotes
+
+  # Check for spelling
+  - repo: https://github.com/crate-ci/typos
+    rev: v1
+    hooks:
+      - id: typos
 
   # Check for common RST mistakes
   - repo: https://github.com/pre-commit/pygrep-hooks
@@ -46,7 +54,7 @@ repos:
 
   # Python linting using ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.2
+    rev: v0.11.2
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
@@ -56,7 +64,7 @@ repos:
 
   # Check static types with mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.14.1
+    rev: v1.15.0
     hooks:
       - id: mypy
         files: ^(bindings/aigverse|noxfile.py)
@@ -67,7 +75,7 @@ repos:
 
   # clang-format the C++ part of the code base
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v19.1.7
+    rev: v20.1.0
     hooks:
       - id: clang-format
         types_or: [c++, c]
@@ -86,14 +94,14 @@ repos:
 
   # Format configuration files with prettier
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.4.2
+    rev: v3.5.3
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
 
   # Check JSON schemata
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.31.0
+    rev: 0.31.3
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -101,6 +109,6 @@ repos:
 
   # Check the pyproject.toml file
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2024.10.21
+    rev: 2025.03.24
     hooks:
       - id: validate-pyproject

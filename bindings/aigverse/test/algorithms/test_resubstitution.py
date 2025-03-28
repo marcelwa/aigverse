@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from aigverse import Aig, aig_resubstitution, equivalence_checking
 
 
