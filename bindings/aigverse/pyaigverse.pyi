@@ -1,4 +1,5 @@
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 
 class AigNode:
     def __init__(self, index: int) -> None: ...
