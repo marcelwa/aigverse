@@ -130,12 +130,11 @@ struct edge_list
      */
     std::vector<edge<Ntk>> edges{};
 };
-
 template <typename Ntk>
-[[nodiscard]] edge_list<Ntk> to_edge_list(const Ntk& ntk, const int64_t regular_weight = 0,
-                                          const int64_t inverted_weight = 1) noexcept
+[[nodiscard]] edge_list<typename Ntk::base_type> to_edge_list(const Ntk& ntk, const int64_t regular_weight = 0,
+                                                              const int64_t inverted_weight = 1) noexcept
 {
-    auto el = edge_list<Ntk>(ntk);
+    auto el = edge_list<typename Ntk::base_type>(ntk);
 
     // constants, primary inputs, and regular nodes
     ntk.foreach_node(
@@ -144,9 +143,8 @@ template <typename Ntk>
             ntk.foreach_fanin(n,
                               [&ntk, regular_weight, inverted_weight, &el, &n](const auto& f)
                               {
-                                  el.edges.push_back(
-                                      edge<Ntk>(ntk.node_to_index(ntk.get_node(f)), ntk.node_to_index(n),
-                                                ntk.is_complemented(f) ? inverted_weight : regular_weight));
+                                  el.edges.emplace_back(ntk.node_to_index(ntk.get_node(f)), ntk.node_to_index(n),
+                                                        ntk.is_complemented(f) ? inverted_weight : regular_weight);
                               });
         });
 
@@ -154,9 +152,21 @@ template <typename Ntk>
     ntk.foreach_po(
         [&ntk, regular_weight, inverted_weight, &el](const auto& po)
         {
-            el.edges.push_back(edge<Ntk>(ntk.node_to_index(ntk.get_node(po)), ntk.size() + ntk.po_index(po),
-                                         ntk.is_complemented(po) ? inverted_weight : regular_weight));
+            el.edges.emplace_back(ntk.node_to_index(ntk.get_node(po)), ntk.size() + ntk.po_index(po),
+                                  ntk.is_complemented(po) ? inverted_weight : regular_weight);
         });
+
+    // register connections (RI to RO)
+    if constexpr (mockturtle::has_foreach_ri_v<Ntk> && mockturtle::has_ri_to_ro_v<Ntk>)
+    {
+        ntk.foreach_ri(
+            [&ntk, regular_weight, inverted_weight, &el](const auto& ri)
+            {
+                // add the feedback loop edge from the driving node to the register output
+                el.edges.emplace_back(ntk.node_to_index(ntk.get_node(ri)), ntk.node_to_index(ntk.ri_to_ro(ri)),
+                                      ntk.is_complemented(ri) ? inverted_weight : regular_weight);
+            });
+    }
 
     return el;
 }
@@ -249,6 +259,8 @@ void ntk_edge_list(pybind11::module& m, const std::string& network_name)
 
     py::implicitly_convertible<py::list, EdgeList>();
 
+    m.def("to_edge_list", &to_edge_list<mockturtle::sequential<Ntk>>, "ntk"_a, "regular_weight"_a = 0,
+          "inverted_weight"_a = 1);
     m.def("to_edge_list", &to_edge_list<Ntk>, "ntk"_a, "regular_weight"_a = 0, "inverted_weight"_a = 1);
 }
 

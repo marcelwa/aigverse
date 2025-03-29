@@ -72,7 +72,8 @@ void read_aiger(pybind11::module& m, const std::string& network_name)
 
 inline void read_aiger(pybind11::module& m)
 {
-    detail::read_aiger<mockturtle::aig_network>(m, "aig");
+    detail::read_aiger<aigverse::aig>(m, "aig");
+    detail::read_aiger<aigverse::sequential_aig>(m, "sequential_aig");
 }
 
 }  // namespace aigverse
