@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from aigverse import Aig, AigSignal, DepthAig, equivalence_checking
+from aigverse import Aig, AigSignal, DepthAig, SequentialAig, equivalence_checking
 
 
 def test_aig_constants() -> None:
@@ -65,41 +65,49 @@ def test_aig_primary_inputs() -> None:
     # Check initial properties of signal `a`
     assert a.get_index() == 1
     assert a.get_complement() == 0
+    assert a.get_data() == 2
 
     # Test negation (~)
     a = ~a
     assert a.get_index() == 1
     assert a.get_complement() == 1
+    assert a.get_data() == 3
 
     # Test positive sign (+)
     a = +a
     assert a.get_index() == 1
     assert a.get_complement() == 0
+    assert a.get_data() == 2
 
     # Reapplying positive sign should not change anything
     a = +a
     assert a.get_index() == 1
     assert a.get_complement() == 0
+    assert a.get_data() == 2
 
     # Test negation (-)
     a = -a
     assert a.get_index() == 1
     assert a.get_complement() == 1
+    assert a.get_data() == 3
 
     # Reapplying negation should not change anything
     a = -a
     assert a.get_index() == 1
     assert a.get_complement() == 1
+    assert a.get_data() == 3
 
     # XOR operation with True
     a ^= True
     assert a.get_index() == 1
     assert a.get_complement() == 0
+    assert a.get_data() == 2
 
     # XOR operation with True again
     a ^= True
     assert a.get_index() == 1
     assert a.get_complement() == 1
+    assert a.get_data() == 3
 
 
 def test_aig_primary_outputs() -> None:
@@ -607,3 +615,116 @@ def test_depth_aig() -> None:
     aig2 = DepthAig(aig)
 
     assert aig2.num_levels() == 4
+
+
+def test_sequential_aig_initialization() -> None:
+    """Test basic initialization and properties of SequentialAig."""
+    saig = SequentialAig()
+    assert saig.size() == 1
+    assert saig.num_gates() == 0
+    assert saig.num_pis() == 0
+    assert saig.num_pos() == 0
+    assert saig.num_registers() == 0
+    assert saig.num_cis() == 0
+    assert saig.num_cos() == 0
+    assert saig.is_combinational()
+
+
+def test_create_and_use_register_in_aig() -> None:
+    """Test creating and using a register in an AIG.
+
+    Raises:
+        AssertionError: If the expected properties do not match.
+    """
+    # Create a sequential AIG
+    aig = SequentialAig()
+
+    # Create primary inputs
+    x1 = aig.create_pi()
+    x2 = aig.create_pi()
+    x3 = aig.create_pi()
+
+    # Check initial network properties
+    assert aig.size() == 4
+    assert aig.num_registers() == 0
+    assert aig.num_pis() == 3
+    assert aig.num_pos() == 0
+
+    # Create gates and outputs
+    f1 = aig.create_and(x1, x2)
+    aig.create_po(f1)
+    aig.create_po(~f1)
+
+    # Create a register input
+    f2 = aig.create_and(f1, x3)
+    aig.create_ri(f2)
+
+    # Create a register output and connect to PO
+    ro = aig.create_ro()
+    aig.create_po(ro)
+
+    # Check final network properties
+    assert aig.num_pos() == 3
+    assert aig.num_registers() == 1
+
+    # Check each primary output
+    assert aig.po_at(0) == f1
+    assert aig.po_at(1) == ~f1
+
+    for i, s in enumerate(aig.pos()):
+        if i == 0:
+            assert s == f1
+        elif i == 1:
+            assert s == ~f1
+        elif i == 2:
+            assert f2.get_data() == aig.po_at(i).get_data()
+        else:
+            raise AssertionError
+
+
+def test_sequential_aig_ci_co_nodes() -> None:
+    """Test combinational interface (CI) and combinational output (CO) nodes."""
+    saig = SequentialAig()
+
+    # Create primary inputs and register outputs
+    pi1 = saig.create_pi()
+    pi2 = saig.create_pi()
+    ro1 = saig.create_ro()
+
+    # Both PIs and ROs are CIs
+    assert saig.is_ci(saig.get_node(pi1))
+    assert saig.is_ci(saig.get_node(pi2))
+    assert saig.is_ci(saig.get_node(ro1))
+
+    # Only ROs are ROs
+    assert not saig.is_ro(saig.get_node(pi1))
+    assert not saig.is_ro(saig.get_node(pi2))
+    assert saig.is_ro(saig.get_node(ro1))
+
+    # Create primary outputs and register inputs
+    saig.create_po(pi1)
+    saig.create_ri(pi2)
+
+    # Check CI and CO counts
+    assert saig.num_cis() == 3  # 2 PIs + 1 RO
+    assert saig.num_cos() == 2  # 1 PO + 1 RI
+
+
+def test_sequential_aig_combinational_check() -> None:
+    """Test checking if a sequential AIG is combinational."""
+    saig = SequentialAig()
+
+    # Initially it's combinational (no registers)
+    assert saig.is_combinational()
+
+    # Add a register, making it sequential
+    saig.create_ro()
+    assert not saig.is_combinational()
+
+    # Create a new sequential AIG
+    saig2 = SequentialAig()
+
+    # Only add PIs and POs (still combinational)
+    pi = saig2.create_pi()
+    saig2.create_po(pi)
+    assert saig2.is_combinational()
