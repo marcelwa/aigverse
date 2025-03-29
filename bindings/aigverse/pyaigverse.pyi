@@ -89,7 +89,7 @@ class DepthAig(Aig):
 class AigRegister:
     def __init__(self, register: AigRegister | None = None) -> None: ...
     control: str
-    init: str
+    init: int
     type: str
 
 class SequentialAig(Aig):
