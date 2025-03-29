@@ -911,15 +911,15 @@ def test_sequential_aig_iteration():
     registers = saig.registers()
     assert len(registers) == 2
 
-    # The register pairs are (ri, ro_index) where ro_index is the index
-    # of the register output node (0, 1) rather than the node value
+    # The register pairs are (ri, ro_node) where ro_node is the actual node ID
+    # of the register output
     register_dict = dict(registers)
     assert f1 in register_dict
     assert f2 in register_dict
 
-    # Check that register indices match correctly
-    assert register_dict[f1] == 0  # First register
-    assert register_dict[f2] == 1  # Second register
+    # Check that register values match correctly
+    assert register_dict[f1] == saig.get_node(ro1)  # First register maps to ro1 node
+    assert register_dict[f2] == saig.get_node(ro2)  # Second register maps to ro2 node
 
     # Alternative way to verify the relationship between ri and ro
     assert saig.ri_to_ro(f1) == saig.get_node(ro1)

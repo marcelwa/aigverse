@@ -124,16 +124,18 @@ def test_read_sequential_aiger():
     assert len(ri_signals) == 1
     ri_signal = ri_signals[0]
 
-    # Test register iteration with (ri_signal, ro_index) pairs
+    # Test register iteration - returns pairs of (ri_signal, ro_node)
     registers = saig.registers()
     assert len(registers) == 1
-    ri, ro_index = registers[0]
+    ri, ro = registers[0]
+
+    # The ri_signal should match what we got from ris()
     assert ri == ri_signal
-    assert ro_index == 0  # First register output has index 0
+
+    # The ro node should match what we got from ros()
+    assert ro == ro_node
 
     # Test register access methods
     assert saig.ro_at(0) == ro_node
     assert saig.ri_at(0) == ri_signal
-
-    # Test the relationship between register input and output
     assert saig.ri_to_ro(ri_signal) == ro_node

@@ -361,10 +361,10 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("registers",
              [](const SequentialNtk& ntk)
              {
-                 std::vector<std::pair<Signal, Node>> ris{};
-                 ris.reserve(ntk.num_registers());
-                 ntk.foreach_ri([&ris](const auto& ri, const auto& ro) { ris.emplace_back(ri, ro); });
-                 return ris;
+                 std::vector<std::pair<Signal, Node>> regs{};
+                 regs.reserve(ntk.num_registers());
+                 ntk.foreach_register([&regs](const auto& reg) { regs.push_back(reg); });
+                 return regs;
              })
 
         ;
