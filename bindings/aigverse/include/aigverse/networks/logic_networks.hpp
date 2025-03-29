@@ -73,6 +73,7 @@ void network(pybind11::module& m, const std::string& network_name)
         .def(py::init<const uint64_t, const bool>(), "index"_a, "complement"_a)
         .def("get_index", [](const Signal& s) { return s.index; })
         .def("get_complement", [](const Signal& s) { return s.complement; })
+        .def("get_data", [](const Signal& s) { return s.data; })
 
         .def("__hash__", [](const Signal& s) { return std::hash<Signal>{}(s); })
         .def("__repr__", [](const Signal& s) { return fmt::format("Signal({}{})", s.complement ? "!" : "", s.index); })
@@ -269,30 +270,59 @@ void network(pybind11::module& m, const std::string& network_name)
     py::class_<SequentialNtk, Ntk>(m, fmt::format("Sequential{}", network_name).c_str())
         .def(py::init<>())
 
+        .def("create_pi", &SequentialNtk::create_pi)
+        .def("create_po", &SequentialNtk::create_po, "f"_a)
         .def("create_ro", &SequentialNtk::create_ro)
         .def("create_ri", &SequentialNtk::create_ri, "f"_a)
 
-        .def("is_ci", &SequentialNtk::is_ci, "n"_a)
-        .def("is_ro", &SequentialNtk::is_ro, "n"_a)
-
         .def("is_combinational", &SequentialNtk::is_combinational)
 
+        .def("is_ci", &SequentialNtk::is_ci, "n"_a)
+        .def("is_pi", &SequentialNtk::is_pi, "n"_a)
+        .def("is_ro", &SequentialNtk::is_ro, "n"_a)
+
+        .def("num_pis", &SequentialNtk::num_pis)
+        .def("num_pos", &SequentialNtk::num_pos)
         .def("num_cis", &SequentialNtk::num_cis)
         .def("num_cos", &SequentialNtk::num_cos)
+
         .def("num_registers", &SequentialNtk::num_registers)
 
+        .def("pi_at", &SequentialNtk::pi_at, "index"_a)
+        .def("po_at", &SequentialNtk::po_at, "index"_a)
         .def("ci_at", &SequentialNtk::ci_at, "index"_a)
         .def("co_at", &SequentialNtk::co_at, "index"_a)
         .def("ro_at", &SequentialNtk::ro_at, "index"_a)
         .def("ri_at", &SequentialNtk::ri_at, "index"_a)
 
+        .def("set_register", &SequentialNtk::set_register, "index"_a, "reg"_a)
+        .def("register_at", &SequentialNtk::register_at, "index"_a)
+
+        .def("pi_index", &SequentialNtk::pi_index, "n"_a)
         .def("ci_index", &SequentialNtk::ci_index, "n"_a)
         .def("co_index", &SequentialNtk::co_index, "s"_a)
         .def("ro_index", &SequentialNtk::ro_index, "n"_a)
         .def("ri_index", &SequentialNtk::ri_index, "s"_a)
+
         .def("ro_to_ri", &SequentialNtk::ro_to_ri, "s"_a)
         .def("ri_to_ro", &SequentialNtk::ri_to_ro, "s"_a)
 
+        .def("pis",
+             [](const SequentialNtk& ntk)
+             {
+                 std::vector<Node> pis{};
+                 pis.reserve(ntk.num_pis());
+                 ntk.foreach_pi([&pis](const auto& pi) { pis.push_back(pi); });
+                 return pis;
+             })
+        .def("pos",
+             [](const SequentialNtk& ntk)
+             {
+                 std::vector<Signal> pos{};
+                 pos.reserve(ntk.num_pos());
+                 ntk.foreach_po([&pos](const auto& po) { pos.push_back(po); });
+                 return pos;
+             })
         .def("cis",
              [](const SequentialNtk& ntk)
              {
@@ -336,9 +366,6 @@ void network(pybind11::module& m, const std::string& network_name)
                  ntk.foreach_ri([&ris](const auto& ri, const auto& ro) { ris.emplace_back(ri, ro); });
                  return ris;
              })
-
-        .def("set_register", &SequentialNtk::set_register, "index"_a, "reg"_a)
-        .def("register_at", &SequentialNtk::register_at, "index"_a)
 
         ;
 }
