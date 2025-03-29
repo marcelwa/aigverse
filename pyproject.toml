@@ -20,7 +20,6 @@ classifiers = [
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -36,7 +35,7 @@ classifiers = [
     "Typing :: Typed"
 ]
 
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 dynamic = ["version"]
 
@@ -157,10 +156,10 @@ environment = { CMAKE_GENERATOR = "Ninja" }
 select = "*-macosx_arm64"
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
+
 [tool.uv]
 required-version = ">=0.5.20"
 reinstall-package = ["aigverse"]
-
 
 
 [tool.mypy]
@@ -178,7 +177,6 @@ warn_unreachable = true
 line-length = 120
 preview = true
 unsafe-fixes = true
-
 
 [tool.ruff.lint]
 select = ["ALL"]
