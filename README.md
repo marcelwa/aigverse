@@ -11,9 +11,8 @@
 
 `aigverse` is a Python framework designed to bridge the gap between logic synthesis and AI/ML applications. It allows
 you to represent and manipulate logic circuits efficiently, making it easier to integrate logic synthesis tasks into
-machine learning pipelines. By leveraging the
-powerful [EPFL Logic Synthesis Libraries](https://arxiv.org/abs/1805.05121),
-particularly [mockturtle](https://github.com/lsils/mockturtle), `aigverse` provides a high-level Python interface to
+machine learning pipelines. `aigverse` is built directly upon the powerful [EPFL Logic Synthesis Libraries](https://arxiv.org/abs/1805.05121),
+particularly [mockturtle](https://github.com/lsils/mockturtle), providing a high-level Python interface to
 state-of-the-art algorithms for And-Inverter Graph (AIG) manipulation and logic synthesis, widely used in formal
 verification, hardware design, and optimization tasks.
 
@@ -31,9 +30,11 @@ verification, hardware design, and optimization tasks.
 
 As AI and machine learning (ML) increasingly impact hardware design automation, there's a growing need for tools that
 integrate logic synthesis with ML workflows. `aigverse` provides a Python-friendly interface for logic synthesis, making
-it easier to develop applications that blend both AI/ML and traditional circuit synthesis techniques. With `aigverse`,
-you can parse, manipulate, and optimize logic circuits directly from Python. Eventually, we aim to provide seamless
-integration with popular ML libraries, enabling the development of novel AI-driven synthesis and optimization tools.
+it easier to develop applications that blend both AI/ML and traditional circuit synthesis techniques. By building upon the
+robust foundation of the EPFL Logic Synthesis Libraries, `aigverse` delivers powerful logic manipulation capabilities while
+maintaining accessibility through its Python interface. With `aigverse`, you can parse, manipulate, and optimize logic circuits
+directly from Python. Eventually, we aim to provide seamless integration with popular ML libraries, enabling the development
+of novel AI-driven synthesis and optimization tools.
 
 ## Installation
 
