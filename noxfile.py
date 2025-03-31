@@ -1,10 +1,3 @@
-# Copyright (c) 2025 Marcel Walter
-# All rights reserved.
-#
-# SPDX-License-Identifier: MIT
-#
-# Licensed under the MIT License
-
 """Nox sessions."""
 
 from __future__ import annotations
