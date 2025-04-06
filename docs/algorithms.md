@@ -65,25 +65,15 @@ The typical optimization workflow involves:
 3. Verifying correctness through equivalence checking
 
 ```{code-cell} ipython3
-from aigverse import Aig
+from aigverse import read_aiger_into_aig
 
-# Create a sample AIG with redundancy
-aig = Aig()
-a = aig.create_pi()
-b = aig.create_pi()
-c = aig.create_pi()
-d = aig.create_pi()
+# Load the i10 benchmark circuit - a real-world example
+aig = read_aiger_into_aig("examples/i10.aig")
 
-# Create a redundant circuit
-t1 = aig.create_and(a, b)
-t2 = aig.create_and(c, d)
-t3 = aig.create_and(a, b)  # Identical to t1
-t4 = aig.create_or(t1, t2)
-t5 = aig.create_or(t3, t2)  # Redundant with t4
-aig.create_po(t4)
-aig.create_po(t5)
-
-print(f"Original AIG size: {aig.size()}")
+# Print statistics about the loaded circuit
+print(f"i10 benchmark:")
+print(f"  I/O: {aig.num_pis()}/{aig.num_pos()}")
+print(f"  AND gates: {aig.num_gates()}")
 ```
 
 ### Resubstitution
@@ -99,8 +89,9 @@ aig_resub = aig.clone()
 # Apply resubstitution
 aig_resubstitution(aig_resub)
 
-print(f"Original size: {aig.size()}")
-print(f"After resubstitution: {aig_resub.size()}")
+print(f"Original AND gates: {aig.num_gates()}")
+print(f"After resubstitution: {aig_resub.num_gates()} AND gates")
+print(f"Reduction: {aig.num_gates() - aig_resub.num_gates()} gates ({(aig.num_gates() - aig_resub.num_gates()) / aig.num_gates() * 100:.2f}%)")
 ```
 
 ### Sum-of-Products Refactoring
@@ -116,8 +107,9 @@ aig_refactor = aig.clone()
 # Apply SOP refactoring
 sop_refactoring(aig_refactor)
 
-print(f"Original size: {aig.size()}")
-print(f"After refactoring: {aig_refactor.size()}")
+print(f"Original AND gates: {aig.num_gates()}")
+print(f"After SOP refactoring: {aig_refactor.num_gates()} AND gates")
+print(f"Reduction: {aig.num_gates() - aig_refactor.num_gates()} gates ({(aig.num_gates() - aig_refactor.num_gates()) / aig.num_gates() * 100:.2f}%)")
 ```
 
 ### Cut Rewriting
@@ -133,8 +125,9 @@ aig_rewrite = aig.clone()
 # Apply cut rewriting
 aig_cut_rewriting(aig_rewrite)
 
-print(f"Original size: {aig.size()}")
-print(f"After cut rewriting: {aig_rewrite.size()}")
+print(f"Original AND gates: {aig.num_gates()}")
+print(f"After cut rewriting: {aig_rewrite.num_gates()} AND gates")
+print(f"Reduction: {aig.num_gates() - aig_rewrite.num_gates()} gates ({(aig.num_gates() - aig_rewrite.num_gates()) / aig.num_gates() * 100:.2f}%)")
 ```
 
 ### Combining Optimization Techniques
@@ -154,8 +147,10 @@ aig_cut_rewriting(aig_opt)
 aig_resubstitution(aig_opt)
 sop_refactoring(aig_opt)
 
-print(f"Original size: {aig.size()}")
-print(f"After combined optimization: {aig_opt.size()}")
+print(f"\nTotal optimization results:")
+print(f"- Original: {aig.num_gates()} AND gates")
+print(f"- Optimized: {aig_opt.num_gates()} AND gates")
+print(f"- Total reduction: {aig.num_gates() - aig_opt.num_gates()} gates ({(aig.num_gates() - aig_opt.num_gates()) / aig.num_gates() * 100:.2f}%)")
 ```
 
 ## Equivalence Checking
@@ -165,49 +160,11 @@ Equivalence checking algorithms verify that two logic networks implement the sam
 ```{code-cell} ipython3
 from aigverse import equivalence_checking
 
-# Create a sample AIG implementing a & b
-aig1 = Aig()
-a = aig1.create_pi()
-b = aig1.create_pi()
-f1 = aig1.create_and(a, b)
-aig1.create_po(f1)
-
-# Create another AIG implementing the same function using De Morgan's law
-# !((!a) | (!b)) = a & b
-aig2 = Aig()
-a = aig2.create_pi()
-b = aig2.create_pi()
-not_a = aig2.create_not(a)
-not_b = aig2.create_not(b)
-or_gate = aig2.create_or(not_a, not_b)
-f2 = aig2.create_not(or_gate)
-aig2.create_po(f2)
-
-# Check if the circuits are equivalent
-are_equivalent = equivalence_checking(aig1, aig2)
-print(f"AIGs are equivalent: {are_equivalent}")
-```
-
-This is particularly useful for verifying that optimized circuits maintain the same functionality as the original:
-
-```{code-cell} ipython3
-# Create a sample AIG
-aig = Aig()
-a = aig.create_pi()
-b = aig.create_pi()
-c = aig.create_pi()
-
-t1 = aig.create_and(a, b)
-t2 = aig.create_and(t1, c)
-aig.create_po(t2)
-
-# Clone and optimize
-aig_opt = aig.clone()
-aig_resubstitution(aig_opt)
-
-# Check equivalence
+# Verify that our optimized circuit from the previous section maintains functional equivalence
 are_equivalent = equivalence_checking(aig, aig_opt)
-print(f"Original and optimized AIGs are equivalent: {are_equivalent}")
+print(f"\nOriginal and optimized benchmark circuits are equivalent: {are_equivalent}")
+print(f"This confirms our optimization preserved the circuit's functionality while reducing")
+print(f"the gate count from {aig.num_gates()} to {aig_opt.num_gates()} AND gates.")
 ```
 
 ## Machine Learning Integration
@@ -246,3 +203,5 @@ print("\nInput-output pairs for ML:")
 for i, (x, y) in enumerate(zip(inputs, outputs)):
     print(f"  Input: {x}, Output: {y}")
 ```
+
+`
