@@ -12,7 +12,7 @@ ci:
   autoupdate_schedule: quarterly
   autofix_commit_msg: "🎨 Incorporated pre-commit fixes"
 
-exclude: "^libs/"
+exclude: "^(libs/|docs/examples/i10\\.aig$)"
 
 repos:
   # Standard hooks
