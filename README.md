@@ -38,8 +38,8 @@ of novel AI-driven synthesis and optimization tools.
 
 ## Installation
 
-`aigverse` requires Python 3.8+ and is built using the EPFL Logic Synthesis Libraries
-with [pybind11](https://github.com/pybind/pybind11). To install `aigverse`:
+`aigverse` is built using the EPFL Logic Synthesis Libraries with [pybind11](https://github.com/pybind/pybind11).
+It is available via PyPI for all major operating systems and supports Python 3.9 to 3.13.
 
 ```bash
 pip install aigverse
