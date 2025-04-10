@@ -11,11 +11,16 @@
 
 `aigverse` is a Python framework designed to bridge the gap between logic synthesis and AI/ML applications. It allows
 you to represent and manipulate logic circuits efficiently, making it easier to integrate logic synthesis tasks into
-machine learning pipelines. By leveraging the
-powerful [EPFL Logic Synthesis Libraries](https://arxiv.org/abs/1805.05121),
-particularly [mockturtle](https://github.com/lsils/mockturtle), `aigverse` provides a high-level Python interface to
+machine learning pipelines. `aigverse` is built directly upon the powerful [EPFL Logic Synthesis Libraries](https://arxiv.org/abs/1805.05121),
+particularly [mockturtle](https://github.com/lsils/mockturtle), providing a high-level Python interface to
 state-of-the-art algorithms for And-Inverter Graph (AIG) manipulation and logic synthesis, widely used in formal
 verification, hardware design, and optimization tasks.
+
+<p align="center">
+  <a href="https://aigverse.readthedocs.io/">
+  <img width=30% src="https://img.shields.io/badge/documentation-blue?style=for-the-badge&logo=read%20the%20docs" alt="Documentation" />
+  </a>
+</p>
 
 ## Features
 
@@ -31,20 +36,24 @@ verification, hardware design, and optimization tasks.
 
 As AI and machine learning (ML) increasingly impact hardware design automation, there's a growing need for tools that
 integrate logic synthesis with ML workflows. `aigverse` provides a Python-friendly interface for logic synthesis, making
-it easier to develop applications that blend both AI/ML and traditional circuit synthesis techniques. With `aigverse`,
-you can parse, manipulate, and optimize logic circuits directly from Python. Eventually, we aim to provide seamless
-integration with popular ML libraries, enabling the development of novel AI-driven synthesis and optimization tools.
+it easier to develop applications that blend both AI/ML and traditional circuit synthesis techniques. By building upon the
+robust foundation of the EPFL Logic Synthesis Libraries, `aigverse` delivers powerful logic manipulation capabilities while
+maintaining accessibility through its Python interface. With `aigverse`, you can parse, manipulate, and optimize logic circuits
+directly from Python. Eventually, we aim to provide seamless integration with popular ML libraries, enabling the development
+of novel AI-driven synthesis and optimization tools.
 
 ## Installation
 
-`aigverse` requires Python 3.8+ and is built using the EPFL Logic Synthesis Libraries
-with [pybind11](https://github.com/pybind/pybind11). To install `aigverse`:
+`aigverse` is built using the EPFL Logic Synthesis Libraries with [pybind11](https://github.com/pybind/pybind11).
+It is available via PyPI for all major operating systems and supports Python 3.9 to 3.13.
 
 ```bash
 pip install aigverse
 ```
 
 ## Usage
+
+The following gives a shallow overview on `aigverse`. Detailed documentation and examples are available at [ReadTheDocs](https://aigverse.readthedocs.io/).
 
 ### Basic Example: Creating an AIG
 
@@ -71,6 +80,8 @@ aig.create_po(f_or)
 # Print the size of the AIG network
 print(f"AIG Size: {aig.size()}")
 ```
+
+Note that all primary inputs (PIs) must be created before any logic gates.
 
 ### Iterating over AIG Nodes
 
@@ -108,6 +119,30 @@ print(f"Depth: {depth_aig.num_levels()}")
 for node in aig.nodes():
     print(f"Level of {node}: {depth_aig.level(node)}")
 ```
+
+### Sequential AIGs
+
+`aigverse` also supports sequential AIGs, which are AIGs with registers.
+
+```python
+from aigverse import SequentialAig
+
+seq_aig = SequentialAig()
+x1 = seq_aig.create_pi()  # Regular PI
+x2 = seq_aig.create_ro()  # Register output (sequential PI)
+
+f_and = seq_aig.create_and(x1, x2)  # AND gate
+
+seq_aig.create_ri(f_and)  # Register input (sequential PO)
+
+print(seq_aig.registers())  # Prints the association of registers
+```
+
+It is to be noted that the construction of sequential AIGs comes with some caveats:
+
+1. All register outputs (ROs) must be created after all primary inputs (PIs).
+2. All register inputs (RIs) must be created after all primary outputs (POs).
+3. As for regular AIGs, all PIs and ROs must be created before any logic gates.
 
 ### Logic Optimization
 
@@ -165,6 +200,9 @@ print(f"AIG Size: {aig1.size()}")
 print(f"AIG Size: {aig2.size()}")
 ```
 
+Additionally, you can read AIGER files into sequential AIGs using `read_aiger_into_sequential_aig` and
+`read_ascii_aiger_into_sequential_aig`.
+
 #### Writing
 
 ```python
@@ -188,6 +226,9 @@ print(edges)
 # Convert to list of tuples
 edges = [(e.source, e.target, e.weight) for e in edges]
 ```
+
+Edge lists also support sequential AIGs. They will have additional connections from register inputs (RIs) to register
+outputs (ROs) which form feedback loops.
 
 ### Truth Tables
 
