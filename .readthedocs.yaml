@@ -23,6 +23,8 @@ build:
         fi
       # Unshallow the git clone and fetch tags to get proper version information
       - git fetch --unshallow --tags
+      # Ensure submodules are checked out
+      - git submodule update --init --recursive
     pre_build:
       # Set up uv
       - asdf plugin add uv
