@@ -42,7 +42,6 @@ def _run_tests(
 ) -> None:
     env = {"UV_PROJECT_ENVIRONMENT": session.virtualenv.location}
     if os.environ.get("CI", None) and sys.platform == "win32":
-        env["CMAKE_GENERATOR"] = "Ninja"
         env["SKBUILD_CMAKE_ARGS"] = "-T ClangCL"
 
     if shutil.which("cmake") is None and shutil.which("cmake3") is None:
