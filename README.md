@@ -16,6 +16,12 @@ particularly [mockturtle](https://github.com/lsils/mockturtle), providing a high
 state-of-the-art algorithms for And-Inverter Graph (AIG) manipulation and logic synthesis, widely used in formal
 verification, hardware design, and optimization tasks.
 
+<p align="center">
+  <a href="https://aigverse.readthedocs.io/">
+  <img width=30% src="https://img.shields.io/badge/documentation-blue?style=for-the-badge&logo=read%20the%20docs" alt="Documentation" />
+  </a>
+</p>
+
 ## Features
 
 - **Efficient Logic Representation**: Use And-Inverter Graphs (AIGs) to model and manipulate logic circuits in Python.
@@ -46,6 +52,8 @@ pip install aigverse
 ```
 
 ## Usage
+
+The following gives a shallow overview on `aigverse`. Detailed documentation and examples are available at [ReadTheDocs](https://aigverse.readthedocs.io/).
 
 ### Basic Example: Creating an AIG
 
