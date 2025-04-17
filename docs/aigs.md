@@ -189,6 +189,34 @@ for node in aig.nodes():
         print(f"  Node {node}")
 ```
 
+## Node Fanouts and resubstitution
+
+Fanouts on a single AIG node could be collected by using {py:class}`~aigverse.FanoutAig` class. The interface of single node resubstitution is also in this class.
+
+```{code-cell} ipython3
+from aigverse import FanoutAig
+# Create a sample AIG
+aig = FanoutAig()
+x1 = aig.create_pi()
+x2 = aig.create_pi()
+x3 = aig.create_pi()
+
+# Create AND gates
+n4 = aig.create_and(x1, x2)
+n5 = aig.create_and(n4, x3)
+n6 = aig.create_and(n4, n5)
+# Create primary outputs
+aig.create_po(n6)
+
+fanout_list = aig.fanout(aig.get_node(n4))
+print("\nFanout nodes of n4:")
+for node in fanout_list:
+    print(f"  Node {node}")
+print("\nThe AND gate number before resub: ", aig.num_gates())
+aig.substitute_node(aig.get_node(n5), n6)
+print("\nThe AND gate number after resub: ", aig.num_gates())
+```
+
 ## Sequential AIGs
 
 Sequential AIGs extend standard AIGs to include registers, which allow modeling sequential circuits with memory elements.
