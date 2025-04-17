@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from aigverse import Aig, AigSignal, DepthAig, SequentialAig, equivalence_checking
+from aigverse import Aig, AigSignal, DepthAig, FanoutAig, SequentialAig, equivalence_checking
 
 
 def test_aig_constants() -> None:
@@ -615,6 +615,45 @@ def test_depth_aig() -> None:
     aig2 = DepthAig(aig)
 
     assert aig2.num_levels() == 4
+
+
+def test_fanout_aig() -> None:
+    aig = FanoutAig()
+
+    assert hasattr(aig, "update_fanout")
+    assert hasattr(aig, "fanout")
+    assert hasattr(aig, "substitute_node")
+    assert hasattr(aig, "substitute_node_no_restrash")
+
+    # Create primary inputs
+    x1 = aig.create_pi()
+    x2 = aig.create_pi()
+    x3 = aig.create_pi()
+
+    # Create AND gates
+    n4 = aig.create_and(x1, x2)
+    n5 = aig.create_and(n4, x3)
+    n6 = aig.create_and(n4, n5)
+    # Create primary outputs
+    aig.create_po(n6)
+    aig_comp = FanoutAig(aig.clone())
+    # Check the fanout of n4
+    fanout_list = aig.fanout(aig.get_node(n4))
+    assert len(fanout_list) == 2
+    assert (fanout_list[0] == aig.get_node(n6)) & (fanout_list[1] == aig.get_node(n5)) | (
+        fanout_list[0] == aig.get_node(n5)
+    ) & (fanout_list[1] == aig.get_node(n6))
+
+    assert aig.num_gates() == 3
+    aig.substitute_node(aig.get_node(n5), n6)
+    assert aig.num_gates() == 2
+
+    # Resub with complemented value and without strash
+    aig_comp.substitute_node_no_restrash(aig_comp.get_node(n6), aig_comp.create_not(n6))
+    # Everything remains the same
+    assert aig_comp.num_gates() == 3
+    fanout_list_comp = aig_comp.fanout(aig_comp.get_node(n4))
+    assert len(fanout_list_comp) == 2
 
 
 def test_sequential_aig_initialization() -> None:
