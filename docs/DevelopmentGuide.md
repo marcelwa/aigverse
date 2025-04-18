@@ -254,6 +254,46 @@ While the above commands install the project in editable mode, so that changes t
 any changes to the C++ code will require a rebuild of the Python package.
 :::
 
+:::::{note}
+When attempting to build the documentation, you must make sure to have `graphviz` installed on your system. Installing
+the documentation or development dependencies will fail if `graphviz` cannot be detected.
+
+::::{tab-set}
+
+:::{tab-item} Ubuntu
+
+```console
+$ sudo apt-get install graphviz
+```
+
+:::
+
+:::{tab-item} macOS
+
+```console
+$ brew install graphviz
+```
+
+:::
+
+:::{tab-item} Windows
+
+```console
+$ winget install graphviz
+```
+
+or
+
+```console
+$ choco install graphviz
+```
+
+:::
+
+::::
+
+:::::
+
 The way the Python package build process in the above commands works is that a wheel for the project is built
 in an isolated environment and then installed into the virtual environment.
 Due to the build isolation, the corresponding C++ build directory cannot be reused for subsequent builds.
@@ -405,6 +445,46 @@ On top of the API documentation, we provide a set of tutorials and examples that
 These are written in Markdown using [myst-nb](https://myst-nb.readthedocs.io/en/latest/), which allows to execute Python code blocks in the documentation.
 The code blocks are executed during the documentation build process, and the output is included in the documentation.
 This allows us to provide up-to-date examples and tutorials that are guaranteed to work with the latest version of the library.
+
+:::::{note}
+When attempting to build the documentation, you must make sure to have `graphviz` installed on your system. Installing
+the documentation or development dependencies will fail if `graphviz` cannot be detected.
+
+::::{tab-set}
+
+:::{tab-item} Ubuntu
+
+```console
+$ sudo apt-get install graphviz
+```
+
+:::
+
+:::{tab-item} macOS
+
+```console
+$ brew install graphviz
+```
+
+:::
+
+:::{tab-item} Windows
+
+```console
+$ winget install graphviz
+```
+
+or
+
+```console
+$ choco install graphviz
+```
+
+:::
+
+::::
+
+:::::
 
 You can build the documentation using the {code}`nox` session {code}`docs`.
 
