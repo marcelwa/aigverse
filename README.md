@@ -295,8 +295,9 @@ tt_list = [[int(tt.get_bit(i)) for i in range(tt.num_bits())] for tt in tts]
 
 ## Contributing
 
-Contributions are welcome! If you'd like to contribute to `aigverse`, please submit a pull request or open an issue. I
-appreciate feedback and suggestions for improving the library.
+Contributions are welcome! If you'd like to contribute to `aigverse`, please see the
+[contribution guide](https://aigverse.readthedocs.io/en/latest/contributing.html). I appreciate feedback and suggestions
+for improving the library.
 
 ## License
 
