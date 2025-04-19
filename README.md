@@ -122,16 +122,15 @@ for node in aig.nodes():
 
 ## AIGs with Fanout Information
 
-You can retrieve the fanouts of a single node from the AIG network, fanout information could be used to calculate factored form literal count(FFLC), which is a good estimate of the hardware cost.
+If needed, you can retrieve the fanouts of AIG nodes as well:
 
 ```python
 from aigverse import FanoutAig
 
 fanout_aig = FanoutAig(aig)
 n_and = aig.get_node(f_and)
-fanout_list = fanout_aig.fanouts(n_and)
 # Iterate over the fanouts of a node
-for fanout in fanout_list:
+for fanout in fanout_aig.fanouts(n_and):
     print(f"Fanout of node {n_and}: {fanout}")
 ```
 

@@ -191,12 +191,12 @@ for node in aig.nodes():
 
 ## AIGs with Fanout Information
 
-Fanouts on a single AIG node could be collected using {py:class}`~aigverse.FanoutAig`.
+Fanouts of AIG nodes can be collected using {py:class}`~aigverse.FanoutAig`.
 
 ```{code-cell} ipython3
 from aigverse import FanoutAig
 # Create a sample AIG
-aig = FanoutAig()
+aig = Aig()
 x1 = aig.create_pi()
 x2 = aig.create_pi()
 x3 = aig.create_pi()
@@ -208,9 +208,9 @@ n6 = aig.create_and(n4, n5)
 # Create primary outputs
 aig.create_po(n6)
 
-fanout_list = aig.fanouts(aig.get_node(n4))
+fanout_aig = FanoutAig(aig)
 print("\nFanout nodes of n4:")
-for node in fanout_list:
+for node in fanout_aig.fanouts(aig.get_node(n4)):
     print(f"  Node {node}")
 ```
 
