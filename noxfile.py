@@ -112,7 +112,10 @@ def docs(session: nox.Session) -> None:
     if shutil.which("dot") is None:
         session.error(
             "Graphviz is required for building the documentation. "
-            "Please install it using your package manager (e.g., `brew install graphviz`)."
+            "Please install it using your package manager. For example:\n"
+            "  - macOS: `brew install graphviz`\n"
+            "  - Ubuntu: `sudo apt install graphviz`\n"
+            "  - Windows: `winget install graphviz` or `choco install graphviz`\n"
         )
 
     parser = argparse.ArgumentParser()
