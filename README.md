@@ -1,8 +1,9 @@
 # aigverse: A Python Library for Logic Networks, Synthesis, and Optimization
 
 [![Python Bindings](https://img.shields.io/github/actions/workflow/status/marcelwa/aigverse/aigverse-pypi-deployment.yml?label=Bindings&logo=python&style=flat-square)](https://github.com/marcelwa/aigverse/actions/workflows/aigverse-pypi-deployment.yml)
-[![License](https://img.shields.io/github/license/marcelwa/aigverse?label=License&style=flat-square)](https://github.com/marcelwa/aigverse/blob/main/LICENSE)
+[![Documentation Status](https://img.shields.io/readthedocs/aigverse?label=Docs&logo=readthedocs&style=flat-square)](https://aigverse.readthedocs.io/)
 [![PyPI](https://img.shields.io/static/v1?label=PyPI&message=aigverse&logo=pypi&color=informational&style=flat-square)](https://pypi.org/project/aigverse/)
+[![License](https://img.shields.io/github/license/marcelwa/aigverse?label=License&style=flat-square)](https://github.com/marcelwa/aigverse/blob/main/LICENSE)
 [![Release](https://img.shields.io/github/v/release/marcelwa/aigverse?label=aigverse&style=flat-square)](https://github.com/marcelwa/aigverse/releases)
 
 > [!Important]
@@ -309,8 +310,9 @@ tt_list = [[int(tt.get_bit(i)) for i in range(tt.num_bits())] for tt in tts]
 
 ## Contributing
 
-Contributions are welcome! If you'd like to contribute to `aigverse`, please submit a pull request or open an issue. I
-appreciate feedback and suggestions for improving the library.
+Contributions are welcome! If you'd like to contribute to `aigverse`, please see the
+[contribution guide](https://aigverse.readthedocs.io/en/latest/contributing.html). I appreciate feedback and suggestions
+for improving the library.
 
 ## License
 
