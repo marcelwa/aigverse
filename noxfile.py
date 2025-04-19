@@ -108,6 +108,16 @@ def minimums(session: nox.Session) -> None:
 @nox.session(reuse_venv=True)
 def docs(session: nox.Session) -> None:
     """Build the docs. Use "--non-interactive" to avoid serving. Pass "-b linkcheck" to check links."""
+    # Check for graphviz installation
+    if shutil.which("dot") is None:
+        session.error(
+            "Graphviz is required for building the documentation. "
+            "Please install it using your package manager. For example:\n"
+            "  - macOS: `brew install graphviz`\n"
+            "  - Ubuntu: `sudo apt install graphviz`\n"
+            "  - Windows: `winget install graphviz` or `choco install graphviz`\n"
+        )
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-b", dest="builder", default="html", help="Build target (default: html)")
     args, posargs = parser.parse_known_args(session.posargs)
