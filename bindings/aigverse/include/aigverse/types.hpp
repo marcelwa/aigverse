@@ -9,6 +9,7 @@
 #include <mockturtle/networks/aig.hpp>
 #include <mockturtle/networks/sequential.hpp>
 #include <mockturtle/views/depth_view.hpp>
+#include <mockturtle/views/fanout_view.hpp>
 
 namespace aigverse
 {
@@ -21,6 +22,10 @@ using aig = mockturtle::aig_network;
  * Alias for the depth AIG.
  */
 using depth_aig = mockturtle::depth_view<aig>;
+/**
+ * Alias for the fanout AIG.
+ */
+using fanouts_aig = mockturtle::fanout_view<aig>;
 /**
  * Alias for the sequential AIG.
  */

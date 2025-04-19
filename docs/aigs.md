@@ -189,6 +189,31 @@ for node in aig.nodes():
         print(f"  Node {node}")
 ```
 
+## AIGs with Fanout Information
+
+Fanouts of AIG nodes can be collected using {py:class}`~aigverse.FanoutAig`.
+
+```{code-cell} ipython3
+from aigverse import FanoutAig
+# Create a sample AIG
+aig = Aig()
+x1 = aig.create_pi()
+x2 = aig.create_pi()
+x3 = aig.create_pi()
+
+# Create AND gates
+n4 = aig.create_and(x1, x2)
+n5 = aig.create_and(n4, x3)
+n6 = aig.create_and(n4, n5)
+# Create primary outputs
+aig.create_po(n6)
+
+fanout_aig = FanoutAig(aig)
+print("\nFanout nodes of n4:")
+for node in fanout_aig.fanouts(aig.get_node(n4)):
+    print(f"  Node {node}")
+```
+
 ## Sequential AIGs
 
 Sequential AIGs extend standard AIGs to include registers, which allow modeling sequential circuits with memory elements.

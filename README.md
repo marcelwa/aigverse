@@ -121,6 +121,20 @@ for node in aig.nodes():
     print(f"Level of {node}: {depth_aig.level(node)}")
 ```
 
+## AIGs with Fanout Information
+
+If needed, you can retrieve the fanouts of AIG nodes as well:
+
+```python
+from aigverse import FanoutAig
+
+fanout_aig = FanoutAig(aig)
+n_and = aig.get_node(f_and)
+# Iterate over the fanouts of a node
+for fanout in fanout_aig.fanouts(n_and):
+    print(f"Fanout of node {n_and}: {fanout}")
+```
+
 ### Sequential AIGs
 
 `aigverse` also supports sequential AIGs, which are AIGs with registers.
