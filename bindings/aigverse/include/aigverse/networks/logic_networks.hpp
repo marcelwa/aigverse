@@ -259,11 +259,16 @@ void network(pybind11::module& m, const std::string& network_name)
         .def(py::init<>())
         .def(py::init<const Ntk&>(), "ntk"_a)
         .def(py::init<const FanoutNtk&>(), "ntk"_a)
-
-        .def("update_fanout", &FanoutNtk::update_fanout)
-        .def("fanout", &FanoutNtk::fanout, "n"_a)
-        .def("substitute_node", &FanoutNtk::substitute_node, "a"_a, "b"_a)
-        .def("substitute_node_no_restrash", &FanoutNtk::substitute_node_no_restrash, "a"_a, "b"_a)
+        .def(
+            "fanouts",
+            [](const FanoutNtk& ntk, const Node& n)
+            {
+                std::vector<Node> fanouts{};
+                fanouts.reserve(ntk.fanout_size(n));
+                ntk.foreach_fanout(n, [&fanouts](const auto& f) { fanouts.push_back(f); });
+                return fanouts;
+            },
+            "n"_a)
 
         ;
 

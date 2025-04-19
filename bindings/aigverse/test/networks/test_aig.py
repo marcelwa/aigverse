@@ -619,11 +619,7 @@ def test_depth_aig() -> None:
 
 def test_fanout_aig() -> None:
     aig = FanoutAig()
-
-    assert hasattr(aig, "update_fanout")
-    assert hasattr(aig, "fanout")
-    assert hasattr(aig, "substitute_node")
-    assert hasattr(aig, "substitute_node_no_restrash")
+    assert hasattr(aig, "fanouts")
 
     # Create primary inputs
     x1 = aig.create_pi()
@@ -636,24 +632,14 @@ def test_fanout_aig() -> None:
     n6 = aig.create_and(n4, n5)
     # Create primary outputs
     aig.create_po(n6)
-    aig_comp = FanoutAig(aig.clone())
     # Check the fanout of n4
-    fanout_list = aig.fanout(aig.get_node(n4))
+    fanout_list = aig.fanouts(aig.get_node(n4))
     assert len(fanout_list) == 2
     assert (fanout_list[0] == aig.get_node(n6)) & (fanout_list[1] == aig.get_node(n5)) | (
         fanout_list[0] == aig.get_node(n5)
     ) & (fanout_list[1] == aig.get_node(n6))
-
-    assert aig.num_gates() == 3
-    aig.substitute_node(aig.get_node(n5), n6)
-    assert aig.num_gates() == 2
-
-    # Resub with complemented value and without strash
-    aig_comp.substitute_node_no_restrash(aig_comp.get_node(n6), aig_comp.create_not(n6))
-    # Everything remains the same
-    assert aig_comp.num_gates() == 3
-    fanout_list_comp = aig_comp.fanout(aig_comp.get_node(n4))
-    assert len(fanout_list_comp) == 2
+    # fanout() size only collect internal fanouts(No PO)
+    assert (len(aig.fanouts(aig.get_node(n6))) == 0) & (aig.fanout_size(aig.get_node(n6)) == 1)
 
 
 def test_sequential_aig_initialization() -> None:

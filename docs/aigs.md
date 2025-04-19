@@ -189,9 +189,9 @@ for node in aig.nodes():
         print(f"  Node {node}")
 ```
 
-## Node Fanouts and resubstitution
+## AIGs with Fanout Information
 
-Fanouts on a single AIG node could be collected by using {py:class}`~aigverse.FanoutAig` class. The interface of single node resubstitution is also in this class.
+Fanouts on a single AIG node could be collected using {py:class}`~aigverse.FanoutAig`.
 
 ```{code-cell} ipython3
 from aigverse import FanoutAig
@@ -208,13 +208,10 @@ n6 = aig.create_and(n4, n5)
 # Create primary outputs
 aig.create_po(n6)
 
-fanout_list = aig.fanout(aig.get_node(n4))
+fanout_list = aig.fanouts(aig.get_node(n4))
 print("\nFanout nodes of n4:")
 for node in fanout_list:
     print(f"  Node {node}")
-print("\nThe AND gate number before resub: ", aig.num_gates())
-aig.substitute_node(aig.get_node(n5), n6)
-print("\nThe AND gate number after resub: ", aig.num_gates())
 ```
 
 ## Sequential AIGs
