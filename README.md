@@ -239,7 +239,7 @@ from aigverse import write_aiger
 write_aiger(aig, "example.aig")
 
 # Write an AIG network to a verilog file
-write_aiger(aig, "example.v")
+write_verilog(aig, "example.v")
 ```
 
 ### Exporting Edge Lists
