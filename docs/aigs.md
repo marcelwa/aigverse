@@ -261,7 +261,7 @@ When creating sequential AIGs, follow these rules:
 AIGs can be read from and written to various file formats.
 
 ```{code-cell} ipython3
-from aigverse import write_aiger, read_aiger_into_aig
+from aigverse import write_aiger, read_aiger_into_aig, write_verilog, read_verilog_into_aig
 
 # Create a sample AIG
 aig = Aig()
@@ -273,11 +273,17 @@ aig.create_po(f)
 # Write to AIGER format
 write_aiger(aig, "example.aig")
 
+# Write to verilog format
+write_verilog(aig, "example.v")
+
 # Read from AIGER format
 read_aig = read_aiger_into_aig("example.aig")
 
+# Write from verilog format
+read_verilog_aig = read_verilog_into_aig("example.v")
 print(f"Original AIG size: {aig.size()}")
 print(f"Read AIG size: {read_aig.size()}")
+print(f"AIG size read from verilog: {read_verilog_aig.size()}")
 ```
 
 ## Graph Representation

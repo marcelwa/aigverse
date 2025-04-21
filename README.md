@@ -218,6 +218,18 @@ print(f"AIG Size: {aig2.size()}")
 Additionally, you can read AIGER files into sequential AIGs using `read_aiger_into_sequential_aig` and
 `read_ascii_aiger_into_sequential_aig`.
 
+You can read a verilog file as an AIG.
+
+```python
+from aigverse import read_verilog_into_aig
+
+# Read verilog files into AIG networks
+aig = read_aiger_into_aig("example.v")
+
+# Print the size of the AIGs
+print(f"AIG Size: {aig.size()}")
+```
+
 #### Writing
 
 ```python
@@ -225,6 +237,9 @@ from aigverse import write_aiger
 
 # Write an AIG network to an AIGER file
 write_aiger(aig, "example.aig")
+
+# Write an AIG network to a verilog file
+write_aiger(aig, "example.v")
 ```
 
 ### Exporting Edge Lists
