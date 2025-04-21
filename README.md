@@ -204,15 +204,19 @@ You can read and write (ASCII) [AIGER](https://fmv.jku.at/aiger/) files.
 #### Parsing
 
 ```python
-from aigverse import read_aiger_into_aig, read_ascii_aiger_into_aig
+from aigverse import read_aiger_into_aig, read_ascii_aiger_into_aig, read_pla_into_aig
 
 # Read AIGER files into AIG networks
 aig1 = read_aiger_into_aig("example.aig")
 aig2 = read_ascii_aiger_into_aig("example.aag")
 
+# Read PLA files into AIG networks
+aig3 = read_pla_into_aig("example.pla")
+
 # Print the size of the AIGs
 print(f"AIG Size: {aig1.size()}")
 print(f"AIG Size: {aig2.size()}")
+print(f"AIG Size: {aig3.size()}")
 ```
 
 Additionally, you can read AIGER files into sequential AIGs using `read_aiger_into_sequential_aig` and
