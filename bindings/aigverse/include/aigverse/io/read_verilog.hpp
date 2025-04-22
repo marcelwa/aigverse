@@ -38,12 +38,13 @@ void read_verilog(pybind11::module& m, const std::string& network_name)
 
             lorina::text_diagnostics  consumer{};
             lorina::diagnostic_engine diag{&consumer};
-            const auto                read_verilog_result =
+
+            const auto read_verilog_result =
                 lorina::read_verilog(filename, mockturtle::verilog_reader<Ntk>(ntk), &diag);
 
             if (read_verilog_result != lorina::return_code::success)
             {
-                throw std::runtime_error("Error reading verilog file");
+                throw std::runtime_error("Error reading Verilog file");
             }
 
             return ntk;
