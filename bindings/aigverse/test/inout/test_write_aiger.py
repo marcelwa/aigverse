@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import os
+import tempfile
 from pathlib import Path
 
 from aigverse import Aig, read_aiger_into_aig, write_aiger
 
+# Get the temporary directory as a Path object
+temp_dir = Path(tempfile.gettempdir())
 dir_path = Path(os.path.realpath(__file__)).parent
 
 
@@ -20,9 +23,9 @@ def test_write_aiger() -> None:
 
     aig.create_po(a3)
 
-    write_aiger(aig, str(dir_path / "../resources/test.aig"))
+    write_aiger(aig, str(temp_dir / "test.aig"))
 
-    aig2 = read_aiger_into_aig(str(dir_path / "../resources/test.aig"))
+    aig2 = read_aiger_into_aig(str(temp_dir / "test.aig"))
 
     assert aig2.size() == 7
     assert aig2.nodes() == list(range(7))

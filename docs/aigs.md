@@ -261,6 +261,12 @@ When creating sequential AIGs, follow these rules:
 AIGs can be read from and written to various file formats.
 
 ```{code-cell} ipython3
+import tempfile
+from pathlib import Path
+
+# Get the temporary directory as a Path object
+temp_dir = Path(tempfile.gettempdir())
+
 from aigverse import write_aiger, read_aiger_into_aig, write_verilog, read_verilog_into_aig
 
 # Create a sample AIG
@@ -271,16 +277,16 @@ f = aig.create_and(a, b)
 aig.create_po(f)
 
 # Write to AIGER format
-write_aiger(aig, "example.aig")
+write_aiger(aig, "str(temp_dir / "example.aig")")
 
 # Write to Verilog format
-write_verilog(aig, "example.v")
+write_verilog(aig, "str(temp_dir / "example.v")")
 
 # Read from AIGER format
-read_aig = read_aiger_into_aig("example.aig")
+read_aig = read_aiger_into_aig("str(temp_dir / "example.aig")")
 
 # Read from Verilog format
-read_verilog_aig = read_verilog_into_aig("example.v")
+read_verilog_aig = read_verilog_into_aig("str(temp_dir / "example.v")")
 
 print(f"Original AIG size: {aig.size()}")
 print(f"Read AIG size: {read_aig.size()}")

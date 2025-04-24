@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import os
+import tempfile
 from pathlib import Path
 
 from aigverse import Aig, read_verilog_into_aig, write_verilog
 
+# Get the temporary directory as a Path object
+temp_dir = Path(tempfile.gettempdir())
 dir_path = Path(os.path.realpath(__file__)).parent
 
 
@@ -16,9 +19,9 @@ def test_write_verilog() -> None:
     a1 = aig.create_or(x1, x2)
     aig.create_po(a1)
 
-    write_verilog(aig, str(dir_path / "../resources/test.v"))
+    write_verilog(aig, str(temp_dir / "test.v"))
 
-    aig2 = read_verilog_into_aig(str(dir_path / "../resources/test.v"))
+    aig2 = read_verilog_into_aig(str(temp_dir / "test.v"))
 
     assert aig2.size() == 4
     assert aig2.nodes() == list(range(4))

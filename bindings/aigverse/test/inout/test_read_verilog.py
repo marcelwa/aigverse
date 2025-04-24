@@ -9,7 +9,7 @@ dir_path = Path(os.path.realpath(__file__)).parent
 
 
 def test_read_verilog() -> None:
-    aig = read_verilog_into_aig(str(dir_path / "../resources/case_verilog.v"))
+    aig = read_verilog_into_aig(str(dir_path / "../resources/test.v"))
     assert aig.size() == 6
     assert aig.nodes() == list(range(6))
     assert aig.num_gates() == 2
