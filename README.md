@@ -229,25 +229,21 @@ write_aiger(aig, "example.aig")
 
 ### Verilog Files
 
-You can read and write [Verilog](https://ieeexplore.ieee.org/document/803556) files.
+You can read and write gate-level Verilog files, which constitutes a very small subset of the Verilog standard, similar in extent to what ABC supports. For more information, see the [`lorina` parser](https://lorina.readthedocs.io/en/latest/verilog.html) used by this project.
 
 #### Parsing
-
-You can read a Verilog file as an AIG.
 
 ```python
 from aigverse import read_verilog_into_aig
 
-# Read Verilog files into AIG networks
+# Read a Verilog file into an AIG network
 aig = read_verilog_into_aig("example.v")
 
-# Print the size of the AIGs
+# Print the size of the AIG
 print(f"AIG Size: {aig.size()}")
 ```
 
 #### Writing
-
-You can write an AIG to a Verilog file.
 
 ```python
 from aigverse import write_verilog
