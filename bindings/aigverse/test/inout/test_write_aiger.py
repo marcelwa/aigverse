@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import tempfile
 from pathlib import Path
 
@@ -8,7 +7,6 @@ from aigverse import Aig, read_aiger_into_aig, write_aiger
 
 # Get the temporary directory as a Path object
 temp_dir = Path(tempfile.gettempdir())
-dir_path = Path(os.path.realpath(__file__)).parent
 
 
 def test_write_aiger() -> None:
