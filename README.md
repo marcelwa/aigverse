@@ -227,6 +227,31 @@ from aigverse import write_aiger
 write_aiger(aig, "example.aig")
 ```
 
+### Verilog Files
+
+You can read and write gate-level Verilog files, which constitutes a very small subset of the Verilog standard, similar in extent to what ABC supports. For more information, see the [`lorina` parser](https://lorina.readthedocs.io/en/latest/verilog.html) used by this project.
+
+#### Parsing
+
+```python
+from aigverse import read_verilog_into_aig
+
+# Read a Verilog file into an AIG network
+aig = read_verilog_into_aig("example.v")
+
+# Print the size of the AIG
+print(f"AIG Size: {aig.size()}")
+```
+
+#### Writing
+
+```python
+from aigverse import write_verilog
+
+# Write an AIG network to a Verilog file
+write_verilog(aig, "example.v")
+```
+
 ### Exporting Edge Lists
 
 You can export the AIG as an edge list, which is useful for integration with graph libraries like NetworkX.
