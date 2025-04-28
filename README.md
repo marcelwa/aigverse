@@ -121,7 +121,7 @@ for node in aig.nodes():
     print(f"Level of {node}: {depth_aig.level(node)}")
 ```
 
-## AIGs with Fanout Information
+### AIGs with Fanout Information
 
 If needed, you can retrieve the fanouts of AIG nodes as well:
 
