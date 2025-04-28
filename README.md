@@ -135,7 +135,7 @@ for fanout in fanout_aig.fanouts(n_and):
     print(f"Fanout of node {n_and}: {fanout}")
 ```
 
-### Sequential AIGs
+## Sequential AIGs
 
 `aigverse` also supports sequential AIGs, which are AIGs with registers.
 
