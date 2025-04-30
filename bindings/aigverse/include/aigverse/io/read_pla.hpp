@@ -37,7 +37,7 @@ void read_pla(pybind11::module& m, const std::string& network_name)
 
             if (read_pla_result != lorina::return_code::success)
             {
-                throw std::runtime_error("Error reading pla file");
+                throw std::runtime_error("Error reading PLA file");
             }
 
             return ntk;

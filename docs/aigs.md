@@ -280,7 +280,7 @@ write_verilog(aig, "example.v")
 read_aig = read_aiger_into_aig("example.aig")
 
 # Read from PLA format
-read_pla_aig = read_pla_into_aig("examples/case.pla")
+read_pla_aig = read_pla_into_aig("example.pla")
 
 # Read from Verilog format
 read_verilog_aig = read_verilog_into_aig("example.v")
