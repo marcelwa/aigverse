@@ -24,12 +24,14 @@ from .pyaigverse import (
     read_ascii_aiger_into_aig,
     read_ascii_aiger_into_sequential_aig,
     read_pla_into_aig,
+    read_verilog_into_aig,
     simulate,
     simulate_nodes,
     sop_refactoring,
     ternary_majority,
     to_edge_list,
     write_aiger,
+    write_verilog,
 )
 
 __all__ = [
@@ -54,10 +56,12 @@ __all__ = [
     "read_ascii_aiger_into_aig",
     "read_ascii_aiger_into_sequential_aig",
     "read_pla_into_aig",
+    "read_verilog_into_aig",
     "simulate",
     "simulate_nodes",
     "sop_refactoring",
     "ternary_majority",
     "to_edge_list",
     "write_aiger",
+    "write_verilog",
 ]
