@@ -23,7 +23,7 @@ verification, hardware design, and optimization tasks.
   </a>
 </p>
 
-## Features
+## ✨ Features
 
 - **Efficient Logic Representation**: Use And-Inverter Graphs (AIGs) to model and manipulate logic circuits in Python.
 - **File Format Support**: Read and write AIGER, Verilog, Bench, PLA, ... files for interoperability with other logic
@@ -33,7 +33,7 @@ verification, hardware design, and optimization tasks.
 - **High-Level API**: Simplify logic synthesis tasks with a Pythonic interface for AIG manipulation and optimization.
 - **Integration with Machine Learning**: Convenient integration with popular data science libraries.
 
-## Motivation
+## 🤔 Motivation
 
 As AI and machine learning (ML) increasingly impact hardware design automation, there's a growing need for tools that
 integrate logic synthesis with ML workflows. `aigverse` provides a Python-friendly interface for logic synthesis, making
@@ -43,7 +43,7 @@ maintaining accessibility through its Python interface. With `aigverse`, you can
 directly from Python. Eventually, we aim to provide seamless integration with popular ML libraries, enabling the development
 of novel AI-driven synthesis and optimization tools.
 
-## Installation
+## 📦 Installation
 
 `aigverse` is built using the EPFL Logic Synthesis Libraries with [pybind11](https://github.com/pybind/pybind11).
 It is available via PyPI for all major operating systems and supports Python 3.9 to 3.13.
@@ -52,11 +52,11 @@ It is available via PyPI for all major operating systems and supports Python 3.9
 pip install aigverse
 ```
 
-## Usage
+## 🚀 Usage
 
 The following gives a shallow overview on `aigverse`. Detailed documentation and examples are available at [ReadTheDocs](https://aigverse.readthedocs.io/).
 
-### Basic Example: Creating an AIG
+### 🏗️ Basic Example: Creating an AIG
 
 In `aigverse`, you can create a simple And-Inverter Graph (AIG) and manipulate it using various logic operations.
 
@@ -84,7 +84,7 @@ print(f"AIG Size: {aig.size()}")
 
 Note that all primary inputs (PIs) must be created before any logic gates.
 
-### Iterating over AIG Nodes
+### 🔍 Iterating over AIG Nodes
 
 You can iterate over all nodes in the AIG, or specific subsets like the primary inputs or only logic nodes (gates).
 
@@ -107,7 +107,7 @@ for fanin in aig.fanins(n_and):
     print(f"Fanin of {n_and}: {fanin}")
 ```
 
-### Depth and Level Computation
+### 📏 Depth and Level Computation
 
 You can compute the depth of the AIG network and the level of each node. Depth information is useful for estimating the
 critical path delay of a respective circuit.
@@ -121,7 +121,7 @@ for node in aig.nodes():
     print(f"Level of {node}: {depth_aig.level(node)}")
 ```
 
-### AIGs with Fanout Information
+### 🕸️ AIGs with Fanout Information
 
 If needed, you can retrieve the fanouts of AIG nodes as well:
 
@@ -135,7 +135,7 @@ for fanout in fanout_aig.fanouts(n_and):
     print(f"Fanout of node {n_and}: {fanout}")
 ```
 
-### Sequential AIGs
+### 🔄 Sequential AIGs
 
 `aigverse` also supports sequential AIGs, which are AIGs with registers.
 
@@ -159,7 +159,7 @@ It is to be noted that the construction of sequential AIGs comes with some cavea
 2. All register inputs (RIs) must be created after all primary outputs (POs).
 3. As for regular AIGs, all PIs and ROs must be created before any logic gates.
 
-### Logic Optimization
+### ⚡ Logic Optimization
 
 You can optimize AIGs using various algorithms. For example, you can perform resubstitution to simplify logic using
 shared divisors. Similarly, refactoring collapses maximmal fanout-free cones (MFFCs) into truth tables and resynthesizes
@@ -181,7 +181,7 @@ print(f"Original AIG Size:  {aig_clone.size()}")
 print(f"Optimized AIG Size: {aig.size()}")
 ```
 
-### Equivalence Checking
+### ✅ Equivalence Checking
 
 Equivalence of AIGs (e.g., after optimization) can be checked using SAT-based equivalence checking.
 
@@ -197,64 +197,45 @@ else:
     print("AIGs are NOT equivalent!")
 ```
 
-### AIGER Files
+### 📄 File Format Support
 
-You can read and write (ASCII) [AIGER](https://fmv.jku.at/aiger/) files.
+You can read and write AIGs in various file formats, including (ASCII) [AIGER](https://fmv.jku.at/aiger/) and gate-level
+Verilog.
 
-#### Parsing
+#### ✏️ Writing
 
 ```python
-from aigverse import read_aiger_into_aig, read_ascii_aiger_into_aig
+from aigverse import write_aiger, write_verilog
+
+# Write an AIG network to an AIGER file
+write_aiger(aig, "example.aig")
+# Write an AIG network to a Verilog file
+write_verilog(aig, "example.v")
+```
+
+#### 👓 Parsing
+
+```python
+from aigverse import (
+    read_aiger_into_aig,
+    read_ascii_aiger_into_aig,
+    read_verilog_into_aig,
+)
 
 # Read AIGER files into AIG networks
 aig1 = read_aiger_into_aig("example.aig")
 aig2 = read_ascii_aiger_into_aig("example.aag")
-
-# Print the size of the AIGs
-print(f"AIG Size: {aig1.size()}")
-print(f"AIG Size: {aig2.size()}")
+# Read a Verilog file into an AIG network
+aig3 = read_verilog_into_aig("example.v")
 ```
 
 Additionally, you can read AIGER files into sequential AIGs using `read_aiger_into_sequential_aig` and
 `read_ascii_aiger_into_sequential_aig`.
 
-#### Writing
+### 🔗 Exporting Edge Lists
 
-```python
-from aigverse import write_aiger
-
-# Write an AIG network to an AIGER file
-write_aiger(aig, "example.aig")
-```
-
-### Verilog Files
-
-You can read and write gate-level Verilog files, which constitutes a very small subset of the Verilog standard, similar in extent to what ABC supports. For more information, see the [`lorina` parser](https://lorina.readthedocs.io/en/latest/verilog.html) used by this project.
-
-#### Parsing
-
-```python
-from aigverse import read_verilog_into_aig
-
-# Read a Verilog file into an AIG network
-aig = read_verilog_into_aig("example.v")
-
-# Print the size of the AIG
-print(f"AIG Size: {aig.size()}")
-```
-
-#### Writing
-
-```python
-from aigverse import write_verilog
-
-# Write an AIG network to a Verilog file
-write_verilog(aig, "example.v")
-```
-
-### Exporting Edge Lists
-
-You can export the AIG as an edge list, which is useful for integration with graph libraries like NetworkX.
+You can export the AIG as an edge list, which is useful for integration with graph libraries like
+[NetworkX](https://networkx.org/).
 
 ```python
 from aigverse import to_edge_list
@@ -270,12 +251,12 @@ edges = [(e.source, e.target, e.weight) for e in edges]
 Edge lists also support sequential AIGs. They will have additional connections from register inputs (RIs) to register
 outputs (ROs) which form feedback loops.
 
-### Truth Tables
+### 🔢 Truth Tables
 
 Small Boolean functions can be efficiently represented using truth tables. `aigverse` enables the creation and
 manipulation of truth tables by wrapping a portion of the [kitty](https://github.com/msoeken/kitty) library.
 
-#### Creation
+#### 🎉 Creation
 
 ```python
 from aigverse import TruthTable
@@ -286,7 +267,7 @@ tt = TruthTable(3)
 tt.create_from_hex_string("e8")
 ```
 
-#### Manipulation
+#### 🔧 Manipulation
 
 ```python
 # Flip each bit in the truth table
@@ -304,7 +285,7 @@ tt.clear()
 print(tt.is_const0())
 ```
 
-#### Symbolic Simulation of AIGs
+#### 🔣 Symbolic Simulation of AIGs
 
 ```python
 from aigverse import simulate, simulate_nodes
@@ -324,7 +305,7 @@ for node, tt in n_to_tt.items():
     print(f"Node {node}: {tt.to_binary()}")
 ```
 
-#### Exporting as Lists of Lists
+#### 📃 Exporting as Lists of Lists
 
 For some machine learning applications, it may be useful to export the truth table as a list of lists.
 
@@ -333,12 +314,12 @@ For some machine learning applications, it may be useful to export the truth tab
 tt_list = [[int(tt.get_bit(i)) for i in range(tt.num_bits())] for tt in tts]
 ```
 
-## Contributing
+## 🙌 Contributing
 
 Contributions are welcome! If you'd like to contribute to `aigverse`, please see the
 [contribution guide](https://aigverse.readthedocs.io/en/latest/contributing.html). I appreciate feedback and suggestions
 for improving the library.
 
-## License
+## 📜 License
 
 `aigverse` is available under the MIT License.
