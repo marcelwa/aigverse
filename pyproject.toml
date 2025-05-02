@@ -194,7 +194,9 @@ ignore = [
     "PLC0415", # Import should be at top of file
     "S101", # Use of assert detected
     "S404", # `subprocess` module is possibly insecure
-    "TID252"   # Prefer absolute imports over relative imports from parent modules
+    "TID252", # Prefer absolute imports over relative imports from parent modules
+    "S301", # pickle can be insecure
+    "S403", # pickle can be insecure
 ]
 
 isort.required-imports = ["from __future__ import annotations"]
