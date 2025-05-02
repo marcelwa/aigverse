@@ -632,20 +632,26 @@ def show_graph(aig: Aig, name: str) -> None:
     edge_tuples = [(e.source, e.target, e.weight) for e in edges]
 
     # Create a NetworkX graph
-    G = nx.DiGraph()
+    g = nx.DiGraph()
     for src, tgt, weight in edge_tuples:
-        G.add_edge(src, tgt, weight=weight)
+        g.add_edge(src, tgt, weight=weight)
 
     # Plot the graph
     plt.figure(figsize=(10, 6))
-    pos = graphviz_layout(G, prog="dot")
-    nx.draw(G, pos, with_labels=True, node_color="lightblue", node_size=500, arrowsize=20, font_size=12)
-    labels = {(u, v): data["weight"] for u, v, data in G.edges(data=True)}
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=labels)
+    pos = graphviz_layout(g, prog="dot")
+    nx.draw(g, pos, with_labels=True, node_color="lightblue", node_size=500, arrowsize=20, font_size=12)
+    labels = {(u, v): data["weight"] for u, v, data in g.edges(data=True)}
+    nx.draw_networkx_edge_labels(g, pos, edge_labels=labels)
     plt.title("AIG as a Hierarchical Graph")
 
     # write plot to file
     plt.savefig(f"{name}.png")
+
+
+def write_dot(aig: Aig, name: str) -> None:
+    from aigverse import write_dot
+
+    write_dot(aig, f"{name}.dot")
 
 
 def test_pickle_complex_aig() -> None:
@@ -659,14 +665,14 @@ def test_pickle_complex_aig() -> None:
 
     # Create gates
     f1 = aig.create_maj(a, b, e)
-    # f2 = aig.create_maj(c, d, e)
+    f2 = aig.create_maj(c, d, e)
     f3 = aig.create_xor(a, b)
     f4 = aig.create_xor(c, d)
-    # f5 = aig.create_or(f1, f2)
+    f5 = aig.create_or(f1, f2)
     f6 = aig.create_and(f3, f4)
 
     # Create primary outputs
-    # aig.create_po(f5)
+    aig.create_po(f5)
     aig.create_po(f6)
     aig.create_po(f1)
 
@@ -686,6 +692,7 @@ def test_pickle_complex_aig() -> None:
 
     # plot the graph
     show_graph(aig, "aig")
+    write_dot(aig, "aig")
 
     # Check initial size and gate count
     # assert aig.size() == 22
@@ -701,6 +708,7 @@ def test_pickle_complex_aig() -> None:
 
     # plot the graph
     show_graph(unpickled_aig, "unpickled_aig")
+    write_dot(unpickled_aig, "unpickled_aig")
 
     # Check if the original and unpickled networks are equivalent
     assert equivalence_checking(aig, unpickled_aig)
