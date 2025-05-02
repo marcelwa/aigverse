@@ -13,6 +13,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <tuple>
@@ -77,8 +78,35 @@ void ntk_index_list(pybind11::module& m, const std::string& network_name)
                      return pos;
                  })
 
-            // .def(
-            //     "__iter__", [](const IndexList& il) { return py::make_iterator(il.edges); }, py::keep_alive<0, 1>())
+            .def("__iter__",
+                 [](const IndexList& il)
+                 {
+                     const auto     raw      = il.raw();
+                     const py::list raw_list = py::cast(raw);
+                     return py::iter(raw_list);
+                 })
+            .def("__getitem__",
+                 [](const IndexList& il, const std::size_t i)
+                 {
+                     const auto& v = il.raw();
+                     if (i >= v.size())
+                     {
+                         throw py::index_error();
+                     }
+                     return v[i];
+                 })
+            .def("__setitem__",
+                 [](IndexList& il, const std::size_t i, const uint32_t value)
+                 {
+                     auto v = il.raw();
+                     if (i >= v.size())
+                     {
+                         throw py::index_error();
+                     }
+                     v[i] = value;
+                     il   = IndexList(v);  // reconstruct the index list with the new vector
+                 })
+
             .def("__len__", [](const IndexList& il) { return il.size(); })
 
             .def("__repr__", [](const IndexList& il) { return fmt::format("IndexList({})", il); })

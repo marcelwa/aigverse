@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import pytest
+
 from aigverse import Aig, AigIndexList, TruthTable, simulate, to_aig, to_index_list
 
 
 def test_decode_index_list_into_aig() -> None:
-    raw_list = [4, 1, 3, 2, 4, 6, 8, 12, 10, 14]
-    il = AigIndexList(raw_list)
+    il = AigIndexList([4, 1, 3, 2, 4, 6, 8, 12, 10, 14])
 
     aig = to_aig(il)
 
@@ -67,3 +68,35 @@ def test_aig_index_list_methods() -> None:
 
     # PIs will be left
     assert il.size() == 3
+
+
+def test_index_list_iter_get_set_item() -> None:
+    il = AigIndexList([4, 1, 3, 2, 4, 6, 8, 12, 10, 14])
+
+    # Test __iter__
+    assert list(iter(il)) == [4, 1, 3, 2, 4, 6, 8, 12, 10, 14]
+
+    # Test __getitem__
+    assert il[0] == 4
+    assert il[1] == 1
+    assert il[2] == 3
+
+    # Test __setitem__
+    il[2] = 99
+    assert il[2] == 99
+
+    # Restore original value
+    il[2] = 3
+    assert il[2] == 3
+
+    # Test out-of-bounds
+    with pytest.raises(IndexError):
+        _ = il[100]
+    with pytest.raises(IndexError):
+        il[100] = 1
+
+
+def test_index_list_to_python_list() -> None:
+    il = AigIndexList([4, 1, 3, 2, 4, 6, 8, 12, 10, 14])
+    pylist = [il.num_pis(), il.num_pos(), il.num_gates(), il.gates(), il.pos()]
+    assert pylist == [4, 1, 3, [(2, 4), (6, 8), (12, 10)], [14]]
