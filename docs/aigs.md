@@ -293,9 +293,13 @@ in extent to what ABC supports. For more information, see the
 [`lorina` parser](https://lorina.readthedocs.io/en/latest/verilog.html) used by this project.
 :::
 
-## Graph Representation
+## Adapters
 
-AIGs can be exported as edge lists for integration with graph analysis libraries like NetworkX.
+Adapters provide alternative representations of AIGs for integration with other tools or workflows.
+
+### Edge Lists
+
+You can export AIGs as edge lists, which are useful for integration with graph libraries like [NetworkX](https://networkx.org/).
 
 ```{code-cell} ipython3
 from aigverse import to_edge_list
@@ -313,13 +317,14 @@ f1 = aig.create_and(a, b)
 f2 = aig.create_or(f1, c)
 aig.create_po(f2)
 
-# Get the edge list
+# Export the AIG as an edge list
 edges = to_edge_list(aig)
-edge_tuples = [(e.source, e.target, e.weight) for e in edges]
+# Convert to a Python list of tuples
+edges = [(e.source, e.target, e.weight) for e in edges]
 
 # Create a NetworkX graph
 G = nx.DiGraph()
-for src, tgt, weight in edge_tuples:
+for src, tgt, weight in edges:
     G.add_edge(src, tgt, weight=weight)
 
 # Plot the graph
@@ -333,6 +338,45 @@ plt.title("AIG as a Hierarchical Graph")
 plt.show()
 ```
 
+Edge lists also support sequential AIGs. They will have additional connections from register inputs (RIs) to register
+outputs (ROs) which form feedback loops.
+
+### Index Lists
+
+Alternatively, index lists provide a compact, serialization-friendly representation of an AIG's structure as a flat
+list of integers. This is useful for ML pipelines, dataset generation, or exporting AIGs for use in environments where
+fixed-size numeric arrays are required.
+
+```{code-cell} ipython3
+from aigverse import to_index_list, to_aig, AigIndexList
+
+# Create a sample AIG
+aig = Aig()
+a = aig.create_pi()
+b = aig.create_pi()
+c = aig.create_pi()
+d = aig.create_pi()
+t0 = aig.create_and(a, b)
+t1 = aig.create_and(c, d)
+t2 = aig.create_xor(t0, t1)
+aig.create_po(t2)
+
+# Convert an AIG to an index list
+indices = to_index_list(aig)
+
+# Convert an index list back to an AIG
+aig2 = to_aig(indices)
+
+# Convert to a Python list
+indices = [int(i) for i in indices]
+print(indices)
+```
+
+For more information on the index list format, see
+[`mockturtle`'s documentation](https://mockturtle.readthedocs.io/en/latest/utils/util_data_structures.html#index-list).
+
 ## Symbolic Simulation
 
-For simulating the truth tables of AIGs, see the [Truth Tables](truth_tables.md) documentation. The {py:func}`~aigverse.simulate` and {py:func}`~aigverse.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes of an AIG.
+For simulating the truth tables of AIGs, see the [Truth Tables](truth_tables.md) documentation. The {py:func}`~aigverse.simulate`
+and {py:func}`~aigverse.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes
+of an AIG.

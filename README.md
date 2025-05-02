@@ -232,9 +232,13 @@ aig3 = read_verilog_into_aig("example.v")
 Additionally, you can read AIGER files into sequential AIGs using `read_aiger_into_sequential_aig` and
 `read_ascii_aiger_into_sequential_aig`.
 
-### 🔗 Exporting Edge Lists
+### 🔌 Adapters
 
-You can export the AIG as an edge list, which is useful for integration with graph libraries like
+Adapters provide alternative representations of AIGs for integration with other tools or workflows.
+
+#### Edge Lists
+
+You can export AIGs as edge lists, which are useful for integration with graph libraries like
 [NetworkX](https://networkx.org/).
 
 ```python
@@ -250,6 +254,28 @@ edges = [(e.source, e.target, e.weight) for e in edges]
 
 Edge lists also support sequential AIGs. They will have additional connections from register inputs (RIs) to register
 outputs (ROs) which form feedback loops.
+
+#### Index Lists
+
+Alternatively, index lists provide a compact, serialization-friendly representation of an AIG's structure as a flat list
+of integers. This is useful for ML pipelines, dataset generation, or exporting AIGs for use in environments where
+fixed-size numeric arrays are required.
+
+```python
+from aigverse import to_index_list, to_aig, AigIndexList
+
+# Convert an AIG to an index list
+indices = to_index_list(aig)
+print(indices)
+
+# Convert an index list back to an AIG
+aig2 = to_aig(indices)
+
+# Convert to a Python list
+indices = [int(i) for i in indices]
+```
+
+For more information on the index list format, see [`mockturtle`'s documentation](https://mockturtle.readthedocs.io/en/latest/utils/util_data_structures.html#index-list).
 
 ### 🔢 Truth Tables
 
