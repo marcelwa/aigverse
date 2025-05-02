@@ -54,9 +54,9 @@ def test_aig_index_list_methods() -> None:
     il = AigIndexList(3)
     assert il.num_pis() == 3
 
-    il.add_and(0, 1)
-    il.add_xor(1, 2)
-    il.add_output(2)
+    il.add_and(1, 2)
+    il.add_and(2, 3)
+    il.add_output(5)
 
     assert il.num_gates() == 2
     assert il.num_pos() == 1
@@ -100,3 +100,6 @@ def test_index_list_to_python_list() -> None:
     il = AigIndexList([4, 1, 3, 2, 4, 6, 8, 12, 10, 14])
     pylist = [il.num_pis(), il.num_pos(), il.num_gates(), il.gates(), il.pos()]
     assert pylist == [4, 1, 3, [(2, 4), (6, 8), (12, 10)], [14]]
+
+    pylist = [int(i) for i in il]
+    assert pylist == [4, 1, 3, 2, 4, 6, 8, 12, 10, 14]
