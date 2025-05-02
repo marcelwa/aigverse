@@ -287,6 +287,12 @@ print(f"Read AIG size: {read_aig.size()}")
 print(f"Read Verilog AIG size: {read_verilog_aig.size()}")
 ```
 
+:::{note}
+The gate-level Verilog file support constitutes a very small subset of the Verilog standard, similar
+in extent to what ABC supports. For more information, see the
+[`lorina` parser](https://lorina.readthedocs.io/en/latest/verilog.html) used by this project.
+:::
+
 ## Graph Representation
 
 AIGs can be exported as edge lists for integration with graph analysis libraries like NetworkX.
