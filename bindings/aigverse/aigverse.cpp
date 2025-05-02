@@ -10,6 +10,7 @@
 #include "aigverse/algorithms/simulation.hpp"
 #include "aigverse/io/read_aiger.hpp"
 #include "aigverse/io/write_aiger.hpp"
+#include "aigverse/io/write_dot.hpp"
 #include "aigverse/networks/logic_networks.hpp"
 #include "aigverse/truth_tables/operations.hpp"
 #include "aigverse/truth_tables/truth_table.hpp"
@@ -48,6 +49,7 @@ PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())
      */
     aigverse::read_aiger(m);
     aigverse::write_aiger(m);
+    aigverse::write_dot(m);
 
     /**
      * Adapters

@@ -28,6 +28,7 @@ from .pyaigverse import (
     ternary_majority,
     to_edge_list,
     write_aiger,
+    write_dot,
 )
 
 __all__ = [
@@ -56,4 +57,5 @@ __all__ = [
     "ternary_majority",
     "to_edge_list",
     "write_aiger",
+    "write_dot",
 ]
