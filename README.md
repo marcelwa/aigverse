@@ -161,9 +161,9 @@ It is to be noted that the construction of sequential AIGs comes with some cavea
 
 ### ⚡ Logic Optimization
 
-You can optimize AIGs using various algorithms. For example, you can perform resubstitution to simplify logic using
-shared divisors. Similarly, refactoring collapses maximmal fanout-free cones (MFFCs) into truth tables and resynthesizes
-them into new structures. Cut rewriting optimizes the AIG by replacing cuts with improved ones from a pre-computed NPN
+You can optimize AIGs using various algorithms. For example, you can perform _resubstitution_ to simplify logic using
+shared divisors. Similarly, _refactoring_ collapses maximal fanout-free cones (MFFCs) into truth tables and resynthesizes
+them into new structures. Cut _rewriting_ optimizes the AIG by replacing cuts with improved ones from a pre-computed NPN
 database.
 
 ```python
