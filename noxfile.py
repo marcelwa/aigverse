@@ -50,6 +50,7 @@ def _run_tests(
         session.install("ninja")
 
     # install build and test dependencies on top of the existing environment
+    python_flag = f"--python={session.python}"
     session.run(
         "uv",
         "sync",
@@ -58,6 +59,7 @@ def _run_tests(
         "build",
         "--only-group",
         "test",
+        python_flag,
         *install_args,
         env=env,
     )
@@ -68,6 +70,7 @@ def _run_tests(
         "--no-dev",  # do not auto-install dev dependencies
         "--no-build-isolation-package",
         "aigverse",  # build the project without isolation
+        python_flag,
         *install_args,
         env=env,
     )
@@ -77,6 +80,7 @@ def _run_tests(
         "uv",
         "run",
         "--no-sync",  # do not sync as everything is already installed
+        python_flag,
         *install_args,
         "pytest",
         *pytest_run_args,
