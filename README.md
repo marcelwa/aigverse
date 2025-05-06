@@ -228,6 +228,7 @@ aig1 = read_aiger_into_aig("example.aig")
 aig2 = read_ascii_aiger_into_aig("example.aag")
 # Read a Verilog file into an AIG network
 aig3 = read_verilog_into_aig("example.v")
+# Read a PLA file into an AIG network
 aig4 = read_pla_into_aig("example.pla")
 ```
 
