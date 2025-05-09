@@ -3,6 +3,7 @@
 //
 
 #include "aigverse/adapters/edge_list.hpp"
+#include "aigverse/adapters/index_list.hpp"
 #include "aigverse/algorithms/equivalence_checking.hpp"
 #include "aigverse/algorithms/refactoring.hpp"
 #include "aigverse/algorithms/resubstitution.hpp"
@@ -59,4 +60,5 @@ PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())
      * Adapters
      */
     aigverse::to_edge_list(m);
+    aigverse::to_index_list(m);
 }
