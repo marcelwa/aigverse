@@ -2,7 +2,72 @@ from __future__ import annotations
 
 import pytest
 
-from aigverse import Aig, AigIndexList, TruthTable, simulate, to_aig, to_index_list
+from aigverse import Aig, AigIndexList, TruthTable, equivalence_checking, simulate, to_aig, to_index_list
+
+
+def test_decode_empty_index_list_into_aig() -> None:
+    il = AigIndexList([])
+
+    aig = to_aig(il)
+
+    assert aig.num_gates() == 0
+    assert aig.num_pis() == 0
+    assert aig.num_pos() == 0
+
+    result = simulate(aig)
+
+    assert len(result) == 0
+
+
+def test_encode_empty_aig_into_index_list() -> None:
+    aig = Aig()
+
+    il = to_index_list(aig)
+
+    assert il.num_pis() == 0
+    assert il.num_pos() == 0
+    assert il.num_gates() == 0
+    assert il.size() == 3  # [0, 0, 0]
+    assert isinstance(il.raw(), list)
+    assert il.raw() == [0, 0, 0]
+    assert isinstance(str(il), str)
+    assert str(il) == "{0, 0, 0}"
+    assert isinstance(repr(il), str)
+    assert repr(il) == "IndexList(#PIs: 0, #POs: 0, #Gates: 0, Gates: [], POs: [])"
+
+
+def test_decode_pi_only_index_list_into_aig() -> None:
+    il = AigIndexList()
+
+    il.add_inputs(4)
+    assert il.num_pis() == 4
+
+    aig = to_aig(il)
+
+    assert aig.num_gates() == 0
+    assert aig.num_pis() == 4
+    assert aig.num_pos() == 0
+
+
+def test_encode_pi_only_aig_into_index_list() -> None:
+    aig = Aig()
+    aig.create_pi()
+    aig.create_pi()
+    aig.create_pi()
+    aig.create_pi()
+
+    il = to_index_list(aig)
+
+    assert il.num_pis() == 4
+    assert il.num_pos() == 0
+    assert il.num_gates() == 0
+    assert il.size() == 3  # [4, 0, 0]
+    assert isinstance(il.raw(), list)
+    assert il.raw() == [4, 0, 0]
+    assert isinstance(str(il), str)
+    assert str(il) == "{4, 0, 0}"
+    assert isinstance(repr(il), str)
+    assert repr(il) == "IndexList(#PIs: 4, #POs: 0, #Gates: 0, Gates: [], POs: [])"
 
 
 def test_decode_index_list_into_aig() -> None:
@@ -48,6 +113,36 @@ def test_encode_aig_into_index_list() -> None:
         repr(il)
         == "IndexList(#PIs: 4, #POs: 1, #Gates: 5, Gates: [(2, 4), (6, 8), (10, 13), (11, 12), (15, 17)], POs: [19])"
     )
+
+
+def test_encode_decode_aig_with_inverted_signals() -> None:
+    aig = Aig()
+    a = aig.create_pi()
+    b = aig.create_pi()
+    c = aig.create_pi()
+
+    t0 = aig.create_and(a, b)
+    t1 = aig.create_and(b, ~c)
+    t2 = aig.create_and(~t0, ~t1)
+
+    aig.create_po(~t1)
+    aig.create_po(t2)
+
+    il = to_index_list(aig)
+
+    assert il.num_pis() == 3
+    assert il.num_pos() == 2
+    assert il.num_gates() == 3
+    assert il.size() == 11
+    assert il.raw() == [3, 2, 3, 2, 4, 4, 7, 9, 11, 11, 12]
+
+    aig2 = to_aig(il)
+
+    assert aig2.num_pis() == 3
+    assert aig2.num_pos() == 2
+    assert aig2.num_gates() == 3
+
+    assert equivalence_checking(aig, aig2)
 
 
 def test_aig_index_list_methods() -> None:
