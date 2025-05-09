@@ -376,11 +376,9 @@ indices = [int(i) for i in indices]
 print(indices)
 ```
 
-`[4, 1, 5, 2, 4, 7, 9, 10, 13, 11, 12, 15, 17, 19]`
-
 The first three entries encode number of PIs, number of POs, and number of gates, respectively. In the example above,
 those are `4`, `1`, and `5`. Successive pairs of indices refer to the fanins signals of nodes. Each fanin exists in two
-polarities: negated = odd index, and non-negated = even index. In the example, `2` and `4` refer to then on-negated
+polarities: negated = odd index, and non-negated = even index. In the example, `2` and `4` refer to the non-negated
 signals originating from PIs `1` and `2`. These form the first AND gate. The subsequent `7` and `9` are odd, hence,
 negated. If the first index is lower than the second, an AND gate is encoded. Otherwise, it is an XOR gate. The final
 indices of the list refer to the PO signals. It must be ensured that they match the encoded number of POs.
