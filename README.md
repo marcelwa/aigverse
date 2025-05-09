@@ -199,8 +199,8 @@ else:
 
 ### 📄 File Format Support
 
-You can read and write AIGs in various file formats, including (ASCII) [AIGER](https://fmv.jku.at/aiger/) and gate-level
-Verilog.
+You can read and write AIGs in various file formats, including (ASCII) [AIGER](https://fmv.jku.at/aiger/), gate-level
+Verilog and PLA.
 
 #### ✏️ Writing
 
@@ -220,6 +220,7 @@ from aigverse import (
     read_aiger_into_aig,
     read_ascii_aiger_into_aig,
     read_verilog_into_aig,
+    read_pla_into_aig,
 )
 
 # Read AIGER files into AIG networks
@@ -227,6 +228,8 @@ aig1 = read_aiger_into_aig("example.aig")
 aig2 = read_ascii_aiger_into_aig("example.aag")
 # Read a Verilog file into an AIG network
 aig3 = read_verilog_into_aig("example.v")
+# Read a PLA file into an AIG network
+aig4 = read_pla_into_aig("example.pla")
 ```
 
 Additionally, you can read AIGER files into sequential AIGs using `read_aiger_into_sequential_aig` and
