@@ -135,12 +135,7 @@ void ntk_index_list(pybind11::module& m, const std::string& network_name)
             [](const IndexList& il)
             {
                 Ntk ntk{};
-
-                if (il.num_pis() != 0 && il.num_gates() != 0)
-                {
-                    mockturtle::decode(ntk, il);
-                }
-
+                mockturtle::decode(ntk, il);
                 return ntk;
             },
             "il"_a);

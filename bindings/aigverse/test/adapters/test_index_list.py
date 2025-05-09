@@ -6,7 +6,7 @@ from aigverse import Aig, AigIndexList, TruthTable, equivalence_checking, simula
 
 
 def test_decode_empty_index_list_into_aig() -> None:
-    il = AigIndexList([])
+    il = AigIndexList()
 
     aig = to_aig(il)
 
