@@ -87,6 +87,23 @@ def test_decode_index_list_into_aig() -> None:
     assert tt_spec == tt_aig
 
 
+def test_implicit_conversion() -> None:
+    il = [4, 1, 3, 2, 4, 6, 8, 12, 10, 14]
+
+    aig = to_aig(il)  # type: ignore[arg-type]
+
+    assert aig.num_gates() == 5
+    assert aig.num_pis() == 4
+    assert aig.num_pos() == 1
+
+    tt_spec = TruthTable(4)
+    tt_spec.create_from_hex_string("7888")
+
+    tt_aig = simulate(aig)[0]
+
+    assert tt_spec == tt_aig
+
+
 def test_encode_aig_into_index_list() -> None:
     aig = Aig()
     a = aig.create_pi()
