@@ -10,6 +10,7 @@
 #include <fmt/format.h>
 #include <mockturtle/traits.hpp>
 #include <mockturtle/views/depth_view.hpp>
+#include <mockturtle/views/fanout_view.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -424,6 +425,27 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("is_on_critical_path", &DepthNtk::is_on_critical_path, "n"_a)
         .def("update_levels", &DepthNtk::update_levels)
         .def("create_po", &DepthNtk::create_po, "f"_a)
+
+        ;
+
+    /**
+     * Fanout network.
+     */
+    using FanoutNtk = mockturtle::fanout_view<Ntk>;
+    py::class_<FanoutNtk, Ntk>(m, fmt::format("Fanout{}", network_name).c_str())
+        .def(py::init<>())
+        .def(py::init<const Ntk&>(), "ntk"_a)
+        .def(py::init<const FanoutNtk&>(), "ntk"_a)
+        .def(
+            "fanouts",
+            [](const FanoutNtk& ntk, const Node& n)
+            {
+                std::vector<Node> fanouts{};
+                fanouts.reserve(ntk.fanout_size(n));
+                ntk.foreach_fanout(n, [&fanouts](const auto& f) { fanouts.push_back(f); });
+                return fanouts;
+            },
+            "n"_a)
 
         ;
 
