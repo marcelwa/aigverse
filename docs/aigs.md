@@ -195,6 +195,7 @@ Fanouts of AIG nodes can be collected using {py:class}`~aigverse.FanoutAig`.
 
 ```{code-cell} ipython3
 from aigverse import FanoutAig
+
 # Create a sample AIG
 aig = Aig()
 x1 = aig.create_pi()
@@ -261,7 +262,13 @@ When creating sequential AIGs, follow these rules:
 AIGs can be read from and written to various file formats.
 
 ```{code-cell} ipython3
-from aigverse import write_aiger, read_aiger_into_aig, read_pla_into_aig, write_verilog, read_verilog_into_aig
+from aigverse import (
+   write_aiger,
+   read_aiger_into_aig,
+   read_pla_into_aig,
+   write_verilog,
+   read_verilog_into_aig
+)
 
 # Create a sample AIG
 aig = Aig()
@@ -296,6 +303,48 @@ The gate-level Verilog file support constitutes a very small subset of the Veril
 in extent to what ABC supports. For more information, see the
 [`lorina` parser](https://lorina.readthedocs.io/en/latest/verilog.html) used by this project.
 :::
+
+## `pickle` Support
+
+AIGs support Python's [`pickle`](https://docs.python.org/3/library/pickle.html) protocol, allowing you to serialize and
+deserialize AIG objects for persistent storage. This is useful for saving intermediate results, sharing AIGs between
+processes, quickly restoring previously computed networks, or interface with data science or machine learning workflows.
+
+```{code-cell} ipython3
+import pickle
+
+# Save AIG to a file using pickle
+with open("aig.pkl", "wb") as f:
+    pickle.dump(aig, f)
+
+# Load the AIG from the pickle file
+with open("aig.pkl", "rb") as f:
+    unpickled_aig = pickle.load(f)
+```
+
+You can also pickle and unpickle multiple AIGs at once by storing them in a tuple or list.
+
+```{code-cell} ipython3
+aig1 = Aig()
+a1 = aig1.create_pi()
+b1 = aig1.create_pi()
+f1 = aig1.create_and(a1, b1)
+aig1.create_po(f1)
+
+aig2 = Aig()
+a2 = aig2.create_pi()
+b2 = aig2.create_pi()
+f2 = aig2.create_or(a2, b2)
+aig2.create_po(f2)
+
+# Pickle both AIGs together
+with open("aigs.pkl", "wb") as f:
+    pickle.dump((aig1, aig2), f)
+
+# Unpickle them
+with open("aigs.pkl", "rb") as f:
+    unpickled_aig1, unpickled_aig2 = pickle.load(f)
+```
 
 ## Adapters
 
