@@ -26,131 +26,6 @@ namespace detail
 {
 
 template <typename Ntk>
-struct network_pickler
-{};
-
-/**
- * Pickling support for AIG networks.
- */
-template <>
-struct network_pickler<aigverse::aig>
-{
-    /**
-     * Pickle an AIG network.
-     *
-     * This function serializes the AIG network into a Python tuple. The tuple contains the following elements:
-     * 1. Number of primary inputs (PIs).
-     * 2. List of gates, where each gate is represented as a pair of incoming signals (fanins).
-     * 3. List of primary outputs (POs).
-     *
-     * @param ntk Aig to pickle.
-     * @return A Python tuple that encodes the AIG.
-     */
-    static pybind11::tuple pickle(const aigverse::aig& ntk)
-    {
-        // number of primary inputs
-        const uint64_t num_pis = ntk.num_pis();
-
-        const mockturtle::topo_view topo_ntk{ntk};
-
-        // list of gates
-        std::vector<std::pair<uint64_t, uint64_t>> gates{};
-        gates.reserve(ntk.num_gates());
-        topo_ntk.foreach_gate(
-            [&](const auto& g)
-            {
-                // incoming signals
-                std::pair<uint64_t, uint64_t> fanins{};
-
-                // extract incoming signals
-                topo_ntk.foreach_fanin(g,
-                                       [&](const auto& f, const auto index)
-                                       {
-                                           if (index == 0)
-                                           {
-                                               fanins.first = f.data;
-                                           }
-                                           else if (index == 1)
-                                           {
-                                               fanins.second = f.data;
-                                           }
-                                           else
-                                           {
-                                               // not an AIG
-                                               throw std::runtime_error("Invalid number of fanins");
-                                           }
-                                       });
-
-                // add to gate list
-                gates.push_back(fanins);
-            });
-
-        // list of primary outputs
-        std::vector<uint64_t> pos{};
-        pos.reserve(ntk.num_pos());
-        ntk.foreach_po(
-            [&](const auto& po)
-            {
-                // add to PO list
-                pos.push_back(po.data);
-            });
-
-        return pybind11::make_tuple(num_pis, gates, pos);
-    }
-
-    /**
-     * Unpickle an AIG network.
-     *
-     * This function deserializes a Python tuple into an AIG network. The tuple should contain the following elements:
-     * 1. Number of primary inputs (PIs).
-     * 2. List of gates, where each gate is represented as a pair of incoming signals (fanins).
-     * 3. List of primary outputs (POs).
-     *
-     * @param t A Python tuple that encodes the AIG.
-     * @return The unpickled AIG network.
-     */
-    static aigverse::aig unpickle(const pybind11::tuple& t)
-    {
-        if (t.size() != 3)
-        {
-            throw std::runtime_error("Invalid tuple size");
-        }
-
-        // extract number of PIs
-        const auto num_pis = t[0].cast<uint64_t>();
-
-        // extract gates
-        const auto gates = t[1].cast<std::vector<std::pair<uint64_t, uint64_t>>>();
-
-        // extract POs
-        const auto pos = t[2].cast<std::vector<uint64_t>>();
-
-        // create network
-        aigverse::aig ntk{};
-
-        // add PIs
-        for (uint64_t i = 0; i < num_pis; ++i)
-        {
-            ntk.create_pi();
-        }
-
-        // add gates
-        for (const auto& [a, b] : gates)
-        {
-            ntk.create_and(mockturtle::signal<aigverse::aig>{a}, mockturtle::signal<aigverse::aig>{b});
-        }
-
-        // add POs
-        for (const auto& po : pos)
-        {
-            ntk.create_po(mockturtle::signal<aigverse::aig>{po});
-        }
-
-        return ntk;
-    }
-};
-
-template <typename Ntk>
 void network(pybind11::module& m, const std::string& network_name)
 {
     namespace py = pybind11;
@@ -186,24 +61,6 @@ void network(pybind11::module& m, const std::string& network_name)
                  return self != other.cast<const Node>();
              })
         .def("__lt__", [](const Node& n1, const Node& n2) { return n1 < n2; })
-
-        // // pickle support
-        // .def(py::pickle(
-        //     [](const Node& n)
-        //     {
-        //         // __getstate__
-        //         return py::tuple(n);
-        //     },
-        //     [](const py::tuple& t)
-        //     {
-        //         // __setstate__
-        //         if (t.size() != 1)
-        //         {
-        //             throw std::runtime_error("Invalid tuple size");
-        //         }
-        //
-        //         return t[0].cast<Node>();
-        //     }))
 
         ;
 
@@ -248,24 +105,6 @@ void network(pybind11::module& m, const std::string& network_name)
         .def("__pos__", [](const Signal& s) { return +s; })
         .def("__neg__", [](const Signal& s) { return -s; })
         .def("__xor__", [](const Signal& s, const bool complement) { return s ^ complement; })
-
-        // // pickle support
-        // .def(py::pickle(
-        //     [](const Signal& s)
-        //     {
-        //         // __getstate__
-        //         return py::tuple(s.data);
-        //     },
-        //     [](const py::tuple& t)
-        //     {
-        //         // __setstate__
-        //         if (t.size() != 1)
-        //         {
-        //             throw std::runtime_error("Invalid tuple size");
-        //         }
-        //
-        //         return Signal(t[0].cast<uint64_t>());
-        //     }))
 
         ;
 
@@ -395,15 +234,34 @@ void network(pybind11::module& m, const std::string& network_name)
 
         // pickle support
         .def(py::pickle(
-            [](const Ntk& ntk)
+            [](const Ntk& ntk)  // __getstate__
             {
-                // __getstate__
-                return network_pickler<Ntk>::pickle(ntk);
+                aigverse::aig_index_list il{};
+                mockturtle::encode(il, ntk);
+                return py::make_tuple(py::cast(il.raw()));
             },
-            [](const py::tuple& t)
+            [](const py::tuple& t)  // __setstate__
             {
-                // __setstate__
-                return network_pickler<Ntk>::unpickle(t);
+                if (t.size() != 1)
+                {
+                    throw pybind11::value_error("Invalid state: expected a tuple of size 1 containing an index list");
+                }
+                try
+                {
+                    aigverse::aig_index_list il{t[0].cast<std::vector<uint32_t>>()};
+
+                    Ntk ntk{};
+                    mockturtle::decode(ntk, il);
+                    return ntk;
+                }
+                catch (const pybind11::cast_error& e)
+                {
+                    throw pybind11::value_error(fmt::format("Invalid state: expected an index list. {}", e.what()));
+                }
+                catch (const std::exception& e)
+                {
+                    throw pybind11::value_error(fmt::format("Failed to restore network state: {}", e.what()));
+                }
             }))
 
         // clean up dangling nodes (after optimization)
