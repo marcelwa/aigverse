@@ -205,12 +205,14 @@ Verilog and PLA.
 #### ✏️ Writing
 
 ```python
-from aigverse import write_aiger, write_verilog
+from aigverse import write_aiger, write_verilog, write_dot
 
 # Write an AIG network to an AIGER file
 write_aiger(aig, "example.aig")
 # Write an AIG network to a Verilog file
 write_verilog(aig, "example.v")
+# Write an AIG network to a DOT file
+write_dot(aig, "example.dot")
 ```
 
 #### 👓 Parsing

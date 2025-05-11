@@ -273,10 +273,11 @@ AIGs can be read from and written to various file formats.
 ```{code-cell} ipython3
 from aigverse import (
    write_aiger,
-   read_aiger_into_aig,
-   read_pla_into_aig,
    write_verilog,
-   read_verilog_into_aig
+   write_dot,
+   read_aiger_into_aig,
+   read_verilog_into_aig,
+   read_pla_into_aig
 )
 
 # Create a sample AIG
@@ -291,6 +292,9 @@ write_aiger(aig, "example.aig")
 
 # Write to Verilog format
 write_verilog(aig, "example.v")
+
+# Write to DOT format
+write_dot(aig, "example.dot")
 
 # Read from AIGER format
 read_aig = read_aiger_into_aig("example.aig")
