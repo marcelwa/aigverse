@@ -11,8 +11,9 @@ ci:
   autoupdate_commit_msg: "⬆️ Bump pre-commit hooks"
   autoupdate_schedule: quarterly
   autofix_commit_msg: "🎨 Incorporated pre-commit fixes"
+  skip: [mypy]
 
-exclude: "^(libs/|docs/examples/i10\\.aig$)"
+exclude: "^(libs/|docs/examples/)"
 
 repos:
   # Standard hooks
