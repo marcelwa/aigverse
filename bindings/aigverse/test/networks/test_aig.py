@@ -597,11 +597,12 @@ def test_pickle_empty_aig() -> None:
 
 
 def test_pickle_simple_aig() -> None:
-    # Create an AIG network
     aig = Aig()
+
     a = aig.create_pi()
     b = aig.create_pi()
     f = aig.create_and(a, b)
+
     aig.create_po(f)
 
     # Check initial size and gate count
@@ -620,35 +621,45 @@ def test_pickle_simple_aig() -> None:
     assert equivalence_checking(aig, unpickled_aig)
 
 
-def show_graph(aig: Aig, name: str) -> None:
-    import matplotlib.pyplot as plt
-    import networkx as nx
-    from networkx.drawing.nx_agraph import graphviz_layout
+def test_pickle_complex_aig() -> None:
+    aig = Aig()
 
-    from aigverse import to_edge_list
+    a = aig.create_pi()
+    b = aig.create_pi()
+    c = aig.create_pi()
+    d = aig.create_pi()
 
-    # Get the edge list
-    edges = to_edge_list(aig)
-    edge_tuples = [(e.source, e.target, e.weight) for e in edges]
+    # Create AND gates
+    f1 = aig.create_and(a, b)
+    f2 = aig.create_and(c, d)
+    f3 = aig.create_and(f1, f2)
 
-    # Create a NetworkX graph
-    g = nx.DiGraph()
-    for src, tgt, weight in edge_tuples:
-        g.add_edge(src, tgt, weight=weight)
+    # Create a MAJ gate (majority of a, b, c)
+    f4 = aig.create_maj(a, b, c)
 
-    # Plot the graph
-    plt.figure(figsize=(10, 6))
-    pos = graphviz_layout(g, prog="dot")
-    nx.draw(g, pos, with_labels=True, node_color="lightblue", node_size=500, arrowsize=20, font_size=12)
-    labels = {(u, v): data["weight"] for u, v, data in g.edges(data=True)}
-    nx.draw_networkx_edge_labels(g, pos, edge_labels=labels)
-    plt.title("AIG as a Hierarchical Graph")
+    # Create an XOR gate (between f3 and f4)
+    f5 = aig.create_xor(f3, f4)
 
-    # write plot to file
-    plt.savefig(f"{name}.png")
+    # Use signal inversions
+    f6 = aig.create_and(~a, ~b)
+    f7 = aig.create_maj(~c, d, ~f6)
+    f8 = aig.create_xor(f5, ~f7)
 
+    # Create primary outputs
+    aig.create_po(f3)
+    aig.create_po(f4)
+    aig.create_po(f5)
+    aig.create_po(f6)
+    aig.create_po(f7)
+    aig.create_po(f8)
 
-def write_dot(aig: Aig, name: str) -> None:
-    from aigverse import write_dot
+    # Pickle and unpickle the AIG network using the pickle module
+    pickled_data = pickle.dumps(aig)
+    unpickled_aig = pickle.loads(pickled_data)
 
-    write_dot(aig, f"{name}.dot")
+    # Check the size and gate count of the unpickled AIG
+    assert unpickled_aig.size() == aig.size()
+    assert unpickled_aig.num_gates() == aig.num_gates()
+
+    # Check if the original and unpickled networks are equivalent
+    assert equivalence_checking(aig, unpickled_aig)
