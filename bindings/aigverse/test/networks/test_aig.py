@@ -673,6 +673,36 @@ def test_pickle_complex_aig() -> None:
     assert equivalence_checking(aig, unpickled_aig)
 
 
+def test_pickle_multiple_aigs() -> None:
+    import pickle
+
+    aig1 = Aig()
+    a1 = aig1.create_pi()
+    b1 = aig1.create_pi()
+    f1 = aig1.create_and(a1, b1)
+    aig1.create_po(f1)
+
+    aig2 = Aig()
+    a2 = aig2.create_pi()
+    b2 = aig2.create_pi()
+    f2 = aig2.create_or(a2, b2)
+    aig2.create_po(f2)
+
+    aig3 = Aig()
+    a3 = aig3.create_pi()
+    b3 = aig3.create_pi()
+    f3 = aig3.create_xor(a3, b3)
+    aig3.create_po(f3)
+
+    # Pickle all three AIGs together as a tuple
+    pickled = pickle.dumps((aig1, aig2, aig3))
+    unpickled_aig1, unpickled_aig2, unpickled_aig3 = pickle.loads(pickled)
+
+    assert equivalence_checking(aig1, unpickled_aig1)
+    assert equivalence_checking(aig2, unpickled_aig2)
+    assert equivalence_checking(aig3, unpickled_aig3)
+
+
 def test_aig_setstate_exceptions():
     import copyreg
     import pickle
