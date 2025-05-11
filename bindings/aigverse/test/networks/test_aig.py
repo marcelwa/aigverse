@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import pickle
 from typing import Any
 
 import pytest
@@ -576,6 +575,8 @@ def test_cleanup_dangling() -> None:
 
 
 def test_pickle_empty_aig() -> None:
+    import pickle
+
     # Ensure the pickling methods exist in AIG
     assert hasattr(Aig, "__getstate__")
     assert hasattr(Aig, "__setstate__")
@@ -600,6 +601,8 @@ def test_pickle_empty_aig() -> None:
 
 
 def test_pickle_simple_aig() -> None:
+    import pickle
+
     aig = Aig()
 
     a = aig.create_pi()
@@ -625,6 +628,8 @@ def test_pickle_simple_aig() -> None:
 
 
 def test_pickle_complex_aig() -> None:
+    import pickle
+
     aig = Aig()
 
     a = aig.create_pi()
@@ -670,6 +675,7 @@ def test_pickle_complex_aig() -> None:
 
 def test_aig_setstate_exceptions():
     import copyreg
+    import pickle
 
     # Helper to create a pickle with a custom state (always a tuple for pickle protocol)
     def make_bad_pickle(state_tuple: tuple[Any, ...]) -> bytes:
