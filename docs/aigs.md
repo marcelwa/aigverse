@@ -355,11 +355,11 @@ Adapters provide alternative representations of AIGs for integration with other 
 You can export AIGs as edge lists, which are useful for integration with graph libraries like [NetworkX](https://networkx.org/).
 
 ```{code-cell} ipython3
-from aigverse import to_edge_list
+import matplotlib.pyplot as plt
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
-import pygraphviz
-import matplotlib.pyplot as plt
+
+from aigverse import to_edge_list
 
 # Create a sample AIG
 aig = Aig()
@@ -382,10 +382,9 @@ for src, tgt, weight in edges:
 
 # Plot the graph
 plt.figure(figsize=(10, 6))
-pos = graphviz_layout(G, prog='dot')
-nx.draw(G, pos, with_labels=True, node_color='lightblue',
-        node_size=500, arrowsize=20, font_size=12)
-labels = {(u, v): data['weight'] for u, v, data in G.edges(data=True)}
+pos = graphviz_layout(G, prog="dot")
+nx.draw(G, pos, with_labels=True, node_color="lightblue", node_size=500, arrowsize=20, font_size=12)
+labels = {(u, v): data["weight"] for u, v, data in G.edges(data=True)}
 nx.draw_networkx_edge_labels(G, pos, edge_labels=labels)
 plt.title("AIG as a Hierarchical Graph")
 plt.show()
