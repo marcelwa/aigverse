@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import pickle
+from typing import Any
+
+import pytest
 
 from aigverse import Aig, AigSignal, equivalence_checking
 
@@ -663,3 +666,30 @@ def test_pickle_complex_aig() -> None:
 
     # Check if the original and unpickled networks are equivalent
     assert equivalence_checking(aig, unpickled_aig)
+
+
+def test_aig_setstate_exceptions():
+    import copyreg
+
+    # Helper to create a pickle with a custom state (always a tuple for pickle protocol)
+    def make_bad_pickle(state_tuple: tuple[Any, ...]) -> bytes:
+        class Dummy:
+            pass
+
+        copyreg.pickle(Dummy, lambda _: (Aig, state_tuple))  # type: ignore[arg-type, return-value]
+        return pickle.dumps(Dummy())
+
+    # Tuple of wrong size (triggers TypeError)
+    bad_pickle = make_bad_pickle(([], 42))
+    with pytest.raises(TypeError, match="incompatible constructor arguments"):
+        pickle.loads(bad_pickle)
+
+    # Tuple with wrong type inside (triggers TypeError)
+    bad_pickle = make_bad_pickle(("not a list",))
+    with pytest.raises(TypeError, match="incompatible constructor arguments"):
+        pickle.loads(bad_pickle)
+
+    # Tuple with wrong element type in list (triggers TypeError)
+    bad_pickle = make_bad_pickle(([1, 2, "bad"],))
+    with pytest.raises(TypeError, match="incompatible constructor arguments"):
+        pickle.loads(bad_pickle)
