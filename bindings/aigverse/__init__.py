@@ -34,6 +34,7 @@ from .pyaigverse import (
     to_edge_list,
     to_index_list,
     write_aiger,
+    write_dot,
     write_verilog,
 )
 
@@ -69,5 +70,6 @@ __all__ = [
     "to_edge_list",
     "to_index_list",
     "write_aiger",
+    "write_dot",
     "write_verilog",
 ]

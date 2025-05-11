@@ -205,12 +205,14 @@ Verilog and PLA.
 #### ✏️ Writing
 
 ```python
-from aigverse import write_aiger, write_verilog
+from aigverse import write_aiger, write_verilog, write_dot
 
 # Write an AIG network to an AIGER file
 write_aiger(aig, "example.aig")
 # Write an AIG network to a Verilog file
 write_verilog(aig, "example.v")
+# Write an AIG network to a DOT file
+write_dot(aig, "example.dot")
 ```
 
 #### 👓 Parsing
@@ -234,6 +236,23 @@ aig4 = read_pla_into_aig("example.pla")
 
 Additionally, you can read AIGER files into sequential AIGs using `read_aiger_into_sequential_aig` and
 `read_ascii_aiger_into_sequential_aig`.
+
+### 🥒 `pickle` Support
+
+AIGs support Python's `pickle` protocol, allowing you to serialize and deserialize AIG objects for persistent storage or
+interface with data science or machine learning workflows.
+
+```python
+import pickle
+
+with open("aig.pkl", "wb") as f:
+    pickle.dump(aig, f)
+
+with open("aig.pkl", "rb") as f:
+    unpickled_aig = pickle.load(f)
+```
+
+You can also pickle multiple AIGs at once by storing them in a tuple or list.
 
 ### 🔌 Adapters
 

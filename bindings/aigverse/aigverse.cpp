@@ -13,6 +13,7 @@
 #include "aigverse/io/read_pla.hpp"
 #include "aigverse/io/read_verilog.hpp"
 #include "aigverse/io/write_aiger.hpp"
+#include "aigverse/io/write_dot.hpp"
 #include "aigverse/io/write_verilog.hpp"
 #include "aigverse/networks/logic_networks.hpp"
 #include "aigverse/truth_tables/operations.hpp"
@@ -55,6 +56,7 @@ PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())
     aigverse::read_pla(m);
     aigverse::read_verilog(m);
     aigverse::write_verilog(m);
+    aigverse::write_dot(m);
 
     /**
      * Adapters

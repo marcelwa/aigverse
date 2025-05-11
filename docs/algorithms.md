@@ -203,5 +203,3 @@ print("\nInput-output pairs for ML:")
 for i, (x, y) in enumerate(zip(inputs, outputs)):
     print(f"  Input: {x}, Output: {y}")
 ```
-
-`

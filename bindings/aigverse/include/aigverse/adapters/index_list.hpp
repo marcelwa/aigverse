@@ -37,7 +37,7 @@ void ntk_index_list(pybind11::module& m, const std::string& network_name)
         /**
          * Index list.
          */
-        using IndexList = mockturtle::xag_index_list<true>;
+        using IndexList = aigverse::aig_index_list;
         py::class_<IndexList>(m, fmt::format("{}IndexList", network_name).c_str())
             .def(py::init<const uint32_t>(), "num_pis"_a = 0)
             .def(py::init<const std::vector<uint32_t>&>(), "values"_a)
@@ -156,7 +156,7 @@ namespace fmt
 
 // make index_list compatible with fmt::format
 template <>
-struct formatter<mockturtle::xag_index_list<true>>
+struct formatter<aigverse::aig_index_list>
 {
     template <typename ParseContext>
     constexpr auto parse(ParseContext& ctx)
@@ -165,7 +165,7 @@ struct formatter<mockturtle::xag_index_list<true>>
     }
 
     template <typename FormatContext>
-    auto format(const mockturtle::xag_index_list<true>& il, FormatContext& ctx) const
+    auto format(const aigverse::aig_index_list& il, FormatContext& ctx) const
     {
         std::vector<std::tuple<uint32_t, uint32_t>> gates{};
         gates.reserve(il.num_gates());

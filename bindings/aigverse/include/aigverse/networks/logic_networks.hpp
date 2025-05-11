@@ -232,7 +232,45 @@ void network(pybind11::module& m, const std::string& network_name)
         .def(
             "is_nary_or", [](const Ntk& ntk, const Node& n) { return ntk.is_nary_or(n); }, "n"_a)
 
-        .def("cleanup_dangling", [](Ntk& ntk) { ntk = mockturtle::cleanup_dangling(ntk); });
+        // pickle support
+        .def(py::pickle(
+                 [](const Ntk& ntk)  // __getstate__
+                 {
+                     aigverse::aig_index_list il{};
+                     mockturtle::encode(il, ntk);
+                     return py::make_tuple(py::cast(il.raw()));
+                 },
+                 [](const py::tuple& state)  // __setstate__
+                 {
+                     if (state.size() != 1)
+                     {
+                         throw pybind11::value_error(
+                             "Invalid state: expected a tuple of size 1 containing an index list");
+                     }
+                     try
+                     {
+                         aigverse::aig_index_list il{state[0].cast<std::vector<uint32_t>>()};
+
+                         Ntk ntk{};
+                         mockturtle::decode(ntk, il);
+                         return ntk;
+                     }
+                     catch (const pybind11::cast_error& e)
+                     {
+                         throw pybind11::value_error(
+                             fmt::format("Invalid state: expected an index list. {}", e.what()));
+                     }
+                     catch (const std::exception& e)
+                     {
+                         throw pybind11::value_error(fmt::format("Failed to restore network state: {}", e.what()));
+                     }
+                 }),
+             "state"_a)
+
+        // clean up dangling nodes (after optimization)
+        .def("cleanup_dangling", [](Ntk& ntk) { ntk = mockturtle::cleanup_dangling(ntk); })
+
+        ;
 
     /**
      * Depth network.
