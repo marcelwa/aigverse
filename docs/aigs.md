@@ -88,7 +88,7 @@ is_complemented = aig.is_complemented(nand_gate)
 print(f"Is NAND complemented? {is_complemented}")
 ```
 
-## Exploring AIG Structure
+### Exploring AIG Structure
 
 You can iterate over all nodes in the AIG, or specific subsets like primary inputs or logic gates.
 
@@ -124,9 +124,9 @@ for fanin in aig.fanins(or_node):
     print(f"  Fanin: {fanin}")
 ```
 
-## Building Complex Functions
+### Building Complex Functions
 
-AIGs support a variety of logic functions beyond just AND gates.
+AIGs support a variety of logic functions beyond just AND gates. Internally, those are decomposed into multiple nodes.
 
 ```{code-cell} ipython3
 aig = Aig()
@@ -155,9 +155,17 @@ print(f"Number of primary inputs: {aig.num_pis()}")
 print(f"Number of primary outputs: {aig.num_pos()}")
 ```
 
-## Depth and Level Computation
+## AIG Views
 
-The depth of an AIG network represents the longest path from any input to any output, which corresponds to the critical path delay in a circuit. You can compute the depth and level of each node using the {py:class}`~aigverse.DepthAig` class.
+AIG views provide alternative representations of AIGs for specific tasks, such as depth computation or fanout analysis.
+These views can be layered on top of the original AIG, allowing you to work with the same underlying structure while
+adding additional functionality.
+
+### Depth and Level Computation
+
+The depth of an AIG network represents the longest path from any input to any output, which corresponds to the critical
+path delay in a circuit. You can compute the depth and level of each node using the {py:class}`~aigverse.DepthAig`
+class.
 
 ```{code-cell} ipython3
 from aigverse import DepthAig
@@ -189,7 +197,7 @@ for node in aig.nodes():
         print(f"  Node {node}")
 ```
 
-## AIGs with Fanout Information
+### AIGs with Fanout Information
 
 Fanouts of AIG nodes can be collected using {py:class}`~aigverse.FanoutAig`.
 
@@ -215,9 +223,10 @@ for node in fanout_aig.fanouts(aig.get_node(n4)):
     print(f"  Node {node}")
 ```
 
-## Sequential AIGs
+### Sequential AIGs
 
-Sequential AIGs extend standard AIGs to include registers, which allow modeling sequential circuits with memory elements.
+{py:class}`~aigverse.SequentialAig`s extend standard AIGs to include registers, which allow modeling sequential circuits
+with memory elements.
 
 ```{code-cell} ipython3
 from aigverse import SequentialAig
