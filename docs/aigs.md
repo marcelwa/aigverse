@@ -371,6 +371,7 @@ You can export AIGs as edge lists, which are useful for integration with graph l
 import matplotlib.pyplot as plt
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
+import pygraphviz
 
 from aigverse import to_edge_list
 
