@@ -82,5 +82,3 @@ class TestBalancing:
             assert aig.depth() <= depth_before, (
                 f"Depth increased for shallow chain: before {depth_before}, after {aig.depth()}"
             )
-
-
