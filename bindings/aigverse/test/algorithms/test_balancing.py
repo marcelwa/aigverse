@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import unittest
-
-import pyaigverse
+import aigverse
 
 
-class TestBalancing(unittest.TestCase):
+class TestBalancing:
     def test_smoke_run(self):
         """Test that aig_balance runs without errors and preserves PI/PO count."""
-        aig = pyaigverse.aig()
+        aig = aigverse.aig()
 
         # Create PIs
         x0 = aig.create_pi()
@@ -29,7 +27,7 @@ class TestBalancing(unittest.TestCase):
         depth_before = aig.depth()
 
         # Apply balancing
-        pyaigverse.aig_balance(aig)
+        aigverse.aig_balance(aig)
 
         assert aig.num_pis() == num_pis_before, "Number of PIs should not change."
         assert aig.num_pos() == num_pos_before, "Number of POs should not change."
@@ -45,7 +43,7 @@ class TestBalancing(unittest.TestCase):
 
     def test_balancing_effect_on_depth(self):
         """Test that balancing reduces depth for an unbalanced network."""
-        aig = pyaigverse.aig()
+        aig = aigverse.aig()
 
         # Create PIs
         x0 = aig.create_pi()
@@ -68,7 +66,7 @@ class TestBalancing(unittest.TestCase):
         depth_before = aig.depth()
 
         # Apply balancing
-        pyaigverse.aig_balance(aig)
+        aigverse.aig_balance(aig)
 
         assert aig.num_pis() == num_pis_before, "Number of PIs should not change after balancing."
         assert aig.num_pos() == num_pos_before, "Number of POs should not change after balancing."
@@ -86,5 +84,3 @@ class TestBalancing(unittest.TestCase):
             )
 
 
-if __name__ == "__main__":
-    unittest.main()
