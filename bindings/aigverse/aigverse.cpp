@@ -4,6 +4,7 @@
 
 #include "aigverse/adapters/edge_list.hpp"
 #include "aigverse/adapters/index_list.hpp"
+#include "aigverse/algorithms/balancing.hpp"
 #include "aigverse/algorithms/equivalence_checking.hpp"
 #include "aigverse/algorithms/refactoring.hpp"
 #include "aigverse/algorithms/resubstitution.hpp"
@@ -46,6 +47,7 @@ PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())
     aigverse::refactoring(m);
     aigverse::resubstitution(m);
     aigverse::rewriting(m);
+    aigverse::balancing(m);
     aigverse::simulation(m);
 
     /**
