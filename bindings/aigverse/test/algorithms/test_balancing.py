@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import aigverse
+from aigverse import DepthAig, aig_balance # Use DepthAig and direct aig_balance
 
 
-class TestBalancing:
+class TestBalancing: # Removed unittest.TestCase
     def test_smoke_run(self):
         """Test that aig_balance runs without errors and preserves PI/PO count."""
-        aig = aigverse.aig()
+        aig = DepthAig() # Changed to DepthAig()
 
         # Create PIs
         x0 = aig.create_pi()
@@ -24,10 +24,11 @@ class TestBalancing:
         num_pos_before = aig.num_pos()
         # Assuming num_gates() and depth() exist, common for such libraries
         num_gates_before = aig.num_gates()
-        depth_before = aig.depth()
+        depth_before = aig.num_levels() # Changed to num_levels()
 
         # Apply balancing
-        aigverse.aig_balance(aig)
+        aig_balance(aig) # Changed to direct call
+        aig.update_levels() # Add this line
 
         assert aig.num_pis() == num_pis_before, "Number of PIs should not change."
         assert aig.num_pos() == num_pos_before, "Number of POs should not change."
@@ -39,11 +40,11 @@ class TestBalancing:
         )
 
         # Depth should ideally not increase.
-        assert aig.depth() <= depth_before, f"Depth increased: before {depth_before}, after {aig.depth()}"
+        assert aig.num_levels() <= depth_before, f"Depth increased: before {depth_before}, after {aig.num_levels()}" # Changed to num_levels()
 
     def test_balancing_effect_on_depth(self):
         """Test that balancing reduces depth for an unbalanced network."""
-        aig = aigverse.aig()
+        aig = DepthAig() # Changed to DepthAig()
 
         # Create PIs
         x0 = aig.create_pi()
@@ -63,10 +64,11 @@ class TestBalancing:
 
         num_pis_before = aig.num_pis()
         num_pos_before = aig.num_pos()
-        depth_before = aig.depth()
+        depth_before = aig.num_levels() # Changed to num_levels()
 
         # Apply balancing
-        aigverse.aig_balance(aig)
+        aig_balance(aig) # Changed to direct call
+        aig.update_levels() # Add this line
 
         assert aig.num_pis() == num_pis_before, "Number of PIs should not change after balancing."
         assert aig.num_pos() == num_pos_before, "Number of POs should not change after balancing."
@@ -75,10 +77,12 @@ class TestBalancing:
         # If depth_before is very small (e.g. 1 or 2), reduction might not happen or be significant.
         # The created network has a depth of 4.
         if depth_before > 2:  # Only assert depth reduction if there's something to reduce
-            assert aig.depth() < depth_before, (
-                f"Depth not reduced for unbalanced chain: before {depth_before}, after {aig.depth()}"
+            assert aig.num_levels() < depth_before, ( # Changed to num_levels()
+                f"Depth not reduced for unbalanced chain: before {depth_before}, after {aig.num_levels()}"
             )
         else:
-            assert aig.depth() <= depth_before, (
-                f"Depth increased for shallow chain: before {depth_before}, after {aig.depth()}"
+            assert aig.num_levels() <= depth_before, ( # Changed to num_levels()
+                f"Depth increased for shallow chain: before {depth_before}, after {aig.num_levels()}"
             )
+
+# Removed if __name__ == "__main__": block

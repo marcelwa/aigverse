@@ -4,6 +4,7 @@
 #include "aigverse/types.hpp"
 
 #include <mockturtle/algorithms/balancing.hpp>
+#include <mockturtle/algorithms/balancing/sop_balancing.hpp> // Added
 #include <mockturtle/networks/aig.hpp>  // For aig_network
 #include <pybind11/pybind11.h>
 
@@ -21,11 +22,10 @@ void expose_balancing_functions(pybind11::module& m)
     m.def(
         "aig_balance",
         [](Ntk& ntk) -> void { // Return void, modify ntk by reference (reassignment)
-            // Assuming mockturtle::balancing_params exists and its default constructor is suitable.
             mockturtle::balancing_params ps{};
-            // Assuming mockturtle::balancing returns a new network, which is then assigned back to ntk.
-            // This matches the style in rewriting.hpp
-            ntk = mockturtle::balancing(ntk, ps);
+            mockturtle::sop_rebalancing<Ntk> rebalance_fn; // Added
+            // Corrected call based on mockturtle example: pass {rebalance_fn}
+            ntk = mockturtle::balancing(static_cast<Ntk const&>(ntk), {rebalance_fn}, ps); 
         },
         "ntk"_a,
         "Balances an AIG network. The network is updated with the balanced version."
