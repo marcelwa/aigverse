@@ -15,7 +15,7 @@ from .pyaigverse import (
     FanoutAig,
     SequentialAig,
     TruthTable,
-    aig_balance,  # Added
+    aig_balance,
     aig_cut_rewriting,
     aig_resubstitution,
     cofactor0,
@@ -52,7 +52,7 @@ __all__ = [
     "SequentialAig",
     "TruthTable",
     "__version__",
-    "aig_balance",  # Added
+    "aig_balance",
     "aig_cut_rewriting",
     "aig_resubstitution",
     "cofactor0",

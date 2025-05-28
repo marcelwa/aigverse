@@ -279,5 +279,14 @@ def aig_cut_rewriting(
     verbose: bool = False,
     very_verbose: bool = False,
 ) -> None: ...
+def aig_balance(
+    ntk: Aig,
+    cut_size: int = 4,
+    cut_limit: int = 8,
+    minimize_truth_table: bool = True,
+    only_on_critical_path: bool = False,
+    sop_both_phases: bool = True,
+    verbose: bool = False,
+) -> None: ...
 def simulate(ntk: Aig) -> list[TruthTable]: ...
 def simulate_nodes(ntk: Aig) -> dict[int, TruthTable]: ...
