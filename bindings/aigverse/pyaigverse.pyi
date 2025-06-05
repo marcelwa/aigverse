@@ -279,7 +279,7 @@ def aig_cut_rewriting(
     verbose: bool = False,
     very_verbose: bool = False,
 ) -> None: ...
-def aig_balance(
+def balancing(
     ntk: Aig,
     cut_size: int = 4,
     cut_limit: int = 8,

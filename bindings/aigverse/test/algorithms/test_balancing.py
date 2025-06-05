@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from aigverse import DepthAig, aig_balance
+from aigverse import DepthAig, balancing
 
 
 def test_balancing_on_simple_balanced_aig() -> None:
@@ -25,7 +25,7 @@ def test_balancing_on_simple_balanced_aig() -> None:
     depth_before = aig.num_levels()
 
     # Apply balancing
-    aig_balance(aig)  # Default parameters
+    balancing(aig)  # Default parameters
     aig.update_levels()  # Recompute levels after potential structural changes
 
     assert aig.num_pis() == num_pis_before, "Number of PIs should not change."
@@ -50,7 +50,7 @@ def test_balancing_on_simple_balanced_aig() -> None:
     a1_c = cloned_aig_for_params.create_and(a0_c, x2_c)
     cloned_aig_for_params.create_po(a1_c)
 
-    aig_balance(
+    balancing(
         cloned_aig_for_params,
         cut_size=6,
         cut_limit=10,
@@ -95,7 +95,7 @@ def test_balancing_reduces_depth_of_long_chain() -> None:
     assert depth_before == 4, f"Initial depth calculation is unexpected: {depth_before}"
 
     # Apply balancing
-    aig_balance(aig)  # Default parameters
+    balancing(aig)  # Default parameters
     aig.update_levels()
 
     assert aig.num_pis() == num_pis_before, "Number of PIs should not change after balancing."
@@ -131,7 +131,7 @@ def test_balancing_reduces_depth_of_long_chain() -> None:
     depth_before_orig = aig_orig.num_levels()
     num_gates_before_orig = aig_orig.num_gates()
 
-    aig_balance(aig_orig, cut_size=3, cut_limit=4, only_on_critical_path=False)  # Smaller cuts
+    balancing(aig_orig, cut_size=3, cut_limit=4, only_on_critical_path=False)  # Smaller cuts
     aig_orig.update_levels()
 
     assert aig_orig.num_pis() == num_pis_before, "PIs changed with non-default params."
@@ -180,7 +180,7 @@ def test_balancing_complex_unbalanced_to_balanced_tree() -> None:
     assert depth_before == 6, f"Initial depth calculation is unexpected: {depth_before}"
 
     # Apply balancing
-    aig_balance(aig)  # Default parameters
+    balancing(aig)  # Default parameters
     aig.update_levels()
 
     assert aig.num_pis() == num_pis_before, "Number of PIs should not change."
@@ -216,7 +216,7 @@ def test_balancing_complex_unbalanced_to_balanced_tree() -> None:
     depth_before_orig_crit = aig_orig.num_levels()
     num_gates_before_orig_crit = aig_orig.num_gates()
 
-    aig_balance(aig_orig, only_on_critical_path=True)
+    balancing(aig_orig, only_on_critical_path=True)
     aig_orig.update_levels()
 
     assert aig_orig.num_pis() == num_pis_before, "PIs changed with critical_path=True."
@@ -248,7 +248,7 @@ def test_balancing_with_different_cut_sizes_on_chain() -> None:
     depth_before_cs_default = aig_cs_default.num_levels()
     assert depth_before_cs_default == pis_count - 1
 
-    aig_balance(aig_cs_default)  # cut_size=4 by default
+    balancing(aig_cs_default)  # cut_size=4 by default
     aig_cs_default.update_levels()
     assert aig_cs_default.num_levels() == expected_final_depth, (
         f"Depth with default cut_size not optimal: {aig_cs_default.num_levels()}, expected {expected_final_depth}"
@@ -264,7 +264,7 @@ def test_balancing_with_different_cut_sizes_on_chain() -> None:
     aig_cs_small.update_levels()
     depth_before_cs_small = aig_cs_small.num_levels()
 
-    aig_balance(aig_cs_small, cut_size=2, cut_limit=10)  # Using cut_size=2
+    balancing(aig_cs_small, cut_size=2, cut_limit=10)  # Using cut_size=2
     aig_cs_small.update_levels()
     assert aig_cs_small.num_levels() <= depth_before_cs_small, (
         f"Depth with cut_size=2 unexpectedly increased: {aig_cs_small.num_levels()}, was {depth_before_cs_small}"
@@ -284,7 +284,7 @@ def test_balancing_with_different_cut_sizes_on_chain() -> None:
     aig_cs_large.update_levels()
     aig_cs_large.num_levels()
 
-    aig_balance(aig_cs_large, cut_size=6, cut_limit=12)
+    balancing(aig_cs_large, cut_size=6, cut_limit=12)
     aig_cs_large.update_levels()
     assert aig_cs_large.num_levels() == expected_final_depth, (
         f"Depth with cut_size=6 not optimal: {aig_cs_large.num_levels()}, expected {expected_final_depth}"

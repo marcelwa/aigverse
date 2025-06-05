@@ -15,12 +15,12 @@ namespace detail
 {
 
 template <typename Ntk>
-void expose_balancing_functions(pybind11::module& m)
+void balancing(pybind11::module& m)
 {
     using namespace pybind11::literals;
 
     m.def(
-        "aig_balance",
+        "balancing",
         [](Ntk& ntk, const uint32_t cut_size = 4, const uint32_t cut_limit = 8, const bool minimize_truth_table = true,
            const bool only_on_critical_path = false, const bool sop_both_phases = true,
            const bool verbose = false) -> void
@@ -45,7 +45,7 @@ void expose_balancing_functions(pybind11::module& m)
 
 inline void balancing(pybind11::module& m)
 {
-    detail::expose_balancing_functions<aigverse::aig>(m);
+    detail::balancing<aigverse::aig>(m);
 }
 
 }  // namespace aigverse
