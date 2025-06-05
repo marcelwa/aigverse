@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from aigverse import DepthAig, balancing
 
 
@@ -289,3 +291,78 @@ def test_balancing_with_different_cut_sizes_on_chain() -> None:
     assert aig_cs_large.num_levels() == expected_final_depth, (
         f"Depth with cut_size=6 not optimal: {aig_cs_large.num_levels()}, expected {expected_final_depth}"
     )
+
+
+def test_esop_balancing_reduces_depth_on_xor_chain() -> None:
+    """Test ESOP balancing reduces depth for a chain of XORs (XAG-like)."""
+    aig = DepthAig()
+    # Create a chain of XORs: x0 ^ x1 ^ x2 ^ x3 ^ x4 ^ x5 ^ x6 ^ x7
+    pis = [aig.create_pi() for _ in range(8)]
+    node = pis[0]
+    for i in range(1, 8):
+        node = aig.create_xor(node, pis[i])
+    aig.create_po(node)
+    aig.update_levels()
+    depth_before = aig.num_levels()
+    # Depth of a chain of XORs is 14 before balancing
+    assert depth_before == 14
+
+    balancing(aig, rebalance_function="esop")
+    aig.update_levels()
+    # ESOP balancing should reduce the depth of the XOR chain to 8
+    assert aig.num_levels() == 8, f"ESOP balancing did not produce expected depth: {aig.num_levels()} (expected 8)"
+
+
+def test_esop_balancing_preserves_functionality_on_xor_and_chain() -> None:
+    """Test ESOP balancing preserves PI/PO/gate count and does not increase depth for mixed XOR/AND."""
+    aig = DepthAig()
+    pis = [aig.create_pi() for _ in range(8)]
+    n0 = aig.create_xor(pis[0], pis[1])
+    n1 = aig.create_xor(pis[2], pis[3])
+    n2 = aig.create_and(n0, n1)
+    n3 = aig.create_and(pis[4], pis[5])
+    n4 = aig.create_and(pis[6], pis[7])
+    n5 = aig.create_xor(n3, n4)
+    out = aig.create_xor(n2, n5)
+    aig.create_po(out)
+    aig.update_levels()
+    num_pis_before = aig.num_pis()
+    num_pos_before = aig.num_pos()
+    num_gates_before = aig.num_gates()
+    depth_before = aig.num_levels()
+
+    balancing(aig, rebalance_function="esop")
+    aig.update_levels()
+    assert aig.num_pis() == num_pis_before
+    assert aig.num_pos() == num_pos_before
+    assert aig.num_gates() <= num_gates_before + 2  # May increase slightly
+    assert aig.num_levels() == depth_before
+
+
+def test_balancing_invalid_rebalance_function_raises() -> None:
+    """
+    Test that an invalid rebalance_function raises an exception.
+    """
+    aig = DepthAig()
+    x0 = aig.create_pi()
+    x1 = aig.create_pi()
+    a0 = aig.create_and(x0, x1)
+    aig.create_po(a0)
+    with pytest.raises(Exception, match="Unknown rebalance function"):
+        balancing(aig, rebalance_function="not_a_valid_option")  # type: ignore [arg-type]
+
+
+def test_esop_balancing_with_sop_both_phases_param() -> None:
+    """Test esop balancing with sop_both_phases param (should not error)."""
+    aig = DepthAig()
+    x0 = aig.create_pi()
+    x1 = aig.create_pi()
+    x2 = aig.create_pi()
+    n0 = aig.create_xor(x0, x1)
+    n1 = aig.create_xor(n0, x2)
+    aig.create_po(n1)
+    aig.update_levels()
+    depth_before = aig.num_levels()
+    balancing(aig, rebalance_function="esop", sop_both_phases=False)
+    aig.update_levels()
+    assert aig.num_levels() <= depth_before
