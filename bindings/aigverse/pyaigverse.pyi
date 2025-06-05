@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from typing import Any, overload
+from typing import Any, Literal, overload
 
 class AigNode:
     def __init__(self, index: int) -> None: ...
@@ -285,6 +285,7 @@ def balancing(
     cut_limit: int = 8,
     minimize_truth_table: bool = True,
     only_on_critical_path: bool = False,
+    rebalance_function: Literal["sop", "esop"] = "sop",
     sop_both_phases: bool = True,
     verbose: bool = False,
 ) -> None: ...
