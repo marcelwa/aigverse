@@ -34,14 +34,16 @@ def test_balancing_on_simple_balanced_aig() -> None:
         f"Depth changed for a balanced AIG: before {depth_before}, after {aig.num_levels()}"
     )
 
-    # Test with non-default parameters
-    aig_params_test = DepthAig()
-    x0_c = aig_params_test.create_pi()
-    x1_c = aig_params_test.create_pi()
-    x2_c = aig_params_test.create_pi()
-    a0_c = aig_params_test.create_and(x0_c, x1_c)
-    a1_c = aig_params_test.create_and(a0_c, x2_c)
-    aig_params_test.create_po(a1_c)
+    # Test balancing with non-default parameters
+    cloned_aig_base = aig.clone()
+    aig_params_test = DepthAig(cloned_aig_base)
+
+    # Re-fetch original properties from the new DepthAig instance
+    num_pis_before_clone = aig_params_test.num_pis()
+    num_pos_before_clone = aig_params_test.num_pos()
+    num_gates_before_clone = aig_params_test.num_gates()
+    aig_params_test.update_levels()
+    depth_before_clone = aig_params_test.num_levels()
 
     balancing(
         aig_params_test,
@@ -54,10 +56,10 @@ def test_balancing_on_simple_balanced_aig() -> None:
     )
     aig_params_test.update_levels()
 
-    assert aig_params_test.num_pis() == num_pis_before
-    assert aig_params_test.num_pos() == num_pos_before
-    assert aig_params_test.num_gates() == num_gates_before
-    assert aig_params_test.num_levels() == depth_before
+    assert aig_params_test.num_pis() == num_pis_before_clone
+    assert aig_params_test.num_pos() == num_pos_before_clone
+    assert aig_params_test.num_gates() == num_gates_before_clone
+    assert aig_params_test.num_levels() == depth_before_clone
 
 
 def test_balancing_reduces_depth_of_long_chain() -> None:
@@ -82,6 +84,8 @@ def test_balancing_reduces_depth_of_long_chain() -> None:
     aig.update_levels()
     depth_before = aig.num_levels()
 
+    aig_copy = aig.clone()
+
     assert depth_before == 4
 
     balancing(aig)
@@ -99,29 +103,25 @@ def test_balancing_reduces_depth_of_long_chain() -> None:
     assert aig.num_levels() < depth_before
 
     # Test with parameters that might affect balancing quality
-    aig_params_test = DepthAig()
-    x0_orig = aig_params_test.create_pi()
-    x1_orig = aig_params_test.create_pi()
-    x2_orig = aig_params_test.create_pi()
-    x3_orig = aig_params_test.create_pi()
-    x4_orig = aig_params_test.create_pi()
-    n0_orig = aig_params_test.create_and(x3_orig, x4_orig)
-    n1_orig = aig_params_test.create_and(x2_orig, n0_orig)
-    n2_orig = aig_params_test.create_and(x1_orig, n1_orig)
-    n3_orig = aig_params_test.create_and(x0_orig, n2_orig)
-    aig_params_test.create_po(n3_orig)
+    original_unbalanced_aig = DepthAig(aig_copy)
+
+    cloned_unbalanced_base = original_unbalanced_aig.clone()
+    aig_params_test = DepthAig(cloned_unbalanced_base)
+
+    num_pis_before_clone = aig_params_test.num_pis()
+    num_pos_before_clone = aig_params_test.num_pos()
+    num_gates_before_clone = aig_params_test.num_gates()
     aig_params_test.update_levels()
-    depth_before_orig = aig_params_test.num_levels()
-    num_gates_before_orig = aig_params_test.num_gates()
+    depth_before_clone = aig_params_test.num_levels()
 
     balancing(aig_params_test, cut_size=3, cut_limit=4, only_on_critical_path=False)
     aig_params_test.update_levels()
 
-    assert aig_params_test.num_pis() == num_pis_before
-    assert aig_params_test.num_pos() == num_pos_before
-    assert aig_params_test.num_levels() < depth_before_orig
+    assert aig_params_test.num_pis() == num_pis_before_clone
+    assert aig_params_test.num_pos() == num_pos_before_clone
+    assert aig_params_test.num_levels() < depth_before_clone
     assert aig_params_test.num_levels() == expected_depth_after_balancing
-    assert aig_params_test.num_gates() == num_gates_before_orig
+    assert aig_params_test.num_gates() == num_gates_before_clone
 
 
 def test_balancing_complex_unbalanced_to_balanced_tree() -> None:
@@ -146,6 +146,8 @@ def test_balancing_complex_unbalanced_to_balanced_tree() -> None:
     aig.update_levels()
     depth_before = aig.num_levels()
 
+    aig_copy = aig.clone()
+
     assert num_gates_before == 7
     assert depth_before == 6
 
@@ -163,29 +165,21 @@ def test_balancing_complex_unbalanced_to_balanced_tree() -> None:
     assert aig.num_levels() < depth_before
 
     # Test with only_on_critical_path = True
-    aig_crit_path_test = DepthAig()
-    pis_orig = [aig_crit_path_test.create_pi() for _ in range(8)]
-    x0o, x1o, x2o, x3o, x4o, x5o, x6o, x7o = pis_orig
-    nc0o = aig_crit_path_test.create_and(x6o, x7o)
-    nc1o = aig_crit_path_test.create_and(x5o, nc0o)
-    nc2o = aig_crit_path_test.create_and(x4o, nc1o)
-    nc3o = aig_crit_path_test.create_and(x3o, nc2o)
-    nc4o = aig_crit_path_test.create_and(x2o, nc3o)
-    nb0o = aig_crit_path_test.create_and(x0o, x1o)
-    outo = aig_crit_path_test.create_and(nb0o, nc4o)
-    aig_crit_path_test.create_po(outo)
+    aig_crit_path_test = DepthAig(aig_copy)
+
+    num_pis_before_clone = aig_crit_path_test.num_pis()
+    num_pos_before_clone = aig_crit_path_test.num_pos()
     aig_crit_path_test.update_levels()
-    depth_before_orig_crit = aig_crit_path_test.num_levels()
-    aig_crit_path_test.num_gates()
+    depth_before_clone = aig_crit_path_test.num_levels()
 
     balancing(aig_crit_path_test, only_on_critical_path=True)
     aig_crit_path_test.update_levels()
 
-    assert aig_crit_path_test.num_pis() == num_pis_before
-    assert aig_crit_path_test.num_pos() == num_pos_before
+    assert aig_crit_path_test.num_pis() == num_pis_before_clone
+    assert aig_crit_path_test.num_pos() == num_pos_before_clone
     assert aig_crit_path_test.num_gates() == expected_gates_after
     assert aig_crit_path_test.num_levels() == expected_depth_after
-    assert aig_crit_path_test.num_levels() < depth_before_orig_crit
+    assert aig_crit_path_test.num_levels() < depth_before_clone
 
 
 def _create_and_chain_po(aig: DepthAig, num_pis: int) -> None:
