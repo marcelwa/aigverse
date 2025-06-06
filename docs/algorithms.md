@@ -87,7 +87,7 @@ from aigverse import aig_resubstitution
 aig_resub = aig.clone()
 
 # Apply resubstitution
-aig_resubstitution(aig_resub)
+aig_resubstitution(aig_resub, window_size=12)
 
 print(f"Original AND gates: {aig.num_gates()}")
 print(f"After resubstitution: {aig_resub.num_gates()} AND gates")
@@ -105,7 +105,7 @@ from aigverse import sop_refactoring
 aig_refactor = aig.clone()
 
 # Apply SOP refactoring
-sop_refactoring(aig_refactor)
+sop_refactoring(aig_refactor, use_reconvergence_cut=True)
 
 print(f"Original AND gates: {aig.num_gates()}")
 print(f"After SOP refactoring: {aig_refactor.num_gates()} AND gates")
@@ -123,11 +123,33 @@ from aigverse import aig_cut_rewriting
 aig_rewrite = aig.clone()
 
 # Apply cut rewriting
-aig_cut_rewriting(aig_rewrite)
+aig_cut_rewriting(aig_rewrite, cut_size=4)
 
 print(f"Original AND gates: {aig.num_gates()}")
 print(f"After cut rewriting: {aig_rewrite.num_gates()} AND gates")
 print(f"Reduction: {aig.num_gates() - aig_rewrite.num_gates()} gates ({(aig.num_gates() - aig_rewrite.num_gates()) / aig.num_gates() * 100:.2f}%)")
+```
+
+### Balancing
+
+Balancing performs (E)SOP factoring to minimize the number of levels in the AIG.
+
+```{code-cell} ipython3
+from aigverse import balancing, DepthAig
+
+# Clone the AIG for comparison
+aig_balance = aig.clone()
+
+# Apply balancing
+balancing(aig_balance, rebalance_function="sop")
+
+# Compute depth
+original_depth = DepthAig(aig).num_levels()
+balanced_depth = DepthAig(aig_balance).num_levels()
+
+print(f"Original depth: {original_depth} levels")
+print(f"After balancing: {balanced_depth} levels")
+print(f"Reduction in depth: {original_depth - balanced_depth} levels ({(original_depth - balanced_depth) / original_depth * 100:.2f}%)")
 ```
 
 ### Combining Optimization Techniques
@@ -135,7 +157,7 @@ print(f"Reduction: {aig.num_gates() - aig_rewrite.num_gates()} gates ({(aig.num_
 For best results, optimization techniques are typically applied in combination, often in multiple passes. The order of application can significantly impact the final result.
 
 ```{code-cell} ipython3
-# Apply all optimization techniques in sequence
+# Apply optimization techniques in sequence
 aig_opt = aig.clone()
 
 # First pass
@@ -200,6 +222,6 @@ inputs = generate_inputs(tt.num_vars())
 outputs = tt_list
 
 print("\nInput-output pairs for ML:")
-for i, (x, y) in enumerate(zip(inputs, outputs)):
-    print(f"  Input: {x}, Output: {y}")
+for i, (x, f) in enumerate(zip(inputs, outputs)):
+    print(f"  Input: {x}, Output: {f}")
 ```
