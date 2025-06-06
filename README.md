@@ -164,16 +164,16 @@ It is to be noted that the construction of sequential AIGs comes with some cavea
 You can optimize AIGs using various algorithms. For example, you can perform _resubstitution_ to simplify logic using
 shared divisors. Similarly, _refactoring_ collapses maximal fanout-free cones (MFFCs) into truth tables and resynthesizes
 them into new structures. Cut _rewriting_ optimizes the AIG by replacing cuts with improved ones from a pre-computed NPN
-database.
+database. Finally, _balancing_ performs (E)SOP factoring to minimize the number of levels in the AIG.
 
 ```python
-from aigverse import aig_resubstitution, sop_refactoring, aig_cut_rewriting
+from aigverse import aig_resubstitution, sop_refactoring, aig_cut_rewriting, balancing
 
 # Clone the AIG network for size comparison
 aig_clone = aig.clone()
 
 # Optimize the AIG with several optimization algorithms
-for optimization in [aig_resubstitution, sop_refactoring, aig_cut_rewriting]:
+for optimization in [aig_resubstitution, sop_refactoring, aig_cut_rewriting, balancing]:
     optimization(aig)
 
 # Print the size of the unoptimized and optimized AIGs
