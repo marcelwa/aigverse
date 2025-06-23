@@ -94,7 +94,3 @@ print(f"Is balanced? {is_balanced}")
 ## Truth Table Simulation
 
 The simulation of AIGs and other logic networks using truth tables is covered in the [Simulation section](algorithms.md#simulation) of the Algorithms documentation. This approach allows you to obtain the truth tables for outputs and internal nodes of a logic network.
-
-## Exporting for Machine Learning
-
-For details on how to export truth tables for use in machine learning applications, refer to the [Machine Learning Integration](algorithms.md#machine-learning-integration) section of the Algorithms documentation.

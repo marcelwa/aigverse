@@ -155,12 +155,6 @@ print(f"Number of primary inputs: {aig.num_pis()}")
 print(f"Number of primary outputs: {aig.num_pos()}")
 ```
 
-## Symbolic Simulation
-
-For simulating the truth tables of AIGs, see the [Truth Tables](truth_tables.md) documentation.
-The {py:func}`~aigverse.simulate` and {py:func}`~aigverse.simulate_nodes` functions allow you to obtain truth tables for
-outputs and internal nodes of an AIG, respectively.
-
 ## AIG Views
 
 AIG views provide alternative representations of AIGs for specific tasks, such as depth computation or fanout analysis.
