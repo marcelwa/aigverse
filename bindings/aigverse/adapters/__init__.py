@@ -2,9 +2,23 @@
 
 from __future__ import annotations
 
-from .. import Aig
-from .networkx import to_networkx
+try:
+    import networkx as nx  # noqa: F401
 
-Aig.to_networkx = to_networkx  # type: ignore[attr-defined]
+except ImportError:
+    import warnings
 
-del to_networkx
+    message = (
+        "NetworkX could not be imported. The `AIG.to_networkx()` adapter will not be available. "
+        "To enable this functionality, install aigverse's 'adapters' extra:\n\n"
+        "  uv pip install aigverse[adapters]\n"
+    )
+    warnings.warn(message, category=ImportWarning, stacklevel=2)
+
+else:
+    from .. import Aig
+    from .networkx import to_networkx
+
+    Aig.to_networkx = to_networkx  # type: ignore[attr-defined]
+
+    del to_networkx
