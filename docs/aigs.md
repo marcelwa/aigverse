@@ -155,6 +155,12 @@ print(f"Number of primary inputs: {aig.num_pis()}")
 print(f"Number of primary outputs: {aig.num_pos()}")
 ```
 
+## Symbolic Simulation
+
+For simulating the truth tables of AIGs, see the [Truth Tables](truth_tables.md) documentation.
+The {py:func}`~aigverse.simulate` and {py:func}`~aigverse.simulate_nodes` functions allow you to obtain truth tables for
+outputs and internal nodes of an AIG, respectively.
+
 ## AIG Views
 
 AIG views provide alternative representations of AIGs for specific tasks, such as depth computation or fanout analysis.
@@ -317,6 +323,47 @@ in extent to what ABC supports. For more information, see the
 [`lorina` parser](https://lorina.readthedocs.io/en/latest/verilog.html) used by this project.
 :::
 
+## Index Lists
+
+Alternatively, index lists provide a compact, serialization-friendly representation of an AIG's structure as a flat
+list of integers. This is useful for ML pipelines, dataset generation, or exporting AIGs for use in environments where
+fixed-size numeric arrays are required.
+
+```{code-cell} ipython3
+from aigverse import to_index_list, to_aig, AigIndexList
+
+# Create a sample AIG
+aig = Aig()
+a = aig.create_pi()
+b = aig.create_pi()
+c = aig.create_pi()
+d = aig.create_pi()
+t0 = aig.create_and(a, b)
+t1 = aig.create_and(~c, ~d)
+t2 = aig.create_xor(t0, t1)
+aig.create_po(t2)
+
+# Convert an AIG to an index list
+indices = to_index_list(aig)
+
+# Convert an index list back to an AIG
+aig2 = to_aig(indices)
+
+# Convert to a Python list
+indices = [int(i) for i in indices]
+print(indices)
+```
+
+The first three entries encode number of PIs, number of POs, and number of gates, respectively. In the example above,
+those are `4`, `1`, and `5`. Successive pairs of indices refer to the fanins signals of nodes. Each fanin exists in two
+polarities: negated = odd index, and non-negated = even index. In the example, `2` and `4` refer to the non-negated
+signals originating from PIs `1` and `2`. These form the first AND gate. The subsequent `7` and `9` are odd, hence,
+negated. If the first index is lower than the second, an AND gate is encoded. Otherwise, it is an XOR gate. The final
+indices of the list refer to the PO signals. It must be ensured that they match the encoded number of POs.
+
+For more information on the index list format, see
+[`mockturtle`'s documentation](https://mockturtle.readthedocs.io/en/latest/utils/util_data_structures.html#index-list).
+
 ## `pickle` Support
 
 AIGs support Python's [`pickle`](https://docs.python.org/3/library/pickle.html) protocol, allowing you to serialize and
@@ -358,97 +405,3 @@ with open("aigs.pkl", "wb") as f:
 with open("aigs.pkl", "rb") as f:
     unpickled_aig1, unpickled_aig2 = pickle.load(f)
 ```
-
-## Adapters
-
-Adapters provide alternative representations of AIGs for integration with other tools or workflows.
-
-### Edge Lists
-
-You can export AIGs as edge lists, which are useful for integration with graph libraries like [NetworkX](https://networkx.org/).
-
-```{code-cell} ipython3
-import matplotlib.pyplot as plt
-import networkx as nx
-from networkx.drawing.nx_agraph import graphviz_layout
-
-from aigverse import to_edge_list
-
-# Create a sample AIG
-aig = Aig()
-a = aig.create_pi()
-b = aig.create_pi()
-c = aig.create_pi()
-f1 = aig.create_and(a, b)
-f2 = aig.create_or(f1, c)
-aig.create_po(f2)
-
-# Export the AIG as an edge list
-edges = to_edge_list(aig)
-# Convert to a Python list of tuples
-edges = [(e.source, e.target, e.weight) for e in edges]
-
-# Create a NetworkX graph
-G = nx.DiGraph()
-for src, tgt, weight in edges:
-    G.add_edge(src, tgt, weight=weight)
-
-# Plot the graph
-plt.figure(figsize=(10, 6))
-pos = graphviz_layout(G, prog="dot")
-nx.draw(G, pos, with_labels=True, node_color="lightblue", node_size=500, arrowsize=20, font_size=12)
-labels = {(u, v): data["weight"] for u, v, data in G.edges(data=True)}
-nx.draw_networkx_edge_labels(G, pos, edge_labels=labels)
-plt.title("AIG as a Hierarchical Graph")
-plt.show()
-```
-
-Edge lists also support sequential AIGs. They will have additional connections from register inputs (RIs) to register
-outputs (ROs) which form feedback loops.
-
-### Index Lists
-
-Alternatively, index lists provide a compact, serialization-friendly representation of an AIG's structure as a flat
-list of integers. This is useful for ML pipelines, dataset generation, or exporting AIGs for use in environments where
-fixed-size numeric arrays are required.
-
-```{code-cell} ipython3
-from aigverse import to_index_list, to_aig, AigIndexList
-
-# Create a sample AIG
-aig = Aig()
-a = aig.create_pi()
-b = aig.create_pi()
-c = aig.create_pi()
-d = aig.create_pi()
-t0 = aig.create_and(a, b)
-t1 = aig.create_and(~c, ~d)
-t2 = aig.create_xor(t0, t1)
-aig.create_po(t2)
-
-# Convert an AIG to an index list
-indices = to_index_list(aig)
-
-# Convert an index list back to an AIG
-aig2 = to_aig(indices)
-
-# Convert to a Python list
-indices = [int(i) for i in indices]
-print(indices)
-```
-
-The first three entries encode number of PIs, number of POs, and number of gates, respectively. In the example above,
-those are `4`, `1`, and `5`. Successive pairs of indices refer to the fanins signals of nodes. Each fanin exists in two
-polarities: negated = odd index, and non-negated = even index. In the example, `2` and `4` refer to the non-negated
-signals originating from PIs `1` and `2`. These form the first AND gate. The subsequent `7` and `9` are odd, hence,
-negated. If the first index is lower than the second, an AND gate is encoded. Otherwise, it is an XOR gate. The final
-indices of the list refer to the PO signals. It must be ensured that they match the encoded number of POs.
-
-For more information on the index list format, see
-[`mockturtle`'s documentation](https://mockturtle.readthedocs.io/en/latest/utils/util_data_structures.html#index-list).
-
-## Symbolic Simulation
-
-For simulating the truth tables of AIGs, see the [Truth Tables](truth_tables.md) documentation. The {py:func}`~aigverse.simulate`
-and {py:func}`~aigverse.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes
-of an AIG.
