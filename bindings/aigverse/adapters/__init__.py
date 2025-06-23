@@ -19,6 +19,6 @@ else:
     from .. import Aig
     from .networkx import to_networkx
 
-    Aig.to_networkx = to_networkx  # type: ignore[attr-defined]
+    Aig.to_networkx = to_networkx  # type: ignore[method-assign]
 
     del to_networkx

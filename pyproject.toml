@@ -197,6 +197,7 @@ ignore = [
     "TID252", # Prefer absolute imports over relative imports from parent modules
     "S301", # pickle can be insecure
     "S403", # pickle can be insecure
+    "PYI002", # strictly static pyi interface
 ]
 
 isort.required-imports = ["from __future__ import annotations"]
