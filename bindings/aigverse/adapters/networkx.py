@@ -7,11 +7,17 @@ from typing import Any, Final
 import networkx as nx
 import numpy as np
 
-from .. import Aig, DepthAig, TruthTable, simulate, simulate_nodes, to_edge_list
+from .. import Aig, DepthAig, FanoutAig, TruthTable, simulate, simulate_nodes, to_edge_list
 
 
 def to_networkx(
-    self: Aig, *, const_nodes: bool = False, levels: bool = False, node_tts: bool = False, graph_tts: bool = False
+    self: Aig,
+    *,
+    const_nodes: bool = False,
+    levels: bool = False,
+    fanouts: bool = False,
+    node_tts: bool = False,
+    graph_tts: bool = False,
 ) -> nx.DiGraph:
     """Converts an AIG to a networkx.DiGraph.
 
@@ -25,7 +31,10 @@ def to_networkx(
         const_nodes: If True, includes constant nodes in the graph.
             Defaults to False.
         levels: If True, computes and adds level information for each node
-            and the total number of levels to the graph. Defaults to False.
+            and the total number of levels to the graph, as attributes
+            'levels' and 'level', respectively. Defaults to False.
+        fanouts: If True, computes and adds fanout information for each node
+            as a 'fanouts' attribute. Defaults to False.
         node_tts: If True, computes and adds a truth table for each node
             as a 'function' attribute. Defaults to False.
         graph_tts: If True, computes and adds the graph's overall truth
@@ -67,6 +76,10 @@ def to_networkx(
     if levels:
         depth_aig = DepthAig(self)
 
+    # Conditionally compute fanouts if requested
+    if fanouts:
+        fanout_aig = FanoutAig(self)
+
     # Conditionally compute node truth tables if requested
     if node_tts:
         node_funcs_raw: dict[int, TruthTable] = simulate_nodes(self)
@@ -104,6 +117,8 @@ def to_networkx(
         attrs: dict[str, Any] = {"index": node}
         if levels:
             attrs["level"] = depth_aig.level(node)
+        if fanouts:
+            attrs["fanouts"] = len(fanout_aig.fanouts(node))
         if node_tts:
             if node in node_funcs:  # regular node
                 attrs["function"] = node_funcs[self.node_to_index(node)]
