@@ -40,12 +40,12 @@ def to_networkx(
         - num_pos (int): Number of primary outputs.
         - num_gates (int): Number of AND gates.
         - levels (int, optional): Total number of levels in the AIG.
-        - function (list[TruthTable], optional): Graph's truth table.
+        - function (list[np.ndarray], optional): Graph's truth tables.
 
     Node Attributes:
         - index (int): The node's identifier.
         - level (int, optional): The level of the node in the AIG.
-        - function (TruthTable, optional): The node's truth table.
+        - function (np.ndarray, optional): The node's truth table.
         - type (np.ndarray): A one-hot encoded vector representing the node
           type ([const, pi, gate, po]).
 
@@ -69,12 +69,17 @@ def to_networkx(
 
     # Conditionally compute node truth tables if requested
     if node_tts:
-        node_funcs: dict[int, TruthTable] = simulate_nodes(self)
-        graph_funcs: list[TruthTable] = simulate(self)
+        node_funcs_raw: dict[int, TruthTable] = simulate_nodes(self)
+        node_funcs = {
+            node: np.array([int(tt.get_bit(i)) for i in range(tt.num_bits())]) for node, tt in node_funcs_raw.items()
+        }
+        graph_funcs_raw: list[TruthTable] = simulate(self)
+        graph_funcs = [np.array([int(tt.get_bit(i)) for i in range(tt.num_bits())]) for tt in graph_funcs_raw]
 
     # Conditionally compute graph output truth tables if requested
-    if graph_tts and not node_tts:  # avoid double computation
-        graph_funcs = simulate(self)
+    elif graph_tts:
+        graph_funcs_raw = simulate(self)
+        graph_funcs = [np.array([int(tt.get_bit(i)) for i in range(tt.num_bits())]) for tt in graph_funcs_raw]
 
     # Initialize the networkx graph
     g = nx.DiGraph()
