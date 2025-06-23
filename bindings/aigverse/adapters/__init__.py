@@ -9,12 +9,13 @@ try:
 except ImportError:
     import warnings
 
-    message = (
+    warnings.warn(
         "Key libraries could not be imported. The `AIG.to_networkx()` adapter will not be available. "
         "To enable this functionality, install aigverse's 'adapters' extra:\n\n"
-        "  uv pip install aigverse[adapters]\n"
+        "  uv pip install aigverse[adapters]\n",
+        category=ImportWarning,
+        stacklevel=2,
     )
-    warnings.warn(message, category=ImportWarning, stacklevel=2)
 
 else:
     from .. import Aig
