@@ -52,9 +52,24 @@ It is available via PyPI for all major operating systems and supports Python 3.9
 pip install aigverse
 ```
 
+### 🔌 Adapters
+
+To keep the core library lightweight, machine learning integration adapters are not installed by default. These adapters
+enable seamless conversion of AIGs to graph and array formats for use with ML and data science libraries (such as
+[NetworkX](https://networkx.org/), [NumPy](https://numpy.org/), etc.). To install `aigverse` with the adapters extra,
+use:
+
+```bash
+pip install aigverse[adapters]
+```
+
+This will install additional dependencies required for ML workflows. See the
+[documentation](https://aigverse.readthedocs.io/en/latest/installation.html#machine-learning-adapters) for more details.
+
 ## 🚀 Usage
 
-The following gives a shallow overview on `aigverse`. Detailed documentation and examples are available at [ReadTheDocs](https://aigverse.readthedocs.io/).
+The following gives a shallow overview on `aigverse`. Detailed documentation and examples are available at
+[ReadTheDocs](https://aigverse.readthedocs.io/).
 
 ### 🏗️ Basic Example: Creating an AIG
 
@@ -254,50 +269,22 @@ with open("aig.pkl", "rb") as f:
 
 You can also pickle multiple AIGs at once by storing them in a tuple or list.
 
-### 🔌 Adapters
+### 🧠 Machine Learning Integration
 
-Adapters provide alternative representations of AIGs for integration with other tools or workflows.
-
-#### Edge Lists
-
-You can export AIGs as edge lists, which are useful for integration with graph libraries like
-[NetworkX](https://networkx.org/).
+With the `adapters` extra, you can convert an AIG to a [NetworkX](https://networkx.org/) directed graph, enabling
+visualization and use with graph-based ML tools:
 
 ```python
-from aigverse import to_edge_list
+from aigverse import adapters
 
-# Export the AIG as an edge list
-edges = to_edge_list(aig)
-print(edges)
-
-# Convert to list of tuples
-edges = [(e.source, e.target, e.weight) for e in edges]
+G = aig.to_networkx(levels=True, fanouts=True, node_tts=True)
 ```
 
-Edge lists also support sequential AIGs. They will have additional connections from register inputs (RIs) to register
-outputs (ROs) which form feedback loops.
+Graph, node, and edge attributes provide logic, level, fanout, and function information for downstream ML or
+visualization tasks.
 
-#### Index Lists
-
-Alternatively, index lists provide a compact, serialization-friendly representation of an AIG's structure as a flat list
-of integers. This is useful for ML pipelines, dataset generation, or exporting AIGs for use in environments where
-fixed-size numeric arrays are required.
-
-```python
-from aigverse import to_index_list, to_aig, AigIndexList
-
-# Convert an AIG to an index list
-indices = to_index_list(aig)
-print(indices)
-
-# Convert an index list back to an AIG
-aig2 = to_aig(indices)
-
-# Convert to a Python list
-indices = [int(i) for i in indices]
-```
-
-For more information on the index list format, see [`mockturtle`'s documentation](https://mockturtle.readthedocs.io/en/latest/utils/util_data_structures.html#index-list).
+For more details and examples, see the
+[machine learning integration documentation](https://aigverse.readthedocs.io/en/latest/machine_learning.html).
 
 ### 🔢 Truth Tables
 
