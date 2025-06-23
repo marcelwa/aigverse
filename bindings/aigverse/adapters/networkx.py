@@ -13,7 +13,6 @@ from .. import Aig, DepthAig, TruthTable, simulate, simulate_nodes, to_edge_list
 def to_networkx(
     self: Aig,
     *,
-    const_nodes: bool = False,
     levels: bool = False,
     fanouts: bool = False,
     node_tts: bool = False,
@@ -26,10 +25,11 @@ def to_networkx(
     attributes for the graph, its nodes, and edges, making it suitable
     for graph-based machine learning tasks.
 
+    Note that the constant-0 node is always included in the graph, as
+    index 0, even if it is not referenced by any edges.
+
     Args:
         self: The AIG object to convert.
-        const_nodes: If True, includes constant nodes in the graph.
-            Defaults to False.
         levels: If True, computes and adds level information for each node
             and the total number of levels to the graph, as attributes
             'levels' and 'level', respectively. Defaults to False.
@@ -105,10 +105,6 @@ def to_networkx(
 
     # Iterate over all nodes in the AIG, plus synthetic PO nodes
     for node in self.nodes() + [self.po_index(po) + self.size() for po in self.pos()]:
-        # Skip constant nodes if const_nodes is False
-        if self.is_constant(node) and not const_nodes:
-            continue
-
         # Prepare node attributes dictionary
         attrs: dict[str, Any] = {"index": node}
         if levels:
