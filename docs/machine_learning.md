@@ -28,11 +28,10 @@ the [Installation](installation.md#machine-learning-adapters) documentation for 
 
 ### NetworkX
 
-The `networkx` adapter allows you to convert an AIG into a `networkx.DiGraph` object. This is a powerful feature, as it
-enables you to leverage the rich ecosystem of graph-based machine learning tools and libraries that operate on
-[NetworkX](https://networkx.org/) graphs. Once converted, you can easily extract node and edge features, visualize the
-structure (e.g., with [Matplotlib](https://matplotlib.org/)), or use the graph as input to graph neural networks and
-other ML models.
+The [NetworkX](https://networkx.org/) adapter allows you to convert an AIG into a {py:class}`~networkx.DiGraph` object.
+This enables you to leverage the rich ecosystem of graph-based machine learning and data science tools that operate on
+NetworkX graphs. Once converted, you can easily extract node and edge features, visualize the structure (e.g., with
+[Matplotlib](https://matplotlib.org/)), or use it as input to graph ML models.
 
 ```{code-cell} ipython3
 import matplotlib.pyplot as plt

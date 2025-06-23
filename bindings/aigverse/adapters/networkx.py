@@ -18,10 +18,10 @@ def to_networkx(
     node_tts: bool = False,
     graph_tts: bool = False,
 ) -> nx.DiGraph:
-    """Converts an AIG to a networkx.DiGraph.
+    """Converts an :class:`~aigverse.Aig` to a :class:`~networkx.DiGraph`.
 
     This function transforms the AIG into a directed graph representation
-    using the networkx library. It allows for the inclusion of various
+    using the NetworkX library. It allows for the inclusion of various
     attributes for the graph, its nodes, and edges, making it suitable
     for graph-based machine learning tasks.
 
@@ -32,35 +32,35 @@ def to_networkx(
         self: The AIG object to convert.
         levels: If True, computes and adds level information for each node
             and the total number of levels to the graph, as attributes
-            'levels' and 'level', respectively. Defaults to False.
+            ``levels`` and ``level``, respectively. Defaults to False.
         fanouts: If True, adds fanout size information for each node
-            as a 'fanouts' attribute. Defaults to False.
+            as a ``fanouts`` attribute. Defaults to False.
         node_tts: If True, computes and adds a truth table for each node
-            as a 'function' attribute. Defaults to False.
+            as a ``function`` attribute. Defaults to False.
         graph_tts: If True, computes and adds the graph's overall truth
-            table as a 'function' attribute to the graph. Defaults to False.
+            table as a ``function`` attribute to the graph. Defaults to False.
 
     Returns:
-        A networkx.DiGraph representing the AIG.
+        A :class:`~networkx.DiGraph` representing the AIG.
 
     Graph Attributes:
-        - type (str): "AIG".
+        - type (str): ``"AIG"``.
         - num_pis (int): Number of primary inputs.
         - num_pos (int): Number of primary outputs.
         - num_gates (int): Number of AND gates.
         - levels (int, optional): Total number of levels in the AIG.
-        - function (list[np.ndarray], optional): Graph's truth tables.
+        - function (list[:class:`~numpy.ndarray`], optional): Graph's truth tables.
 
     Node Attributes:
         - index (int): The node's identifier.
         - level (int, optional): The level of the node in the AIG.
-        - function (np.ndarray, optional): The node's truth table.
-        - type (np.ndarray): A one-hot encoded vector representing the node
-          type ([const, pi, gate, po]).
+        - function (:class:`~numpy.ndarray`, optional): The node's truth table.
+        - type (:class:`~numpy.ndarray`): A one-hot encoded vector representing the node
+          type (``[const, pi, gate, po]``).
 
     Edge Attributes:
-        - type (np.ndarray): A one-hot encoded vector representing the edge
-          type ([regular, inverted]).
+        - type (:class:`~numpy.ndarray`): A one-hot encoded vector representing the edge
+          type (``[regular, inverted]``).
     """
     # one-hot encodings for node types: [const, pi, gate, po]
     node_type_const: Final[np.ndarray[Any, np.dtype[np.float32]]] = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)
