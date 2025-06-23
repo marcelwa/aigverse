@@ -99,7 +99,7 @@ def to_networkx(
     g.graph["num_pos"] = self.num_pos()
     g.graph["num_gates"] = self.num_gates()
     if levels:
-        g.graph["levels"] = depth_aig.num_levels()
+        g.graph["levels"] = depth_aig.num_levels() + 1  # + 1 for the PO level
     if graph_tts:
         g.graph["function"] = graph_funcs
 
@@ -108,7 +108,7 @@ def to_networkx(
         # Prepare node attributes dictionary
         attrs: dict[str, Any] = {"index": node}
         if levels:
-            attrs["level"] = depth_aig.level(node)
+            attrs["level"] = depth_aig.level(node) if node < self.size() else depth_aig.num_levels() + 1
         if fanouts:
             attrs["fanouts"] = self.fanout_size(node)
         if node_tts:
