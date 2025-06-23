@@ -90,6 +90,12 @@ docs = [
     { name = "sphinxext-opengraph" },
 ]
 test = [
+    { name = "networkx", version = "3.2.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "networkx", version = "3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "numpy", version = "2.3.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pytest" },
     { name = "pytest-console-scripts" },
     { name = "pytest-cov" },
@@ -153,6 +159,8 @@ docs = [
     { name = "sphinxext-opengraph", specifier = ">=0.9.1" },
 ]
 test = [
+    { name = "networkx", specifier = ">=3.0.0" },
+    { name = "numpy", specifier = ">=1.23.0" },
     { name = "pytest", specifier = ">=8.3.3" },
     { name = "pytest-console-scripts", specifier = ">=1.4.1" },
     { name = "pytest-cov", specifier = ">=6" },
