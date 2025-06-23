@@ -4,12 +4,13 @@ from __future__ import annotations
 
 try:
     import networkx as nx  # noqa: F401
+    import numpy as np  # noqa: F401
 
 except ImportError:
     import warnings
 
     message = (
-        "NetworkX could not be imported. The `AIG.to_networkx()` adapter will not be available. "
+        "Key libraries could not be imported. The `AIG.to_networkx()` adapter will not be available. "
         "To enable this functionality, install aigverse's 'adapters' extra:\n\n"
         "  uv pip install aigverse[adapters]\n"
     )

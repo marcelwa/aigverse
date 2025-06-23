@@ -41,6 +41,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 test = ["pytest>=7.2", "aigverse"]
+adapters = ["networkx>=3.0.0", "numpy>=1.23.0"]
 
 [project.urls]
 Source = "https://github.com/marcelwa/aigverse"
@@ -222,6 +223,10 @@ build = [
     "scikit-build-core>=0.11.0",
     "setuptools-scm>=8.1",
 ]
+adapters = [
+    "networkx>=3.0.0",
+    "numpy>=1.23.0",
+]
 docs = [
     "furo>=2024.8.6",
     "myst-nb>=1.1.2",
@@ -236,6 +241,7 @@ docs = [
     "sphinx>=8.1.3; python_version >= '3.10'",
     "sphinx>=8.2.3; python_version >= '3.11'",
     "networkx>=3.0.0",
+    "numpy>=1.23.0",
     "matplotlib>=3.0.0",
     "pygraphviz>=1.9.0",
 ]
@@ -246,6 +252,7 @@ test = [
 ]
 dev = [
     { include-group = "build" },
+    { include-group = "adapters" },
     { include-group = "docs" },
     { include-group = "test" },
 ]
