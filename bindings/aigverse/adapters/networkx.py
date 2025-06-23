@@ -7,7 +7,7 @@ from typing import Any, Final
 import networkx as nx
 import numpy as np
 
-from .. import Aig, DepthAig, FanoutAig, TruthTable, simulate, simulate_nodes, to_edge_list
+from .. import Aig, DepthAig, TruthTable, simulate, simulate_nodes, to_edge_list
 
 
 def to_networkx(
@@ -33,7 +33,7 @@ def to_networkx(
         levels: If True, computes and adds level information for each node
             and the total number of levels to the graph, as attributes
             'levels' and 'level', respectively. Defaults to False.
-        fanouts: If True, computes and adds fanout information for each node
+        fanouts: If True, adds fanout size information for each node
             as a 'fanouts' attribute. Defaults to False.
         node_tts: If True, computes and adds a truth table for each node
             as a 'function' attribute. Defaults to False.
@@ -76,10 +76,6 @@ def to_networkx(
     if levels:
         depth_aig = DepthAig(self)
 
-    # Conditionally compute fanouts if requested
-    if fanouts:
-        fanout_aig = FanoutAig(self)
-
     # Conditionally compute node truth tables if requested
     if node_tts:
         node_funcs_raw: dict[int, TruthTable] = simulate_nodes(self)
@@ -118,7 +114,7 @@ def to_networkx(
         if levels:
             attrs["level"] = depth_aig.level(node)
         if fanouts:
-            attrs["fanouts"] = len(fanout_aig.fanouts(node))
+            attrs["fanouts"] = self.fanout_size(node)
         if node_tts:
             if node in node_funcs:  # regular node
                 attrs["function"] = node_funcs[self.node_to_index(node)]
