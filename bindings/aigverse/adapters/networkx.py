@@ -70,10 +70,11 @@ def to_networkx(
     # Conditionally compute node truth tables if requested
     if node_tts:
         node_funcs: dict[int, TruthTable] = simulate_nodes(self)
+        graph_funcs: list[TruthTable] = simulate(self)
 
     # Conditionally compute graph output truth tables if requested
-    if graph_tts:
-        graph_func: list[TruthTable] = simulate(self)
+    if graph_tts and not node_tts:  # avoid double computation
+        graph_funcs = simulate(self)
 
     # Initialize the networkx graph
     g = nx.DiGraph()
@@ -86,7 +87,7 @@ def to_networkx(
     if levels:
         g.graph["levels"] = depth_aig.num_levels()
     if graph_tts:
-        g.graph["function"] = graph_func
+        g.graph["function"] = graph_funcs
 
     # Iterate over all nodes in the AIG, plus synthetic PO nodes
     for node in self.nodes() + [self.po_index(po) + self.size() for po in self.pos()]:
@@ -98,8 +99,12 @@ def to_networkx(
         attrs: dict[str, Any] = {"index": node}
         if levels:
             attrs["level"] = depth_aig.level(node)
-        if node_tts and node in node_funcs:
-            attrs["function"] = node_funcs[node]  # type: ignore[index]
+        if node_tts:
+            if node in node_funcs:  # regular node
+                attrs["function"] = node_funcs[self.node_to_index(node)]
+            else:  # synthetic PO node
+                po_index = self.node_to_index(node) - self.size()
+                attrs["function"] = graph_funcs[po_index]
 
         # Determine and assign one-hot encoded node type
         if self.is_constant(node):
