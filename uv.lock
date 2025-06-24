@@ -20,9 +20,6 @@ adapters = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
     { name = "numpy", version = "2.3.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-test = [
-    { name = "pytest" },
-]
 
 [package.dev-dependencies]
 adapters = [
@@ -103,10 +100,8 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aigverse", marker = "extra == 'test'", editable = "." },
     { name = "networkx", marker = "extra == 'adapters'", specifier = ">=3.0.0" },
     { name = "numpy", marker = "extra == 'adapters'", specifier = ">=1.23.0" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=7.2" },
 ]
 
 [package.metadata.requires-dev]
