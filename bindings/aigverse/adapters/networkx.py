@@ -112,11 +112,11 @@ def to_networkx(
         if fanouts:
             attrs["fanouts"] = self.fanout_size(node)
         if node_tts:
-            if node in node_funcs:  # regular node
-                attrs["function"] = node_funcs[self.node_to_index(node)]
-            else:  # synthetic PO node
+            if node >= self.size():  # type: ignore[operator]  # is synthetic PO
                 po_index = self.node_to_index(node) - self.size()
                 attrs["function"] = graph_funcs[po_index]
+            else:  # is regular node
+                attrs["function"] = node_funcs[self.node_to_index(node)]
 
         # Determine and assign one-hot encoded node type
         if node >= self.size():  # type: ignore[operator]  # is synthetic PO
