@@ -7,7 +7,7 @@ from typing import Any, Final
 import networkx as nx
 import numpy as np
 
-from .. import Aig, DepthAig, TruthTable, simulate, simulate_nodes, to_edge_list
+from .. import Aig, DepthAig, simulate, simulate_nodes, to_edge_list
 
 
 def to_networkx(
@@ -76,19 +76,20 @@ def to_networkx(
     if levels:
         depth_aig = DepthAig(self)
 
+    node_funcs = {}
+    graph_funcs = []
+
     # Conditionally compute node truth tables if requested
     if node_tts:
-        node_funcs_raw: dict[int, TruthTable] = simulate_nodes(self)
         node_funcs = {
-            node: np.array([int(tt.get_bit(i)) for i in range(tt.num_bits())]) for node, tt in node_funcs_raw.items()
+            node: np.array([int(tt.get_bit(i)) for i in range(tt.num_bits())])
+            for node, tt in simulate_nodes(self).items()
         }
-        graph_funcs_raw: list[TruthTable] = simulate(self)
-        graph_funcs = [np.array([int(tt.get_bit(i)) for i in range(tt.num_bits())]) for tt in graph_funcs_raw]
+        graph_funcs = [np.array([int(tt.get_bit(i)) for i in range(tt.num_bits())]) for tt in simulate(self)]
 
     # Conditionally compute graph output truth tables if requested
     elif graph_tts:
-        graph_funcs_raw = simulate(self)
-        graph_funcs = [np.array([int(tt.get_bit(i)) for i in range(tt.num_bits())]) for tt in graph_funcs_raw]
+        graph_funcs = [np.array([int(tt.get_bit(i)) for i in range(tt.num_bits())]) for tt in simulate(self)]
 
     # Initialize the networkx graph
     g = nx.DiGraph()
