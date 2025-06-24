@@ -40,7 +40,6 @@ requires-python = ">=3.9"
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = ["pytest>=7.2", "aigverse"]
 adapters = ["networkx>=3.0.0", "numpy>=1.23.0"]
 
 [project.urls]
