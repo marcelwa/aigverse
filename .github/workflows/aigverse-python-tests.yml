@@ -15,6 +15,7 @@ on:
       - "**/CMakeLists.txt"
       - "libs/**"
       - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/aigverse-python-tests.yml"
   pull_request:
     branches: ["main"]
@@ -27,6 +28,7 @@ on:
       - "**/CMakeLists.txt"
       - "libs/**"
       - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/aigverse-python-tests.yml"
 
 concurrency:
