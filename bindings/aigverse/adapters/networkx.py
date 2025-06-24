@@ -119,14 +119,14 @@ def to_networkx(
                 attrs["function"] = graph_funcs[po_index]
 
         # Determine and assign one-hot encoded node type
-        if self.is_constant(node):
+        if node >= self.size():  # type: ignore[operator]  # is synthetic PO
+            type_vec = node_type_po
+        elif self.is_constant(node):
             type_vec = node_type_const
         elif self.is_pi(node):
             type_vec = node_type_pi
-        elif node < self.size():  # is gate
+        else:  # is gate
             type_vec = node_type_gate
-        else:  # is PO
-            type_vec = node_type_po
         attrs["type"] = type_vec
 
         # Add the node to the graph with its attributes
