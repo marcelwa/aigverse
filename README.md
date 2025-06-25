@@ -10,6 +10,15 @@
 > This project is still in the early stages of development. The API is subject to change, and some features may not be
 > fully implemented. I appreciate your patience and understanding as work to improve the library continues.
 
+<p align="center">
+  <a href="https://aigverse.readthedocs.io">
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/marcelwa/aigverse/refs/heads/main/docs/_static/aigverse_logo_dark_mode.svg" width="60%">
+     <img src="https://raw.githubusercontent.com/marcelwa/aigverse/refs/heads/main/docs/_static/aigverse_logo_light_mode.svg" width="60%" alt="aigverse logo">
+   </picture>
+  </a>
+</p>
+
 `aigverse` is a Python framework designed to bridge the gap between logic synthesis and AI/ML applications. It allows
 you to represent and manipulate logic circuits efficiently, making it easier to integrate logic synthesis tasks into
 machine learning pipelines. `aigverse` is built directly upon the powerful [EPFL Logic Synthesis Libraries](https://arxiv.org/abs/1805.05121),
