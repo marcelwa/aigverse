@@ -1,7 +1,18 @@
 from __future__ import annotations
 
-import numpy as np
 import pytest
+
+try:
+    import networkx as nx  # noqa: F401
+    import numpy as np
+except ImportError:
+    pytest.skip(
+        "Key libraries could not be imported. The `AIG.to_networkx()` adapter will not be available. "
+        "Skipping NetworkX adapter tests. To enable this functionality, install aigverse's 'adapters' extra:\n\n"
+        "  uv pip install aigverse[adapters]\n",
+        allow_module_level=True,
+    )
+
 
 from aigverse import Aig, DepthAig, FanoutAig, SequentialAig
 
