@@ -143,8 +143,8 @@ if read_the_docs_build:
 html_theme = "furo"
 html_static_path = ["_static"]
 html_theme_options = {
-    # "light_logo": "aigverse_dark.png",
-    # "dark_logo": "aigverse_light.png",
+    "light_logo": "aigverse_logo_light_mode.png",
+    "dark_logo": "aigverse_logo_dark_mode.png",
     "source_repository": "https://github.com/marcelwa/aigverse/",
     "source_branch": "main",
     "source_directory": "docs/",
