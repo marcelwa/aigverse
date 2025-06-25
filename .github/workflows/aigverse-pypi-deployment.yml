@@ -17,6 +17,7 @@ on:
       - "**/CMakeLists.txt"
       - "libs/**"
       - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/aigverse-pypi-deployment.yml"
   pull_request:
     branches: ["main"]
@@ -29,6 +30,7 @@ on:
       - "**/CMakeLists.txt"
       - "libs/**"
       - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/aigverse-pypi-deployment.yml"
   workflow_dispatch:
 

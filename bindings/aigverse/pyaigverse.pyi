@@ -1,5 +1,8 @@
 from collections.abc import Iterator
-from typing import Any, Literal, overload
+from typing import TYPE_CHECKING, Any, Literal, overload
+
+if TYPE_CHECKING:
+    import networkx as nx
 
 class AigNode:
     def __init__(self, index: int) -> None: ...
@@ -80,6 +83,15 @@ class Aig:
     def __getstate__(self) -> tuple[list[int]]: ...
     def __setstate__(self, state: tuple[list[int]]) -> Aig: ...
     def cleanup_dangling(self) -> None: ...
+    if TYPE_CHECKING:
+        def to_networkx(
+            self,
+            *,
+            levels: bool = False,
+            fanouts: bool = False,
+            node_tts: bool = False,
+            graph_tts: bool = False,
+        ) -> nx.DiGraph: ...
 
 class DepthAig(Aig):
     def __init__(self, ntk: Aig | DepthAig | None = None) -> None: ...
