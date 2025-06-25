@@ -21,7 +21,7 @@ def test_import() -> None:
     """Test that the aigverse adapters can be imported and correctly monkey-patches Aig."""
     assert not hasattr(Aig, "to_networkx")
 
-    from aigverse import adapters  # noqa: F401
+    import aigverse.adapters
 
     assert hasattr(Aig, "to_networkx")
     assert hasattr(DepthAig, "to_networkx")
@@ -53,7 +53,6 @@ def simple_aig() -> Aig:
 
 def test_to_networkx_basic(simple_aig: Aig) -> None:
     """Test basic graph structure and attributes."""
-    from aigverse import adapters  # noqa: F401
 
     g = simple_aig.to_networkx()
 
@@ -87,7 +86,6 @@ def test_to_networkx_basic(simple_aig: Aig) -> None:
 
 def test_to_networkx_levels(simple_aig: Aig) -> None:
     """Test level attributes."""
-    from aigverse import adapters  # noqa: F401
 
     g = simple_aig.to_networkx(levels=True)
 
@@ -100,7 +98,6 @@ def test_to_networkx_levels(simple_aig: Aig) -> None:
 
 def test_to_networkx_node_tts_and_graph_tts(simple_aig: Aig) -> None:
     """Test node and graph truth tables as numpy arrays."""
-    from aigverse import adapters  # noqa: F401
 
     g = simple_aig.to_networkx(node_tts=True, graph_tts=True)
 
@@ -125,7 +122,6 @@ def test_to_networkx_node_tts_and_graph_tts(simple_aig: Aig) -> None:
 
 def test_to_networkx_fanouts() -> None:
     """Test fanout attribute."""
-    from aigverse import adapters  # noqa: F401
 
     aig = Aig()
     a = aig.create_pi()
@@ -143,7 +139,6 @@ def test_to_networkx_fanouts() -> None:
 
 def test_to_networkx_edge_types(simple_aig: Aig) -> None:
     """Test edge type one-hot encoding for regular and inverted edges."""
-    from aigverse import adapters  # noqa: F401
 
     g = simple_aig.to_networkx()
 
@@ -157,7 +152,6 @@ def test_to_networkx_edge_types(simple_aig: Aig) -> None:
 
 def test_to_networkx_node_types(simple_aig: Aig) -> None:
     """Test node type one-hot encoding for all node types."""
-    from aigverse import adapters  # noqa: F401
 
     g = simple_aig.to_networkx()
     found_types = set()

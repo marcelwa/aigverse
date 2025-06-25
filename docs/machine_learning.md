@@ -38,7 +38,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 
-from aigverse import Aig, adapters
+from aigverse import Aig
+import aigverse.adapters
 
 # Create a sample AIG
 aig = Aig()

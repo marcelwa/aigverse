@@ -275,7 +275,7 @@ With the `adapters` extra, you can convert an AIG to a [NetworkX](https://networ
 visualization and use with graph-based ML tools:
 
 ```python
-from aigverse import adapters
+import aigverse.adapters
 
 G = aig.to_networkx(levels=True, fanouts=True, node_tts=True)
 ```
