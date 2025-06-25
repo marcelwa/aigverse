@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import sys
+from unittest import mock
+
 import pytest
 
 try:
@@ -17,10 +20,38 @@ except ImportError:
 from aigverse import Aig, DepthAig, FanoutAig, SequentialAig
 
 
-def test_import() -> None:
+@pytest.mark.parametrize("dependency", ["networkx", "numpy"])
+def test_missing_dependencies(dependency: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that an ImportWarning is issued if a dependency is missing."""
+    # Ensure a clean state by unloading the adapters module and removing any existing patch
+    monkeypatch.delitem(sys.modules, "aigverse.adapters", raising=False)
+    monkeypatch.delattr(Aig, "to_networkx", raising=False)
+
+    # Simulate that the dependency is not installed by patching 'sys.modules'
+    with mock.patch.dict(sys.modules, {dependency: None}):
+        # Check that the expected warning is raised when the module is imported
+        with pytest.warns(ImportWarning, match="Key libraries could not be imported"):
+            import aigverse.adapters  # noqa: F401
+
+        # The monkey-patch should not have been applied
+        assert not hasattr(Aig, "to_networkx")
+
+    # Unload the module to ensure a clean state for subsequent tests
+    monkeypatch.delitem(sys.modules, "aigverse.adapters", raising=False)
+
+
+def test_import(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that the aigverse adapters can be imported and correctly monkey-patch Aig."""
+    # Ensure a clean state by unloading the adapters module and removing any existing patch
+    monkeypatch.delitem(sys.modules, "aigverse.adapters", raising=False)
+    monkeypatch.delattr(Aig, "to_networkx", raising=False)
+    monkeypatch.delattr(DepthAig, "to_networkx", raising=False)
+    monkeypatch.delattr(FanoutAig, "to_networkx", raising=False)
+    monkeypatch.delattr(SequentialAig, "to_networkx", raising=False)
+
     assert not hasattr(Aig, "to_networkx")
 
+    # This import will execute the module's top-level code
     import aigverse.adapters
 
     assert hasattr(Aig, "to_networkx")
@@ -31,6 +62,9 @@ def test_import() -> None:
     import aigverse
 
     assert not hasattr(aigverse, "to_networkx")  # to_networkx gets deleted from scope correctly
+
+    # Unload the module to ensure a clean state for subsequent tests
+    monkeypatch.delitem(sys.modules, "aigverse.adapters", raising=False)
 
 
 @pytest.fixture
