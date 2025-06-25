@@ -1,4 +1,4 @@
-"""AIG to networkx adapter."""
+"""AIG to NetworkX adapter."""
 
 from __future__ import annotations
 
@@ -108,26 +108,32 @@ def to_networkx(
     for node in self.nodes() + [self.po_index(po) + self.size() for po in self.pos()]:
         # Prepare node attributes dictionary
         attrs: dict[str, Any] = {"index": node}
-        if levels:
-            attrs["level"] = depth_aig.level(node) if node < self.size() else depth_aig.num_levels() + 1
-        if fanouts:
-            attrs["fanouts"] = self.fanout_size(node)
-        if node_tts:
-            if node >= self.size():  # type: ignore[operator]  # is synthetic PO
+        is_synthetic_po = node >= self.size()  # type: ignore[operator]
+
+        if is_synthetic_po:
+            type_vec = node_type_po
+            if levels:
+                attrs["level"] = depth_aig.num_levels() + 1
+            if fanouts:
+                attrs["fanouts"] = 0
+            if node_tts:
                 po_index = self.node_to_index(node) - self.size()
                 attrs["function"] = graph_funcs[po_index]
-            else:  # is regular node
+        else:  # regular node
+            if self.is_constant(node):
+                type_vec = node_type_const
+            elif self.is_pi(node):
+                type_vec = node_type_pi
+            else:  # is gate
+                type_vec = node_type_gate
+
+            if levels:
+                attrs["level"] = depth_aig.level(node)
+            if fanouts:
+                attrs["fanouts"] = self.fanout_size(node)
+            if node_tts:
                 attrs["function"] = node_funcs[self.node_to_index(node)]
 
-        # Determine and assign one-hot encoded node type
-        if node >= self.size():  # type: ignore[operator]  # is synthetic PO
-            type_vec = node_type_po
-        elif self.is_constant(node):
-            type_vec = node_type_const
-        elif self.is_pi(node):
-            type_vec = node_type_pi
-        else:  # is gate
-            type_vec = node_type_gate
         attrs["type"] = type_vec
 
         # Add the node to the graph with its attributes
