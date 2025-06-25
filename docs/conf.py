@@ -143,8 +143,8 @@ if read_the_docs_build:
 html_theme = "furo"
 html_static_path = ["_static"]
 html_theme_options = {
-    # "light_logo": "aigverse_dark.png",
-    # "dark_logo": "aigverse_light.png",
+    "light_logo": "aigverse_logo_light_mode.svg",
+    "dark_logo": "aigverse_logo_dark_mode.svg",
     "source_repository": "https://github.com/marcelwa/aigverse/",
     "source_branch": "main",
     "source_directory": "docs/",
@@ -163,13 +163,13 @@ latex_documents = [
     (
         master_doc,
         "aigverse.tex",
-        r"AIGVerse\\{\Large A Python library for working with logic networks, synthesis, and optimization}",
+        r"\texttt{aigverse}\\{\Large A Python library for working with logic networks, synthesis, and optimization}",
         r"Marcel Walter\\Technical University of Munich",
         "howto",
         False,
     ),
 ]
-# latex_logo = "_static/aigverse_dark.png"
+latex_logo = "_static/aigverse_logo_light_mode.svg"
 latex_elements = {
     "papersize": "a4paper",
     "releasename": "Version",
