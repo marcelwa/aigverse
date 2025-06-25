@@ -143,8 +143,8 @@ if read_the_docs_build:
 html_theme = "furo"
 html_static_path = ["_static"]
 html_theme_options = {
-    "light_logo": "aigverse_logo_light_mode.png",
-    "dark_logo": "aigverse_logo_dark_mode.png",
+    "light_logo": "aigverse_logo_light_mode.svg",
+    "dark_logo": "aigverse_logo_dark_mode.svg",
     "source_repository": "https://github.com/marcelwa/aigverse/",
     "source_branch": "main",
     "source_directory": "docs/",
@@ -169,7 +169,7 @@ latex_documents = [
         False,
     ),
 ]
-latex_logo = "_static/aigverse_logo_light_mode.png"
+latex_logo = "_static/aigverse_logo_light_mode.svg"
 latex_elements = {
     "papersize": "a4paper",
     "releasename": "Version",
