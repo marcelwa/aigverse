@@ -163,13 +163,13 @@ latex_documents = [
     (
         master_doc,
         "aigverse.tex",
-        r"AIGVerse\\{\Large A Python library for working with logic networks, synthesis, and optimization}",
+        r"\texttt{aigverse}\\{\Large A Python library for working with logic networks, synthesis, and optimization}",
         r"Marcel Walter\\Technical University of Munich",
         "howto",
         False,
     ),
 ]
-# latex_logo = "_static/aigverse_dark.png"
+latex_logo = "_static/aigverse_logo_light_mode.png"
 latex_elements = {
     "papersize": "a4paper",
     "releasename": "Version",
