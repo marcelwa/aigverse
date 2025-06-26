@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 
+import pytest
+
 from aigverse import TruthTable, cofactor0, cofactor1, ternary_majority
 
 
@@ -413,3 +415,55 @@ def test_hash() -> None:
 
     # Check that the number of unique entries in counts does not exceed 10
     assert len(counts) <= 10
+
+
+def test_list_like_access() -> None:
+    tt = TruthTable(3)  # 8 bits
+    assert len(tt) == 8
+
+    # Initially all zero
+    assert all(b is False for b in tt)
+
+    # __setitem__ / __getitem__
+    tt[0] = True
+    tt[2] = True
+    tt[5] = True
+
+    assert tt[0] is True
+    assert tt[1] is False
+    assert tt[2] is True
+    assert tt[3] is False
+    assert tt[4] is False
+    assert tt[5] is True
+    assert tt[6] is False
+    assert tt[7] is False
+
+    # Negative indexing
+    assert tt[-1] is False  # bit 7
+    assert tt[-3] is True  # bit 5
+    assert tt[-8] is True  # bit 0
+
+    tt[-1] = True  # set bit 7
+    assert tt[7] is True
+
+    # __iter__
+    bits = list(tt)  # type: ignore[unreachable]  # mypy false positive
+    expected_bits = [True, False, True, False, False, True, False, True]
+    assert bits == expected_bits
+
+    # Test clearing bits
+    tt[0] = False
+    assert tt[0] is False
+    bits = list(tt)
+    expected_bits[0] = False
+    assert bits == expected_bits
+
+    # Test out of bounds
+    with pytest.raises(IndexError):
+        _ = tt[8]
+    with pytest.raises(IndexError):
+        tt[8] = False
+    with pytest.raises(IndexError):
+        _ = tt[-9]
+    with pytest.raises(IndexError):
+        tt[-9] = True

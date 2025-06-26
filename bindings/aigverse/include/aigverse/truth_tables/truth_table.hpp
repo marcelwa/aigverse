@@ -24,6 +24,77 @@ namespace aigverse
 namespace detail
 {
 
+/**
+ * @brief An iterator for traversing the bits of a truth table.
+ *
+ * This class provides a standard C++ iterator interface for iterating over the individual bits of a
+ * `aigverse::truth_table`. It is used to implement Python's list-like iteration protocol (`__iter__`).
+ */
+class truth_table_bit_iterator
+{
+  public:
+    /**
+     * @brief Constructs a bit iterator.
+     *
+     * @param tt The truth table to iterate over.
+     * @param index The starting index of the iterator.
+     */
+    truth_table_bit_iterator(const aigverse::truth_table& tt, const uint64_t index) : tt{&tt}, index{index} {}
+
+    /**
+     * @brief Dereferences the iterator to get the current bit.
+     *
+     * @return The boolean value of the bit at the current position.
+     */
+    bool operator*() const
+    {
+        return static_cast<bool>(kitty::get_bit(*tt, index));
+    }
+
+    /**
+     * @brief Increments the iterator to the next bit.
+     *
+     * @return A reference to the incremented iterator.
+     */
+    truth_table_bit_iterator& operator++()
+    {
+        ++index;
+        return *this;
+    }
+
+    /**
+     * @brief Compares two iterators for equality.
+     *
+     * @param other The other iterator to compare with.
+     * @return `true` if both iterators point to the same bit, `false` otherwise.
+     */
+    bool operator==(const truth_table_bit_iterator& other) const
+    {
+        return index == other.index;
+    }
+
+    /**
+     * @brief Compares two iterators for inequality.
+     *
+     * @param other The other iterator to compare with.
+     * @return `true` if the iterators point to different bits, `false` otherwise.
+     */
+    bool operator!=(const truth_table_bit_iterator& other) const
+    {
+        return !(*this == other);
+    }
+
+  private:
+    /**
+     * @brief A pointer to the truth table being iterated over.
+     */
+    const aigverse::truth_table* tt;
+    /**
+     * @brief The current bit index.
+     */
+    uint64_t index;
+};
+
 inline void truth_tables(pybind11::module& m)
 {
     namespace py = pybind11;
@@ -42,6 +113,54 @@ inline void truth_tables(pybind11::module& m)
         .def(py::self | py::self, "other"_a)
         .def(py::self ^ py::self, "other"_a)
         .def(~py::self)
+
+        // Python list-like convenience functions
+        .def("__len__", &aigverse::truth_table::num_bits)
+        .def(
+            "__getitem__",
+            [](const aigverse::truth_table& self, int64_t index) -> bool
+            {
+                if (index < 0)
+                {
+                    index += static_cast<int64_t>(self.num_bits());
+                }
+                if (index < 0 || static_cast<uint64_t>(index) >= self.num_bits())
+                {
+                    throw py::index_error("index out of range");
+                }
+                return kitty::get_bit(self, static_cast<uint64_t>(index));
+            },
+            "index"_a)
+        .def(
+            "__setitem__",
+            [](aigverse::truth_table& self, int64_t index, bool value)
+            {
+                if (index < 0)
+                {
+                    index += static_cast<int64_t>(self.num_bits());
+                }
+                if (index < 0 || static_cast<uint64_t>(index) >= self.num_bits())
+                {
+                    throw py::index_error("index out of range");
+                }
+                if (value)
+                {
+                    kitty::set_bit(self, static_cast<uint64_t>(index));
+                }
+                else
+                {
+                    kitty::clear_bit(self, static_cast<uint64_t>(index));
+                }
+            },
+            "index"_a, "value"_a)
+        .def(
+            "__iter__",
+            [](const aigverse::truth_table& self)
+            {
+                return py::make_iterator(truth_table_bit_iterator(self, 0),
+                                         truth_table_bit_iterator(self, self.num_bits()));
+            },
+            py::keep_alive<0, 1>())
 
         // Method bindings
         .def("num_vars", &aigverse::truth_table::num_vars, "Returns the number of variables.")
