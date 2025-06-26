@@ -115,7 +115,16 @@ inline void truth_tables(pybind11::module& m)
         .def(~py::self)
 
         // Python list-like convenience functions
-        .def("__len__", &aigverse::truth_table::num_bits)
+        .def("__len__",
+             [](const aigverse::truth_table& self) -> uint64_t
+             {
+                 if (self._bits.empty())
+                 {
+                     return 0;
+                 }
+
+                 return self.num_bits();
+             })
         .def(
             "__getitem__",
             [](const aigverse::truth_table& self, int64_t index) -> bool
