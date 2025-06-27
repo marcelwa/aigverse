@@ -1,6 +1,6 @@
 # aigverse: A Python Library for Logic Networks, Synthesis, and Optimization
 
-[![Python Bindings](https://img.shields.io/github/actions/workflow/status/marcelwa/aigverse/aigverse-pypi-deployment.yml?label=Bindings&logo=python&style=flat-square)](https://github.com/marcelwa/aigverse/actions/workflows/aigverse-pypi-deployment.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/marcelwa/aigverse/aigverse-pypi-deployment.yml?label=CI&logo=github&style=flat-square)](https://github.com/marcelwa/aigverse/actions/workflows/aigverse-pypi-deployment.yml)
 [![Documentation Status](https://img.shields.io/readthedocs/aigverse?label=Docs&logo=readthedocs&style=flat-square)](https://aigverse.readthedocs.io/)
 [![PyPI](https://img.shields.io/static/v1?label=PyPI&message=aigverse&logo=pypi&color=informational&style=flat-square)](https://pypi.org/project/aigverse/)
 [![License](https://img.shields.io/github/license/marcelwa/aigverse?label=License&style=flat-square)](https://github.com/marcelwa/aigverse/blob/main/LICENSE)
@@ -9,6 +9,15 @@
 > [!Important]
 > This project is still in the early stages of development. The API is subject to change, and some features may not be
 > fully implemented. I appreciate your patience and understanding as work to improve the library continues.
+
+<p align="center">
+  <a href="https://aigverse.readthedocs.io">
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/marcelwa/aigverse/refs/heads/main/docs/_static/aigverse_logo_dark_mode.svg" width="60%">
+     <img src="https://raw.githubusercontent.com/marcelwa/aigverse/refs/heads/main/docs/_static/aigverse_logo_light_mode.svg" width="60%" alt="aigverse logo">
+   </picture>
+  </a>
+</p>
 
 `aigverse` is a Python framework designed to bridge the gap between logic synthesis and AI/ML applications. It allows
 you to represent and manipulate logic circuits efficiently, making it easier to integrate logic synthesis tasks into
@@ -52,9 +61,24 @@ It is available via PyPI for all major operating systems and supports Python 3.9
 pip install aigverse
 ```
 
+### 🔌 Adapters
+
+To keep the core library lightweight, machine learning integration adapters are not installed by default. These adapters
+enable seamless conversion of AIGs to graph and array formats for use with ML and data science libraries (such as
+[NetworkX](https://networkx.org/), [NumPy](https://numpy.org/), etc.). To install `aigverse` with the adapters extra,
+use:
+
+```bash
+pip install aigverse[adapters]
+```
+
+This will install additional dependencies required for ML workflows. See the
+[documentation](https://aigverse.readthedocs.io/en/latest/installation.html#machine-learning-adapters) for more details.
+
 ## 🚀 Usage
 
-The following gives a shallow overview on `aigverse`. Detailed documentation and examples are available at [ReadTheDocs](https://aigverse.readthedocs.io/).
+The following gives a shallow overview on `aigverse`. Detailed documentation and examples are available at
+[ReadTheDocs](https://aigverse.readthedocs.io/).
 
 ### 🏗️ Basic Example: Creating an AIG
 
@@ -254,50 +278,22 @@ with open("aig.pkl", "rb") as f:
 
 You can also pickle multiple AIGs at once by storing them in a tuple or list.
 
-### 🔌 Adapters
+### 🧠 Machine Learning Integration
 
-Adapters provide alternative representations of AIGs for integration with other tools or workflows.
-
-#### Edge Lists
-
-You can export AIGs as edge lists, which are useful for integration with graph libraries like
-[NetworkX](https://networkx.org/).
+With the `adapters` extra, you can convert an AIG to a [NetworkX](https://networkx.org/) directed graph, enabling
+visualization and use with graph-based ML tools:
 
 ```python
-from aigverse import to_edge_list
+import aigverse.adapters
 
-# Export the AIG as an edge list
-edges = to_edge_list(aig)
-print(edges)
-
-# Convert to list of tuples
-edges = [(e.source, e.target, e.weight) for e in edges]
+G = aig.to_networkx(levels=True, fanouts=True, node_tts=True)
 ```
 
-Edge lists also support sequential AIGs. They will have additional connections from register inputs (RIs) to register
-outputs (ROs) which form feedback loops.
+Graph, node, and edge attributes provide logic, level, fanout, and function information for downstream ML or
+visualization tasks.
 
-#### Index Lists
-
-Alternatively, index lists provide a compact, serialization-friendly representation of an AIG's structure as a flat list
-of integers. This is useful for ML pipelines, dataset generation, or exporting AIGs for use in environments where
-fixed-size numeric arrays are required.
-
-```python
-from aigverse import to_index_list, to_aig, AigIndexList
-
-# Convert an AIG to an index list
-indices = to_index_list(aig)
-print(indices)
-
-# Convert an index list back to an AIG
-aig2 = to_aig(indices)
-
-# Convert to a Python list
-indices = [int(i) for i in indices]
-```
-
-For more information on the index list format, see [`mockturtle`'s documentation](https://mockturtle.readthedocs.io/en/latest/utils/util_data_structures.html#index-list).
+For more details and examples, see the
+[machine learning integration documentation](https://aigverse.readthedocs.io/en/latest/machine_learning.html).
 
 ### 🔢 Truth Tables
 
@@ -353,13 +349,35 @@ for node, tt in n_to_tt.items():
     print(f"Node {node}: {tt.to_binary()}")
 ```
 
-#### 📃 Exporting as Lists of Lists
+#### 📃 Exporting as Lists or NumPy Arrays
 
-For some machine learning applications, it may be useful to export the truth table as a list of lists.
+For machine learning applications, it is often useful to convert truth tables into standard data structures like Python
+lists or NumPy arrays. Since `TruthTable` objects are iterable, conversion is straightforward.
 
 ```python
-# Export the truth table as a list of lists
-tt_list = [[int(tt.get_bit(i)) for i in range(tt.num_bits())] for tt in tts]
+import numpy as np
+
+# Export to a list
+tt_list = list(tt)
+
+# Export to NumPy arrays
+tt_np_bool = np.array(tt)
+tt_np_int = np.array(tt, dtype=np.int32)
+tt_np_float = np.array(tt, dtype=np.float64)
+```
+
+#### 🥒 `pickle` Support
+
+Truth tables also support Python's `pickle` protocol, allowing you to serialize and deserialize them.
+
+```python
+import pickle
+
+with open("tt.pkl", "wb") as f:
+    pickle.dump(tt, f)
+
+with open("tt.pkl", "rb") as f:
+    unpickled_tt = pickle.load(f)
 ```
 
 ## 🙌 Contributing

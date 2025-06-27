@@ -24,13 +24,83 @@ namespace aigverse
 namespace detail
 {
 
+/**
+ * @brief An iterator for traversing the bits of a truth table.
+ *
+ * This class provides a standard C++ iterator interface for iterating over the individual bits of a
+ * `aigverse::truth_table`. It is used to implement Python's list-like iteration protocol (`__iter__`).
+ */
+class truth_table_bit_iterator
+{
+  public:
+    /**
+     * @brief Constructs a bit iterator.
+     *
+     * @param tt The truth table to iterate over.
+     * @param index The starting index of the iterator.
+     */
+    truth_table_bit_iterator(const aigverse::truth_table& tt, const uint64_t index) : tt{&tt}, index{index} {}
+
+    /**
+     * @brief Dereferences the iterator to get the current bit.
+     *
+     * @return The boolean value of the bit at the current position.
+     */
+    bool operator*() const
+    {
+        return static_cast<bool>(kitty::get_bit(*tt, index));
+    }
+
+    /**
+     * @brief Increments the iterator to the next bit.
+     *
+     * @return A reference to the incremented iterator.
+     */
+    truth_table_bit_iterator& operator++()
+    {
+        ++index;
+        return *this;
+    }
+
+    /**
+     * @brief Compares two iterators for equality.
+     *
+     * @param other The other iterator to compare with.
+     * @return `true` if both iterators point to the same bit, `false` otherwise.
+     */
+    bool operator==(const truth_table_bit_iterator& other) const
+    {
+        return index == other.index;
+    }
+
+    /**
+     * @brief Compares two iterators for inequality.
+     *
+     * @param other The other iterator to compare with.
+     * @return `true` if the iterators point to different bits, `false` otherwise.
+     */
+    bool operator!=(const truth_table_bit_iterator& other) const
+    {
+        return !(*this == other);
+    }
+
+  private:
+    /**
+     * @brief A pointer to the truth table being iterated over.
+     */
+    const aigverse::truth_table* tt;
+    /**
+     * @brief The current bit index.
+     */
+    uint64_t index;
+};
+
 inline void truth_tables(pybind11::module& m)
 {
     namespace py = pybind11;
     using namespace pybind11::literals;
 
     py::class_<aigverse::truth_table>(m, "TruthTable")
-        .def(py::init<>(), "Create an empty TruthTable with 0 variables.")
         .def(py::init<uint32_t>(), "num_vars"_a,
              "Create a TruthTable with 'num_vars' variables with all bits set to 0.")
 
@@ -42,6 +112,54 @@ inline void truth_tables(pybind11::module& m)
         .def(py::self | py::self, "other"_a)
         .def(py::self ^ py::self, "other"_a)
         .def(~py::self)
+
+        // Python list-like convenience functions
+        .def("__len__", &aigverse::truth_table::num_bits)
+        .def(
+            "__getitem__",
+            [](const aigverse::truth_table& self, int64_t index) -> bool
+            {
+                if (index < 0)
+                {
+                    index += static_cast<int64_t>(self.num_bits());
+                }
+                if (index < 0 || static_cast<uint64_t>(index) >= self.num_bits())
+                {
+                    throw py::index_error("index out of range");
+                }
+                return kitty::get_bit(self, static_cast<uint64_t>(index));
+            },
+            "index"_a)
+        .def(
+            "__setitem__",
+            [](aigverse::truth_table& self, int64_t index, const bool value)
+            {
+                if (index < 0)
+                {
+                    index += static_cast<int64_t>(self.num_bits());
+                }
+                if (index < 0 || static_cast<uint64_t>(index) >= self.num_bits())
+                {
+                    throw py::index_error("index out of range");
+                }
+                if (value)
+                {
+                    kitty::set_bit(self, static_cast<uint64_t>(index));
+                }
+                else
+                {
+                    kitty::clear_bit(self, static_cast<uint64_t>(index));
+                }
+            },
+            "index"_a, "value"_a)
+        .def(
+            "__iter__",
+            [](const aigverse::truth_table& self)
+            {
+                return py::make_iterator(truth_table_bit_iterator(self, 0),
+                                         truth_table_bit_iterator(self, self.num_bits()));
+            },
+            py::keep_alive<0, 1>())
 
         // Method bindings
         .def("num_vars", &aigverse::truth_table::num_vars, "Returns the number of variables.")
@@ -63,6 +181,37 @@ inline void truth_tables(pybind11::module& m)
         .def(
             "__hash__", [](const aigverse::truth_table& self) { return kitty::hash<aigverse::truth_table>{}(self); },
             "Returns the hash of the truth table.")
+
+        // Pickle support
+        .def(py::pickle(
+            [](const aigverse::truth_table& self) { // __getstate__
+                return py::make_tuple(self.num_vars(), self._bits);
+            },
+            [](const py::tuple& t) { // __setstate__
+                if (t.size() != 2)
+                {
+                    throw std::runtime_error("Invalid state for TruthTable unpickling.");
+                }
+
+                const auto num_vars = t[0].cast<uint32_t>();
+                const auto words = t[1].cast<std::vector<uint64_t>>();
+
+                if (words.empty())
+                {
+                    throw std::runtime_error("Cannot unpickle an empty TruthTable.");
+                }
+
+                aigverse::truth_table tt(num_vars);
+
+                if (tt.num_blocks() != words.size())
+                {
+                    throw std::runtime_error("Mismatched block count during unpickling.");
+                }
+
+                kitty::create_from_words(tt, words.begin(), words.end());
+
+                return tt;
+            }))
 
         // Free functions added to the class for convenience
         .def(
@@ -162,8 +311,14 @@ inline void truth_tables(pybind11::module& m)
 
         // Representations
         .def(
-            "__repr__", [](const aigverse::truth_table& self) -> std::string
-            { return fmt::format("TruthTable <vars={}>", self.num_vars()); },
+            "__repr__",
+            [](const aigverse::truth_table& self) -> std::string
+            {
+                std::stringstream stream{};
+                kitty::print_hex(self, stream);
+
+                return fmt::format("TruthTable <vars={}>: {}", self.num_vars(), stream.str());
+            },
             "Returns an abstract string representation of the truth table.")
         .def(
             "to_binary",

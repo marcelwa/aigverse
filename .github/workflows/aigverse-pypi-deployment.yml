@@ -17,6 +17,7 @@ on:
       - "**/CMakeLists.txt"
       - "libs/**"
       - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/aigverse-pypi-deployment.yml"
   pull_request:
     branches: ["main"]
@@ -29,6 +30,7 @@ on:
       - "**/CMakeLists.txt"
       - "libs/**"
       - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/aigverse-pypi-deployment.yml"
   workflow_dispatch:
 
@@ -75,7 +77,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest, macos-13, macos-14, windows-latest]
+        runs-on:
+          [ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-15, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -124,7 +127,7 @@ jobs:
           merge-multiple: true
 
       - name: Generate artifact attestation for sdist and wheel(s)
-        uses: actions/attest-build-provenance@v2.3.0
+        uses: actions/attest-build-provenance@v2.4.0
         with:
           subject-path: "dist/*"
 
