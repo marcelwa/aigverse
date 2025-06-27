@@ -104,9 +104,7 @@ AIGVERSE_ENABLE_PCH = "ON"
 AIGVERSE_ENABLE_UNITY_BUILD = "ON"
 
 [[tool.scikit-build.overrides]]
-if.python-version = ">=3.13"
 if.abi-flags = "t"
-if.platform-system = "win32"
 inherit.cmake.define = "append"
 cmake.define.DISABLE_GIL = "1"
 
@@ -138,11 +136,11 @@ xfail_strict = true
 
 [tool.cibuildwheel]
 build = "cp3*"
+enable = ["cpython-freethreading"]
 archs = "auto64"
 skip = "*-musllinux*"
 test-command = "python -c \"from aigverse import Aig\""
 build-frontend = "build[uv]"
-free-threaded-support = true
 manylinux-x86_64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.macos]
