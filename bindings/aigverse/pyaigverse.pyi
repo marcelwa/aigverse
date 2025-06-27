@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Literal, overload
 
 if TYPE_CHECKING:
     import networkx as nx
+    import numpy as np
 
 class AigNode:
     def __init__(self, index: int) -> None: ...
@@ -91,6 +92,7 @@ class Aig:
             fanouts: bool = False,
             node_tts: bool = False,
             graph_tts: bool = False,
+            dtype: type[np.generic] = ...,
         ) -> nx.DiGraph: ...
 
 class DepthAig(Aig):

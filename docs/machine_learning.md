@@ -37,6 +37,7 @@ NetworkX graphs. Once converted, you can easily extract node and edge features, 
 import matplotlib.pyplot as plt
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
+import numpy as np
 
 from aigverse import Aig
 import aigverse.adapters
@@ -51,7 +52,7 @@ f2 = aig.create_or(f1, c)
 aig.create_po(f2)
 
 # Convert the AIG to a NetworkX graph
-G = aig.to_networkx(levels=True, fanouts=True, node_tts=True)
+G = aig.to_networkx(levels=True, fanouts=True, node_tts=True, dtype=np.int32)
 
 # Generate the initial layout using Graphviz's 'dot' program
 pos = graphviz_layout(G, prog="dot")
