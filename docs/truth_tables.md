@@ -95,7 +95,7 @@ print(f"Is balanced? {is_balanced}")
 
 The simulation of AIGs and other logic networks using truth tables is covered in the [Simulation section](algorithms.md#simulation) of the Algorithms documentation. This approach allows you to obtain the truth tables for outputs and internal nodes of a logic network.
 
-## Pickle Support
+## `pickle` Support
 
 Truth tables support Python's `pickle` protocol, allowing you to serialize and deserialize them for persistent storage or use in data science workflows.
 
