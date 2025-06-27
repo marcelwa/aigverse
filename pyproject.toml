@@ -135,7 +135,8 @@ xfail_strict = true
 
 
 [tool.cibuildwheel]
-build = "cp3* cp3*t-*"
+build = "cp3*"
+enable = ["cpython-freethreading"]
 archs = "auto64"
 skip = "*-musllinux*"
 test-command = "python -c \"from aigverse import Aig\""
