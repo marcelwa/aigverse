@@ -50,6 +50,7 @@ def _run_tests(
         session.install("ninja")
 
     # install build and test dependencies on top of the existing environment
+    python_flag = f"--python={session.python}"
     session.run(
         "uv",
         "sync",
@@ -58,6 +59,7 @@ def _run_tests(
         "build",
         "--only-group",
         "test",
+        python_flag,
         *install_args,
         env=env,
     )
@@ -68,6 +70,7 @@ def _run_tests(
         "--no-dev",  # do not auto-install dev dependencies
         "--no-build-isolation-package",
         "aigverse",  # build the project without isolation
+        python_flag,
         *install_args,
         env=env,
     )
@@ -77,6 +80,7 @@ def _run_tests(
         "uv",
         "run",
         "--no-sync",  # do not sync as everything is already installed
+        python_flag,
         *install_args,
         "pytest",
         *pytest_run_args,
@@ -108,6 +112,16 @@ def minimums(session: nox.Session) -> None:
 @nox.session(reuse_venv=True)
 def docs(session: nox.Session) -> None:
     """Build the docs. Use "--non-interactive" to avoid serving. Pass "-b linkcheck" to check links."""
+    # Check for graphviz installation
+    if shutil.which("dot") is None:
+        session.error(
+            "Graphviz is required for building the documentation. "
+            "Please install it using your package manager. For example:\n"
+            "  - macOS: `brew install graphviz`\n"
+            "  - Ubuntu: `sudo apt install graphviz`\n"
+            "  - Windows: `winget install graphviz` or `choco install graphviz`\n"
+        )
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-b", dest="builder", default="html", help="Build target (default: html)")
     args, posargs = parser.parse_known_args(session.posargs)

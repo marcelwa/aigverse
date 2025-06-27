@@ -13,7 +13,7 @@ Key features include:
 - Efficient logic representation using And-Inverter Graphs (AIGs)
 - Support for various file formats (AIGER, Verilog, Bench, PLA)
 - High-performance C++ backend with a Pythonic interface
-- Integration capabilities with machine learning workflows
+- Integration capabilities with machine learning and data science workflows
 - Comprehensive tools for logic synthesis and optimization
 
 This documentation provides a comprehensive guide to the `aigverse` library, including {doc}`installation instructions <installation>`, a {doc}`quickstart guide <aigs>`, and detailed {doc}`API documentation <api/aigverse/index>`.
@@ -45,6 +45,7 @@ installation
 aigs
 truth_tables
 algorithms
+machine_learning
 ```
 
 ````{only} not latex

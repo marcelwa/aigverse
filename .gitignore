@@ -77,6 +77,8 @@ instance/
 docs/_build/
 docs/**/build
 docs/api/
+docs/example.aig
+docs/example.v
 
 # PyBuilder
 .pybuilder/

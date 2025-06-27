@@ -32,6 +32,10 @@ Check out their excellent [documentation](https://docs.astral.sh/uv/) for more i
 
 :::::
 
+## Core Library
+
+To install the core `aigverse` library, you can use `uv` or `pip`.
+
 ::::{tab-set}
 :sync-group: installer
 
@@ -54,7 +58,7 @@ $ uv pip install aigverse
 :::
 ::::
 
-In most practical cases (under 64-bit Linux, MacOS incl. Apple Silicon, and Windows), this requires no compilation and merely downloads and installs a platform-specific pre-built wheel.
+In most practical cases (under 64-bit Linux, macOS incl. Apple Silicon, and Windows), this requires no compilation and merely downloads and installs a platform-specific pre-built wheel.
 
 Once installed, you can check if the installation was successful by running:
 
@@ -66,8 +70,9 @@ which should print the installed version of the library.
 
 ---
 
-If you want to use the `aigverse` Python package in your own project, you can simply add it as a dependency to your `pyproject.toml` or `setup.py` file.
-This will automatically install the `aigverse` package when your project is installed.
+If you want to use the `aigverse` Python package in your own project, you can simply add it as a dependency to your
+`pyproject.toml` or `setup.py` file. This will automatically install the `aigverse` package and its dependencies when
+your project is installed.
 
 ::::{tab-set}
 
@@ -104,3 +109,33 @@ setup(
 
 :::
 ::::
+
+## Machine Learning Adapters
+
+To keep the library as light-weight as possible for default logic synthesis tasks, machine learning integration adapters
+for `aigverse` are not installed by default as those require many additional dependencies. Instead, you can opt in to
+the adapters by installing the `aigverse[adapters]` extra:
+
+::::{tab-set}
+:sync-group: installer
+
+:::{tab-item} uv _(recommended)_
+:sync: uv
+
+```console
+$ uv pip install aigverse[adapters]
+```
+
+:::
+
+:::{tab-item} pip
+:sync: pip
+
+```console
+(.venv) $ python -m pip install aigverse[adapters]
+```
+
+:::
+::::
+
+The same syntax applies to adding the `aigverse` package with adapters as a dependency to your own project.

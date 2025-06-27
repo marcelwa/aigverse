@@ -17,6 +17,7 @@ on:
       - "**/CMakeLists.txt"
       - "libs/**"
       - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/aigverse-pypi-deployment.yml"
   pull_request:
     branches: ["main"]
@@ -29,6 +30,7 @@ on:
       - "**/CMakeLists.txt"
       - "libs/**"
       - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/aigverse-pypi-deployment.yml"
   workflow_dispatch:
 
@@ -53,7 +55,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v6
 
       - name: Build sdist
         run: uv build --sdist
@@ -99,7 +101,7 @@ jobs:
         uses: rui314/setup-mold@v1
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v6
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.23
@@ -125,7 +127,7 @@ jobs:
           merge-multiple: true
 
       - name: Generate artifact attestation for sdist and wheel(s)
-        uses: actions/attest-build-provenance@v2.2.3
+        uses: actions/attest-build-provenance@v2.4.0
         with:
           subject-path: "dist/*"
 
