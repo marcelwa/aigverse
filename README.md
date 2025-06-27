@@ -329,7 +329,7 @@ tt.clear()
 print(tt.is_const0())
 ```
 
-#### 🔣 Symbolic Simulation of AIGs
+#### Symbolic Simulation of AIGs
 
 ```python
 from aigverse import simulate, simulate_nodes
@@ -349,13 +349,26 @@ for node, tt in n_to_tt.items():
     print(f"Node {node}: {tt.to_binary()}")
 ```
 
-#### 📃 Exporting as Lists of Lists
+#### 📃 Exporting as Lists or NumPy Arrays
 
-For some machine learning applications, it may be useful to export the truth table as a list of lists.
+For machine learning applications, it is often useful to convert truth tables into standard data structures like Python
+lists or NumPy arrays. Since `TruthTable` objects are iterable, conversion is straightforward.
 
 ```python
-# Export the truth table as a list of lists
-tt_list = [[int(tt.get_bit(i)) for i in range(tt.num_bits())] for tt in tts]
+from aigverse import TruthTable
+import numpy as np
+
+# tt is a TruthTable object, e.g., from simulation or created manually
+tt = TruthTable(3)
+tt.create_from_hex_string("e8")  # 3-input majority function
+
+# Export to a list
+tt_list = list(tt)
+
+# Export to NumPy arrays
+tt_np_bool = np.array(tt)
+tt_np_int = np.array(tt, dtype=np.int32)
+tt_np_float = np.array(tt, dtype=np.float64)
 ```
 
 ## 🙌 Contributing
