@@ -417,6 +417,64 @@ def test_hash() -> None:
     assert len(counts) <= 10
 
 
+def test_pickle() -> None:
+    import pickle
+
+    # Test with a non-trivial truth table
+    tt_original = TruthTable(4)
+    tt_original.create_from_hex_string("1337")
+
+    # Pickle and unpickle
+    pickled_tt = pickle.dumps(tt_original)
+    tt_unpickled = pickle.loads(pickled_tt)
+
+    # Verify that the unpickled object is identical to the original
+    assert tt_unpickled == tt_original
+    assert tt_unpickled.num_vars() == tt_original.num_vars()
+    assert tt_unpickled.to_binary() == tt_original.to_binary()
+
+    # Test with a 0-var truth table (non-empty)
+    tt_zero_var = TruthTable(0)
+    tt_zero_var.create_from_hex_string("1")
+    pickled_zero_var = pickle.dumps(tt_zero_var)
+    tt_unpickled_zero_var = pickle.loads(pickled_zero_var)
+    assert tt_unpickled_zero_var == tt_zero_var
+    assert tt_unpickled_zero_var.to_binary() == "1"
+
+
+def test_pickle_list() -> None:
+    import pickle
+
+    # Create a list of different truth tables
+    tts_original = [
+        TruthTable(0),
+        TruthTable(1),
+        TruthTable(2),
+        TruthTable(3),
+        TruthTable(4),
+    ]
+
+    # Modify them to be non-trivial
+    tts_original[0].create_from_hex_string("1")  # const 1
+    tts_original[1].create_from_hex_string("1")  # var 0 complement
+    tts_original[2].create_from_binary_string("1001")  # XNOR
+    tts_original[3].create_from_hex_string("e8")  # MAJ3
+    tts_original[4].create_random()
+
+    # Pickle the list
+    pickled_list = pickle.dumps(tts_original)
+
+    # Unpickle the list
+    tts_unpickled = pickle.loads(pickled_list)
+
+    # Check for equivalence
+    assert isinstance(tts_unpickled, list)
+    assert len(tts_original) == len(tts_unpickled)
+    for tt_orig, tt_unp in zip(tts_original, tts_unpickled):
+        assert tt_orig == tt_unp
+        assert tt_orig.to_binary() == tt_unp.to_binary()
+
+
 def test_list_like_access() -> None:
     tt = TruthTable(3)  # 8 bits
     assert len(tt) == 8

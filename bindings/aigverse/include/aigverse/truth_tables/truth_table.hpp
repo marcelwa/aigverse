@@ -101,7 +101,6 @@ inline void truth_tables(pybind11::module& m)
     using namespace pybind11::literals;
 
     py::class_<aigverse::truth_table>(m, "TruthTable")
-        .def(py::init<>(), "Create an empty TruthTable with 0 variables.")
         .def(py::init<uint32_t>(), "num_vars"_a,
              "Create a TruthTable with 'num_vars' variables with all bits set to 0.")
 
@@ -115,16 +114,7 @@ inline void truth_tables(pybind11::module& m)
         .def(~py::self)
 
         // Python list-like convenience functions
-        .def("__len__",
-             [](const aigverse::truth_table& self) -> uint64_t
-             {
-                 if (self._bits.empty())
-                 {
-                     return 0;
-                 }
-
-                 return self.num_bits();
-             })
+        .def("__len__", &aigverse::truth_table::num_bits)
         .def(
             "__getitem__",
             [](const aigverse::truth_table& self, int64_t index) -> bool
@@ -191,6 +181,37 @@ inline void truth_tables(pybind11::module& m)
         .def(
             "__hash__", [](const aigverse::truth_table& self) { return kitty::hash<aigverse::truth_table>{}(self); },
             "Returns the hash of the truth table.")
+
+        // Pickle support
+        .def(py::pickle(
+            [](const aigverse::truth_table& self) { // __getstate__
+                return py::make_tuple(self.num_vars(), self._bits);
+            },
+            [](const py::tuple& t) { // __setstate__
+                if (t.size() != 2)
+                {
+                    throw std::runtime_error("Invalid state for TruthTable unpickling.");
+                }
+
+                const auto num_vars = t[0].cast<uint32_t>();
+                const auto words = t[1].cast<std::vector<uint64_t>>();
+
+                if (words.empty())
+                {
+                    throw std::runtime_error("Cannot unpickle an empty TruthTable.");
+                }
+
+                aigverse::truth_table tt(num_vars);
+
+                if (tt.num_blocks() != words.size())
+                {
+                    throw std::runtime_error("Mismatched block count during unpickling.");
+                }
+
+                kitty::create_from_words(tt, words.begin(), words.end());
+
+                return tt;
+            }))
 
         // Free functions added to the class for convenience
         .def(
