@@ -142,7 +142,7 @@ inline void truth_tables(pybind11::module& m)
             "index"_a)
         .def(
             "__setitem__",
-            [](aigverse::truth_table& self, int64_t index, bool value)
+            [](aigverse::truth_table& self, int64_t index, const bool value)
             {
                 if (index < 0)
                 {
@@ -290,8 +290,14 @@ inline void truth_tables(pybind11::module& m)
 
         // Representations
         .def(
-            "__repr__", [](const aigverse::truth_table& self) -> std::string
-            { return fmt::format("TruthTable <vars={}>", self.num_vars()); },
+            "__repr__",
+            [](const aigverse::truth_table& self) -> std::string
+            {
+                std::stringstream stream{};
+                kitty::print_hex(self, stream);
+
+                return fmt::format("TruthTable <vars={}>: {}", self.num_vars(), stream.str());
+            },
             "Returns an abstract string representation of the truth table.")
         .def(
             "to_binary",

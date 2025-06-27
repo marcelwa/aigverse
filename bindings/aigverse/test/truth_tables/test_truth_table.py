@@ -155,12 +155,12 @@ def test_create_from_hex_string() -> None:
 
 
 def test_repr() -> None:
-    assert repr(TruthTable(0)) == "TruthTable <vars=0>"
-    assert repr(TruthTable(1)) == "TruthTable <vars=1>"
-    assert repr(TruthTable(2)) == "TruthTable <vars=2>"
-    assert repr(TruthTable(3)) == "TruthTable <vars=3>"
-    assert repr(TruthTable(4)) == "TruthTable <vars=4>"
-    assert repr(TruthTable(5)) == "TruthTable <vars=5>"
+    assert repr(TruthTable(0)) == "TruthTable <vars=0>: 0"
+    assert repr(TruthTable(1)) == "TruthTable <vars=1>: 0"
+    assert repr(TruthTable(2)) == "TruthTable <vars=2>: 0"
+    assert repr(TruthTable(3)) == "TruthTable <vars=3>: 00"
+    assert repr(TruthTable(4)) == "TruthTable <vars=4>: 0000"
+    assert repr(TruthTable(5)) == "TruthTable <vars=5>: 00000000"
 
 
 def test_create_constants() -> None:
