@@ -94,3 +94,30 @@ print(f"Is balanced? {is_balanced}")
 ## Truth Table Simulation
 
 The simulation of AIGs and other logic networks using truth tables is covered in the [Simulation section](algorithms.md#simulation) of the Algorithms documentation. This approach allows you to obtain the truth tables for outputs and internal nodes of a logic network.
+
+## Pickle Support
+
+Truth tables support Python's `pickle` protocol, allowing you to serialize and deserialize them for persistent storage or use in data science workflows.
+
+```{code-cell} ipython3
+import pickle
+
+# Create a truth table
+tt = TruthTable(3)
+tt.create_from_hex_string("d8")  # ITE function
+
+# Pickle the truth table
+with open("tt.pkl", "wb") as f:
+    pickle.dump(tt, f)
+
+# Unpickle the truth table
+with open("tt.pkl", "rb") as f:
+    unpickled_tt = pickle.load(f)
+
+# Verify that the unpickled object is identical
+print(f"Original:    {tt.to_binary()}")
+print(f"Unpickled:   {unpickled_tt.to_binary()}")
+print(f"Equivalent:  {tt == unpickled_tt}")
+```
+
+You can also pickle multiple truth tables at once by storing them in a list or tuple.

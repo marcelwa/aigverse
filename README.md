@@ -366,6 +366,20 @@ tt_np_int = np.array(tt, dtype=np.int32)
 tt_np_float = np.array(tt, dtype=np.float64)
 ```
 
+#### 🥒 `pickle` Support
+
+Truth tables also support Python's `pickle` protocol, allowing you to serialize and deserialize them.
+
+```python
+import pickle
+
+with open("tt.pkl", "wb") as f:
+    pickle.dump(tt, f)
+
+with open("tt.pkl", "rb") as f:
+    unpickled_tt = pickle.load(f)
+```
+
 ## 🙌 Contributing
 
 Contributions are welcome! If you'd like to contribute to `aigverse`, please see the
