@@ -170,7 +170,7 @@ latex_documents = [
         False,
     ),
 ]
-latex_logo = "_static/aigverse_logo_light_mode.svg"
+latex_logo = "_static/aigverse_logo_light_mode.png"
 latex_elements = {
     "papersize": "a4paper",
     "releasename": "Version",
