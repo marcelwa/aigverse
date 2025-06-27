@@ -41,9 +41,9 @@ def to_networkx(
         graph_tts: If True, computes and adds the graph's overall truth
             table as a ``function`` attribute to the graph. Defaults to False.
         dtype: The data type for truth tables and all one-hot encodings.
-            Defaults to :class:`~numpy.int8`. For machine learning tasks, a
-            floating-point type such as :class:`~numpy.float32` or
-            :class:`~numpy.float64` may be more appropriate, as it allows
+            Defaults to :obj:`~numpy.int8`. For machine learning tasks, a
+            floating-point type such as :obj:`~numpy.float32` or
+            :obj:`~numpy.float64` may be more appropriate, as it allows
             for gradient-based optimization.
 
     Returns:
@@ -63,12 +63,12 @@ def to_networkx(
         - function (:class:`~numpy.ndarray`, optional): The node's truth table.
         - type (:class:`~numpy.ndarray`): A one-hot encoded vector representing
             the node type (``[const, pi, gate, po]``). The data type is determined
-            by the ``dtype`` argument, defaulting to :class:`~numpy.int8`.
+            by the ``dtype`` argument, defaulting to :obj:`~numpy.int8`.
 
     Edge Attributes:
         - type (:class:`~numpy.ndarray`): A one-hot encoded vector representing the edge
             type (``[regular, inverted]``). The data type is determined by the
-            ``dtype`` argument, defaulting to :class:`~numpy.int8`.
+            ``dtype`` argument, defaulting to :obj:`~numpy.int8`.
     """
     # one-hot encodings for node types: [const, pi, gate, po]
     node_type_const: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([1, 0, 0, 0], dtype=dtype)

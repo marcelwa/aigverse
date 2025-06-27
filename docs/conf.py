@@ -93,6 +93,7 @@ myst_substitutions = {
     "version": version,
 }
 myst_heading_anchors = 3
+nitpicky = True
 
 # -- Options for {MyST}NB ----------------------------------------------------
 
