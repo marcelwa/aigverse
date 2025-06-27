@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 
+import pytest
+
 from aigverse import TruthTable, cofactor0, cofactor1, ternary_majority
 
 
@@ -153,12 +155,12 @@ def test_create_from_hex_string() -> None:
 
 
 def test_repr() -> None:
-    assert repr(TruthTable(0)) == "TruthTable <vars=0>"
-    assert repr(TruthTable(1)) == "TruthTable <vars=1>"
-    assert repr(TruthTable(2)) == "TruthTable <vars=2>"
-    assert repr(TruthTable(3)) == "TruthTable <vars=3>"
-    assert repr(TruthTable(4)) == "TruthTable <vars=4>"
-    assert repr(TruthTable(5)) == "TruthTable <vars=5>"
+    assert repr(TruthTable(0)) == "TruthTable <vars=0>: 0"
+    assert repr(TruthTable(1)) == "TruthTable <vars=1>: 0"
+    assert repr(TruthTable(2)) == "TruthTable <vars=2>: 0"
+    assert repr(TruthTable(3)) == "TruthTable <vars=3>: 00"
+    assert repr(TruthTable(4)) == "TruthTable <vars=4>: 0000"
+    assert repr(TruthTable(5)) == "TruthTable <vars=5>: 00000000"
 
 
 def test_create_constants() -> None:
@@ -413,3 +415,113 @@ def test_hash() -> None:
 
     # Check that the number of unique entries in counts does not exceed 10
     assert len(counts) <= 10
+
+
+def test_pickle() -> None:
+    import pickle
+
+    # Test with a non-trivial truth table
+    tt_original = TruthTable(4)
+    tt_original.create_from_hex_string("1337")
+
+    # Pickle and unpickle
+    pickled_tt = pickle.dumps(tt_original)
+    tt_unpickled = pickle.loads(pickled_tt)
+
+    # Verify that the unpickled object is identical to the original
+    assert tt_unpickled == tt_original
+    assert tt_unpickled.num_vars() == tt_original.num_vars()
+    assert tt_unpickled.to_binary() == tt_original.to_binary()
+
+    # Test with a 0-var truth table (non-empty)
+    tt_zero_var = TruthTable(0)
+    tt_zero_var.create_from_hex_string("1")
+    pickled_zero_var = pickle.dumps(tt_zero_var)
+    tt_unpickled_zero_var = pickle.loads(pickled_zero_var)
+    assert tt_unpickled_zero_var == tt_zero_var
+    assert tt_unpickled_zero_var.to_binary() == "1"
+
+
+def test_pickle_list() -> None:
+    import pickle
+
+    # Create a list of different truth tables
+    tts_original = [
+        TruthTable(0),
+        TruthTable(1),
+        TruthTable(2),
+        TruthTable(3),
+        TruthTable(4),
+    ]
+
+    # Modify them to be non-trivial
+    tts_original[0].create_from_hex_string("1")  # const 1
+    tts_original[1].create_from_hex_string("1")  # var 0 complement
+    tts_original[2].create_from_binary_string("1001")  # XNOR
+    tts_original[3].create_from_hex_string("e8")  # MAJ3
+    tts_original[4].create_random()
+
+    # Pickle the list
+    pickled_list = pickle.dumps(tts_original)
+
+    # Unpickle the list
+    tts_unpickled = pickle.loads(pickled_list)
+
+    # Check for equivalence
+    assert isinstance(tts_unpickled, list)
+    assert len(tts_original) == len(tts_unpickled)
+    for tt_orig, tt_unp in zip(tts_original, tts_unpickled):
+        assert tt_orig == tt_unp
+        assert tt_orig.to_binary() == tt_unp.to_binary()
+
+
+def test_list_like_access() -> None:
+    tt = TruthTable(3)  # 8 bits
+    assert len(tt) == 8
+
+    # Initially all zero
+    assert all(b is False for b in tt)
+
+    # __setitem__ / __getitem__
+    tt[0] = True
+    tt[2] = True
+    tt[5] = True
+
+    assert tt[0] is True
+    assert tt[1] is False
+    assert tt[2] is True
+    assert tt[3] is False
+    assert tt[4] is False
+    assert tt[5] is True
+    assert tt[6] is False
+    assert tt[7] is False
+
+    # Negative indexing
+    assert tt[-1] is False  # bit 7
+    assert tt[-3] is True  # bit 5
+    assert tt[-8] is True  # bit 0
+
+    tt[-1] = True  # set bit 7
+    assert tt[7] is True
+
+    # __iter__
+    bits = list(tt)  # type: ignore[unreachable]  # mypy false positive
+    expected_bits = [True, False, True, False, False, True, False, True]
+    assert bits == expected_bits
+
+    # Test clearing bits
+    tt[0] = False
+    assert tt[0] is False
+    bits = list(tt)
+    expected_bits[0] = False
+    assert bits == expected_bits
+
+    # Test out of bounds
+    with pytest.raises(IndexError):
+        _ = tt[8]
+    with pytest.raises(IndexError):
+        tt[8] = False
+    with pytest.raises(IndexError):
+        _ = tt[-9]
+    with pytest.raises(IndexError):
+        tt[-9] = True
