@@ -118,14 +118,14 @@ class TestNetworkxAdapter:
             assert "index" in data
             assert isinstance(data["type"], np.ndarray)
             assert data["type"].shape == (4,)
-            assert np.isclose(np.sum(data["type"]), 1.0)
+            assert np.sum(data["type"]) == 1
 
         # Edge attributes: type
         for _, _, data in g.edges(data=True):
             assert "type" in data
             assert isinstance(data["type"], np.ndarray)
             assert data["type"].shape == (2,)
-            assert np.isclose(np.sum(data["type"]), 1.0)
+            assert np.sum(data["type"]) == 1
 
     @staticmethod
     def test_to_networkx_levels(simple_aig: Aig) -> None:
@@ -148,7 +148,7 @@ class TestNetworkxAdapter:
         assert isinstance(g.graph["function"], list)
         for arr in g.graph["function"]:
             assert isinstance(arr, np.ndarray)
-            assert arr.dtype == np.int_
+            assert arr.dtype == np.int8
             assert arr.ndim == 1
             assert set(arr).issubset({0, 1})
 
@@ -157,7 +157,7 @@ class TestNetworkxAdapter:
             if "function" in data:
                 arr = data["function"]
                 assert isinstance(arr, np.ndarray)
-                assert arr.dtype == np.int_
+                assert arr.dtype == np.int8
                 assert arr.ndim == 1
                 assert set(arr).issubset({0, 1})
 
@@ -180,8 +180,8 @@ class TestNetworkxAdapter:
             arr = data["type"]
             assert isinstance(arr, np.ndarray)
             assert arr.shape == (2,)
-            assert np.isclose(np.sum(arr), 1.0)
-            assert set(arr).issubset({0.0, 1.0})
+            assert np.sum(arr) == 1
+            assert set(arr).issubset({0, 1})
 
     @staticmethod
     def test_to_networkx_node_types(simple_aig: Aig) -> None:
@@ -193,8 +193,29 @@ class TestNetworkxAdapter:
             arr = data["type"]
             assert isinstance(arr, np.ndarray)
             assert arr.shape == (4,)
-            assert np.isclose(np.sum(arr), 1.0)
+            assert np.sum(arr) == 1
             found_types.add(tuple(arr.tolist()))
 
         # Should have at least const, pi, gate, po
         assert len(found_types) == 4
+
+    @staticmethod
+    @pytest.mark.parametrize("dtype", [np.bool_, np.int8, np.int16, np.int32, np.int64, np.float32, np.float64])
+    def test_to_networkx_dtype(simple_aig: Aig, dtype: type[np.generic]) -> None:
+        """Test that the dtype argument is correctly applied to all numpy arrays."""
+        g = simple_aig.to_networkx(node_tts=True, graph_tts=True, dtype=dtype)
+
+        # Check graph function dtype
+        if "function" in g.graph:
+            for arr in g.graph["function"]:
+                assert arr.dtype == dtype
+
+        # Check node attribute dtypes
+        for _, data in g.nodes(data=True):
+            assert data["type"].dtype == dtype
+            if "function" in data:
+                assert data["function"].dtype == dtype
+
+        # Check edge attribute dtype
+        for _, _, data in g.edges(data=True):
+            assert data["type"].dtype == dtype

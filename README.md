@@ -349,13 +349,35 @@ for node, tt in n_to_tt.items():
     print(f"Node {node}: {tt.to_binary()}")
 ```
 
-#### 📃 Exporting as Lists of Lists
+#### 📃 Exporting as Lists or NumPy Arrays
 
-For some machine learning applications, it may be useful to export the truth table as a list of lists.
+For machine learning applications, it is often useful to convert truth tables into standard data structures like Python
+lists or NumPy arrays. Since `TruthTable` objects are iterable, conversion is straightforward.
 
 ```python
-# Export the truth table as a list of lists
-tt_list = [[int(tt.get_bit(i)) for i in range(tt.num_bits())] for tt in tts]
+import numpy as np
+
+# Export to a list
+tt_list = list(tt)
+
+# Export to NumPy arrays
+tt_np_bool = np.array(tt)
+tt_np_int = np.array(tt, dtype=np.int32)
+tt_np_float = np.array(tt, dtype=np.float64)
+```
+
+#### 🥒 `pickle` Support
+
+Truth tables also support Python's `pickle` protocol, allowing you to serialize and deserialize them.
+
+```python
+import pickle
+
+with open("tt.pkl", "wb") as f:
+    pickle.dump(tt, f)
+
+with open("tt.pkl", "rb") as f:
+    unpickled_tt = pickle.load(f)
 ```
 
 ## 🙌 Contributing
