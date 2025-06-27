@@ -329,7 +329,7 @@ tt.clear()
 print(tt.is_const0())
 ```
 
-#### Symbolic Simulation of AIGs
+#### 🔣 Symbolic Simulation of AIGs
 
 ```python
 from aigverse import simulate, simulate_nodes
@@ -355,12 +355,7 @@ For machine learning applications, it is often useful to convert truth tables in
 lists or NumPy arrays. Since `TruthTable` objects are iterable, conversion is straightforward.
 
 ```python
-from aigverse import TruthTable
 import numpy as np
-
-# tt is a TruthTable object, e.g., from simulation or created manually
-tt = TruthTable(3)
-tt.create_from_hex_string("e8")  # 3-input majority function
 
 # Export to a list
 tt_list = list(tt)
