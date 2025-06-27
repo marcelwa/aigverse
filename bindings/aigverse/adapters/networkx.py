@@ -63,14 +63,14 @@ def to_networkx(
           type (``[regular, inverted]``).
     """
     # one-hot encodings for node types: [const, pi, gate, po]
-    node_type_const: Final[np.ndarray[Any, np.dtype[np.float32]]] = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)
-    node_type_pi: Final[np.ndarray[Any, np.dtype[np.float32]]] = np.array([0.0, 1.0, 0.0, 0.0], dtype=np.float32)
-    node_type_gate: Final[np.ndarray[Any, np.dtype[np.float32]]] = np.array([0.0, 0.0, 1.0, 0.0], dtype=np.float32)
-    node_type_po: Final[np.ndarray[Any, np.dtype[np.float32]]] = np.array([0.0, 0.0, 0.0, 1.0], dtype=np.float32)
+    node_type_const: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([1, 0, 0, 0], dtype=np.int8)
+    node_type_pi: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([0, 1, 0, 0], dtype=np.int8)
+    node_type_gate: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([0, 0, 1, 0], dtype=np.int8)
+    node_type_po: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([0, 0, 0, 1], dtype=np.int8)
 
     # one-hot encodings for edge types: [regular, inverted]
-    edge_type_regular: Final[np.ndarray[Any, np.dtype[np.float32]]] = np.array([1.0, 0.0], dtype=np.float32)
-    edge_type_inverted: Final[np.ndarray[Any, np.dtype[np.float32]]] = np.array([0.0, 1.0], dtype=np.float32)
+    edge_type_regular: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([1, 0], dtype=np.int8)
+    edge_type_inverted: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([0, 1], dtype=np.int8)
 
     # Conditionally compute levels if requested
     if levels:
@@ -81,15 +81,12 @@ def to_networkx(
 
     # Conditionally compute node truth tables if requested
     if node_tts:
-        node_funcs = {
-            node: np.array([int(tt.get_bit(i)) for i in range(tt.num_bits())])
-            for node, tt in simulate_nodes(self).items()
-        }
-        graph_funcs = [np.array([int(tt.get_bit(i)) for i in range(tt.num_bits())]) for tt in simulate(self)]
+        node_funcs = {node: np.array(tt, dtype=np.int8) for node, tt in simulate_nodes(self).items()}
+        graph_funcs = [np.array(tt, dtype=np.int8) for tt in simulate(self)]
 
     # Conditionally compute graph output truth tables if requested
     elif graph_tts:
-        graph_funcs = [np.array([int(tt.get_bit(i)) for i in range(tt.num_bits())]) for tt in simulate(self)]
+        graph_funcs = [np.array(tt, dtype=np.int8) for tt in simulate(self)]
 
     # Initialize the networkx graph
     g = nx.DiGraph()
