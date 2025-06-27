@@ -198,3 +198,24 @@ class TestNetworkxAdapter:
 
         # Should have at least const, pi, gate, po
         assert len(found_types) == 4
+
+    @staticmethod
+    @pytest.mark.parametrize("dtype", [np.bool_, np.int8, np.int16, np.int32, np.int64, np.float32, np.float64])
+    def test_to_networkx_dtype(simple_aig: Aig, dtype: type[np.generic]) -> None:
+        """Test that the dtype argument is correctly applied to all numpy arrays."""
+        g = simple_aig.to_networkx(node_tts=True, graph_tts=True, dtype=dtype)
+
+        # Check graph function dtype
+        if "function" in g.graph:
+            for arr in g.graph["function"]:
+                assert arr.dtype == dtype
+
+        # Check node attribute dtypes
+        for _, data in g.nodes(data=True):
+            assert data["type"].dtype == dtype
+            if "function" in data:
+                assert data["function"].dtype == dtype
+
+        # Check edge attribute dtype
+        for _, _, data in g.edges(data=True):
+            assert data["type"].dtype == dtype
