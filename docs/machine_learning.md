@@ -140,3 +140,258 @@ print("\nFeature matrix (X) and labels (y) for ML:")
 print("X:\n", feature_matrix)
 print("y:\n", labels)
 ```
+
+## Graph-Based Machine Learning
+
+For more sophisticated tasks, particularly those involving Graph Neural Networks (GNNs), a list of `networkx.DiGraph`
+objects needs to be converted into a dataset of tensors suitable for ML libraries. The standard and most efficient way
+to do this, especially in PyTorch Geometric, is to create a `Dataset` class. This class handles the one-time conversion
+of raw graph objects into a processed format that can be quickly loaded for training.
+
+The following examples demonstrate how to create proper dataset classes for PyTorch Geometric and TensorFlow. These
+classes are designed to process a list of NetworkX graphs that have been converted from `aigverse.Aig` objects.
+
+### PyTorch Geometric Dataset
+
+For PyTorch Geometric, the best practice is to inherit from `torch_geometric.data.InMemoryDataset`. This base class is
+perfect when your entire collection of graphs can fit into memory. The key logic goes into the `process` method, which
+iterates through your list of raw NetworkX graphs, converts each one into a `torch_geometric.data.Data` object, and
+saves the collection of `Data` objects for efficient, repeated access.
+
+#### Option 1: Using Sparse Edge Index (Standard)
+
+This is the most common and memory-efficient approach in PyG. It represents graph connectivity using a sparse
+`edge_index` tensor.
+
+```{code-cell} ipython3
+import networkx as nx
+import numpy as np
+import torch
+from torch_geometric.data import Data, InMemoryDataset
+
+
+class AIGPygDataset(InMemoryDataset):
+    """Creates a PyTorch Geometric dataset from a list of NetworkX graphs.
+
+    This dataset uses the standard sparse edge_index representation.
+    """
+
+    def __init__(self, root: str, graph_list: list[nx.DiGraph]):
+        self.graph_list = graph_list
+        super().__init__(root)
+        self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
+
+    @property
+    def processed_file_names(self) -> list[str]:
+        return ["data.pt"]
+
+    def process(self) -> None:
+        # This method is called once to convert the raw data into tensors.
+        data_list = []
+        for G in self.graph_list:
+            # Node features (x): One-hot encoded type [const, pi, gate, po]
+            node_features = [data["type"] for _, data in G.nodes(data=True)]
+            x = torch.tensor(np.array(node_features), dtype=torch.float)
+
+            # Edge connectivity (edge_index): COO format [2, num_edges]
+            edge_index = torch.tensor(list(G.edges), dtype=torch.long).t().contiguous()
+
+            # Edge features (edge_attr): One-hot encoded type [regular, inverted]
+            edge_features = [data["type"] for _, _, data in G.edges(data=True)]
+            edge_attr = torch.tensor(np.array(edge_features), dtype=torch.float)
+
+            data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
+            data_list.append(data)
+
+        data, slices = self.collate(data_list)
+        torch.save((data, slices), self.processed_paths[0])
+
+
+# --- Example Usage ---
+# The following assumes you have a list of NetworkX DiGraphs.
+# For demonstration, we'll create a list with two graphs.
+from aigverse import Aig
+import aigverse.adapters
+
+aig1 = Aig()
+a, b = aig1.create_pi(), aig1.create_pi()
+f = aig1.create_and(a, b)
+aig1.create_po(f)
+aig2 = Aig()
+a, b, c = aig2.create_pi(), aig2.create_pi(), aig2.create_pi()
+f1 = aig2.create_and(a, b)
+f2 = aig2.create_and(f1, c)
+aig2.create_po(f2)
+graph_list = [aig1.to_networkx(), aig2.to_networkx()]
+# ---
+
+# Create the dataset (it will be processed and saved in the 'aig_pyg_dataset/' directory)
+dataset = AIGPygDataset(root="aig_pyg_dataset/", graph_list=graph_list)
+
+print(f"Dataset created with {len(dataset)} graphs.")
+print("First graph in the dataset:")
+print(dataset[0])
+print("\nSecond graph in the dataset:")
+print(dataset[1])
+```
+
+#### Option 2: Using Dense Adjacency Tensor
+
+For some models, a dense adjacency tensor is more suitable. The following `Dataset` class creates a `Data` object for
+each graph containing the node feature matrix (`x`) and a 3D adjacency tensor (`adj`).
+
+```{code-cell} ipython3
+import networkx as nx
+import numpy as np
+import torch
+from torch_geometric.data import Data, InMemoryDataset
+
+
+class AIGPygAdjDataset(InMemoryDataset):
+    """Creates a PyTorch Geometric dataset from a list of NetworkX graphs.
+
+    This dataset uses a dense 3D adjacency tensor for multi-relational edges.
+    """
+
+    def __init__(self, root, graph_list: list[nx.DiGraph]):
+        self.graph_list = graph_list
+        super().__init__(root)
+        self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
+
+    @property
+    def processed_file_names(self) -> list[str]:
+        return ["data_adj.pt"]
+
+    def process(self) -> None:
+        data_list = []
+
+        # Find the maximum number of nodes in the dataset for padding
+        max_nodes = 0
+        for G in self.graph_list:
+            max_nodes = max(max_nodes, G.number_of_nodes())
+
+        for G in self.graph_list:
+            num_nodes = G.number_of_nodes()
+
+            # Node features (x)
+            node_features_np = np.array([data["type"] for _, data in G.nodes(data=True)], dtype=np.float32)
+            # Pad node features to max_nodes
+            x_padded = np.pad(node_features_np, ((0, max_nodes - num_nodes), (0, 0)), "constant")
+            x = torch.from_numpy(x_padded)
+
+            # 3D Adjacency Tensor (adj)
+            adj = np.zeros((num_nodes, num_nodes, 2), dtype=np.float32)
+            for u, v, data in G.edges(data=True):
+                # data['type'] is a one-hot vector [1, 0] (regular) or [0, 1] (inverted)
+                adj[u, v, :] = data["type"]
+
+            # Pad adjacency tensor to max_nodes x max_nodes
+            adj_padded = np.pad(adj, ((0, max_nodes - num_nodes), (0, max_nodes - num_nodes), (0, 0)), "constant")
+            adj_tensor = torch.from_numpy(adj_padded)
+
+            data = Data(x=x, adj=adj_tensor)
+            data_list.append(data)
+
+        data, slices = self.collate(data_list)
+        torch.save((data, slices), self.processed_paths[0])
+
+
+# --- Example Usage ---
+# We use the same graph_list from the previous example.
+# For demonstration, we'll create a list with two graphs.
+from aigverse import Aig
+import aigverse.adapters
+
+aig1 = Aig()
+a, b = aig1.create_pi(), aig1.create_pi()
+f = aig1.create_and(a, b)
+aig1.create_po(f)
+aig2 = Aig()
+a, b, c = aig2.create_pi(), aig2.create_pi(), aig2.create_pi()
+f1 = aig2.create_and(a, b)
+f2 = aig2.create_and(f1, c)
+aig2.create_po(f2)
+graph_list = [aig1.to_networkx(), aig2.to_networkx()]
+# ---
+
+# Create the dataset
+adj_dataset = AIGPygAdjDataset(root="aig_pyg_adj_dataset/", graph_list=graph_list)
+
+print(f"Adjacency Tensor Dataset created with {len(adj_dataset)} graphs.")
+first_graph = adj_dataset[0]
+print("First graph in the dataset:")
+print(f"Node features shape: {first_graph.x.shape}")
+print(f"Adjacency tensor shape: {first_graph.adj.shape}")
+```
+
+### TensorFlow Dataset
+
+For TensorFlow, the `tf.data.Dataset` API is the standard. A common and flexible pattern is to create a Python generator
+that yields your processed data (the node and adjacency tensors for each graph) and then wrap it with
+`tf.data.Dataset.from_generator`. This creates an efficient, iterable input pipeline for your model.
+
+```{code-cell} ipython3
+import os
+
+# Suppress TensorFlow GPU-related warnings by forcing CPU-only mode
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+# Suppress TensorFlow informational and warning messages
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
+import networkx as nx
+import numpy as np
+import tensorflow as tf
+
+
+def aig_tf_generator(graph_list: list[nx.DiGraph]) -> tf.Tensor:
+    """
+    A Python generator that yields tensors for each graph in the list.
+    """
+    for G in graph_list:
+        num_nodes = G.number_of_nodes()
+
+        # Node feature matrix
+        node_features_list = [data["type"] for _, data in G.nodes(data=True)]
+        node_features = np.array(node_features_list, dtype=np.float32)
+
+        # 3D Adjacency tensor
+        adj = np.zeros((num_nodes, num_nodes, 2), dtype=np.float32)
+        for u, v, data in G.edges(data=True):
+            adj[u, v, :] = data["type"]
+
+        yield node_features, adj
+
+
+# --- Example Usage ---
+# We use the same graph_list from the previous examples.
+# For demonstration, we'll create a list with two graphs.
+from aigverse import Aig
+import aigverse.adapters
+
+aig1 = Aig()
+a, b = aig1.create_pi(), aig1.create_pi()
+f = aig1.create_and(a, b)
+aig1.create_po(f)
+aig2 = Aig()
+a, b, c = aig2.create_pi(), aig2.create_pi(), aig2.create_pi()
+f1 = aig2.create_and(a, b)
+f2 = aig2.create_and(f1, c)
+aig2.create_po(f2)
+graph_list = [aig1.to_networkx(), aig2.to_networkx()]
+# Let's define the output tensor shapes and types for the generator.
+# Note: Since graphs have variable numbers of nodes, we set node dimensions to None.
+output_signature = (
+    tf.TensorSpec(shape=(None, 4), dtype=tf.float32),  # 4 node types
+    tf.TensorSpec(shape=(None, None, 2), dtype=tf.float32),  # 2 edge types
+)
+
+# Create the tf.data.Dataset from the generator
+tf_dataset = tf.data.Dataset.from_generator(lambda: aig_tf_generator(graph_list), output_signature=output_signature)
+
+# TensorFlow Dataset created. You can now iterate over it or use .batch(), .shuffle(), etc.
+# Example of taking one element from the dataset
+for node_features, adj_tensor in tf_dataset.take(1):
+    print("\nFirst item in the TF dataset:")
+    print(f"Node features shape: {node_features.shape}")
+    print(f"Adjacency tensor shape: {adj_tensor.shape}")
+```
