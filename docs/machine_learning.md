@@ -90,7 +90,7 @@ nx.draw_networkx_edges(
     G,
     pos,
     node_size=5000,
-    arrows ="True",
+    arrows=True,
     arrowstyle="->",
     arrowsize=20,
 )
