@@ -394,7 +394,7 @@ This is a great way to get the features you need while also supporting the ongoi
 library.
 
 For inquiries, please reach out to [@marcelwa](https://github.com/marcelwa/). More information can be found in the
-[documentation](https://aigverse.readthedocs.io/en/latest/consulting.html).
+[documentation](https://aigverse.readthedocs.io/en/latest/support.html).
 
 ## 📜 License
 
