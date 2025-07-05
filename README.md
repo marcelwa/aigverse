@@ -386,6 +386,16 @@ Contributions are welcome! If you'd like to contribute to `aigverse`, please see
 [contribution guide](https://aigverse.readthedocs.io/en/latest/contributing.html). I appreciate feedback and suggestions
 for improving the library.
 
+## 💼 Support and Consulting
+
+`aigverse` is and will always be a free, open-source library. If you or your organization require dedicated support,
+specific new features, or integration of `aigverse` into your projects, professional consulting services are available.
+This is a great way to get the features you need while also supporting the ongoing maintenance and development of the
+library.
+
+For inquiries, please reach out to [@marcelwa](https://github.com/marcelwa/). More information can be found in the
+[documentation](https://aigverse.readthedocs.io/en/latest/support.html).
+
 ## 📜 License
 
 `aigverse` is available under the MIT License.
