@@ -393,7 +393,7 @@ specific new features, or integration of `aigverse` into your projects, professi
 This is a great way to get the features you need while also supporting the ongoing maintenance and development of the
 library.
 
-For inquiries, please reach out to @marcelwa. More information can be found in the
+For inquiries, please reach out to [@marcelwa](https://github.com/marcelwa/). More information can be found in the
 [documentation](https://aigverse.readthedocs.io/en/latest/consulting.html).
 
 ## 📜 License
