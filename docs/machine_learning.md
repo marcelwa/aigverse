@@ -74,7 +74,7 @@ plt.figure(figsize=(12, 8))
 plt.title("AIG with Attribute Labels")
 
 # Draw the graph structure (just the edges and arrows)
-nx.draw(G, pos, with_labels=False, node_size=0, arrowsize=20)
+nx.draw_networkx_nodes(G, pos, node_size=0)
 
 # Draw the node labels with a bounding box
 nx.draw_networkx_labels(
@@ -83,6 +83,16 @@ nx.draw_networkx_labels(
     labels=node_labels,
     font_size=10,
     bbox={"facecolor": "lightblue", "edgecolor": "black", "boxstyle": "round,pad=0.5"},
+)
+
+# Draw the network edges
+nx.draw_networkx_edges(
+    G,
+    pos,
+    node_size=5000,
+    arrows=True,
+    arrowstyle="->",
+    arrowsize=20,
 )
 
 # Draw the edge labels to show edge attributes
