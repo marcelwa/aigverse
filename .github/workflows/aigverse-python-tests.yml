@@ -42,7 +42,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
           fetch-depth: 0
@@ -76,7 +76,7 @@ jobs:
           [ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-15, windows-latest]
     steps:
       - name: Clone Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
           fetch-depth: 0
