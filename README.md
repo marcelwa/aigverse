@@ -69,7 +69,7 @@ enable seamless conversion of AIGs to graph and array formats for use with ML an
 use:
 
 ```bash
-pip install aigverse[adapters]
+pip install "aigverse[adapters]"
 ```
 
 This will install additional dependencies required for ML workflows. See the

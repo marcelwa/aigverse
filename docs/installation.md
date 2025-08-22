@@ -123,7 +123,7 @@ the adapters by installing the `aigverse[adapters]` extra:
 :sync: uv
 
 ```console
-$ uv pip install aigverse[adapters]
+$ uv pip install "aigverse[adapters]"
 ```
 
 :::
@@ -132,7 +132,7 @@ $ uv pip install aigverse[adapters]
 :sync: pip
 
 ```console
-(.venv) $ python -m pip install aigverse[adapters]
+(.venv) $ python -m pip install "aigverse[adapters]"
 ```
 
 :::
