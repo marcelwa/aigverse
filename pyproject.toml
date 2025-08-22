@@ -57,14 +57,14 @@ ninja.version = ">=1.10"
 # Setuptools-style build caching in a local directory
 build-dir = "build/{wheel_tag}/{build_type}"
 # Explicitly set the package directory
-wheel.packages = ["bindings/aigverse"]
+wheel.packages = ["src/aigverse"]
 # Only build the Python bindings target
 build.targets = ["pyaigverse"]
 # Only install the Python package component
 install.components = ["aigverse_Python"]
 
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
-sdist.include = ["bindings/aigverse/_version.py", "bindings/aigverse/adapters/**"]
+sdist.include = ["src/aigverse/_version.py", "src/aigverse/adapters/**"]
 sdist.exclude = [
     "**/.git",
     "**/.github",
@@ -110,7 +110,7 @@ cmake.define.DISABLE_GIL = "1"
 
 
 [tool.check-sdist]
-sdist-only = ["bindings/aigverse/_version.py"]
+sdist-only = ["src/aigverse/_version.py"]
 git-only = [
     "docs/*",
     "libs/*",
@@ -123,12 +123,12 @@ build-backend = "auto"
 
 
 [tool.setuptools_scm]
-write_to = "bindings/aigverse/_version.py"
+write_to = "src/aigverse/_version.py"
 
 
 [tool.pytest.ini_options]
 minversion = "7.2"
-testpaths = ["bindings/aigverse/test"]
+testpaths = ["test"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
 xfail_strict = true
@@ -163,8 +163,8 @@ aigverse = { workspace = true }
 
 
 [tool.mypy]
-files = ["bindings/aigverse/", "noxfile.py"]
-mypy_path = ["$MYPY_CONFIG_FILE_DIR/bindings"]
+files = ["src/aigverse/", "noxfile.py"]
+mypy_path = ["$MYPY_CONFIG_FILE_DIR/src"]
 warn_unused_configs = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 strict = true
@@ -201,7 +201,7 @@ ignore = [
 isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
-"bindings/aigverse/test/**" = ["T20", "ANN", "D"]
+"test/**" = ["T20", "ANN", "D"]
 "docs/**" = ["T20", "ERA001", "INP001"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]
 "*.pyi" = ["D418", "PYI021"]  # pydocstyle
