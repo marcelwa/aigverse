@@ -201,10 +201,10 @@ ignore = [
 isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
-"test/**" = ["T20", "ANN", "D"]
+"test/**" = ["T20", "ANN", "D", "INP001"]
 "docs/**" = ["T20", "ERA001", "INP001"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]
-"*.pyi" = ["D418", "PYI021"]  # pydocstyle
+"*.pyi" = ["D418", "PYI021"]
 "*.ipynb" = [
     "D", # pydocstyle
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
