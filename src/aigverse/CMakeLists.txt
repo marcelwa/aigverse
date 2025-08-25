@@ -1,10 +1,12 @@
 pybind11_add_module(pyaigverse
-        # Prefer thin LTO if available
         THIN_LTO
         aigverse.cpp)
+
 target_link_libraries(pyaigverse PRIVATE mockturtle)
+
 target_include_directories(pyaigverse
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 set_property(TARGET pyaigverse PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if (MSVC)

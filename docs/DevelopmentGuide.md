@@ -197,7 +197,7 @@ on the workflow summary page, or in the "Files changed" tab of the pull request.
 
 We use [pybind11](https://pybind11.readthedocs.io/en/stable) to expose large parts of the C++ library mockturtle to Python.
 This allows to keep the performance critical parts of the code in C++ while providing a convenient interface for Python users.
-All code related to C++-Python bindings is contained in the {code}`bindings/aigverse` directory.
+All code related to C++-Python bindings is contained in the {code}`src/aigverse` directory.
 
 ::::::{tab-set}
 :sync-group: installer
@@ -354,7 +354,7 @@ These are explained in more detail in the following sections.
 ### Running Python Tests
 
 The Python part of the code base is tested via unit tests using the [pytest](https://docs.pytest.org/en/latest/) framework.
-The corresponding test files can be found in the {code}`bindings/aigverse/test/` directory.
+The corresponding test files can be found in the {code}`test/` directory.
 A {code}`nox` session is provided to conveniently run the Python tests.
 
 ```console
@@ -375,7 +375,7 @@ $ nox -s tests-3.12
 If you don't want to use {code}`nox`, you can also run the tests directly using {code}`pytest`.
 
 ```console
-(.venv) $ pytest bindings/aigverse/test/
+(.venv) $ pytest test/
 ```
 
 This requires that you have the project installed in the virtual environment and the test dependency group installed.
@@ -431,7 +431,7 @@ Every public function, class, and module should have a docstring that explains w
 Ruff will check for missing docstrings and will explicitly warn you if you forget to add one.
 
 We heavily rely on [type hints](https://docs.python.org/3/library/typing.html) to document the expected types of function arguments and return values.
-For the compiled parts of the code base, we provide type hints in the form of {code}`.pyi` stub files in the {code}`bindings/aigverse` directory.
+For the compiled parts of the code base, we provide type hints in the form of {code}`.pyi` stub files in the {code}`src/aigverse` directory.
 
 The Python API documentation is integrated into the overall documentation that we host on ReadTheDocs using the
 [sphinx-autoapi](https://sphinx-autoapi.readthedocs.io/en/latest/) extension for Sphinx.

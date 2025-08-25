@@ -49,8 +49,7 @@ add_library(aigverse::aigverse_warnings ALIAS aigverse_warnings)
 # Include libraries
 add_subdirectory(libs)
 
-# Python bindings
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/bindings/)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/aigverse)
 
 # If MSVC is being used, and ASAN is enabled, we need to set the debugger
 # environment so that it behaves well with MSVC's debugger, and we can run the

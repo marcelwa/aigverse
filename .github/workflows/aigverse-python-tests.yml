@@ -7,7 +7,8 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "bindings/aigverse/**"
+      - "src/aigverse/**"
+      - "test/**"
       - "**/*.py"
       - "**/*.hpp"
       - "**/*.cpp"
@@ -20,7 +21,8 @@ on:
   pull_request:
     branches: ["main"]
     paths:
-      - "bindings/aigverse/**"
+      - "src/aigverse/**"
+      - "test/**"
       - "**/*.py"
       - "**/*.hpp"
       - "**/*.cpp"
