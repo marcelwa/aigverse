@@ -64,7 +64,15 @@ build.targets = ["pyaigverse"]
 install.components = ["aigverse_Python"]
 
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
-sdist.include = ["bindings/aigverse/_version.py", "bindings/aigverse/adapters/**"]
+sdist.include = [
+    "src/**",
+    "libs/**",
+    "cmake/**",
+    "CMakeLists.txt",
+    "pyproject.toml",
+    "README.md",
+    "LICENSE"
+]
 sdist.exclude = [
     "**/.nox",
     "**/.venv",
@@ -80,16 +88,12 @@ sdist.exclude = [
     "**/experiment",
     "**/experiments",
     "**/examples",
-    "**/include",
-    "**/libs",
     "**/cmake-build-**",
     "**/docs",
     "**/plots",
     "**/test",
     "**/tests",
     "**/nauty",
-    "**.cpp",
-    "**.hpp",
     "**.pdf",
     "**.ans",
     "**.out",
@@ -103,7 +107,6 @@ sdist.exclude = [
 sdist-only = ["src/aigverse/_version.py"]
 git-only = [
     "docs/*",
-    "libs/*",
     "test/*",
     ".idea/*",
 ]
