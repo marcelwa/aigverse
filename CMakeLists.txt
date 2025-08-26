@@ -26,6 +26,7 @@ project(
 include(cmake/PreventInSourceBuilds.cmake)
 include(cmake/ProjectOptions.cmake)
 include(cmake/Utilities.cmake)
+include(cmake/ExternalDependencies.cmake)
 
 aigverse_setup_options()
 aigverse_global_options()
@@ -49,7 +50,6 @@ add_library(aigverse::aigverse_warnings ALIAS aigverse_warnings)
 # Include libraries
 add_subdirectory(libs)
 
-# Public headers (moved to top-level include/). This defines AIGVERSE_PUBLIC_HEADERS and AIGVERSE_PUBLIC_INCLUDE_DIR
 add_subdirectory(include)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/aigverse)
