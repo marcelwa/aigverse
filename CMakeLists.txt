@@ -25,7 +25,6 @@ project(
 
 include(cmake/PreventInSourceBuilds.cmake)
 include(cmake/ProjectOptions.cmake)
-include(cmake/Utilities.cmake)
 include(cmake/ExternalDependencies.cmake)
 
 aigverse_setup_options()

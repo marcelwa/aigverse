@@ -1,5 +1,4 @@
-# check whether the submodule ``modulename`` is correctly cloned in the
-# ``/libs`` directory.
+# check whether the submodule ``modulename`` is correctly cloned in the ``/libs`` directory.
 macro(check_if_present modulename)
   if(NOT EXISTS "${PROJECT_SOURCE_DIR}/libs/${modulename}/CMakeLists.txt")
     message(
