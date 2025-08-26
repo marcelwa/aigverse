@@ -2,10 +2,7 @@ pybind11_add_module(pyaigverse
         THIN_LTO
         aigverse.cpp)
 
-target_link_libraries(pyaigverse PRIVATE mockturtle)
-
-target_include_directories(pyaigverse
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(pyaigverse PRIVATE libaigverse mockturtle)
 
 set_property(TARGET pyaigverse PROPERTY POSITION_INDEPENDENT_CODE ON)
 

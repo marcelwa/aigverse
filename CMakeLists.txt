@@ -2,7 +2,7 @@
 # Project (https://github.com/lefticus/cpp_starter_project) and CMake Template
 # (https://github.com/cpp-best-practices/cmake_template)
 
-cmake_minimum_required(VERSION 3.21...3.29)
+cmake_minimum_required(VERSION 3.23...4.1.0)
 
 # Only set the CMAKE_CXX_STANDARD if it is not set by someone else
 if(NOT DEFINED CMAKE_CXX_STANDARD)
@@ -48,6 +48,9 @@ add_library(aigverse::aigverse_warnings ALIAS aigverse_warnings)
 
 # Include libraries
 add_subdirectory(libs)
+
+# Public headers (moved to top-level include/). This defines AIGVERSE_PUBLIC_HEADERS and AIGVERSE_PUBLIC_INCLUDE_DIR
+add_subdirectory(include)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/aigverse)
 
