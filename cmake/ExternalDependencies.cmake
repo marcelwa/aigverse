@@ -3,7 +3,13 @@
 include(FetchContent)
 include(CMakeDependentOption)
 
-option(AIGVERSE_VENDOR_PYBIND11 "Fetch pybind11 automatically if not found" ON)
+cmake_dependent_option(
+  AIGVERSE_VENDOR_PYBIND11
+  "Fetch pybind11 automatically if not found"
+  ON
+  "NOT SKBUILD"
+  OFF
+)
 set(AIGVERSE_PYBIND11_VERSION 2.13.6 CACHE STRING "Desired pybind11 version")
 
 if(NOT SKBUILD)
@@ -18,13 +24,17 @@ if(NOT SKBUILD)
     ERROR_VARIABLE pybind11_exec_err
   )
   if(pybind11_exec_res EQUAL 0 AND pybind11_DIR)
-    list(APPEND CMAKE_PREFIX_PATH "${pybind11_DIR}")
+    list(PREPEND CMAKE_PREFIX_PATH "${pybind11_DIR}")
   else()
     message(DEBUG "pybind11 --cmakedir query failed (code=${pybind11_exec_res}). stderr: ${pybind11_exec_err}")
   endif()
 endif()
 
-message(STATUS "Python executable: ${Python_EXECUTABLE}")
+if(Python_EXECUTABLE)
+  message(STATUS "Python executable: ${Python_EXECUTABLE}")
+else()
+    message(FATAL_ERROR "Python executable not found")
+endif()
 
 # First attempt to find an existing pybind11 (quiet; we'll vendor if missing)
 find_package(pybind11 ${AIGVERSE_PYBIND11_VERSION} CONFIG QUIET)
@@ -37,7 +47,7 @@ if(NOT pybind11_FOUND)
       GIT_REPOSITORY https://github.com/pybind/pybind11.git
       GIT_TAG v${AIGVERSE_PYBIND11_VERSION}
       GIT_SHALLOW TRUE
-      FIND_PACKAGE_ARGS ${AIGVERSE_PYBIND11_VERSION}
+      FIND_PACKAGE_ARGS ${AIGVERSE_PYBIND11_VERSION} CONFIG
     )
     # Prevent polluting parent projects if this is used as a subtree
     set(FETCHCONTENT_QUIET OFF)
