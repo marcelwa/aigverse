@@ -49,8 +49,10 @@ add_library(aigverse::aigverse_warnings ALIAS aigverse_warnings)
 # Include libraries
 add_subdirectory(libs)
 
+# Include headers
 add_subdirectory(include)
 
+# Include source files
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/aigverse)
 
 # If MSVC is being used, and ASAN is enabled, we need to set the debugger
