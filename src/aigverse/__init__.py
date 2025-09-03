@@ -1,4 +1,4 @@
-"""Bindings for aigverse."""
+"""aigverse: A Python Library for Logic Networks, Synthesis, and Optimization."""
 
 from __future__ import annotations
 

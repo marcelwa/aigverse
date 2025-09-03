@@ -135,13 +135,14 @@ dmypy.json
 cython_debug/
 
 # setuptools_scm
-bindings/*/_version.py
+src/aigverse/_version.py
 
 # SKBuild cache dir
 _skbuild/
 
 # Any build dirs in the tests
-bindings/aigverse/test/**/build/
+test/**/build/
+test/resources/test.aig
 
 # Common editor files
 *~

@@ -9,7 +9,8 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "bindings/aigverse/**"
+      - "src/aigverse/**"
+      - "test/**"
       - "**/*.py"
       - "**/*.hpp"
       - "**/*.cpp"
@@ -22,7 +23,8 @@ on:
   pull_request:
     branches: ["main"]
     paths:
-      - "bindings/aigverse/**"
+      - "src/aigverse/**"
+      - "test/**"
       - "**/*.py"
       - "**/*.hpp"
       - "**/*.cpp"
@@ -78,7 +80,7 @@ jobs:
       fail-fast: false
       matrix:
         runs-on:
-          [ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-15, windows-latest]
+          [ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-15, windows-2025]
 
     steps:
       - uses: actions/checkout@v5

@@ -1,7 +1,8 @@
 [build-system]
 requires = [
     "scikit-build-core>=0.10.1",
-    "setuptools-scm>=8.1"
+    "setuptools-scm>=8.1",
+    "pybind11>=2.13.6",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -25,6 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "License :: OSI Approved :: MIT License",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS",
@@ -57,15 +59,26 @@ ninja.version = ">=1.10"
 # Setuptools-style build caching in a local directory
 build-dir = "build/{wheel_tag}/{build_type}"
 # Explicitly set the package directory
-wheel.packages = ["bindings/aigverse"]
+wheel.packages = ["src/aigverse"]
 # Only build the Python bindings target
 build.targets = ["pyaigverse"]
 # Only install the Python package component
 install.components = ["aigverse_Python"]
 
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
-sdist.include = ["bindings/aigverse/_version.py", "bindings/aigverse/adapters/**"]
+sdist.include = [
+    "src/**",
+    "include/**",
+    "libs/**",
+    "cmake/**",
+    "CMakeLists.txt",
+    "pyproject.toml",
+    "README.md",
+    "LICENSE"
+]
 sdist.exclude = [
+    "**/.nox",
+    "**/.venv",
     "**/.git",
     "**/.github",
     "**/app",
@@ -78,16 +91,12 @@ sdist.exclude = [
     "**/experiment",
     "**/experiments",
     "**/examples",
-    "**/include",
-    "**/libs",
     "**/cmake-build-**",
     "**/docs",
     "**/plots",
     "**/test",
     "**/tests",
     "**/nauty",
-    "**.cpp",
-    "**.hpp",
     "**.pdf",
     "**.ans",
     "**.out",
@@ -96,6 +105,18 @@ sdist.exclude = [
     "**CMakeList.txt",
     "**__pycache__"
 ]
+
+[tool.check-sdist]
+sdist-only = ["src/aigverse/_version.py"]
+git-only = [
+    "docs/*",
+    "test/*",
+    ".idea/*",
+]
+default-ignore = true
+mode = "git"
+build-backend = "auto"
+
 
 [tool.scikit-build.cmake.define]
 MOCKTURTLE_EXAMPLES = "OFF"
@@ -109,26 +130,13 @@ inherit.cmake.define = "append"
 cmake.define.DISABLE_GIL = "1"
 
 
-[tool.check-sdist]
-sdist-only = ["bindings/aigverse/_version.py"]
-git-only = [
-    "docs/*",
-    "libs/*",
-    "test/*",
-    ".idea/*",
-]
-default-ignore = true
-mode = "git"
-build-backend = "auto"
-
-
 [tool.setuptools_scm]
-write_to = "bindings/aigverse/_version.py"
+write_to = "src/aigverse/_version.py"
 
 
 [tool.pytest.ini_options]
 minversion = "7.2"
-testpaths = ["bindings/aigverse/test"]
+testpaths = ["test"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
 log_cli_level = "INFO"
 xfail_strict = true
@@ -163,8 +171,8 @@ aigverse = { workspace = true }
 
 
 [tool.mypy]
-files = ["bindings/aigverse/", "noxfile.py"]
-mypy_path = ["$MYPY_CONFIG_FILE_DIR/bindings"]
+files = ["src/aigverse/", "noxfile.py"]
+mypy_path = ["$MYPY_CONFIG_FILE_DIR/src"]
 warn_unused_configs = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 strict = true
@@ -201,10 +209,10 @@ ignore = [
 isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
-"bindings/aigverse/test/**" = ["T20", "ANN", "D"]
+"test/**" = ["T20", "ANN", "D", "INP001"]
 "docs/**" = ["T20", "ERA001", "INP001"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]
-"*.pyi" = ["D418", "PYI021"]  # pydocstyle
+"*.pyi" = ["D418", "PYI021"]
 "*.ipynb" = [
     "D", # pydocstyle
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
@@ -219,6 +227,7 @@ convention = "google"
 build = [
     "scikit-build-core>=0.11.0",
     "setuptools-scm>=8.1",
+    "pybind11>=2.13.6",
 ]
 adapters = [
     "networkx>=3.0.0",

@@ -2,7 +2,7 @@
 # Project (https://github.com/lefticus/cpp_starter_project) and CMake Template
 # (https://github.com/cpp-best-practices/cmake_template)
 
-cmake_minimum_required(VERSION 3.21...3.29)
+cmake_minimum_required(VERSION 3.23...4.1.0)
 
 # Only set the CMAKE_CXX_STANDARD if it is not set by someone else
 if(NOT DEFINED CMAKE_CXX_STANDARD)
@@ -25,7 +25,7 @@ project(
 
 include(cmake/PreventInSourceBuilds.cmake)
 include(cmake/ProjectOptions.cmake)
-include(cmake/Utilities.cmake)
+include(cmake/ExternalDependencies.cmake)
 
 aigverse_setup_options()
 aigverse_global_options()
@@ -49,22 +49,11 @@ add_library(aigverse::aigverse_warnings ALIAS aigverse_warnings)
 # Include libraries
 add_subdirectory(libs)
 
-# Python bindings
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/bindings/)
+# Include headers
+add_subdirectory(include)
 
-# If MSVC is being used, and ASAN is enabled, we need to set the debugger
-# environment so that it behaves well with MSVC's debugger, and we can run the
-# target from visual studio
-if(MSVC)
-  get_all_installable_targets(all_targets)
-  message("all_targets=${all_targets}")
-  set_target_properties(
-    ${all_targets} PROPERTIES VS_DEBUGGER_ENVIRONMENT
-                              "PATH=$(VC_ExecutablePath_x64);%PATH%")
-endif()
-
-# set the startup project for the "play" button in MSVC
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT intro)
+# Include source files
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/aigverse)
 
 if(CMAKE_SKIP_INSTALL_RULES)
   return()
