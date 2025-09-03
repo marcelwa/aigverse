@@ -28,7 +28,6 @@ target_sources(aigverse
     FILE_SET HEADERS
     BASE_DIRS
       ${PROJECT_SOURCE_DIR}/include
-      ${AIGVERSE_GENERATED_DIR}
     FILES
       ${AIGVERSE_PUBLIC_HEADERS}
 )
@@ -42,11 +41,14 @@ target_link_libraries(aigverse INTERFACE
   aigverse::aigverse_warnings
 )
 
-set_target_properties(
-  aigverse
-  PROPERTIES
-    CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN YES
+# Visibility / conformity flags for consumers.
+# * GCC/Clang: hide symbols by default
+# * MSVC: tighten language conformance & proper __cplusplus, modern preprocessor
+# Symbol export on MSVC still requires dllexport/dllimport if building shared libs.
+target_compile_options(aigverse
+  INTERFACE
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,GNU>:-fvisibility=hidden -fvisibility-inlines-hidden>
+    $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive- /Zc:__cplusplus /Zc:inline /Zc:preprocessor /Zc:throwingNew /EHsc>
 )
 
 # Install headers via file set (skipped if global install disabled)
