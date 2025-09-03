@@ -1,6 +1,9 @@
+# Automatically collect all .cpp sources in this directory (recursive)
+file(GLOB_RECURSE AIGVERSE_PY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+
 pybind11_add_module(pyaigverse
         THIN_LTO
-        aigverse.cpp)
+        ${AIGVERSE_PY_SOURCES})
 
 # Provide namespaced alias for consistent consumer usage
 add_library(aigverse::pyaigverse ALIAS pyaigverse)
@@ -14,7 +17,7 @@ if (MSVC)
     target_compile_options(pyaigverse PRIVATE /utf-8)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_WIN32")
     add_definitions(-DUNICODE -D_UNICODE)
-endif()
+endif ()
 
 # Install directive for scikit-build-core
 install(TARGETS pyaigverse
