@@ -33,3 +33,15 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+// lorina parsers
+#include <lorina/aiger.hpp>
+#include <lorina/diagnostics.hpp>
+#include <lorina/verilog.hpp>
+
+// mockturtle IO writers/readers
+#include <mockturtle/io/aiger_reader.hpp>
+#include <mockturtle/io/verilog_reader.hpp>
+#include <mockturtle/io/write_aiger.hpp>
+#include <mockturtle/io/write_dot.hpp>
+#include <mockturtle/io/write_verilog.hpp>

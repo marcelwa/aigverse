@@ -5,13 +5,9 @@
 #ifndef AIGVERSE_READ_AIGER_HPP
 #define AIGVERSE_READ_AIGER_HPP
 
-#include <fmt/format.h>
-#include <lorina/aiger.hpp>
-#include <lorina/diagnostics.hpp>
-#include <mockturtle/io/aiger_reader.hpp>
-#include <mockturtle/networks/aig.hpp>
+#include "aigverse/types.hpp"
+
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
 #include <string>
 
@@ -22,59 +18,14 @@ namespace detail
 {
 
 template <typename Ntk>
-void read_aiger(pybind11::module& m, const std::string& network_name)
-{
-    using namespace pybind11::literals;
+void read_aiger(pybind11::module& m, const std::string& network_name);
 
-    m.def(
-        fmt::format("read_aiger_into_{}", network_name).c_str(),
-        [](const std::string& filename)
-        {
-            Ntk ntk{};
-
-            lorina::text_diagnostics  consumer{};
-            lorina::diagnostic_engine diag{&consumer};
-
-            const auto read_aiger_result = lorina::read_aiger(filename, mockturtle::aiger_reader<Ntk>(ntk), &diag);
-
-            if (read_aiger_result != lorina::return_code::success)
-            {
-                throw std::runtime_error("Error reading AIGER file");
-            }
-
-            return ntk;
-        },
-        "filename"_a);
-
-    m.def(
-        fmt::format("read_ascii_aiger_into_{}", network_name).c_str(),
-        [](const std::string& filename)
-        {
-            Ntk ntk{};
-
-            lorina::text_diagnostics  consumer{};
-            lorina::diagnostic_engine diag{&consumer};
-
-            const auto read_ascii_aiger_result =
-                lorina::read_ascii_aiger(filename, mockturtle::aiger_reader<Ntk>(ntk), &diag);
-
-            if (read_ascii_aiger_result != lorina::return_code::success)
-            {
-                throw std::runtime_error("Error reading ASCII AIGER file");
-            }
-
-            return ntk;
-        },
-        "filename"_a);
-}
+extern template void read_aiger<aigverse::aig>(pybind11::module& m, const std::string& network_name);
+extern template void read_aiger<aigverse::sequential_aig>(pybind11::module& m, const std::string& network_name);
 
 }  // namespace detail
 
-inline void read_aiger(pybind11::module& m)
-{
-    detail::read_aiger<aigverse::aig>(m, "aig");
-    detail::read_aiger<aigverse::sequential_aig>(m, "sequential_aig");
-}
+void read_aiger(pybind11::module& m);
 
 }  // namespace aigverse
 
