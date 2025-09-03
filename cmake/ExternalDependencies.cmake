@@ -4,6 +4,7 @@ include(FetchContent)
 include(CMakeDependentOption)
 
 if(NOT SKBUILD)
+  find_package(Python COMPONENTS Interpreter REQUIRED)
   # Manually detect the installed pybind11 package and import it into CMake.
   execute_process(
     COMMAND "${Python_EXECUTABLE}" -m pybind11 --cmakedir
