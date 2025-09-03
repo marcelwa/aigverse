@@ -11,6 +11,9 @@ add_library(aigverse::pyaigverse ALIAS pyaigverse)
 # Link against the public header-only target and dependencies (namespaced)
 target_link_libraries(pyaigverse PRIVATE aigverse::aigverse aigverse::mockturtle)
 
+# Precompiled header to speed up heavy pybind11/fmt/mockturtle includes
+target_precompile_headers(pyaigverse PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/pch.hpp>")
+
 set_property(TARGET pyaigverse PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if (MSVC)
