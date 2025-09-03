@@ -22,7 +22,7 @@ extern template void write_verilog<aigverse::aig>(pybind11::module& m);
 
 }  // namespace detail
 
-void write_verilog(pybind11::module& m);
+void bind_write_verilog(pybind11::module& m);
 
 }  // namespace aigverse
 

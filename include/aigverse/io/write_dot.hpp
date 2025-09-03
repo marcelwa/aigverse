@@ -22,7 +22,7 @@ extern template void write_dot<aigverse::aig>(pybind11::module& m);
 
 }  // namespace detail
 
-void write_dot(pybind11::module& m);
+void bind_write_dot(pybind11::module& m);
 
 }  // namespace aigverse
 

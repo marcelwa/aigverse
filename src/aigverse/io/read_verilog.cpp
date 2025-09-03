@@ -52,7 +52,7 @@ template void read_verilog<aigverse::aig>(pybind11::module& m, const std::string
 
 }  // namespace detail
 
-void read_verilog(pybind11::module& m)
+void bind_read_verilog(pybind11::module& m)
 {
     detail::read_verilog<aigverse::aig>(m, "aig");
 }

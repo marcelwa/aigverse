@@ -24,7 +24,7 @@ extern template void read_pla<aigverse::aig>(pybind11::module& m, const std::str
 
 }  // namespace detail
 
-void read_pla(pybind11::module& m);
+void bind_read_pla(pybind11::module& m);
 
 }  // namespace aigverse
 

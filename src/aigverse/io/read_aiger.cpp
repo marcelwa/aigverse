@@ -72,7 +72,7 @@ template void read_aiger<aigverse::sequential_aig>(pybind11::module& m, const st
 
 }  // namespace detail
 
-void read_aiger(pybind11::module& m)
+void bind_read_aiger(pybind11::module& m)
 {
     detail::read_aiger<aigverse::aig>(m, "aig");
     detail::read_aiger<aigverse::sequential_aig>(m, "sequential_aig");

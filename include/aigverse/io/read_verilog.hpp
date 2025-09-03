@@ -24,7 +24,7 @@ extern template void read_verilog<aigverse::aig>(pybind11::module& m, const std:
 
 }  // namespace detail
 
-void read_verilog(pybind11::module& m);
+void bind_read_verilog(pybind11::module& m);
 
 }  // namespace aigverse
 

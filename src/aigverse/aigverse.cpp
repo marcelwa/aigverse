@@ -53,12 +53,12 @@ PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())
     /**
      * I/O
      */
-    aigverse::read_aiger(m);
-    aigverse::write_aiger(m);
-    aigverse::read_pla(m);
-    aigverse::read_verilog(m);
-    aigverse::write_verilog(m);
-    aigverse::write_dot(m);
+    aigverse::bind_read_aiger(m);
+    aigverse::bind_write_aiger(m);
+    aigverse::bind_read_pla(m);
+    aigverse::bind_read_verilog(m);
+    aigverse::bind_write_verilog(m);
+    aigverse::bind_write_dot(m);
 
     /**
      * Adapters

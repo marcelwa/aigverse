@@ -25,7 +25,7 @@ extern template void read_aiger<aigverse::sequential_aig>(pybind11::module& m, c
 
 }  // namespace detail
 
-void read_aiger(pybind11::module& m);
+void bind_read_aiger(pybind11::module& m);
 
 }  // namespace aigverse
 
