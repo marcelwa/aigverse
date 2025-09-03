@@ -4,7 +4,8 @@ include(FetchContent)
 include(CMakeDependentOption)
 
 if(NOT SKBUILD)
-  find_package(Python COMPONENTS Interpreter REQUIRED)
+  # Need Development.Module so that python_add_library/python3_add_library are defined
+  find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
   # Manually detect the installed pybind11 package and import it into CMake.
   execute_process(
     COMMAND "${Python_EXECUTABLE}" -m pybind11 --cmakedir
