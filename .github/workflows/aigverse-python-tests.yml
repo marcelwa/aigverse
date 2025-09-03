@@ -75,7 +75,7 @@ jobs:
       fail-fast: false
       matrix:
         runs-on:
-          [ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-15, windows-latest]
+          [ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-15, windows-2025]
     steps:
       - name: Clone Repository
         uses: actions/checkout@v5
