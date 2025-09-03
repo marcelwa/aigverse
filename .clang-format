@@ -53,7 +53,7 @@ IncludeCategories:
     Priority: 1
   - Regex: '"[a-zA-Z0-9_\.]+.+"$'
     Priority: 2
-  - Regex: '<fiction\/[a-zA-Z0-9_]+.+>$'
+  - Regex: '<aigverse\/[a-zA-Z0-9_]+.+>$'
     Priority: 3
   - Regex: '<(alice|lorina|mockturtle|kitty|bill|nlohmann|fmt|z3|phmap|btree|tinyxml2|pybind11)(\/[a-zA-Z0-9_])*.+>$'
     Priority: 4

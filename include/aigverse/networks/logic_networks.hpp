@@ -18,16 +18,16 @@ namespace detail
 {
 
 template <typename Ntk>
-void network(pybind11::module& m, const std::string& network_name);
+void bind_network(pybind11::module& m, const std::string& network_name);
 
-extern template void network<aigverse::aig>(pybind11::module& m, const std::string& network_name);
+extern template void bind_network<aigverse::aig>(pybind11::module& m, const std::string& network_name);
 // extern template void network<aigverse::mig>(pybind11::module& m, const std::string& network_name);
 // extern template void network<aigverse::xag>(pybind11::module& m, const std::string& network_name);
 
 }  // namespace detail
 
-// Registers all currently supported logic network bindings into the module.
-void logic_networks(pybind11::module& m);
+// Registers logic network bindings
+void bind_logic_networks(pybind11::module& m);
 
 }  // namespace aigverse
 

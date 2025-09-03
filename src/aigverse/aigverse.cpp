@@ -32,13 +32,13 @@ PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())
     /**
      * Networks
      */
-    aigverse::logic_networks(m);
+    aigverse::bind_logic_networks(m);
 
     /**
      * Truth tables.
      */
-    aigverse::truth_tables(m);
-    aigverse::truth_table_operations(m);
+    aigverse::bind_truth_table(m);
+    aigverse::bind_truth_table_operations(m);
 
     /**
      * Algorithms
