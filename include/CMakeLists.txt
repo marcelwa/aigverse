@@ -37,8 +37,8 @@ target_compile_features(aigverse INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
 # Propagate options and warnings
 target_link_libraries(aigverse INTERFACE
-  aigverse::aigverse_options
-  aigverse::aigverse_warnings
+  $<BUILD_INTERFACE:aigverse_options>
+  $<BUILD_INTERFACE:aigverse_warnings>
 )
 
 # Visibility / conformity flags for consumers.
@@ -47,8 +47,8 @@ target_link_libraries(aigverse INTERFACE
 # Symbol export on MSVC still requires dllexport/dllimport if building shared libs.
 target_compile_options(aigverse
   INTERFACE
-    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,GNU>:-fvisibility=hidden -fvisibility-inlines-hidden>
-    $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive- /Zc:__cplusplus /Zc:inline /Zc:preprocessor /Zc:throwingNew /EHsc>
+        $<BUILD_INTERFACE:$<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,GNU>:-fvisibility=hidden -fvisibility-inlines-hidden>>
+        $<BUILD_INTERFACE:$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive- /Zc:__cplusplus /Zc:inline /Zc:preprocessor /Zc:throwingNew /EHsc>>
 )
 
 # Install headers via file set (skipped if global install disabled)
