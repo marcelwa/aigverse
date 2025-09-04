@@ -192,31 +192,71 @@ void bind_truth_table(pybind11::module_& m)
                             return tt;
                         }))
         .def(
-            "set_bit", [](aigverse::truth_table& self, uint64_t index) { kitty::set_bit(self, index); }, "index"_a,
-            "Sets the bit at the given index.")
+            "set_bit",
+            [](aigverse::truth_table& self, const uint64_t index)
+            {
+                if (index >= self.num_bits())
+                {
+                    throw py::index_error("index out of range");
+                }
+                kitty::set_bit(self, index);
+            },
+            "index"_a, "Sets the bit at the given index.")
         .def(
-            "get_bit", [](const aigverse::truth_table& self, uint64_t index) { return kitty::get_bit(self, index); },
+            "get_bit",
+            [](const aigverse::truth_table& self, const uint64_t index)
+            {
+                if (index >= self.num_bits())
+                {
+                    throw py::index_error("index out of range");
+                }
+                return kitty::get_bit(self, index);
+            },
             "index"_a, "Returns the bit at the given index.")
         .def(
-            "clear_bit", [](aigverse::truth_table& self, uint64_t index) { kitty::clear_bit(self, index); }, "index"_a,
-            "Clears the bit at the given index.")
+            "clear_bit",
+            [](aigverse::truth_table& self, const uint64_t index)
+            {
+                if (index >= self.num_bits())
+                {
+                    throw py::index_error("index out of range");
+                }
+                kitty::clear_bit(self, index);
+            },
+            "index"_a, "Clears the bit at the given index.")
         .def(
-            "flip_bit", [](aigverse::truth_table& self, uint64_t index) { kitty::flip_bit(self, index); }, "index"_a,
-            "Flips the bit at the given index.")
+            "flip_bit",
+            [](aigverse::truth_table& self, const uint64_t index)
+            {
+                if (index >= self.num_bits())
+                {
+                    throw py::index_error("index out of range");
+                }
+                kitty::flip_bit(self, index);
+            },
+            "index"_a, "Flips the bit at the given index.")
         .def(
-            "get_block", [](const aigverse::truth_table& self, uint64_t block_index)
-            { return kitty::get_block(self, block_index); }, "block_index"_a, "Returns a block of bits vector.")
+            "get_block",
+            [](const aigverse::truth_table& self, const uint64_t block_index)
+            {
+                if (block_index >= self.num_blocks())
+                {
+                    throw py::index_error("block index out of range");
+                }
+                return kitty::get_block(self, block_index);
+            },
+            "block_index"_a, "Returns a 64-bit block of bits.")
         .def(
             "create_nth_var",
-            [](aigverse::truth_table& self, uint8_t var_index, bool complement)
+            [](aigverse::truth_table& self, const uint64_t var_index, const bool complement)
             {
                 if (var_index >= self.num_vars())
                 {
-                    throw std::runtime_error(
+                    throw py::index_error(
                         "Index of the variable must be smaller than the truth table's number of variables.");
                 }
 
-                kitty::create_nth_var(self, var_index, complement);
+                kitty::create_nth_var(self, static_cast<uint8_t>(var_index), complement);
             },
             "var_index"_a, "complement"_a = false, "Constructs projections (single-variable functions).")
         .def(
@@ -225,7 +265,7 @@ void bind_truth_table(pybind11::module_& m)
             {
                 if (binary.size() != self.num_bits())
                 {
-                    throw std::runtime_error(
+                    throw std::invalid_argument(
                         "Number of characters in binary string must match the number of bits in the truth table.");
                 }
 
@@ -240,13 +280,14 @@ void bind_truth_table(pybind11::module_& m)
                 {
                     if (hexadecimal.size() != 1)
                     {
-                        throw std::runtime_error("Number of characters in hex string must be one fourth the number of "
-                                                 "bits in the truth table.");
+                        throw std::invalid_argument(
+                            "Number of characters in hex string must be one fourth the number of "
+                            "bits in the truth table.");
                     }
                 }
                 else if ((hexadecimal.size() << 2u) != self.num_bits())
                 {
-                    throw std::runtime_error(
+                    throw std::invalid_argument(
                         "Number of characters in hex string must be one fourth the number of bits in the truth table.");
                 }
 
