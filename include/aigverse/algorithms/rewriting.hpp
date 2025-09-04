@@ -2,8 +2,7 @@
 // Created by marcel on 15.09.24.
 //
 
-#ifndef AIGVERSE_REWRITING_HPP
-#define AIGVERSE_REWRITING_HPP
+#pragma once
 
 #include "aigverse/types.hpp"
 
@@ -28,5 +27,3 @@ extern template void rewriting<aigverse::aig>(pybind11::module_& m);
 void bind_rewriting(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_REWRITING_HPP

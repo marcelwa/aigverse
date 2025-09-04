@@ -2,8 +2,7 @@
 // Created by marcel on 09.09.24.
 //
 
-#ifndef AIGVERSE_EQUIVALENCE_CHECKING_HPP
-#define AIGVERSE_EQUIVALENCE_CHECKING_HPP
+#pragma once
 
 #include "aigverse/types.hpp"
 
@@ -28,5 +27,3 @@ extern template void equivalence_checking<aigverse::aig, aigverse::aig>(pybind11
 void bind_equivalence_checking(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_EQUIVALENCE_CHECKING_HPP

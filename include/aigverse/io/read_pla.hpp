@@ -2,8 +2,7 @@
 // Created by Jingren on 06.05.25.
 //
 
-#ifndef AIGVERSE_READ_PLA_HPP
-#define AIGVERSE_READ_PLA_HPP
+#pragma once
 
 #include "aigverse/types.hpp"
 
@@ -30,5 +29,3 @@ extern template void read_pla<aigverse::aig>(pybind11::module_& m, const std::st
 void bind_read_pla(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_READ_PLA_HPP

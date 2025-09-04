@@ -2,8 +2,7 @@
 // Created by marcel on 04.09.24.
 //
 
-#ifndef AIGVERSE_READ_AIGER_HPP
-#define AIGVERSE_READ_AIGER_HPP
+#pragma once
 
 #include "aigverse/types.hpp"
 
@@ -31,5 +30,3 @@ extern template void read_aiger<aigverse::sequential_aig>(pybind11::module_& m, 
 void bind_read_aiger(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_READ_AIGER_HPP

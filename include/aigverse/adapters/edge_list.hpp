@@ -2,8 +2,7 @@
 // Created by marcel on 05.09.24.
 //
 
-#ifndef AIGVERSE_EDGE_LIST_HPP
-#define AIGVERSE_EDGE_LIST_HPP
+#pragma once
 
 #include "aigverse/types.hpp"
 
@@ -227,5 +226,3 @@ struct formatter<aigverse::edge_list<Ntk>>
 };
 
 }  // namespace fmt
-
-#endif  // AIGVERSE_EDGE_LIST_HPP

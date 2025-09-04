@@ -2,8 +2,7 @@
 // Created by marcel on 12.12.24.
 //
 
-#ifndef AIGVERSE_OPERATIONS_HPP
-#define AIGVERSE_OPERATIONS_HPP
+#pragma once
 
 namespace pybind11
 {
@@ -17,5 +16,3 @@ namespace aigverse
 void bind_truth_table_operations(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_OPERATIONS_HPP

@@ -2,8 +2,7 @@
 // Created by marcel on 04.09.24.
 //
 
-#ifndef AIGVERSE_LOGIC_NETWORKS_HPP
-#define AIGVERSE_LOGIC_NETWORKS_HPP
+#pragma once
 
 #include "aigverse/types.hpp"
 
@@ -33,5 +32,3 @@ extern template void bind_network<aigverse::aig>(pybind11::module_& m, const std
 void bind_logic_networks(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_LOGIC_NETWORKS_HPP

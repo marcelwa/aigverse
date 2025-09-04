@@ -2,8 +2,7 @@
 // Created by marcel on 05.09.24.
 //
 
-#ifndef AIGVERSE_WRITE_AIGER_HPP
-#define AIGVERSE_WRITE_AIGER_HPP
+#pragma once
 
 #include "aigverse/types.hpp"
 
@@ -28,5 +27,3 @@ extern template void write_aiger<aigverse::aig>(pybind11::module_& m);
 void bind_write_aiger(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_WRITE_AIGER_HPP

@@ -2,8 +2,7 @@
 // Created by marcel on 02.05.25.
 //
 
-#ifndef AIGVERSE_INDEX_LIST_HPP
-#define AIGVERSE_INDEX_LIST_HPP
+#pragma once
 
 #include "aigverse/types.hpp"
 
@@ -72,5 +71,3 @@ struct formatter<aigverse::aig_index_list>
 };
 
 }  // namespace fmt
-
-#endif  // AIGVERSE_INDEX_LIST_HPP

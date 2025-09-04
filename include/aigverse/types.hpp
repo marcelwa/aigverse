@@ -2,8 +2,7 @@
 // Created by marcel on 06.11.24.
 //
 
-#ifndef AIGVERSE_TYPES_HPP
-#define AIGVERSE_TYPES_HPP
+#pragma once
 
 #include <kitty/dynamic_truth_table.hpp>
 #include <mockturtle/networks/aig.hpp>
@@ -41,5 +40,3 @@ using aig_index_list = mockturtle::xag_index_list<true>;
 using truth_table = kitty::dynamic_truth_table;
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_TYPES_HPP

@@ -2,8 +2,7 @@
 // Created by marcel on 06.11.24.
 //
 
-#ifndef AIGVERSE_TRUTH_TABLE_HPP
-#define AIGVERSE_TRUTH_TABLE_HPP
+#pragma once
 
 namespace pybind11
 {
@@ -17,5 +16,3 @@ namespace aigverse
 void bind_truth_table(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_TRUTH_TABLE_HPP

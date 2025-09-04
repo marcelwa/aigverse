@@ -2,8 +2,7 @@
 // Created by Jingren on 21.04.25.
 //
 
-#ifndef AIGVERSE_READ_VERILOG_HPP
-#define AIGVERSE_READ_VERILOG_HPP
+#pragma once
 
 #include "aigverse/types.hpp"
 
@@ -30,5 +29,3 @@ extern template void read_verilog<aigverse::aig>(pybind11::module_& m, const std
 void bind_read_verilog(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_READ_VERILOG_HPP

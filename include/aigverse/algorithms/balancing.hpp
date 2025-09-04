@@ -1,5 +1,4 @@
-#ifndef AIGVERSE_ALGORITHMS_BALANCING_HPP
-#define AIGVERSE_ALGORITHMS_BALANCING_HPP
+#pragma once
 
 #include "aigverse/types.hpp"
 
@@ -24,5 +23,3 @@ extern template void balancing<aigverse::aig>(pybind11::module_& m);
 void bind_balancing(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_ALGORITHMS_BALANCING_HPP

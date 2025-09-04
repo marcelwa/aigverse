@@ -2,8 +2,7 @@
 // Created by marcel on 06.11.24.
 //
 
-#ifndef AIGVERSE_SIMULATION_HPP
-#define AIGVERSE_SIMULATION_HPP
+#pragma once
 
 #include "aigverse/types.hpp"
 
@@ -28,5 +27,3 @@ extern template void simulation<aigverse::aig>(pybind11::module_& m);
 void bind_simulation(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_SIMULATION_HPP

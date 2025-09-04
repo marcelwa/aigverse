@@ -2,8 +2,7 @@
 // Created by marcel on 22.04.24.
 //
 
-#ifndef AIGVERSE_WRITE_DOT_HPP
-#define AIGVERSE_WRITE_DOT_HPP
+#pragma once
 
 #include "aigverse/types.hpp"
 
@@ -28,5 +27,3 @@ extern template void write_dot<aigverse::aig>(pybind11::module_& m);
 void bind_write_dot(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_WRITE_DOT_HPP

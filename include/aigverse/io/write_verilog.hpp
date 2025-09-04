@@ -2,8 +2,7 @@
 // Created by Jingren on 20.04.25.
 //
 
-#ifndef AIGVERSE_WRITE_VERILOG_HPP
-#define AIGVERSE_WRITE_VERILOG_HPP
+#pragma once
 
 #include "aigverse/types.hpp"
 
@@ -28,5 +27,3 @@ extern template void write_verilog<aigverse::aig>(pybind11::module_& m);
 void bind_write_verilog(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_WRITE_VERILOG_HPP
