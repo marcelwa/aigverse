@@ -26,32 +26,68 @@ namespace aigverse
 namespace detail
 {
 
+/**
+ * An iterator helper class to iterate over the bits of a truth table.
+ */
 class truth_table_bit_iterator
 {
   public:
+    /**
+     * Default constructor.
+     *
+     * @param tt The truth table to iterate over.
+     * @param index Start index of the iteration.
+     */
     truth_table_bit_iterator(const aigverse::truth_table& tt, const uint64_t index) : tt{&tt}, index{index} {}
-
+    /**
+     * Dereference operator to obtain the current bit in the truth table.
+     *
+     * @return The current bit in the truth table at the current index.
+     */
     bool operator*() const
     {
         return static_cast<bool>(kitty::get_bit(*tt, index));
     }
+    /**
+     * Pre-increment operator to move to the next bit in the truth table.
+     *
+     * @return Reference to the updated iterator.
+     */
     truth_table_bit_iterator& operator++()
     {
         ++index;
         return *this;
     }
+    /**
+     * Equality operator to compare two iterators.
+     *
+     * @param other The other iterator to compare with.
+     * @return `true` if both iterators point to the same index, `false` otherwise.
+     */
     bool operator==(const truth_table_bit_iterator& other) const
     {
         return index == other.index;
     }
+    /**
+     * Inequality operator to compare two iterators.
+     *
+     * @param other The other iterator to compare with.
+     * @return `true` if both iterators point to different indices, `false` otherwise.
+     */
     bool operator!=(const truth_table_bit_iterator& other) const
     {
         return !(*this == other);
     }
 
   private:
+    /**
+     * Pointer to the truth table being iterated over.
+     */
     const aigverse::truth_table* tt;
-    uint64_t                     index;
+    /**
+     * Current index in the truth table.
+     */
+    uint64_t index;
 };
 
 }  // namespace detail
