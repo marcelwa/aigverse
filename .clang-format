@@ -49,18 +49,16 @@ DisableFormat: false
 FixNamespaceComments: true
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '<catch2\/[a-zA-Z0-9_]+.+>$'
+  - Regex: '"aigverse\/[a-zA-Z0-9_\/]+.+"$'
     Priority: 1
   - Regex: '"[a-zA-Z0-9_\.]+.+"$'
     Priority: 2
   - Regex: '<aigverse\/[a-zA-Z0-9_]+.+>$'
     Priority: 3
-  - Regex: '<(alice|lorina|mockturtle|kitty|bill|nlohmann|fmt|z3|phmap|btree|tinyxml2|pybind11)(\/[a-zA-Z0-9_])*.+>$'
+  - Regex: '<(alice|lorina|mockturtle|kitty|bill|nlohmann|fmt|phmap|btree|pybind11)(\/[a-zA-Z0-9_])*.+>$'
     Priority: 4
-  - Regex: '<z3[a-zA-Z0-9_\+]+.+>$'
-    Priority: 5
   - Regex: "<[a-zA-Z0-9_]+>$"
-    Priority: 6
+    Priority: 5
 IndentCaseLabels: true
 IndentWidth: 4
 Language: Cpp
