@@ -164,12 +164,15 @@ def write_verilog(ntk: Aig, filename: str | PathLike[str]) -> None: ...
 def write_dot(ntk: Aig, filename: str | PathLike[str]) -> None: ...
 
 class AigEdge:
+    @overload
     def __init__(
         self,
-        source: AigNode | int | None = None,
-        target: AigNode | int | None = None,
+        source: AigNode | int,
+        target: AigNode | int,
         weight: int = 0,
     ) -> None: ...
+    @overload
+    def __init__(self) -> None: ...
 
     source: AigNode | int
     target: AigNode | int
