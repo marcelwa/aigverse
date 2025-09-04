@@ -8,8 +8,10 @@
 #include <lorina/diagnostics.hpp>
 #include <mockturtle/io/pla_reader.hpp>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <pybind11/stl/filesystem.h>
 
+#include <filesystem>
+#include <stdexcept>
 #include <string>
 
 namespace aigverse
@@ -25,14 +27,14 @@ void read_pla(pybind11::module_& m, const std::string& network_name)
 
     m.def(
         fmt::format("read_pla_into_{}", network_name).c_str(),
-        [](const std::string& filename)
+        [](const std::filesystem::path& filename)
         {
             Ntk ntk{};
 
             lorina::text_diagnostics  consumer{};
             lorina::diagnostic_engine diag{&consumer};
 
-            const auto read_pla_result = lorina::read_pla(filename, mockturtle::pla_reader<Ntk>(ntk), &diag);
+            const auto read_pla_result = lorina::read_pla(filename.string(), mockturtle::pla_reader<Ntk>(ntk), &diag);
 
             if (read_pla_result != lorina::return_code::success)
             {

@@ -10,8 +10,10 @@
 #include <lorina/verilog.hpp>
 #include <mockturtle/io/verilog_reader.hpp>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <pybind11/stl/filesystem.h>
 
+#include <filesystem>
+#include <stdexcept>
 #include <string>
 
 namespace aigverse
@@ -27,7 +29,7 @@ void read_verilog(pybind11::module_& m, const std::string& network_name)
 
     m.def(
         fmt::format("read_verilog_into_{}", network_name).c_str(),
-        [](const std::string& filename)
+        [](const std::filesystem::path& filename)
         {
             Ntk ntk{};
 
@@ -35,7 +37,7 @@ void read_verilog(pybind11::module_& m, const std::string& network_name)
             lorina::diagnostic_engine diag{&consumer};
 
             const auto read_verilog_result =
-                lorina::read_verilog(filename, mockturtle::verilog_reader<Ntk>(ntk), &diag);
+                lorina::read_verilog(filename.string(), mockturtle::verilog_reader<Ntk>(ntk), &diag);
 
             if (read_verilog_result != lorina::return_code::success)
             {

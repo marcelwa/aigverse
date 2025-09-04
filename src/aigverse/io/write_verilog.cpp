@@ -6,8 +6,9 @@
 
 #include <mockturtle/io/write_verilog.hpp>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <pybind11/stl/filesystem.h>
 
+#include <filesystem>
 #include <string>
 
 namespace aigverse
@@ -22,8 +23,8 @@ void write_verilog(pybind11::module_& m)
     using namespace pybind11::literals;
 
     m.def(
-        "write_verilog", [](const Ntk& ntk, const std::string& filename) { mockturtle::write_verilog(ntk, filename); },
-        "network"_a, "filename"_a);
+        "write_verilog", [](const Ntk& ntk, const std::filesystem::path& filename)
+        { mockturtle::write_verilog(ntk, filename.string()); }, "network"_a, "filename"_a);
 }
 
 // Explicit instantiation for AIG

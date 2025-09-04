@@ -9,8 +9,9 @@
 #include <lorina/diagnostics.hpp>
 #include <mockturtle/io/aiger_reader.hpp>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <pybind11/stl/filesystem.h>
 
+#include <filesystem>
 #include <stdexcept>
 #include <string>
 
@@ -27,14 +28,15 @@ void read_aiger(pybind11::module_& m, const std::string& network_name)
 
     m.def(
         fmt::format("read_aiger_into_{}", network_name).c_str(),
-        [](const std::string& filename)
+        [](const std::filesystem::path& filename)
         {
             Ntk ntk{};
 
             lorina::text_diagnostics  consumer{};
             lorina::diagnostic_engine diag{&consumer};
 
-            const auto read_aiger_result = lorina::read_aiger(filename, mockturtle::aiger_reader<Ntk>(ntk), &diag);
+            const auto read_aiger_result =
+                lorina::read_aiger(filename.string(), mockturtle::aiger_reader<Ntk>(ntk), &diag);
 
             if (read_aiger_result != lorina::return_code::success)
             {
@@ -47,7 +49,7 @@ void read_aiger(pybind11::module_& m, const std::string& network_name)
 
     m.def(
         fmt::format("read_ascii_aiger_into_{}", network_name).c_str(),
-        [](const std::string& filename)
+        [](const std::filesystem::path& filename)
         {
             Ntk ntk{};
 
@@ -55,7 +57,7 @@ void read_aiger(pybind11::module_& m, const std::string& network_name)
             lorina::diagnostic_engine diag{&consumer};
 
             const auto read_ascii_aiger_result =
-                lorina::read_ascii_aiger(filename, mockturtle::aiger_reader<Ntk>(ntk), &diag);
+                lorina::read_ascii_aiger(filename.string(), mockturtle::aiger_reader<Ntk>(ntk), &diag);
 
             if (read_ascii_aiger_result != lorina::return_code::success)
             {

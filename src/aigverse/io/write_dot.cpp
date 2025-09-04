@@ -6,9 +6,9 @@
 
 #include <mockturtle/io/write_dot.hpp>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <pybind11/stl/filesystem.h>
 
-#include <string>
+#include <filesystem>
 
 namespace aigverse
 {
@@ -22,8 +22,8 @@ void write_dot(pybind11::module_& m)
     using namespace pybind11::literals;
 
     m.def(
-        "write_dot", [](const Ntk& ntk, const std::string& filename) { mockturtle::write_dot(ntk, filename); },
-        "network"_a, "filename"_a);
+        "write_dot", [](const Ntk& ntk, const std::filesystem::path& filename)
+        { mockturtle::write_dot(ntk, filename.string()); }, "network"_a, "filename"_a);
 }
 
 // Explicit instantiation for AIG
