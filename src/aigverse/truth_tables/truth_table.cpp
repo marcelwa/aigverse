@@ -35,10 +35,10 @@ class truth_table_bit_iterator
     /**
      * Default constructor.
      *
-     * @param tt The truth table to iterate over.
-     * @param index Start index of the iteration.
+     * @param table The truth table to iterate over.
+     * @param i Start index of the iteration.
      */
-    truth_table_bit_iterator(const aigverse::truth_table& tt, const uint64_t index) : tt{&tt}, index{index} {}
+    truth_table_bit_iterator(const aigverse::truth_table& table, const uint64_t i) : tt{&table}, index{i} {}
     /**
      * Dereference operator to obtain the current bit in the truth table.
      *

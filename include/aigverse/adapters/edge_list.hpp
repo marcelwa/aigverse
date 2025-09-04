@@ -36,15 +36,14 @@ struct edge
     /**
      * Constructor.
      *
-     * @param source Source node of the edge.
-     * @param target Target node of the edge.
-     * @param weight Weight of the edge.
+     * @param src Source node of the edge.
+     * @param tgt Target node of the edge.
+     * @param w Weight of the edge.
      */
-    constexpr edge(const mockturtle::node<Ntk>& source, const mockturtle::node<Ntk>& target,
-                   const int64_t weight = 0) noexcept :
-            source(source),
-            target(target),
-            weight(weight)
+    constexpr edge(const mockturtle::node<Ntk>& src, const mockturtle::node<Ntk>& tgt, const int64_t w = 0) noexcept :
+            source{src},
+            target{tgt},
+            weight{w}
     {}
     /**
      * Equality operator.
@@ -101,16 +100,16 @@ struct edge_list
     /**
      * Constructor.
      *
-     * @param ntk Network.
+     * @param network Network.
      */
-    explicit edge_list(const Ntk& ntk) : ntk{ntk} {};
+    explicit edge_list(const Ntk& network) : ntk{network} {};
     /**
      * Constructor.
      *
-     * @param ntk Network.
-     * @param edges Edges of the network.
+     * @param network Network.
+     * @param es Edges of the network.
      */
-    edge_list(const Ntk& ntk, const std::vector<edge<Ntk>>& edges) : ntk{ntk}, edges{edges} {};
+    edge_list(const Ntk& network, const std::vector<edge<Ntk>>& es) : ntk{network}, edges{es} {};
     /**
      * Implicit conversion to vector.
      *
