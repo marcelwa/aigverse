@@ -105,9 +105,9 @@ void ntk_edge_list(pybind11::module_& m, const std::string& network_name)
 
     py::implicitly_convertible<py::list, EdgeList>();
 
-    m.def("to_edge_list", &bind_to_edge_list<mockturtle::sequential<Ntk>>, "ntk"_a, "regular_weight"_a = 0,
+    m.def("to_edge_list", &to_edge_list<mockturtle::sequential<Ntk>>, "ntk"_a, "regular_weight"_a = 0,
           "inverted_weight"_a = 1);
-    m.def("to_edge_list", &bind_to_edge_list<Ntk>, "ntk"_a, "regular_weight"_a = 0, "inverted_weight"_a = 1);
+    m.def("to_edge_list", &to_edge_list<Ntk>, "ntk"_a, "regular_weight"_a = 0, "inverted_weight"_a = 1);
 }
 
 // Explicit instantiation for AIG

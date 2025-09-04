@@ -132,8 +132,8 @@ struct edge_list
     std::vector<edge<Ntk>> edges{};
 };
 template <typename Ntk>
-[[nodiscard]] edge_list<typename Ntk::base_type> bind_to_edge_list(const Ntk& ntk, const int64_t regular_weight = 0,
-                                                                   const int64_t inverted_weight = 1) noexcept
+[[nodiscard]] edge_list<typename Ntk::base_type> to_edge_list(const Ntk& ntk, const int64_t regular_weight = 0,
+                                                              const int64_t inverted_weight = 1) noexcept
 {
     auto el = edge_list<typename Ntk::base_type>(ntk);
 
