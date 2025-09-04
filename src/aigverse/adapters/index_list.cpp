@@ -127,7 +127,7 @@ void ntk_index_list(pybind11::module_& m, const std::string& network_name)
 
         auto lower_case_network_name = network_name;
         std::transform(lower_case_network_name.begin(), lower_case_network_name.end(), lower_case_network_name.begin(),
-                       [](const auto c) { return std::tolower(c); });
+                       [](const auto c) { return static_cast<char>(std::tolower(static_cast<unsigned char>(c))); });
 
         m.def(
             fmt::format("to_{}", lower_case_network_name).c_str(),
