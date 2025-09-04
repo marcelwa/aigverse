@@ -123,7 +123,7 @@ void ntk_index_list(pybind11::module_& m, const std::string& network_name)
                 mockturtle::encode(il, ntk);
                 return il;
             },
-            "ntk"_a);
+            "ntk"_a, py::return_value_policy::move);
 
         auto lower_case_network_name = network_name;
         std::transform(lower_case_network_name.begin(), lower_case_network_name.end(), lower_case_network_name.begin(),
@@ -137,7 +137,7 @@ void ntk_index_list(pybind11::module_& m, const std::string& network_name)
                 mockturtle::decode(ntk, il);
                 return ntk;
             },
-            "il"_a);
+            "il"_a, py::return_value_policy::move);
     }
 }
 
