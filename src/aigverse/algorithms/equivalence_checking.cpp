@@ -45,9 +45,8 @@ void equivalence_checking(pybind11::module_& m)
 
             return mockturtle::equivalence_checking(miter.value(), params);
         },
-        "spec"_a, "impl"_a, "conflict_limit"_a = 0, "functional_reduction"_a = true, "verbose"_a = false)
-
-        ;
+        "spec"_a, "impl"_a, "conflict_limit"_a = 0, "functional_reduction"_a = true, "verbose"_a = false,
+        pybind11::call_guard<pybind11::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG

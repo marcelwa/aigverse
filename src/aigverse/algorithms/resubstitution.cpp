@@ -48,9 +48,7 @@ void resubstitution(pybind11::module_& m)
         },
         "ntk"_a, "max_pis"_a = 8, "max_divisors"_a = 150, "max_inserts"_a = 2, "skip_fanout_limit_for_roots"_a = 1000,
         "skip_fanout_limit_for_divisors"_a = 100, "verbose"_a = false, "use_dont_cares"_a = false, "window_size"_a = 12,
-        "preserve_depth"_a = false)
-
-        ;
+        "preserve_depth"_a = false, pybind11::call_guard<pybind11::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG

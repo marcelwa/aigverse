@@ -50,9 +50,8 @@ void rewriting(pybind11::module_& m)
         },
         "ntk"_a, "cut_size"_a = 4, "cut_limit"_a = 8, "minimize_truth_table"_a = true, "allow_zero_gain"_a = false,
         "use_dont_cares"_a = false, "min_cand_cut_size"_a = 3, "min_cand_cut_size_override"_a = std::nullopt,
-        "preserve_depth"_a = false, "verbose"_a = false, "very_verbose"_a = false)
-
-        ;
+        "preserve_depth"_a = false, "verbose"_a = false, "very_verbose"_a = false,
+        pybind11::call_guard<pybind11::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG

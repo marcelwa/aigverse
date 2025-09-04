@@ -62,7 +62,7 @@ void balancing(pybind11::module_& m)
         },
         "ntk"_a, "cut_size"_a = 4, "cut_limit"_a = 8, "minimize_truth_table"_a = true,
         "only_on_critical_path"_a = false, "rebalance_function"_a = "sop", "sop_both_phases"_a = true,
-        "verbose"_a = false);
+        "verbose"_a = false, pybind11::call_guard<pybind11::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG

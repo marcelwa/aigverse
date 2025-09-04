@@ -60,9 +60,7 @@ void refactoring(pybind11::module_& m)
             }
         },
         "ntk"_a, "max_pis"_a = 6, "allow_zero_gain"_a = false, "use_reconvergence_cut"_a = false,
-        "use_dont_cares"_a = false, "verbose"_a = false)
-
-        ;
+        "use_dont_cares"_a = false, "verbose"_a = false, pybind11::call_guard<pybind11::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG

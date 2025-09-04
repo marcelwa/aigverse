@@ -82,7 +82,7 @@ void simulation(pybind11::module_& m)
                 throw;
             }
         },
-        "network"_a);
+        "network"_a, pybind11::call_guard<pybind11::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG
