@@ -101,6 +101,8 @@ void bind_truth_table(pybind11::module_& m)
     py::class_<aigverse::truth_table>(m, "TruthTable")
         .def(py::init<uint32_t>(), "num_vars"_a,
              "Create a TruthTable with 'num_vars' variables with all bits set to 0.")
+
+        // Operators
         .def(py::self == py::self, "other"_a)
         .def(py::self != py::self, "other"_a)
         .def(py::self < py::self, "other"_a)
@@ -108,6 +110,8 @@ void bind_truth_table(pybind11::module_& m)
         .def(py::self | py::self, "other"_a)
         .def(py::self ^ py::self, "other"_a)
         .def(~py::self)
+
+        // Python list-like convenience functions
         .def("__len__", &aigverse::truth_table::num_bits)
         .def(
             "__getitem__",
@@ -155,9 +159,13 @@ void bind_truth_table(pybind11::module_& m)
                                          detail::truth_table_bit_iterator(self, self.num_bits()));
             },
             py::keep_alive<0, 1>())
+
+        // Method bindings
         .def("num_vars", &aigverse::truth_table::num_vars, "Returns the number of variables.")
         .def("num_blocks", &aigverse::truth_table::num_blocks, "Returns the number of blocks.")
         .def("num_bits", &aigverse::truth_table::num_bits, "Returns the number of bits.")
+
+        // operator= for assigning to other truth tables
         .def(
             "__copy__", [](const aigverse::truth_table& self) { return self; },
             "Returns a shallow copy of the truth table.")
@@ -167,9 +175,13 @@ void bind_truth_table(pybind11::module_& m)
         .def(
             "__assign__", [](aigverse::truth_table& self, const aigverse::truth_table& other) { return self = other; },
             "other"_a, "Assigns the truth table from another compatible truth table.")
+
+        // Hashing
         .def(
             "__hash__", [](const aigverse::truth_table& self) { return kitty::hash<aigverse::truth_table>{}(self); },
             "Returns the hash of the truth table.")
+
+        // Pickle support
         .def(py::pickle([](const aigverse::truth_table& self) { return py::make_tuple(self.num_vars(), self._bits); },
                         [](const py::tuple& t)
                         {
@@ -191,6 +203,8 @@ void bind_truth_table(pybind11::module_& m)
                             kitty::create_from_words(tt, words.begin(), words.end());
                             return tt;
                         }))
+
+        // Free functions added to the class for convenience
         .def(
             "set_bit",
             [](aigverse::truth_table& self, const uint64_t index)
@@ -309,6 +323,8 @@ void bind_truth_table(pybind11::module_& m)
         .def(
             "is_const1", [](const aigverse::truth_table& self) { return kitty::is_const0(kitty::unary_not(self)); },
             "Checks if the truth table is constant 1.")
+
+        // Representations
         .def(
             "__repr__",
             [](const aigverse::truth_table& self)
