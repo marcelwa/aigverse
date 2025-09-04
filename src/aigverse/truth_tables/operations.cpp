@@ -9,6 +9,7 @@
 #include <kitty/operations.hpp>
 #include <pybind11/pybind11.h>
 
+#include <cstdint>
 #include <stdexcept>
 
 namespace aigverse
