@@ -43,12 +43,12 @@ PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())
     /**
      * Algorithms
      */
-    aigverse::equivalence_checking(m);
-    aigverse::refactoring(m);
-    aigverse::resubstitution(m);
-    aigverse::rewriting(m);
-    aigverse::balancing(m);
-    aigverse::simulation(m);
+    aigverse::bind_equivalence_checking(m);
+    aigverse::bind_refactoring(m);
+    aigverse::bind_resubstitution(m);
+    aigverse::bind_rewriting(m);
+    aigverse::bind_balancing(m);
+    aigverse::bind_simulation(m);
 
     /**
      * I/O
