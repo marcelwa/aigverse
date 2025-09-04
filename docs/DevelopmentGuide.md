@@ -119,7 +119,7 @@ Ready to contribute to the project? This guide will get you started.
 
 ## Working on the bindings (C++)
 
-Building the project requires a C++ compiler supporting _C++17_ and CMake with a minimum version of _3.21_.
+Building the project requires a C++ compiler supporting _C++17_ and CMake with a minimum version of _3.23_.
 Our CI pipeline on GitHub continuously tests the library under Windows, macOS, and Linux.
 
 ### Configure and Build
@@ -193,11 +193,12 @@ Due to technical limitations, the workflow can only post pull request comments i
 If you are working on a fork, you can still see the clang-tidy results either in the GitHub Actions logs,
 on the workflow summary page, or in the "Files changed" tab of the pull request.
 
-## Working on the Python package
+## Working on the Python project
 
 We use [pybind11](https://pybind11.readthedocs.io/en/stable) to expose large parts of the C++ library mockturtle to Python.
 This allows to keep the performance critical parts of the code in C++ while providing a convenient interface for Python users.
-All code related to C++-Python bindings is contained in the {code}`src/aigverse` directory.
+All source files related to C++-Python bindings are contained in the {code}`src/aigverse` directory, with the respective headers
+being in {code}`include/aigverse`.
 
 ::::::{tab-set}
 :sync-group: installer
