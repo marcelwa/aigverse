@@ -52,7 +52,7 @@ void refactoring(pybind11::module& m)
             }
             catch (const std::exception& e)
             {
-                throw std::runtime_error(fmt::format("Error in mockturtle::sop_refactoring: ", e.what()));
+                throw std::runtime_error(fmt::format("Error in mockturtle::sop_refactoring: {}", e.what()));
             }
             catch (...)
             {
