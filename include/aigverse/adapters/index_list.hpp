@@ -26,14 +26,14 @@ namespace detail
 {
 
 template <typename Ntk>
-void ntk_index_list(pybind11::module& m, const std::string& network_name);
+void ntk_index_list(pybind11::module_& m, const std::string& network_name);
 
-extern template void ntk_index_list<aigverse::aig>(pybind11::module& m, const std::string& network_name);
+extern template void ntk_index_list<aigverse::aig>(pybind11::module_& m, const std::string& network_name);
 
 }  // namespace detail
 
 // Wrapper declaration (implemented in .cpp)
-void bind_to_index_list(pybind11::module& m);
+void bind_to_index_list(pybind11::module_& m);
 
 }  // namespace aigverse
 

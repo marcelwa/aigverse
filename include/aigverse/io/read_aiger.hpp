@@ -18,14 +18,14 @@ namespace detail
 {
 
 template <typename Ntk>
-void read_aiger(pybind11::module& m, const std::string& network_name);
+void read_aiger(pybind11::module_& m, const std::string& network_name);
 
-extern template void read_aiger<aigverse::aig>(pybind11::module& m, const std::string& network_name);
-extern template void read_aiger<aigverse::sequential_aig>(pybind11::module& m, const std::string& network_name);
+extern template void read_aiger<aigverse::aig>(pybind11::module_& m, const std::string& network_name);
+extern template void read_aiger<aigverse::sequential_aig>(pybind11::module_& m, const std::string& network_name);
 
 }  // namespace detail
 
-void bind_read_aiger(pybind11::module& m);
+void bind_read_aiger(pybind11::module_& m);
 
 }  // namespace aigverse
 

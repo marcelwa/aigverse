@@ -21,7 +21,7 @@ namespace detail
 {
 
 template <typename Ntk>
-void ntk_edge_list(pybind11::module& m, const std::string& network_name)
+void ntk_edge_list(pybind11::module_& m, const std::string& network_name)
 {
     namespace py = pybind11;
     using namespace pybind11::literals;
@@ -111,11 +111,11 @@ void ntk_edge_list(pybind11::module& m, const std::string& network_name)
 }
 
 // Explicit instantiation for AIG
-template void ntk_edge_list<aigverse::aig>(pybind11::module& m, const std::string& network_name);
+template void ntk_edge_list<aigverse::aig>(pybind11::module_& m, const std::string& network_name);
 
 }  // namespace detail
 
-void bind_to_edge_list(pybind11::module& m)
+void bind_to_edge_list(pybind11::module_& m)
 {
     detail::ntk_edge_list<aigverse::aig>(m, "Aig");
 }

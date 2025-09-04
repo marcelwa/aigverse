@@ -16,13 +16,13 @@ namespace detail
 {
 
 template <typename Spec, typename Impl>
-void equivalence_checking(pybind11::module& m);
+void equivalence_checking(pybind11::module_& m);
 
-extern template void equivalence_checking<aigverse::aig, aigverse::aig>(pybind11::module& m);
+extern template void equivalence_checking<aigverse::aig, aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_equivalence_checking(pybind11::module& m);
+void bind_equivalence_checking(pybind11::module_& m);
 
 }  // namespace aigverse
 

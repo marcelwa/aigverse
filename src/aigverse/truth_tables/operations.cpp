@@ -15,7 +15,7 @@ namespace aigverse
 namespace detail
 {
 
-static void bind_truth_table_operations(pybind11::module& m)
+static void bind_truth_table_operations(pybind11::module_& m)
 {
     using namespace pybind11::literals;
 
@@ -38,7 +38,7 @@ static void bind_truth_table_operations(pybind11::module& m)
 
 }  // namespace detail
 
-void bind_truth_table_operations(pybind11::module& m)
+void bind_truth_table_operations(pybind11::module_& m)
 {
     detail::bind_truth_table_operations(m);
 }

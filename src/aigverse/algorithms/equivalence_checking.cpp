@@ -22,7 +22,7 @@ namespace detail
 {
 
 template <typename Spec, typename Impl>
-void equivalence_checking(pybind11::module& m)
+void equivalence_checking(pybind11::module_& m)
 {
     using namespace pybind11::literals;
 
@@ -51,11 +51,11 @@ void equivalence_checking(pybind11::module& m)
 }
 
 // Explicit instantiation for AIG
-template void equivalence_checking<aigverse::aig, aigverse::aig>(pybind11::module& m);
+template void equivalence_checking<aigverse::aig, aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_equivalence_checking(pybind11::module& m)
+void bind_equivalence_checking(pybind11::module_& m)
 {
     detail::equivalence_checking<aigverse::aig, aigverse::aig>(m);
 }

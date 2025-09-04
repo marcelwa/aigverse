@@ -23,7 +23,7 @@ namespace detail
 {
 
 template <typename Ntk>
-void simulation(pybind11::module& m)
+void simulation(pybind11::module_& m)
 {
     namespace py = pybind11;
     using namespace py::literals;
@@ -86,11 +86,11 @@ void simulation(pybind11::module& m)
 }
 
 // Explicit instantiation for AIG
-template void simulation<aigverse::aig>(pybind11::module& m);
+template void simulation<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_simulation(pybind11::module& m)
+void bind_simulation(pybind11::module_& m)
 {
     detail::simulation<aigverse::aig>(m);
 }

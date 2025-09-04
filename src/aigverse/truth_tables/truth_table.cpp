@@ -92,7 +92,7 @@ class truth_table_bit_iterator
 
 }  // namespace detail
 
-void bind_truth_table(pybind11::module& m)
+void bind_truth_table(pybind11::module_& m)
 {
 
     namespace py = pybind11;

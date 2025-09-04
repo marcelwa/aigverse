@@ -23,7 +23,7 @@ namespace detail
 {
 
 template <typename Ntk>
-void balancing(pybind11::module& m)
+void balancing(pybind11::module_& m)
 {
     using namespace pybind11::literals;
 
@@ -66,11 +66,11 @@ void balancing(pybind11::module& m)
 }
 
 // Explicit instantiation for AIG
-template void balancing<aigverse::aig>(pybind11::module& m);
+template void balancing<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_balancing(pybind11::module& m)
+void bind_balancing(pybind11::module_& m)
 {
     detail::balancing<aigverse::aig>(m);
 }

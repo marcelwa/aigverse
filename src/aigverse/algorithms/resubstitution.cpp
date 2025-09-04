@@ -20,7 +20,7 @@ namespace detail
 {
 
 template <typename Ntk>
-void resubstitution(pybind11::module& m)
+void resubstitution(pybind11::module_& m)
 {
     using namespace pybind11::literals;
 
@@ -54,11 +54,11 @@ void resubstitution(pybind11::module& m)
 }
 
 // Explicit instantiation for AIG
-template void resubstitution<aigverse::aig>(pybind11::module& m);
+template void resubstitution<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_resubstitution(pybind11::module& m)
+void bind_resubstitution(pybind11::module_& m)
 {
     detail::resubstitution<aigverse::aig>(m);
 }

@@ -17,7 +17,7 @@ namespace detail
 {
 
 template <typename Ntk>
-void write_verilog(pybind11::module& m)
+void write_verilog(pybind11::module_& m)
 {
     using namespace pybind11::literals;
 
@@ -27,11 +27,11 @@ void write_verilog(pybind11::module& m)
 }
 
 // Explicit instantiation for AIG
-template void write_verilog<aigverse::aig>(pybind11::module& m);
+template void write_verilog<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_write_verilog(pybind11::module& m)
+void bind_write_verilog(pybind11::module_& m)
 {
     detail::write_verilog<aigverse::aig>(m);
 }

@@ -19,7 +19,7 @@ namespace detail
 {
 
 template <typename Ntk>
-void read_pla(pybind11::module& m, const std::string& network_name)
+void read_pla(pybind11::module_& m, const std::string& network_name)
 {
     using namespace pybind11::literals;
 
@@ -45,11 +45,11 @@ void read_pla(pybind11::module& m, const std::string& network_name)
 }
 
 // Explicit instantiation for AIG
-template void read_pla<aigverse::aig>(pybind11::module& m, const std::string& network_name);
+template void read_pla<aigverse::aig>(pybind11::module_& m, const std::string& network_name);
 
 }  // namespace detail
 
-void bind_read_pla(pybind11::module& m)
+void bind_read_pla(pybind11::module_& m)
 {
     detail::read_pla<aigverse::aig>(m, "aig");
 }

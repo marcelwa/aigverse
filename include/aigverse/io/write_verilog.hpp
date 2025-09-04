@@ -16,13 +16,13 @@ namespace detail
 {
 
 template <typename Ntk>
-void write_verilog(pybind11::module& m);
+void write_verilog(pybind11::module_& m);
 
-extern template void write_verilog<aigverse::aig>(pybind11::module& m);
+extern template void write_verilog<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_write_verilog(pybind11::module& m);
+void bind_write_verilog(pybind11::module_& m);
 
 }  // namespace aigverse
 

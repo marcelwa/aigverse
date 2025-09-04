@@ -25,7 +25,7 @@ namespace detail
 {
 
 template <typename Ntk>
-void bind_network(pybind11::module& m, const std::string& network_name)
+void bind_network(pybind11::module_& m, const std::string& network_name)
 {
     namespace py = pybind11;
     using namespace pybind11::literals;
@@ -350,11 +350,11 @@ void bind_network(pybind11::module& m, const std::string& network_name)
 }
 
 // Explicit instantiation for AIG
-template void bind_network<aigverse::aig>(pybind11::module&, const std::string&);
+template void bind_network<aigverse::aig>(pybind11::module_&, const std::string&);
 
 }  // namespace detail
 
-void bind_logic_networks(pybind11::module& m)
+void bind_logic_networks(pybind11::module_& m)
 {
     detail::bind_network<aigverse::aig>(m, "Aig");
 }

@@ -16,13 +16,13 @@ namespace detail
 {
 
 template <typename Ntk>
-void resubstitution(pybind11::module& m);
+void resubstitution(pybind11::module_& m);
 
-extern template void resubstitution<aigverse::aig>(pybind11::module& m);
+extern template void resubstitution<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_resubstitution(pybind11::module& m);
+void bind_resubstitution(pybind11::module_& m);
 
 }  // namespace aigverse
 

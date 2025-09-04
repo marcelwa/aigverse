@@ -21,7 +21,7 @@ namespace detail
 {
 
 template <typename Ntk>
-void read_verilog(pybind11::module& m, const std::string& network_name)
+void read_verilog(pybind11::module_& m, const std::string& network_name)
 {
     using namespace pybind11::literals;
 
@@ -48,11 +48,11 @@ void read_verilog(pybind11::module& m, const std::string& network_name)
 }
 
 // Explicit instantiation for AIG
-template void read_verilog<aigverse::aig>(pybind11::module& m, const std::string& network_name);
+template void read_verilog<aigverse::aig>(pybind11::module_& m, const std::string& network_name);
 
 }  // namespace detail
 
-void bind_read_verilog(pybind11::module& m)
+void bind_read_verilog(pybind11::module_& m)
 {
     detail::read_verilog<aigverse::aig>(m, "aig");
 }

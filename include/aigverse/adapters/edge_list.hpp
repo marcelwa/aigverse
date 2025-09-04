@@ -174,15 +174,15 @@ namespace detail
 
 // Forward declaration of binding template.
 template <typename Ntk>
-void ntk_edge_list(pybind11::module& m, const std::string& network_name);
+void ntk_edge_list(pybind11::module_& m, const std::string& network_name);
 
 // Explicit instantiation declaration for AIG.
-extern template void ntk_edge_list<aigverse::aig>(pybind11::module& m, const std::string& network_name);
+extern template void ntk_edge_list<aigverse::aig>(pybind11::module_& m, const std::string& network_name);
 
 }  // namespace detail
 
 // Wrapper declaration (implemented in .cpp)
-void bind_to_edge_list(pybind11::module& m);
+void bind_to_edge_list(pybind11::module_& m);
 
 }  // namespace aigverse
 

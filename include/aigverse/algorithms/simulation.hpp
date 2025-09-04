@@ -16,13 +16,13 @@ namespace detail
 {
 
 template <typename Ntk>
-void simulation(pybind11::module& m);
+void simulation(pybind11::module_& m);
 
-extern template void simulation<aigverse::aig>(pybind11::module& m);
+extern template void simulation<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_simulation(pybind11::module& m);
+void bind_simulation(pybind11::module_& m);
 
 }  // namespace aigverse
 

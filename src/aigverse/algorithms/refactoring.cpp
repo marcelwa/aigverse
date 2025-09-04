@@ -22,7 +22,7 @@ namespace detail
 {
 
 template <typename Ntk>
-void refactoring(pybind11::module& m)
+void refactoring(pybind11::module_& m)
 {
     using namespace pybind11::literals;
 
@@ -66,11 +66,11 @@ void refactoring(pybind11::module& m)
 }
 
 // Explicit instantiation for AIG
-template void refactoring<aigverse::aig>(pybind11::module& m);
+template void refactoring<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_refactoring(pybind11::module& m)
+void bind_refactoring(pybind11::module_& m)
 {
     detail::refactoring<aigverse::aig>(m);
 }

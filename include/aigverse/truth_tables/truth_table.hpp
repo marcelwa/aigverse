@@ -11,7 +11,7 @@ namespace aigverse
 {
 
 // Registers truth table bindings
-void bind_truth_table(pybind11::module& m);
+void bind_truth_table(pybind11::module_& m);
 
 }  // namespace aigverse
 
