@@ -244,7 +244,7 @@ $ .venv\Scripts\activate.bat
 Then, you can install the project via:
 
 ```console
-(.venv) $ pip install -ve.
+(.venv) $ pip install -e .
 ```
 
 :::::
