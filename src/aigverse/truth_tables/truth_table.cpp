@@ -62,11 +62,11 @@ class truth_table_bit_iterator
      * Equality operator to compare two iterators.
      *
      * @param other The other iterator to compare with.
-     * @return `true` if both iterators point to the same index, `false` otherwise.
+     * @return `true` if both iterators point to the same index of the same truth table, `false` otherwise.
      */
     bool operator==(const truth_table_bit_iterator& other) const
     {
-        return index == other.index;
+        return tt == other.tt && index == other.index;
     }
     /**
      * Inequality operator to compare two iterators.
