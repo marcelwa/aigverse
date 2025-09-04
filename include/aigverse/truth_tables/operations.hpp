@@ -5,7 +5,10 @@
 #ifndef AIGVERSE_OPERATIONS_HPP
 #define AIGVERSE_OPERATIONS_HPP
 
-#include <pybind11/pybind11.h>
+namespace pybind11
+{
+class module_;
+}
 
 namespace aigverse
 {

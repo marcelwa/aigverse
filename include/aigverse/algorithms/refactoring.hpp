@@ -7,7 +7,10 @@
 
 #include "aigverse/types.hpp"
 
-#include <pybind11/pybind11.h>
+namespace pybind11
+{
+class module_;
+}
 
 namespace aigverse
 {

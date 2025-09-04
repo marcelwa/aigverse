@@ -5,7 +5,10 @@
 #ifndef AIGVERSE_TRUTH_TABLE_HPP
 #define AIGVERSE_TRUTH_TABLE_HPP
 
-#include <pybind11/pybind11.h>
+namespace pybind11
+{
+class module_;
+}
 
 namespace aigverse
 {

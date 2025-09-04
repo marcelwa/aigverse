@@ -10,14 +10,17 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <mockturtle/utils/index_list.hpp>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <string>
 #include <tuple>
 #include <vector>
+
+namespace pybind11
+{
+class module_;
+}
 
 namespace aigverse
 {
