@@ -63,6 +63,6 @@ PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())
     /**
      * Adapters
      */
-    aigverse::to_edge_list(m);
-    aigverse::to_index_list(m);
+    aigverse::bind_to_edge_list(m);
+    aigverse::bind_to_index_list(m);
 }
