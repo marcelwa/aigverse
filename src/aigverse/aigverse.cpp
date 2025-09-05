@@ -32,37 +32,37 @@ PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())
     /**
      * Networks
      */
-    aigverse::logic_networks(m);
+    aigverse::bind_logic_networks(m);
 
     /**
      * Truth tables.
      */
-    aigverse::truth_tables(m);
-    aigverse::truth_table_operations(m);
+    aigverse::bind_truth_table(m);
+    aigverse::bind_truth_table_operations(m);
 
     /**
      * Algorithms
      */
-    aigverse::equivalence_checking(m);
-    aigverse::refactoring(m);
-    aigverse::resubstitution(m);
-    aigverse::rewriting(m);
-    aigverse::balancing(m);
-    aigverse::simulation(m);
+    aigverse::bind_equivalence_checking(m);
+    aigverse::bind_refactoring(m);
+    aigverse::bind_resubstitution(m);
+    aigverse::bind_rewriting(m);
+    aigverse::bind_balancing(m);
+    aigverse::bind_simulation(m);
 
     /**
      * I/O
      */
-    aigverse::read_aiger(m);
-    aigverse::write_aiger(m);
-    aigverse::read_pla(m);
-    aigverse::read_verilog(m);
-    aigverse::write_verilog(m);
-    aigverse::write_dot(m);
+    aigverse::bind_read_aiger(m);
+    aigverse::bind_write_aiger(m);
+    aigverse::bind_read_pla(m);
+    aigverse::bind_read_verilog(m);
+    aigverse::bind_write_verilog(m);
+    aigverse::bind_write_dot(m);
 
     /**
      * Adapters
      */
-    aigverse::to_edge_list(m);
-    aigverse::to_index_list(m);
+    aigverse::bind_to_edge_list(m);
+    aigverse::bind_to_index_list(m);
 }

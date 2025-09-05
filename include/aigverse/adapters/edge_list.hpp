@@ -2,22 +2,23 @@
 // Created by marcel on 05.09.24.
 //
 
-#ifndef AIGVERSE_EDGE_LIST_HPP
-#define AIGVERSE_EDGE_LIST_HPP
+#pragma once
 
 #include "aigverse/types.hpp"
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <mockturtle/traits.hpp>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
 #include <cstdint>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
+
+namespace pybind11
+{
+class module_;
+}
 
 namespace aigverse
 {
@@ -37,15 +38,14 @@ struct edge
     /**
      * Constructor.
      *
-     * @param source Source node of the edge.
-     * @param target Target node of the edge.
-     * @param weight Weight of the edge.
+     * @param src Source node of the edge.
+     * @param tgt Target node of the edge.
+     * @param w Weight of the edge.
      */
-    constexpr edge(const mockturtle::node<Ntk>& source, const mockturtle::node<Ntk>& target,
-                   const int64_t weight = 0) noexcept :
-            source(source),
-            target(target),
-            weight(weight)
+    constexpr edge(const mockturtle::node<Ntk>& src, const mockturtle::node<Ntk>& tgt, const int64_t w = 0) noexcept :
+            source{src},
+            target{tgt},
+            weight{w}
     {}
     /**
      * Equality operator.
@@ -102,16 +102,16 @@ struct edge_list
     /**
      * Constructor.
      *
-     * @param ntk Network.
+     * @param network Network.
      */
-    explicit edge_list(const Ntk& ntk) : ntk{ntk} {};
+    explicit edge_list(const Ntk& network) : ntk{network} {};
     /**
      * Constructor.
      *
-     * @param ntk Network.
-     * @param edges Edges of the network.
+     * @param network Network.
+     * @param es Edges of the network.
      */
-    edge_list(const Ntk& ntk, const std::vector<edge<Ntk>>& edges) : ntk{ntk}, edges{edges} {};
+    edge_list(const Ntk& network, const std::vector<edge<Ntk>>& es) : ntk{network}, edges{es} {};
     /**
      * Implicit conversion to vector.
      *
@@ -174,102 +174,17 @@ template <typename Ntk>
 namespace detail
 {
 
+// Forward declaration of binding template.
 template <typename Ntk>
-void ntk_edge_list(pybind11::module& m, const std::string& network_name)
-{
-    namespace py = pybind11;
-    using namespace pybind11::literals;
+void ntk_edge_list(pybind11::module_& m, const std::string& network_name);
 
-    /**
-     * Edge.
-     */
-    using Edge = edge<Ntk>;
-    py::class_<Edge>(m, fmt::format("{}Edge", network_name).c_str())
-        .def(py::init<>())
-        .def(py::init<const mockturtle::node<Ntk>&, const mockturtle::node<Ntk>&, const int64_t>(), "source"_a,
-             "target"_a, "weight"_a = 0)
-        .def_readwrite("source", &Edge::source)
-        .def_readwrite("target", &Edge::target)
-        .def_readwrite("weight", &Edge::weight)
-        .def("__repr__", [](const Edge& e) { return fmt::format("{}", e); })
-        .def("__eq__",
-             [](const Edge& self, const py::object& other) -> bool
-             {
-                 if (!py::isinstance<Edge>(other))
-                 {
-                     return false;
-                 }
-
-                 return self == other.cast<const Edge>();
-             })
-        .def("__ne__",
-             [](const Edge& self, const py::object& other) -> bool
-             {
-                 if (!py::isinstance<Edge>(other))
-                 {
-                     return false;
-                 }
-
-                 return self != other.cast<const Edge>();
-             })
-
-        ;
-
-    py::implicitly_convertible<py::tuple, Edge>();
-
-    /**
-     * Edge list.
-     */
-    using EdgeList = edge_list<Ntk>;
-    py::class_<EdgeList>(m, fmt::format("{}EdgeList", network_name).c_str())
-        .def(py::init<>())
-        .def(py::init<const Ntk&>(), "ntk"_a)
-        .def(py::init<const Ntk&, const std::vector<Edge>&>(), "ntk"_a, "edges"_a)
-        .def_readwrite("ntk", &EdgeList::ntk)
-        .def_readwrite("edges", &EdgeList::edges)
-        .def(
-            "append", [](EdgeList& el, const Edge& e) { el.edges.push_back(e); }, "edge"_a)
-        .def("clear", [](EdgeList& el) { el.edges.clear(); })
-        .def(
-            "__iter__", [](const EdgeList& el) { return py::make_iterator(el.edges); }, py::keep_alive<0, 1>())
-        .def("__len__", [](const EdgeList& el) { return el.edges.size(); })
-        .def("__getitem__",
-             [](const EdgeList& el, const std::size_t index)
-             {
-                 if (index >= el.edges.size())
-                 {
-                     throw py::index_error();
-                 }
-
-                 return el.edges[index];
-             })
-        .def("__setitem__",
-             [](EdgeList& el, const std::size_t index, const Edge& e)
-             {
-                 if (index >= el.edges.size())
-                 {
-                     throw py::index_error();
-                 }
-
-                 el.edges[index] = e;
-             })
-        .def("__repr__", [](const EdgeList& el) { return fmt::format("EdgeList({})", el); })
-
-        ;
-
-    py::implicitly_convertible<py::list, EdgeList>();
-
-    m.def("to_edge_list", &to_edge_list<mockturtle::sequential<Ntk>>, "ntk"_a, "regular_weight"_a = 0,
-          "inverted_weight"_a = 1);
-    m.def("to_edge_list", &to_edge_list<Ntk>, "ntk"_a, "regular_weight"_a = 0, "inverted_weight"_a = 1);
-}
+// Explicit instantiation declaration for AIG.
+extern template void ntk_edge_list<aigverse::aig>(pybind11::module_& m, const std::string& network_name);
 
 }  // namespace detail
 
-inline void to_edge_list(pybind11::module& m)
-{
-    detail::ntk_edge_list<aigverse::aig>(m, "Aig");
-}
+// Wrapper declaration (implemented in .cpp)
+void bind_to_edge_list(pybind11::module_& m);
 
 }  // namespace aigverse
 
@@ -311,5 +226,3 @@ struct formatter<aigverse::edge_list<Ntk>>
 };
 
 }  // namespace fmt
-
-#endif  // AIGVERSE_EDGE_LIST_HPP

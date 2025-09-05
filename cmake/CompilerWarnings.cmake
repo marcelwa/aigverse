@@ -73,9 +73,6 @@ function(
                                # explicit annotation
         -Wno-unknown-pragmas # do not warn if encountering unknown pragmas
         -Wno-pragmas # do not warn if encountering unknown pragma options
-        -Wno-gnu-zero-variadic-macro-arguments # do not warn if zero variadic
-                                               # macro arguments are passed to a
-                                               # GNU user-defined macro
     )
   endif()
 

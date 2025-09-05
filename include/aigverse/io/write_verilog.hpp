@@ -2,15 +2,14 @@
 // Created by Jingren on 20.04.25.
 //
 
-#ifndef AIGVERSE_WRITE_VERILOG_HPP
-#define AIGVERSE_WRITE_VERILOG_HPP
+#pragma once
 
-#include <mockturtle/io/write_verilog.hpp>
-#include <mockturtle/networks/aig.hpp>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include "aigverse/types.hpp"
 
-#include <string>
+namespace pybind11
+{
+class module_;
+}
 
 namespace aigverse
 {
@@ -19,22 +18,12 @@ namespace detail
 {
 
 template <typename Ntk>
-void write_verilog(pybind11::module& m)
-{
-    using namespace pybind11::literals;
+void write_verilog(pybind11::module_& m);
 
-    m.def(
-        "write_verilog", [](const Ntk& ntk, const std::string& filename) { mockturtle::write_verilog(ntk, filename); },
-        "network"_a, "filename"_a);
-}
+extern template void write_verilog<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-inline void write_verilog(pybind11::module& m)
-{
-    detail::write_verilog<mockturtle::aig_network>(m);
-}
+void bind_write_verilog(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_WRITE_VERILOG_HPP

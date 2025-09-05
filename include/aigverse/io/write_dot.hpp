@@ -2,15 +2,14 @@
 // Created by marcel on 22.04.24.
 //
 
-#ifndef AIGVERSE_WRITE_DOT_HPP
-#define AIGVERSE_WRITE_DOT_HPP
+#pragma once
 
-#include <mockturtle/io/write_dot.hpp>
-#include <mockturtle/networks/aig.hpp>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include "aigverse/types.hpp"
 
-#include <string>
+namespace pybind11
+{
+class module_;
+}
 
 namespace aigverse
 {
@@ -19,22 +18,12 @@ namespace detail
 {
 
 template <typename Ntk>
-void write_dot(pybind11::module& m)
-{
-    using namespace pybind11::literals;
+void write_dot(pybind11::module_& m);
 
-    m.def(
-        "write_dot", [](const Ntk& ntk, const std::string& filename) { mockturtle::write_dot(ntk, filename); },
-        "network"_a, "filename"_a);
-}
+extern template void write_dot<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-inline void write_dot(pybind11::module& m)
-{
-    detail::write_dot<mockturtle::aig_network>(m);
-}
+void bind_write_dot(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_WRITE_DOT_HPP

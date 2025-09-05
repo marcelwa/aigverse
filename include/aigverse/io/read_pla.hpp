@@ -2,16 +2,16 @@
 // Created by Jingren on 06.05.25.
 //
 
-#ifndef AIGVERSE_READ_PLA_HPP
-#define AIGVERSE_READ_PLA_HPP
+#pragma once
 
-#include <fmt/format.h>
-#include <lorina/diagnostics.hpp>
-#include <mockturtle/io/pla_reader.hpp>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include "aigverse/types.hpp"
 
 #include <string>
+
+namespace pybind11
+{
+class module_;
+}
 
 namespace aigverse
 {
@@ -20,38 +20,12 @@ namespace detail
 {
 
 template <typename Ntk>
-void read_pla(pybind11::module& m, const std::string& network_name)
-{
-    using namespace pybind11::literals;
+void read_pla(pybind11::module_& m, const std::string& network_name);
 
-    m.def(
-        fmt::format("read_pla_into_{}", network_name).c_str(),
-        [](const std::string& filename)
-        {
-            Ntk ntk{};
-
-            lorina::text_diagnostics  consumer{};
-            lorina::diagnostic_engine diag{&consumer};
-
-            const auto read_pla_result = lorina::read_pla(filename, mockturtle::pla_reader<Ntk>(ntk), &diag);
-
-            if (read_pla_result != lorina::return_code::success)
-            {
-                throw std::runtime_error("Error reading PLA file");
-            }
-
-            return ntk;
-        },
-        "filename"_a);
-}
+extern template void read_pla<aigverse::aig>(pybind11::module_& m, const std::string& network_name);
 
 }  // namespace detail
 
-inline void read_pla(pybind11::module& m)
-{
-    detail::read_pla<aigverse::aig>(m, "aig");
-}
+void bind_read_pla(pybind11::module_& m);
 
 }  // namespace aigverse
-
-#endif  // AIGVERSE_READ_PLA_HPP
