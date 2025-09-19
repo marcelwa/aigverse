@@ -50,7 +50,7 @@ integrate logic synthesis with ML workflows. `aigverse` provides a Python-friend
 it easier to develop applications that blend both AI/ML and traditional circuit synthesis techniques. By building upon
 the robust foundation of the EPFL Logic Synthesis Libraries, `aigverse` delivers powerful logic manipulation
 capabilities while maintaining accessibility through its Python interface. With `aigverse`, you can parse, manipulate,
-and optimize logic circuits directly from Python. Eventually, we aim to provide seamless integration with popular ML
+and optimize logic circuits directly from Python. We aim to provide seamless integration with popular ML
 libraries, enabling the development of novel AI-driven synthesis and optimization tools.
 
 ## 📦 Installation
