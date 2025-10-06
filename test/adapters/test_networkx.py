@@ -52,7 +52,6 @@ def test_import(monkeypatch: pytest.MonkeyPatch) -> None:
     assert not hasattr(Aig, "to_networkx")
 
     # This import will execute the module's top-level code
-    import aigverse.adapters
 
     assert hasattr(Aig, "to_networkx")
     assert hasattr(DepthAig, "to_networkx")
