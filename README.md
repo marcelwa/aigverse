@@ -19,12 +19,13 @@
   </a>
 </p>
 
-`aigverse` is a Python framework designed to bridge the gap between logic synthesis and AI/ML applications. It allows
-you to represent and manipulate logic circuits efficiently, making it easier to integrate logic synthesis tasks into
-machine learning pipelines. `aigverse` is built directly upon the powerful [EPFL Logic Synthesis Libraries](https://arxiv.org/abs/1805.05121),
-particularly [mockturtle](https://github.com/lsils/mockturtle), providing a high-level Python interface to
-state-of-the-art algorithms for And-Inverter Graph (AIG) manipulation and logic synthesis, widely used in formal
-verification, hardware design, and optimization tasks.
+`aigverse` is a Python infrastructure framework designed to bridge the gap between logic synthesis and AI/ML
+applications. It allows you to represent and manipulate logic circuits efficiently, making it easier to integrate logic
+synthesis and optimization tasks into machine learning pipelines. `aigverse` is built directly upon the
+powerful [EPFL Logic Synthesis Libraries](https://arxiv.org/abs/1805.05121), particularly
+[mockturtle](https://github.com/lsils/mockturtle), providing a high-level Python interface to state-of-the-art
+algorithms for And-Inverter Graph (AIG) manipulation and logic synthesis, widely used in formal verification, hardware
+design, and optimization tasks.
 
 <p align="center">
   <a href="https://aigverse.readthedocs.io/">
@@ -46,11 +47,11 @@ verification, hardware design, and optimization tasks.
 
 As AI and machine learning (ML) increasingly impact hardware design automation, there's a growing need for tools that
 integrate logic synthesis with ML workflows. `aigverse` provides a Python-friendly interface for logic synthesis, making
-it easier to develop applications that blend both AI/ML and traditional circuit synthesis techniques. By building upon the
-robust foundation of the EPFL Logic Synthesis Libraries, `aigverse` delivers powerful logic manipulation capabilities while
-maintaining accessibility through its Python interface. With `aigverse`, you can parse, manipulate, and optimize logic circuits
-directly from Python. Eventually, we aim to provide seamless integration with popular ML libraries, enabling the development
-of novel AI-driven synthesis and optimization tools.
+it easier to develop applications that blend both AI/ML and traditional circuit synthesis techniques. By building upon
+the robust foundation of the EPFL Logic Synthesis Libraries, `aigverse` delivers powerful logic manipulation
+capabilities while maintaining accessibility through its Python interface. With `aigverse`, you can parse, manipulate,
+and optimize logic circuits directly from Python. We aim to provide seamless integration with popular ML
+libraries, enabling the development of novel AI-driven synthesis and optimization tools.
 
 ## 📦 Installation
 
@@ -216,9 +217,9 @@ It is to be noted that the construction of sequential AIGs comes with some cavea
 ### ⚡ Logic Optimization
 
 You can optimize AIGs using various algorithms. For example, you can perform _resubstitution_ to simplify logic using
-shared divisors. Similarly, _refactoring_ collapses maximal fanout-free cones (MFFCs) into truth tables and resynthesizes
-them into new structures. Cut _rewriting_ optimizes the AIG by replacing cuts with improved ones from a pre-computed NPN
-database. Finally, _balancing_ performs (E)SOP factoring to minimize the number of levels in the AIG.
+shared divisors. Similarly, _refactoring_ collapses maximal fanout-free cones (MFFCs) into truth tables and
+resynthesizes them into new structures. Cut _rewriting_ optimizes the AIG by replacing cuts with improved ones from a
+pre-computed NPN database. Finally, _balancing_ performs (E)SOP factoring to minimize the number of levels in the AIG.
 
 ```python
 from aigverse import aig_resubstitution, sop_refactoring, aig_cut_rewriting, balancing
@@ -409,6 +410,17 @@ with open("tt.pkl", "wb") as f:
 with open("tt.pkl", "rb") as f:
     unpickled_tt = pickle.load(f)
 ```
+
+## 🎤 Learn More
+
+For a deeper dive into the vision and technical details behind `aigverse`, check out the presentation from the
+[Free Silicon Conference (FSiC) 2025](https://wiki.f-si.org/index.php?title=FSiC2025):
+
+**"aigverse: Toward machine learning-driven logic synthesis"**
+📄 [Slides available on the FSiC wiki](https://wiki.f-si.org/index.php?title=Aigverse:_Toward_machine_learning-driven_logic_synthesis)
+
+This talk covers the motivation, architecture, and future directions of `aigverse` as an infrastructure project for
+bringing machine learning to logic synthesis.
 
 ## 🙌 Contributing
 
