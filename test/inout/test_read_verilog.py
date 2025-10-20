@@ -28,10 +28,8 @@ def test_read_verilog_with_names() -> None:
     pi_nodes = aig.pis()
     assert len(pi_nodes) == 3
 
-    # Check that at least one PI has a name
-    pi_names = [aig.get_name(AigSignal(pi, False)) for pi in pi_nodes if aig.has_name(AigSignal(pi, False))]
-
     # The inputs should be named a, b, c
+    pi_names = [aig.get_name(AigSignal(pi, False)) for pi in pi_nodes if aig.has_name(AigSignal(pi, False))]
     assert set(pi_names) == {"a", "b", "c"}
 
     # Test PO names (output: y1)
