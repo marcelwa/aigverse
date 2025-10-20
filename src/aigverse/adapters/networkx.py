@@ -56,6 +56,7 @@ def to_networkx(
         - num_gates (int): Number of AND gates.
         - levels (int, optional): Total number of levels in the AIG.
         - function (list[:class:`~numpy.ndarray`], optional): Graph's truth tables.
+        - name (str, optional): Network name (only for :class:`~aigverse.NamedAig`).
 
     Node Attributes:
         - index (int): The node's identifier.
@@ -69,6 +70,8 @@ def to_networkx(
         - type (:class:`~numpy.ndarray`): A one-hot encoded vector representing the edge
             type (``[regular, inverted]``). The data type is determined by the
             ``dtype`` argument, defaulting to :obj:`~numpy.int8`.
+        - name (str, optional): Signal name or primary output name for edges to synthetic
+            PO nodes (only for :class:`~aigverse.NamedAig`).
     """
     # one-hot encodings for node types: [const, pi, gate, po]
     node_type_const: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([1, 0, 0, 0], dtype=dtype)
@@ -79,6 +82,9 @@ def to_networkx(
     # one-hot encodings for edge types: [regular, inverted]
     edge_type_regular: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([1, 0], dtype=dtype)
     edge_type_inverted: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([0, 1], dtype=dtype)
+
+    # Check if this is a NamedAig by testing for the presence of name methods
+    has_names = hasattr(self, "has_name") and hasattr(self, "get_name")
 
     # Conditionally compute levels if requested
     if levels:
@@ -108,6 +114,10 @@ def to_networkx(
         g.graph["levels"] = depth_aig.num_levels() + 1  # + 1 for the PO level
     if graph_tts:
         g.graph["function"] = graph_funcs
+    if has_names and hasattr(self, "get_network_name"):
+        network_name = self.get_network_name()
+        if network_name:  # Only add if non-empty
+            g.graph["name"] = network_name
 
     # Iterate over all nodes in the AIG, plus synthetic PO nodes
     for node in self.nodes() + [self.po_index(po) + self.size() for po in self.pos()]:
@@ -151,6 +161,27 @@ def to_networkx(
     for src, tgt, weight in [(e.source, e.target, e.weight) for e in edges]:
         # Assign one-hot encoded edge type based on inversion
         edge_type = edge_type_inverted if weight else edge_type_regular
-        g.add_edge(src, tgt, type=edge_type)
+        edge_attrs: dict[str, Any] = {"type": edge_type}
+
+        # Add signal name if available (edges represent signals)
+        if has_names:
+            from .. import AigSignal
+
+            # src is AigNode | int, convert to int for AigSignal constructor
+            src_int = src if isinstance(src, int) else hash(src)
+            sig = AigSignal(src_int, bool(weight))
+            if self.has_name(sig):  # type: ignore[attr-defined]
+                edge_attrs["name"] = self.get_name(sig)  # type: ignore[attr-defined]
+
+        g.add_edge(src, tgt, **edge_attrs)
+
+    # Add PO names as attributes on edges going to synthetic PO nodes
+    if has_names and hasattr(self, "has_output_name") and hasattr(self, "get_output_name"):
+        for po_idx, po in enumerate(self.pos()):
+            if self.has_output_name(po_idx):
+                synthetic_po_node = self.po_index(po) + self.size()
+                # Find all edges going into this synthetic PO node
+                for pred in g.predecessors(synthetic_po_node):  # type: ignore[no-untyped-call]
+                    g.edges[pred, synthetic_po_node]["name"] = self.get_output_name(po_idx)
 
     return g
