@@ -168,7 +168,7 @@ def to_networkx(
             from .. import AigSignal
 
             # src is AigNode | int, convert to int for AigSignal constructor
-            src_int = src if isinstance(src, int) else hash(src)
+            src_int = src if isinstance(src, int) else self.node_to_index(src)
             sig = AigSignal(src_int, bool(weight))
             if self.has_name(sig):  # type: ignore[attr-defined]
                 edge_attrs["name"] = self.get_name(sig)  # type: ignore[attr-defined]
