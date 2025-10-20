@@ -49,14 +49,14 @@ void read_verilog(pybind11::module_& m, const std::string& network_name)
         "filename"_a);
 }
 
-// Explicit instantiation for AIG
-template void read_verilog<aigverse::aig>(pybind11::module_& m, const std::string& network_name);
+// Explicit instantiation for named AIG
+template void read_verilog<aigverse::named_aig>(pybind11::module_& m, const std::string& network_name);
 
 }  // namespace detail
 
 void bind_read_verilog(pybind11::module_& m)
 {
-    detail::read_verilog<aigverse::aig>(m, "aig");
+    detail::read_verilog<aigverse::named_aig>(m, "aig");
 }
 
 }  // namespace aigverse
