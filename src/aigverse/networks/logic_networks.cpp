@@ -9,6 +9,7 @@
 #include <mockturtle/traits.hpp>
 #include <mockturtle/views/depth_view.hpp>
 #include <mockturtle/views/fanout_view.hpp>
+#include <mockturtle/views/names_view.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -225,11 +226,27 @@ void bind_network(pybind11::module_& m, const std::string& network_name)
              "state"_a)
         .def("cleanup_dangling", [](Ntk& ntk) { ntk = mockturtle::cleanup_dangling(ntk); });
 
+    using NamedNtk = mockturtle::names_view<Ntk>;
+    py::class_<NamedNtk, Ntk>(m, fmt::format("Named{}", network_name).c_str())
+        .def(py::init<>())
+        .def(py::init<const NamedNtk&>(), "ntk"_a)
+        .def(py::init<const Ntk&>(), "ntk"_a)
+        .def("create_pi", &NamedNtk::create_pi, "name"_a = "")
+        .def("create_po", &NamedNtk::create_po, "f"_a, "name"_a = "")
+        .def("set_network_name", &NamedNtk::set_network_name, "name"_a)
+        .def("get_network_name", &NamedNtk::get_network_name)
+        .def("has_name", &NamedNtk::has_name, "s"_a)
+        .def("set_name", &NamedNtk::set_name, "s"_a, "name"_a)
+        .def("get_name", &NamedNtk::get_name, "s"_a)
+        .def("has_output_name", &NamedNtk::has_output_name, "index"_a)
+        .def("set_output_name", &NamedNtk::set_output_name, "index"_a, "name"_a)
+        .def("get_output_name", &NamedNtk::get_output_name, "index"_a);
+
     using DepthNtk = mockturtle::depth_view<Ntk>;
     py::class_<DepthNtk, Ntk>(m, fmt::format("Depth{}", network_name).c_str())
         .def(py::init<>())
-        .def(py::init<const Ntk&>(), "ntk"_a)
         .def(py::init<const DepthNtk&>(), "ntk"_a)
+        .def(py::init<const Ntk&>(), "ntk"_a)
         .def("num_levels", &DepthNtk::depth)
         .def("level", &DepthNtk::level, "n"_a)
         .def("is_on_critical_path", &DepthNtk::is_on_critical_path, "n"_a)

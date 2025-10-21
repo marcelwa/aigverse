@@ -66,7 +66,7 @@ jobs:
         uses: rui314/setup-mold@v1
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{matrix.language}}
           config: |
@@ -82,7 +82,7 @@ jobs:
         run: cmake --build build -j4
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           upload: False
           output: sarif-results
@@ -98,6 +98,6 @@ jobs:
           output: sarif-results/${{ matrix.language }}.sarif
 
       - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: sarif-results/${{ matrix.language }}.sarif
