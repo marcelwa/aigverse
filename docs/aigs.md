@@ -161,6 +161,59 @@ AIG views provide alternative representations of AIGs for specific tasks, such a
 These views can be layered on top of the original AIG, allowing you to work with the same underlying structure while
 adding additional functionality.
 
+### Network and Signal Names
+
+The {py:class}`~aigverse.NamedAig` class extends the standard AIG with the ability to assign names to the network itself,
+primary inputs, primary outputs, and internal signals. This is particularly useful for debugging, visualization, and
+interfacing with external tools that rely on human-readable signal names.
+
+```{code-cell} ipython3
+from aigverse import NamedAig
+
+# Create a new named AIG (or construct from existing AIG)
+named_aig = NamedAig()
+
+# Set the network name
+named_aig.set_network_name("full_adder")
+
+# Create named primary inputs
+a = named_aig.create_pi("a")
+b = named_aig.create_pi("b")
+cin = named_aig.create_pi("cin")
+
+# Create full adder logic
+sum = named_aig.create_xor3(a, b, cin)
+carry = named_aig.create_maj(a, b, cin)
+
+# Assign names to internal signals
+named_aig.set_name(sum, "sum")
+named_aig.set_name(carry, "carry")
+
+# Create named primary outputs
+named_aig.create_po(sum, "sum_output")
+named_aig.create_po(carry, "carry_output")
+
+# Retrieve names
+print(f"Network name: {named_aig.get_network_name()}")
+print(f"PI names: {[named_aig.get_name(pi) for pi in named_aig.pis()]}")
+print(f"Signal name (sum): {named_aig.get_name(sum)}")
+print(f"Signal name (carry): {named_aig.get_name(carry)}")
+print(f"PO name at index 0: {named_aig.get_output_name(0)}")
+print(f"PO name at index 1: {named_aig.get_output_name(1)}")
+
+# Check if a signal has a name
+print(f"Has name: {named_aig.has_name(sum)}")
+```
+
+Named AIGs are automatically created when reading from file formats that contain naming information, e.g., Verilog and
+AIGER. AIGER. See [File I/O](#file-io) for more details.
+
+:::{note}
+Names are tied to the specific AIG structure. When you apply optimization algorithms or structural modifications
+(such as {py:func}`~aigverse.cleanup_dangling`), the names will be lost as the return type will be downcast to
+{py:class}`~aigverse.Aig` If preserving names is important, consider reapplying them after optimization.
+:::
+
 ### Depth and Level Computation
 
 The depth of an AIG network represents the longest path from any input to any output, which corresponds to the critical
