@@ -56,6 +56,28 @@ def test_read_ascii_aiger_into_aig():
         read_ascii_aiger_into_aig(str(dir_path / "and.aag"))
 
 
+def test_read_aiger_with_names():
+    """Test that AIGER files with names are properly read into NamedAig."""
+    aig = read_ascii_aiger_into_aig(str(dir_path / "../resources/and_with_names.aag"))
+
+    # Test basic network properties
+    assert aig.num_pis() == 2
+    assert aig.num_pos() == 1
+    assert aig.num_gates() == 1
+
+    # Test PI names (i0 input_a, i1 input_b)
+    pi_nodes = aig.pis()
+    assert len(pi_nodes) == 2
+    assert aig.has_name(AigSignal(pi_nodes[0], False))
+    assert aig.get_name(AigSignal(pi_nodes[0], False)) == "input_a"
+    assert aig.has_name(AigSignal(pi_nodes[1], False))
+    assert aig.get_name(AigSignal(pi_nodes[1], False)) == "input_b"
+
+    # Test PO names (o0 output_and)
+    assert aig.has_output_name(0)
+    assert aig.get_output_name(0) == "output_and"
+
+
 def test_read_aiger_into_sequential_aig():
     saig = read_aiger_into_sequential_aig(str(dir_path / "../resources/mux21.aig"))
 

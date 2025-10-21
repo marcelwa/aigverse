@@ -1,0 +1,10 @@
+aag 3 2 0 1 1
+2
+4
+6
+6 2 4
+i0 input_a
+i1 input_b
+o0 output_and
+c
+Simple AND gate with names for testing

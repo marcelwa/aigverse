@@ -31,7 +31,7 @@ void equivalence_checking(pybind11::module_& m)
         [](const Spec& spec, const Impl& impl, const uint32_t conflict_limit = 0,
            const bool functional_reduction = true, const bool verbose = false) -> std::optional<bool>
         {
-            const auto miter = mockturtle::miter<aigverse::aig, Spec, Impl>(spec, impl);
+            const auto miter = mockturtle::miter<mockturtle::aig_network, Spec, Impl>(spec, impl);
 
             if (!miter.has_value())
             {

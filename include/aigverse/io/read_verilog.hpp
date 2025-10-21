@@ -22,7 +22,7 @@ namespace detail
 template <typename Ntk>
 void read_verilog(pybind11::module_& m, const std::string& network_name);
 
-extern template void read_verilog<aigverse::aig>(pybind11::module_& m, const std::string& network_name);
+extern template void read_verilog<aigverse::named_aig>(pybind11::module_& m, const std::string& network_name);
 
 }  // namespace detail
 
