@@ -21,7 +21,6 @@ classifiers = [
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -37,7 +36,7 @@ classifiers = [
     "Typing :: Typed"
 ]
 
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 dynamic = ["version"]
 
@@ -253,8 +252,6 @@ docs = [
 test = [
     { include-group = "adapters" },
     "pytest>=8.3.3",
-    "pytest-console-scripts>=1.4.1",
-    "pytest-cov>=6",
 ]
 dev = [
     { include-group = "build" },
