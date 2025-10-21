@@ -185,7 +185,7 @@ def test_create_one_variable_functions() -> None:
     assert tt_s.num_bits() == 2
 
     # Testing each possible state for a one-variable function
-    for hex_val, expected_bin in zip(["0", "1", "2", "3"], ["00", "01", "10", "11"]):
+    for hex_val, expected_bin in zip(["0", "1", "2", "3"], ["00", "01", "10", "11"], strict=False):
         tt_s.create_from_hex_string(hex_val)
         assert tt_s.to_binary() == expected_bin
 
@@ -470,7 +470,7 @@ def test_pickle_list() -> None:
     # Check for equivalence
     assert isinstance(tts_unpickled, list)
     assert len(tts_original) == len(tts_unpickled)
-    for tt_orig, tt_unp in zip(tts_original, tts_unpickled):
+    for tt_orig, tt_unp in zip(tts_original, tts_unpickled, strict=False):
         assert tt_orig == tt_unp
         assert tt_orig.to_binary() == tt_unp.to_binary()
 
