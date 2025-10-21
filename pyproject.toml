@@ -252,6 +252,7 @@ docs = [
 test = [
     { include-group = "adapters" },
     "pytest>=8.3.3",
+    "pytest-cov>=6",
 ]
 dev = [
     { include-group = "build" },
