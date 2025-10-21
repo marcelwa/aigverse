@@ -56,7 +56,8 @@ libraries, enabling the development of novel AI-driven synthesis and optimizatio
 ## 📦 Installation
 
 `aigverse` is built using the EPFL Logic Synthesis Libraries with [pybind11](https://github.com/pybind/pybind11).
-It is available via PyPI for all major operating systems and supports Python 3.9 to 3.13.
+It is available via PyPI for all major operating systems and supports Python 3.10 to 3.14 (with
+optional [free-threading](https://docs.python.org/3/howto/free-threading-python.html) for 3.13 and 3.14).
 
 ```bash
 pip install aigverse
