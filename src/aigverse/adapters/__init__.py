@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-try:
+try:  # noqa: RUF067
     import networkx as nx  # noqa: F401
     import numpy as np  # noqa: F401
 
