@@ -171,12 +171,15 @@ cmake.define.DISABLE_GIL = "1"
 write_to = "src/aigverse/_version.py"
 
 
-[tool.pytest.ini_options]
-minversion = "7.2"
-testpaths = ["test"]
-addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
-log_cli_level = "INFO"
-xfail_strict = true
+[tool.pytest]
+minversion = "9.0"
+strict = true
+addopts = [
+    "-ra",
+    "--numprocesses=auto", # Automatically use all available CPU cores for parallel testing
+]
+log_level = "INFO"
+testpaths = ["test/"]
 
 
 [tool.cibuildwheel]
@@ -288,8 +291,9 @@ docs = [
 ]
 test = [
     { include-group = "adapters" },
-    "pytest>=8.3.3",
-    "pytest-cov>=6",
+    "pytest>=9.0.1",
+    "pytest-sugar>=1.1.1",
+    "pytest-xdist>=3.8.0",
 ]
 dev = [
     { include-group = "build" },
