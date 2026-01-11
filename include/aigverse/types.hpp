@@ -10,6 +10,7 @@
 #include <mockturtle/utils/index_list.hpp>
 #include <mockturtle/views/depth_view.hpp>
 #include <mockturtle/views/fanout_view.hpp>
+#include <mockturtle/views/names_view.hpp>
 
 namespace aigverse
 {
@@ -18,6 +19,10 @@ namespace aigverse
  * Alias for the AIG.
  */
 using aig = mockturtle::aig_network;
+/**
+ * Alias for the named AIG.
+ */
+using named_aig = mockturtle::names_view<aig>;
 /**
  * Alias for the depth AIG.
  */

@@ -219,3 +219,55 @@ class TestNetworkxAdapter:
         # Check edge attribute dtype
         for _, _, data in g.edges(data=True):
             assert data["type"].dtype == dtype
+
+    @staticmethod
+    def test_to_networkx_with_names() -> None:
+        """Test that NamedAig names are preserved in NetworkX graph."""
+        from aigverse import NamedAig
+
+        # Create a NamedAig with names
+        aig = NamedAig()
+        aig.set_network_name("test_network")
+
+        a = aig.create_pi("input_a")
+        b = aig.create_pi("input_b")
+        g = aig.create_and(a, b)
+        aig.set_name(g, "and_gate")
+
+        aig.create_po(a, "output_a")
+        aig.create_po(g, "output_and")
+
+        # Convert to NetworkX
+        nx_graph = aig.to_networkx()
+
+        # Check graph name
+        assert "name" in nx_graph.graph
+        assert nx_graph.graph["name"] == "test_network"
+
+        # Check edge (signal) names
+        edge_names = {}
+        for src, tgt, data in nx_graph.edges(data=True):
+            if "name" in data:
+                edge_names[src, tgt] = data["name"]
+
+        # Verify that we have signal names on edges
+        # Signals are edges, so we should find names on edges coming from nodes
+        assert len(edge_names) > 0, "Should have at least some named signals"
+
+        # Check for PO names on edges going to synthetic PO nodes
+        # They should also use "name" attribute
+        edge_names_list = list(edge_names.values())
+        assert "output_a" in edge_names_list
+        assert "output_and" in edge_names_list
+
+    @staticmethod
+    def test_to_networkx_without_names(simple_aig: Aig) -> None:
+        """Test that regular Aig objects don't have name attributes."""
+        g = simple_aig.to_networkx()
+
+        # Graph should not have a name attribute
+        assert "name" not in g.graph
+
+        # Edges should not have name attributes
+        for _src, _tgt, data in g.edges(data=True):
+            assert "name" not in data

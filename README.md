@@ -56,7 +56,8 @@ libraries, enabling the development of novel AI-driven synthesis and optimizatio
 ## 📦 Installation
 
 `aigverse` is built using the EPFL Logic Synthesis Libraries with [pybind11](https://github.com/pybind/pybind11).
-It is available via PyPI for all major operating systems and supports Python 3.9 to 3.13.
+It is available via PyPI for all major operating systems and supports Python 3.10 to 3.14 (with
+optional [free-threading](https://docs.python.org/3/howto/free-threading-python.html) for 3.13 and 3.14).
 
 ```bash
 pip install aigverse
@@ -131,6 +132,36 @@ n_and = aig.get_node(f_and)
 for fanin in aig.fanins(n_and):
     print(f"Fanin of {n_and}: {fanin}")
 ```
+
+### 🏷️ Network and Signal Names
+
+Named AIGs allow you to assign human-readable names to the network, inputs, outputs, and internal signals.
+
+```python
+from aigverse import NamedAig
+
+# Create a named AIG
+named_aig = NamedAig()
+named_aig.set_network_name("full_adder")
+
+# Create named primary inputs and logic
+a = named_aig.create_pi("a")
+b = named_aig.create_pi("b")
+cin = named_aig.create_pi("cin")
+
+sum = named_aig.create_xor3(a, b, cin)
+carry = named_aig.create_maj(a, b, cin)
+
+# Assign names to signals and create named outputs
+named_aig.set_name(sum, "sum")
+named_aig.create_po(carry, "carry_output")
+
+# Retrieve names
+print(f"Network: {named_aig.get_network_name()}")
+print(f"Signal: {named_aig.get_name(sum)}")
+```
+
+Named AIGs are automatically created when reading Verilog or AIGER files with naming information.
 
 ### 📏 Depth and Level Computation
 
