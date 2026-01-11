@@ -92,9 +92,7 @@ set(MOCKTURTLE_TEST
     CACHE BOOL "" FORCE)
 # Ensure all static libraries built by mockturtle are position-independent This
 # is required for linking into Python extension modules (shared libraries)
-set(CMAKE_POSITION_INDEPENDENT_CODE
-    ON
-    CACHE BOOL "" FORCE)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 message(
   STATUS
