@@ -108,7 +108,4 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(mockturtle)
 
 # Create alias for mockturtle
-if(TARGET mockturtle AND NOT TARGET aigverse::mockturtle)
-  add_library(aigverse::mockturtle ALIAS mockturtle)
-  message(STATUS "mockturtle fetched and ready")
-endif()
+add_library(aigverse::mockturtle ALIAS mockturtle)
