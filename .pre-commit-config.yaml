@@ -13,7 +13,7 @@ ci:
   autofix_commit_msg: "🎨 Incorporated pre-commit fixes"
   skip: [mypy]
 
-exclude: "^(libs/|docs/examples/)"
+exclude: "^(docs/examples/|.*/_deps/)"
 
 repos:
   # Standard hooks

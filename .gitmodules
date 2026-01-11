@@ -1,4 +1,0 @@
-[submodule "libs/mockturtle"]
-	path = libs/mockturtle
-	url = https://github.com/marcelwa/mockturtle.git
-	branch = mnt

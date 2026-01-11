@@ -39,15 +39,13 @@ set(GIT_SHA
     CACHE STRING "SHA this build was generated from")
 string(SUBSTRING "${GIT_SHA}" 0 8 GIT_SHORT_SHA)
 
-target_compile_features(aigverse_options INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
+target_compile_features(aigverse_options
+                        INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
 # Alias for the options target
 add_library(aigverse::aigverse_options ALIAS aigverse_options)
 # Alias for the warnings target
 add_library(aigverse::aigverse_warnings ALIAS aigverse_warnings)
-
-# Include libraries
-add_subdirectory(libs)
 
 # Include headers
 add_subdirectory(include)
