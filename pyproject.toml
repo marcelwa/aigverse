@@ -68,6 +68,7 @@ metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 sdist.include = [
     "src/**",
     "include/**",
+    "libs/**",
     "cmake/**",
     "CMakeLists.txt",
     "pyproject.toml",
@@ -78,6 +79,7 @@ sdist.exclude = [
     "**/.nox",
     "**/.venv",
     "**/.git",
+    "**/.git/**",
     "**/.github",
     "**/app",
     "**/apps",
