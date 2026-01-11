@@ -204,7 +204,11 @@ environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
 [tool.uv]
 required-version = ">=0.5.20"
-reinstall-package = ["aigverse"]
+cache-keys = [
+    { file = "pyproject.toml" },
+    { git = { commit = true, tags = true } },
+    { file = "src/**/*.cpp" },
+]
 
 [tool.uv.sources]
 aigverse = { workspace = true }
