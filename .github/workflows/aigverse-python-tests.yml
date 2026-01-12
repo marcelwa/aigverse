@@ -46,7 +46,6 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
         with:
-          submodules: recursive
           fetch-depth: 0
 
       - name: Setup ccache
@@ -79,7 +78,6 @@ jobs:
       - name: Clone Repository
         uses: actions/checkout@v6
         with:
-          submodules: recursive
           fetch-depth: 0
 
       - name: Setup ccache

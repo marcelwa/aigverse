@@ -12,7 +12,7 @@ function(
   CUDA_WARNINGS)
   if("${MSVC_WARNINGS}" STREQUAL "")
     set(MSVC_WARNINGS
-        /W4     # Baseline reasonable warnings
+        /W4 # Baseline reasonable warnings
         /w14242 # 'identifier': conversion from 'type1' to 'type2', possible
                 # loss of data
         /w14254 # 'operator': conversion from 'type1:field_bits' to

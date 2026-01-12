@@ -73,7 +73,8 @@ macro(aigverse_global_options)
     else()
       set(ENABLE_UBSAN_MINIMAL_RUNTIME TRUE)
     endif()
-    aigverse_enable_hardening(aigverse_options ON ${ENABLE_UBSAN_MINIMAL_RUNTIME})
+    aigverse_enable_hardening(aigverse_options ON
+                              ${ENABLE_UBSAN_MINIMAL_RUNTIME})
   endif()
 endmacro()
 
@@ -86,8 +87,8 @@ macro(aigverse_local_options)
   add_library(aigverse_options INTERFACE)
 
   include(cmake/CompilerWarnings.cmake)
-  aigverse_set_project_warnings(aigverse_warnings ${AIGVERSE_WARNINGS_AS_ERRORS}
-                               "" "" "" "")
+  aigverse_set_project_warnings(aigverse_warnings
+                                ${AIGVERSE_WARNINGS_AS_ERRORS} "" "" "" "")
 
   include(cmake/Sanitizers.cmake)
   aigverse_enable_sanitizers(
@@ -133,7 +134,7 @@ macro(aigverse_local_options)
       set(ENABLE_UBSAN_MINIMAL_RUNTIME TRUE)
     endif()
     aigverse_enable_hardening(aigverse_options OFF
-                             ${ENABLE_UBSAN_MINIMAL_RUNTIME})
+                              ${ENABLE_UBSAN_MINIMAL_RUNTIME})
   endif()
 
 endmacro()

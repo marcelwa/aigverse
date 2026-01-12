@@ -13,7 +13,7 @@ ci:
   autofix_commit_msg: "🎨 Incorporated pre-commit fixes"
   skip: [mypy]
 
-exclude: "^(libs/|docs/examples/)"
+exclude: "^(docs/examples/|.*/_deps/)"
 
 repos:
   # Standard hooks
@@ -22,9 +22,11 @@ repos:
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
+      - id: check-vcs-permalinks
       - id: check-docstring-first
       - id: check-merge-conflict
       - id: check-symlinks
+      - id: check-json
       - id: check-toml
       - id: check-yaml
       - id: debug-statements
@@ -53,6 +55,21 @@ repos:
       - id: rst-backticks
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
+
+  # CMake format and lint the CMakeLists.txt files
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+        additional_dependencies: [pyyaml]
+        types: [file]
+        files: (\.cmake|CMakeLists.txt)(.in)?$
+
+  # Ensure uv lock file is up-to-date
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.9.16
+    hooks:
+      - id: uv-lock
 
   # Python linting using ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit

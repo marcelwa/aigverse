@@ -2,7 +2,7 @@
 # Project (https://github.com/lefticus/cpp_starter_project) and CMake Template
 # (https://github.com/cpp-best-practices/cmake_template)
 
-cmake_minimum_required(VERSION 3.23...4.1.0)
+cmake_minimum_required(VERSION 3.24...4.1.0)
 
 # Only set the CMAKE_CXX_STANDARD if it is not set by someone else
 if(NOT DEFINED CMAKE_CXX_STANDARD)
@@ -39,15 +39,13 @@ set(GIT_SHA
     CACHE STRING "SHA this build was generated from")
 string(SUBSTRING "${GIT_SHA}" 0 8 GIT_SHORT_SHA)
 
-target_compile_features(aigverse_options INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
+target_compile_features(aigverse_options
+                        INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
 # Alias for the options target
 add_library(aigverse::aigverse_options ALIAS aigverse_options)
 # Alias for the warnings target
 add_library(aigverse::aigverse_warnings ALIAS aigverse_warnings)
-
-# Include libraries
-add_subdirectory(libs)
 
 # Include headers
 add_subdirectory(include)
