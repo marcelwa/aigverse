@@ -2,6 +2,8 @@
 // Created by marcel on 03.09.25.
 //
 
+#include "aigverse/types.hpp"
+
 #include <kitty/operations.hpp>
 #include <pybind11/pybind11.h>
 

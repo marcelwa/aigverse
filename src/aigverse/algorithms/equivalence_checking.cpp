@@ -2,6 +2,8 @@
 // Created by marcel on 03.09.25.
 //
 
+#include "aigverse/types.hpp"
+
 #include <mockturtle/algorithms/equivalence_checking.hpp>
 #include <mockturtle/algorithms/miter.hpp>
 #include <pybind11/pybind11.h>

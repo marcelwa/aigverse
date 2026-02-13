@@ -4,6 +4,8 @@
 
 #include "index_list.hpp"
 
+#include "aigverse/types.hpp"
+
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <mockturtle/utils/index_list.hpp>

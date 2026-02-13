@@ -12,6 +12,9 @@ target_link_libraries(
   pyaigverse PRIVATE aigverse::mockturtle aigverse::aigverse_options
                      aigverse::aigverse_warnings)
 
+# Include types.hpp and pch.hpp
+target_include_directories(pyaigverse PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
+
 # Precompiled header to speed up heavy pybind11/fmt/mockturtle includes
 target_precompile_headers(
   pyaigverse PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/pch.hpp>")

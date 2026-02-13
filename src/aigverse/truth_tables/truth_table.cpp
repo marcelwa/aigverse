@@ -2,6 +2,8 @@
 // Created by marcel on 03.09.25.
 //
 
+#include "aigverse/types.hpp"
+
 #include <fmt/format.h>
 #include <kitty/bit_operations.hpp>
 #include <kitty/dynamic_truth_table.hpp>

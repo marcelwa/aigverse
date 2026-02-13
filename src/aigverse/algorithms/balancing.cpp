@@ -2,6 +2,8 @@
 // Created by marcel on 03.09.25.
 //
 
+#include "aigverse/types.hpp"
+
 #include <fmt/format.h>
 #include <mockturtle/algorithms/balancing.hpp>
 #include <mockturtle/algorithms/balancing/esop_balancing.hpp>
