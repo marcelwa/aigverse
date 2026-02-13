@@ -19,11 +19,11 @@ namespace detail
 template <typename Ntk>
 void write_dot(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;
 
     m.def(
         "write_dot", [](const Ntk& ntk, const std::filesystem::path& filename)
-        { mockturtle::write_dot(ntk, filename.string()); }, "network"_a, "filename"_a);  // NOLINT(misc-include-cleaner)
+        { mockturtle::write_dot(ntk, filename.string()); }, py::arg("network"), py::arg("filename"));
 }
 
 // Explicit instantiation for AIG

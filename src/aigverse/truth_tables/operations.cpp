@@ -18,12 +18,12 @@ namespace detail
 
 static void bind_truth_table_operations(pybind11::module_& m)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;
 
     m.def(
         "ternary_majority",
         [](const aigverse::truth_table& a, const aigverse::truth_table& b, const aigverse::truth_table& c)
-        { return kitty::ternary_majority(a, b, c); }, "a"_a, "b"_a, "c"_a,  // NOLINT(misc-include-cleaner)
+        { return kitty::ternary_majority(a, b, c); }, py::arg("a"), py::arg("b"), py::arg("c"),
         "Compute the ternary majority of three truth tables.",
         pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 
@@ -37,7 +37,7 @@ static void bind_truth_table_operations(pybind11::module_& m)
             }
             return kitty::cofactor0(tt, var_index);
         },
-        "tt"_a, "var_index"_a,
+        py::arg("tt"), py::arg("var_index"),
         "Returns the cofactor with respect to 0 of the variable at index `var_index` in the given truth table.",
         pybind11::call_guard<pybind11::gil_scoped_release>());
 
@@ -51,7 +51,7 @@ static void bind_truth_table_operations(pybind11::module_& m)
             }
             return kitty::cofactor1(tt, var_index);
         },
-        "tt"_a, "var_index"_a,
+        py::arg("tt"), py::arg("var_index"),
         "Returns the cofactor with respect to 1 of the variable at index `var_index` in the given truth table.",
         pybind11::call_guard<pybind11::gil_scoped_release>());
 }

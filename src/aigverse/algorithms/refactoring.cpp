@@ -22,7 +22,7 @@ namespace detail
 template <typename Ntk>
 void refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;
 
     m.def(
         "sop_refactoring",
@@ -48,7 +48,7 @@ void refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 
                 ntk = std::move(cleaned);
             }
-            catch (const std::exception& e)  // NOLINT(misc-include-cleaner)
+            catch (const std::exception& e)
             {
                 throw std::runtime_error(fmt::format("Error in mockturtle::sop_refactoring: {}", e.what()));
             }
@@ -57,8 +57,8 @@ void refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
                 throw std::runtime_error("Unknown error in mockturtle::sop_refactoring");
             }
         },
-        "ntk"_a, "max_pis"_a = 6, "allow_zero_gain"_a = false, "use_reconvergence_cut"_a = false,
-        "use_dont_cares"_a = false, "verbose"_a = false,
+        py::arg("ntk"), py::arg("max_pis") = 6, py::arg("allow_zero_gain") = false,
+        py::arg("use_reconvergence_cut") = false, py::arg("use_dont_cares") = false, py::arg("verbose") = false,
         pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 

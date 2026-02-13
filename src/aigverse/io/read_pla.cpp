@@ -23,7 +23,7 @@ namespace detail
 template <typename Ntk>
 void read_pla(pybind11::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;
 
     m.def(
         fmt::format("read_pla_into_{}", network_name).c_str(),
@@ -43,7 +43,7 @@ void read_pla(pybind11::module_& m, const std::string& network_name)  // NOLINT(
 
             return ntk;
         },
-        "filename"_a);  // NOLINT(misc-include-cleaner)
+        py::arg("filename"));  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG

@@ -10,8 +10,10 @@
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner)
 #include <mockturtle/traits.hpp>
 #include <pybind11/pybind11.h>
+#include <pybind11/pytypes.h>
 #include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <tuple>
@@ -27,17 +29,15 @@ template <typename Ntk>
 void ntk_edge_list(pybind11::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
 {
     namespace py = pybind11;
-    using namespace pybind11::literals;
 
     /**
      * Edge.
      */
-    using Edge = edge<Ntk>;
+    using Edge = edge<Ntk>;  // NOLINT(readability-identifier-naming)
     py::class_<Edge>(m, fmt::format("{}Edge", network_name).c_str())
         .def(py::init<>())
-        .def(py::init<const mockturtle::node<Ntk>&, const mockturtle::node<Ntk>&, const int64_t>(),
-             "source"_a,  // NOLINT(misc-include-cleaner)
-             "target"_a, "weight"_a = 0)
+        .def(py::init<const mockturtle::node<Ntk>&, const mockturtle::node<Ntk>&, const int64_t>(), py::arg("source"),
+             py::arg("target"), py::arg("weight") = 0)
         .def_readwrite("source", &Edge::source)
         .def_readwrite("target", &Edge::target)
         .def_readwrite("weight", &Edge::weight)
@@ -45,7 +45,7 @@ void ntk_edge_list(pybind11::module_& m, const std::string& network_name)  // NO
         .def("__eq__",
              [](const Edge& self, const py::object& other) -> bool
              {
-                 if (!py::isinstance<Edge>(other))  // NOLINT(misc-include-cleaner)
+                 if (!py::isinstance<Edge>(other))
                  {
                      return false;
                  }
@@ -70,16 +70,15 @@ void ntk_edge_list(pybind11::module_& m, const std::string& network_name)  // NO
     /**
      * Edge list.
      */
-    using EdgeList = edge_list<Ntk>;
+    using EdgeList = edge_list<Ntk>;  // NOLINT(readability-identifier-naming)
     py::class_<EdgeList>(m, fmt::format("{}EdgeList", network_name).c_str())
         .def(py::init<>())
-        .def(py::init<const Ntk&>(), "ntk"_a)
-        .def(py::init<const Ntk&, const std::vector<Edge>&>(), "ntk"_a, "edges"_a)  // NOLINT(misc-include-cleaner)
+        .def(py::init<const Ntk&>(), py::arg("ntk"))
+        .def(py::init<const Ntk&, const std::vector<Edge>&>(), py::arg("ntk"), py::arg("edges"))
         .def_readwrite("ntk", &EdgeList::ntk)
         .def_readwrite("edges", &EdgeList::edges)
         .def(
-            "append", [](EdgeList& el, const Edge& e) { el.edges.push_back(e); },
-            "edge"_a)  // NOLINT(misc-include-cleaner)
+            "append", [](EdgeList& el, const Edge& e) { el.edges.push_back(e); }, py::arg("edge"))
         .def("clear", [](EdgeList& el) { el.edges.clear(); })
         .def(
             "__iter__", [](const EdgeList& el) { return py::make_iterator(el.edges); }, py::keep_alive<0, 1>())
@@ -110,11 +109,10 @@ void ntk_edge_list(pybind11::module_& m, const std::string& network_name)  // NO
 
     py::implicitly_convertible<py::list, EdgeList>();  // NOLINT(misc-include-cleaner)
 
-    m.def("to_edge_list", &to_edge_list<mockturtle::sequential<Ntk>>, "ntk"_a,
-          "regular_weight"_a  = 0,   // NOLINT(misc-include-cleaner)
-          "inverted_weight"_a = 1);  // NOLINT(misc-include-cleaner)
-    m.def("to_edge_list", &to_edge_list<Ntk>, "ntk"_a, "regular_weight"_a = 0,
-          "inverted_weight"_a = 1);  // NOLINT(misc-include-cleaner)
+    m.def("to_edge_list", &to_edge_list<mockturtle::sequential<Ntk>>, py::arg("ntk"), py::arg("regular_weight") = 0,
+          py::arg("inverted_weight") = 1);
+    m.def("to_edge_list", &to_edge_list<Ntk>, py::arg("ntk"), py::arg("regular_weight") = 0,
+          py::arg("inverted_weight") = 1);
 }
 
 // Explicit instantiation for AIG

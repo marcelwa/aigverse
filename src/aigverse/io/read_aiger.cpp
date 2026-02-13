@@ -24,7 +24,7 @@ namespace detail
 template <typename Ntk>
 void read_aiger(pybind11::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;
 
     m.def(
         fmt::format("read_aiger_into_{}", network_name).c_str(),
@@ -45,7 +45,7 @@ void read_aiger(pybind11::module_& m, const std::string& network_name)  // NOLIN
 
             return ntk;
         },
-        "filename"_a);  // NOLINT(misc-include-cleaner)
+        py::arg("filename"));
 
     m.def(
         fmt::format("read_ascii_aiger_into_{}", network_name).c_str(),
@@ -66,7 +66,7 @@ void read_aiger(pybind11::module_& m, const std::string& network_name)  // NOLIN
 
             return ntk;
         },
-        "filename"_a);  // NOLINT(misc-include-cleaner)
+        py::arg("filename"));
 }
 
 // Explicit instantiations for named AIG and sequential AIG

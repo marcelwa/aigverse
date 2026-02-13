@@ -9,7 +9,6 @@
 #include <pybind11/stl/filesystem.h>  // NOLINT(misc-include-cleaner)
 
 #include <filesystem>
-#include <string>  // NOLINT(misc-include-cleaner)
 
 namespace aigverse
 {
@@ -20,12 +19,11 @@ namespace detail
 template <typename Ntk>
 void write_verilog(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;
 
     m.def(
         "write_verilog", [](const Ntk& ntk, const std::filesystem::path& filename)
-        { mockturtle::write_verilog(ntk, filename.string()); }, "network"_a,
-        "filename"_a);  // NOLINT(misc-include-cleaner)
+        { mockturtle::write_verilog(ntk, filename.string()); }, py::arg("network"), py::arg("filename"));
 }
 
 // Explicit instantiation for AIG

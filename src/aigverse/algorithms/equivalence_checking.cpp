@@ -22,7 +22,7 @@ namespace detail
 template <typename Spec, typename Impl>
 void equivalence_checking(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;
 
     m.def(
         "equivalence_checking",
@@ -43,7 +43,8 @@ void equivalence_checking(pybind11::module_& m)  // NOLINT(misc-use-internal-lin
 
             return mockturtle::equivalence_checking(miter.value(), params);
         },
-        "spec"_a, "impl"_a, "conflict_limit"_a = 0, "functional_reduction"_a = true, "verbose"_a = false,
+        py::arg("spec"), py::arg("impl"), py::arg("conflict_limit") = 0, py::arg("functional_reduction") = true,
+        py::arg("verbose") = false,
         pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 

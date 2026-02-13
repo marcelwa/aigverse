@@ -20,7 +20,7 @@ namespace detail
 template <typename Ntk>
 void rewriting(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;
 
     m.def(
         "aig_cut_rewriting",
@@ -46,9 +46,10 @@ void rewriting(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 
             ntk = mockturtle::cut_rewriting(ntk, aig_npn_resyn_engine, params);
         },
-        "ntk"_a, "cut_size"_a = 4, "cut_limit"_a = 8, "minimize_truth_table"_a = true, "allow_zero_gain"_a = false,
-        "use_dont_cares"_a = false, "min_cand_cut_size"_a = 3, "min_cand_cut_size_override"_a = std::nullopt,
-        "preserve_depth"_a = false, "verbose"_a = false, "very_verbose"_a = false,
+        py::arg("ntk"), py::arg("cut_size") = 4, py::arg("cut_limit") = 8, py::arg("minimize_truth_table") = true,
+        py::arg("allow_zero_gain") = false, py::arg("use_dont_cares") = false, py::arg("min_cand_cut_size") = 3,
+        py::arg("min_cand_cut_size_override") = std::nullopt, py::arg("preserve_depth") = false,
+        py::arg("verbose") = false, py::arg("very_verbose") = false,
         pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 

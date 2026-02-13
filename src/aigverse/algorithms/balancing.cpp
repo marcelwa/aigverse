@@ -8,7 +8,6 @@
 #include <mockturtle/algorithms/balancing.hpp>
 #include <mockturtle/algorithms/balancing/esop_balancing.hpp>
 #include <mockturtle/algorithms/balancing/sop_balancing.hpp>
-#include <mockturtle/networks/aig.hpp>  // NOLINT(misc-include-cleaner)
 #include <pybind11/pybind11.h>
 
 #include <cstdint>
@@ -24,7 +23,7 @@ namespace detail
 template <typename Ntk>
 void balancing(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;
 
     m.def(
         "balancing",
@@ -59,9 +58,10 @@ void balancing(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
                     "Unknown rebalance function: '{}'. Possible values are 'sop' and 'esop'.", rebalance_function));
             }
         },
-        "ntk"_a, "cut_size"_a = 4, "cut_limit"_a = 8, "minimize_truth_table"_a = true,
-        "only_on_critical_path"_a = false, "rebalance_function"_a = "sop", "sop_both_phases"_a = true,
-        "verbose"_a = false, pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        py::arg("ntk"), py::arg("cut_size") = 4, py::arg("cut_limit") = 8, py::arg("minimize_truth_table") = true,
+        py::arg("only_on_critical_path") = false, py::arg("rebalance_function") = "sop",
+        py::arg("sop_both_phases") = true, py::arg("verbose") = false,
+        pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG

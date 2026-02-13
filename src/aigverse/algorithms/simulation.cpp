@@ -6,6 +6,7 @@
 
 #include <kitty/dynamic_truth_table.hpp>
 #include <mockturtle/algorithms/simulation.hpp>
+#include <mockturtle/traits.hpp>  // NOLINT(misc-include-cleaner)
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)
 
@@ -24,7 +25,6 @@ template <typename Ntk>
 void simulation(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
-    using namespace py::literals;
 
     m.def(
         "simulate",
@@ -49,11 +49,11 @@ void simulation(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
                 throw;
             }
         },
-        "network"_a);  // NOLINT(misc-include-cleaner)
+        py::arg("network"));
 
     m.def(
         "simulate_nodes",
-        [](const Ntk& ntk) -> std::unordered_map<uint64_t, kitty::dynamic_truth_table>  // NOLINT(misc-include-cleaner)
+        [](const Ntk& ntk) -> std::unordered_map<uint64_t, kitty::dynamic_truth_table>
         {
             if (ntk.num_pis() > 16)
             {
@@ -68,8 +68,7 @@ void simulation(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
                     // NOLINTNEXTLINE
                     mockturtle::default_simulator<kitty::dynamic_truth_table>{static_cast<unsigned>(ntk.num_pis())});
 
-                std::unordered_map<mockturtle::node<Ntk>, kitty::dynamic_truth_table>
-                    node_to_tt{};  // NOLINT(misc-include-cleaner)
+                std::unordered_map<mockturtle::node<Ntk>, kitty::dynamic_truth_table> node_to_tt{};
 
                 // convert vector implementation to unordered_map
                 ntk.foreach_node([&n_map, &node_to_tt](const auto& n) { node_to_tt[n] = n_map[n]; });
@@ -81,7 +80,7 @@ void simulation(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
                 throw;
             }
         },
-        "network"_a, pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        py::arg("network"), pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG

@@ -25,7 +25,7 @@ namespace detail
 template <typename Ntk>
 void read_verilog(pybind11::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;
 
     m.def(
         fmt::format("read_verilog_into_{}", network_name).c_str(),
@@ -46,7 +46,7 @@ void read_verilog(pybind11::module_& m, const std::string& network_name)  // NOL
 
             return ntk;
         },
-        "filename"_a);  // NOLINT(misc-include-cleaner)
+        py::arg("filename"));
 }
 
 // Explicit instantiation for named AIG
