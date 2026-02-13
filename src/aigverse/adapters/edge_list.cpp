@@ -58,7 +58,7 @@ void ntk_edge_list(pybind11::module_& m, const std::string& network_name)  // NO
              {
                  if (!py::isinstance<Edge>(other))
                  {
-                     return false;
+                     return true;
                  }
 
                  return self != other.cast<const Edge>();
@@ -85,24 +85,32 @@ void ntk_edge_list(pybind11::module_& m, const std::string& network_name)  // NO
             "__iter__", [](const EdgeList& el) { return py::make_iterator(el.edges); }, py::keep_alive<0, 1>())
         .def("__len__", [](const EdgeList& el) { return el.edges.size(); })
         .def("__getitem__",
-             [](const EdgeList& el, const std::size_t index)
+             [](const EdgeList& el, std::ptrdiff_t index)
              {
-                 if (index >= el.edges.size())
+                 if (index < 0)
+                 {
+                     index += static_cast<std::ptrdiff_t>(el.edges.size());
+                 }
+                 if (index < 0 || static_cast<std::size_t>(index) >= el.edges.size())
                  {
                      throw py::index_error();
                  }
 
-                 return el.edges[index];
+                 return el.edges[static_cast<std::size_t>(index)];
              })
         .def("__setitem__",
-             [](EdgeList& el, const std::size_t index, const Edge& e)
+             [](EdgeList& el, std::ptrdiff_t index, const Edge& e)
              {
-                 if (index >= el.edges.size())
+                 if (index < 0)
+                 {
+                     index += static_cast<std::ptrdiff_t>(el.edges.size());
+                 }
+                 if (index < 0 || static_cast<std::size_t>(index) >= el.edges.size())
                  {
                      throw py::index_error();
                  }
 
-                 el.edges[index] = e;
+                 el.edges[static_cast<std::size_t>(index)] = e;
              })
         .def("__repr__", [](const EdgeList& el) { return fmt::format("EdgeList({})", el); })
 
