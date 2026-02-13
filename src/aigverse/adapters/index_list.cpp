@@ -93,7 +93,7 @@ void ntk_index_list(pybind11::module_& m, const std::string& network_name)  // N
                      const auto& v = il.raw();
                      if (i >= v.size())
                      {
-                         throw py::index_error("index out of range");
+                         throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                      }
                      return v[i];
                  })
@@ -103,7 +103,7 @@ void ntk_index_list(pybind11::module_& m, const std::string& network_name)  // N
                      auto v = il.raw();
                      if (i >= v.size())
                      {
-                         throw py::index_error("index out of range");
+                         throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                      }
                      v[i] = value;
                      il   = IndexList(v);  // reconstruct the index list with the new vector
