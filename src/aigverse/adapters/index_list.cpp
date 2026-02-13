@@ -7,13 +7,17 @@
 #include "aigverse/types.hpp"
 
 #include <fmt/format.h>
-#include <fmt/ranges.h>
+#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner)
 #include <mockturtle/utils/index_list.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <pybind11/pytypes.h>
+#include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -26,20 +30,19 @@ namespace detail
 {
 
 template <typename Ntk>
-void ntk_index_list(pybind11::module_& m, const std::string& network_name)
+void ntk_index_list(pybind11::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
 {
     namespace py = pybind11;
-    using namespace pybind11::literals;
 
     if constexpr (std::is_same_v<Ntk, aigverse::aig>)
     {
         /**
          * Index list.
          */
-        using IndexList = aigverse::aig_index_list;
+        using IndexList = aigverse::aig_index_list;  // NOLINT(readability-identifier-naming)
         py::class_<IndexList>(m, fmt::format("{}IndexList", network_name).c_str())
-            .def(py::init<const uint32_t>(), "num_pis"_a = 0)
-            .def(py::init<const std::vector<uint32_t>&>(), "values"_a)
+            .def(py::init<const uint32_t>(), py::arg("num_pis") = 0)
+            .def(py::init<const std::vector<uint32_t>&>(), py::arg("values"))
 
             .def("raw", &IndexList::raw)
 
@@ -48,10 +51,10 @@ void ntk_index_list(pybind11::module_& m, const std::string& network_name)
             .def("num_pis", &IndexList::num_pis)
             .def("num_pos", &IndexList::num_pos)
 
-            .def("add_inputs", &IndexList::add_inputs, "n"_a = 1u)
-            .def("add_and", &IndexList::add_and, "lit0"_a, "lit1"_a)
-            .def("add_xor", &IndexList::add_xor, "lit0"_a, "lit1"_a)
-            .def("add_output", &IndexList::add_output, "lit"_a)
+            .def("add_inputs", &IndexList::add_inputs, py::arg("n") = 1u)
+            .def("add_and", &IndexList::add_and, py::arg("lit0"), py::arg("lit1"))
+            .def("add_xor", &IndexList::add_xor, py::arg("lit0"), py::arg("lit1"))
+            .def("add_output", &IndexList::add_output, py::arg("lit"))
 
             .def("clear", &IndexList::clear)
 
@@ -90,7 +93,7 @@ void ntk_index_list(pybind11::module_& m, const std::string& network_name)
                      const auto& v = il.raw();
                      if (i >= v.size())
                      {
-                         throw py::index_error("index out of range");
+                         throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                      }
                      return v[i];
                  })
@@ -100,7 +103,7 @@ void ntk_index_list(pybind11::module_& m, const std::string& network_name)
                      auto v = il.raw();
                      if (i >= v.size())
                      {
-                         throw py::index_error("index out of range");
+                         throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                      }
                      v[i] = value;
                      il   = IndexList(v);  // reconstruct the index list with the new vector
@@ -123,7 +126,7 @@ void ntk_index_list(pybind11::module_& m, const std::string& network_name)
                 mockturtle::encode(il, ntk);
                 return il;
             },
-            "ntk"_a, py::return_value_policy::move);
+            py::arg("ntk"), py::return_value_policy::move);  // NOLINT(misc-include-cleaner)
 
         auto lower_case_network_name = network_name;
         std::transform(lower_case_network_name.begin(), lower_case_network_name.end(), lower_case_network_name.begin(),
@@ -137,12 +140,12 @@ void ntk_index_list(pybind11::module_& m, const std::string& network_name)
                 mockturtle::decode(ntk, il);
                 return ntk;
             },
-            "il"_a, py::return_value_policy::move);
+            py::arg("il"), py::return_value_policy::move);  // NOLINT(misc-include-cleaner)
     }
 }
 }  // namespace detail
 
-void bind_to_index_list(pybind11::module_& m)
+void bind_to_index_list(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::ntk_index_list<aigverse::aig>(m, "Aig");
 }

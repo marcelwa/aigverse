@@ -7,7 +7,7 @@
 #include "aigverse/types.hpp"
 
 #include <fmt/format.h>
-#include <fmt/ranges.h>
+#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner)
 #include <mockturtle/utils/index_list.hpp>
 
 #include <cstdint>
@@ -26,7 +26,7 @@ namespace fmt
 
 // make index_list compatible with fmt::format
 template <>
-struct formatter<aigverse::aig_index_list>
+struct formatter<aigverse::aig_index_list>  // NOLINT(misc-include-cleaner)
 {
     template <typename ParseContext>
     constexpr auto parse(ParseContext& ctx)

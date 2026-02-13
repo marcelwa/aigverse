@@ -6,6 +6,7 @@
 
 #include <mockturtle/algorithms/cut_rewriting.hpp>
 #include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
 
 #include <cstdint>
@@ -18,9 +19,9 @@ namespace detail
 {
 
 template <typename Ntk>
-void rewriting(pybind11::module_& m)
+void rewriting(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "aig_cut_rewriting",
@@ -46,10 +47,11 @@ void rewriting(pybind11::module_& m)
 
             ntk = mockturtle::cut_rewriting(ntk, aig_npn_resyn_engine, params);
         },
-        "ntk"_a, "cut_size"_a = 4, "cut_limit"_a = 8, "minimize_truth_table"_a = true, "allow_zero_gain"_a = false,
-        "use_dont_cares"_a = false, "min_cand_cut_size"_a = 3, "min_cand_cut_size_override"_a = std::nullopt,
-        "preserve_depth"_a = false, "verbose"_a = false, "very_verbose"_a = false,
-        pybind11::call_guard<pybind11::gil_scoped_release>());
+        py::arg("ntk"), py::arg("cut_size") = 4, py::arg("cut_limit") = 8, py::arg("minimize_truth_table") = true,
+        py::arg("allow_zero_gain") = false, py::arg("use_dont_cares") = false, py::arg("min_cand_cut_size") = 3,
+        py::arg("min_cand_cut_size_override") = std::nullopt, py::arg("preserve_depth") = false,
+        py::arg("verbose") = false, py::arg("very_verbose") = false,
+        pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG
@@ -57,7 +59,7 @@ template void rewriting<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_rewriting(pybind11::module_& m)
+void bind_rewriting(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::rewriting<aigverse::aig>(m);
 }

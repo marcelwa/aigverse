@@ -6,16 +6,21 @@
 
 #include <fmt/format.h>
 #include <kitty/bit_operations.hpp>
+#include <kitty/constructors.hpp>
 #include <kitty/dynamic_truth_table.hpp>
 #include <kitty/hash.hpp>
+#include <kitty/operations.hpp>
 #include <kitty/print.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <pybind11/pytypes.h>
+#include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)
 
 #include <cstdint>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace aigverse
@@ -90,23 +95,22 @@ class truth_table_bit_iterator
 
 }  // namespace detail
 
-void bind_truth_table(pybind11::module_& m)
+void bind_truth_table(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
 
     namespace py = pybind11;
-    using namespace pybind11::literals;
 
     py::class_<aigverse::truth_table>(m, "TruthTable")
-        .def(py::init<uint32_t>(), "num_vars"_a,
+        .def(py::init<uint32_t>(), py::arg("num_vars"),
              "Create a TruthTable with 'num_vars' variables with all bits set to 0.")
 
         // Operators
-        .def(py::self == py::self, "other"_a)
-        .def(py::self != py::self, "other"_a)
-        .def(py::self < py::self, "other"_a)
-        .def(py::self & py::self, "other"_a)
-        .def(py::self | py::self, "other"_a)
-        .def(py::self ^ py::self, "other"_a)
+        .def(py::self == py::self, py::arg("other"))  // NOLINT(misc-redundant-expression)
+        .def(py::self != py::self, py::arg("other"))  // NOLINT(misc-redundant-expression)
+        .def(py::self < py::self, py::arg("other"))   // NOLINT(misc-redundant-expression)
+        .def(py::self & py::self, py::arg("other"))   // NOLINT(misc-redundant-expression)
+        .def(py::self | py::self, py::arg("other"))   // NOLINT(misc-redundant-expression)
+        .def(py::self ^ py::self, py::arg("other"))   // NOLINT(misc-redundant-expression)
         .def(~py::self)
 
         // Python list-like convenience functions
@@ -121,12 +125,12 @@ void bind_truth_table(pybind11::module_& m)
                 }
                 if (index < 0 || static_cast<uint64_t>(index) >= self.num_bits())
                 {
-                    throw py::index_error("index out of range");
+                    throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                 }
 
                 return kitty::get_bit(self, static_cast<uint64_t>(index));
             },
-            "index"_a)
+            py::arg("index"))
         .def(
             "__setitem__",
             [](aigverse::truth_table& self, int64_t index, const bool value)
@@ -137,7 +141,7 @@ void bind_truth_table(pybind11::module_& m)
                 }
                 if (index < 0 || static_cast<uint64_t>(index) >= self.num_bits())
                 {
-                    throw py::index_error("index out of range");
+                    throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                 }
                 if (value)
                 {
@@ -148,7 +152,7 @@ void bind_truth_table(pybind11::module_& m)
                     kitty::clear_bit(self, static_cast<uint64_t>(index));
                 }
             },
-            "index"_a, "value"_a)
+            py::arg("index"), py::arg("value"))
         .def(
             "__iter__",
             [](const aigverse::truth_table& self)
@@ -156,7 +160,7 @@ void bind_truth_table(pybind11::module_& m)
                 return py::make_iterator(detail::truth_table_bit_iterator(self, 0),
                                          detail::truth_table_bit_iterator(self, self.num_bits()));
             },
-            py::keep_alive<0, 1>())
+            py::keep_alive<0, 1>())  // NOLINT(misc-include-cleaner)
 
         // Method bindings
         .def("num_vars", &aigverse::truth_table::num_vars, "Returns the number of variables.")
@@ -172,7 +176,7 @@ void bind_truth_table(pybind11::module_& m)
             "Returns a deep copy of the truth table.")
         .def(
             "__assign__", [](aigverse::truth_table& self, const aigverse::truth_table& other) { return self = other; },
-            "other"_a, "Assigns the truth table from another compatible truth table.")
+            py::arg("other"), "Assigns the truth table from another compatible truth table.")
 
         // Hashing
         .def(
@@ -209,44 +213,44 @@ void bind_truth_table(pybind11::module_& m)
             {
                 if (index >= self.num_bits())
                 {
-                    throw py::index_error("index out of range");
+                    throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                 }
                 kitty::set_bit(self, index);
             },
-            "index"_a, "Sets the bit at the given index.")
+            py::arg("index"), "Sets the bit at the given index.")
         .def(
             "get_bit",
             [](const aigverse::truth_table& self, const uint64_t index)
             {
                 if (index >= self.num_bits())
                 {
-                    throw py::index_error("index out of range");
+                    throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                 }
                 return kitty::get_bit(self, index);
             },
-            "index"_a, "Returns the bit at the given index.")
+            py::arg("index"), "Returns the bit at the given index.")
         .def(
             "clear_bit",
             [](aigverse::truth_table& self, const uint64_t index)
             {
                 if (index >= self.num_bits())
                 {
-                    throw py::index_error("index out of range");
+                    throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                 }
                 kitty::clear_bit(self, index);
             },
-            "index"_a, "Clears the bit at the given index.")
+            py::arg("index"), "Clears the bit at the given index.")
         .def(
             "flip_bit",
             [](aigverse::truth_table& self, const uint64_t index)
             {
                 if (index >= self.num_bits())
                 {
-                    throw py::index_error("index out of range");
+                    throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                 }
                 kitty::flip_bit(self, index);
             },
-            "index"_a, "Flips the bit at the given index.")
+            py::arg("index"), "Flips the bit at the given index.")
         .def(
             "get_block",
             [](const aigverse::truth_table& self, const uint64_t block_index)
@@ -257,7 +261,7 @@ void bind_truth_table(pybind11::module_& m)
                 }
                 return kitty::get_block(self, block_index);
             },
-            "block_index"_a, "Returns a 64-bit block of bits.")
+            py::arg("block_index"), "Returns a 64-bit block of bits.")
         .def(
             "create_nth_var",
             [](aigverse::truth_table& self, const uint64_t var_index, const bool complement)
@@ -270,7 +274,7 @@ void bind_truth_table(pybind11::module_& m)
 
                 kitty::create_nth_var(self, static_cast<uint8_t>(var_index), complement);
             },
-            "var_index"_a, "complement"_a = false, "Constructs projections (single-variable functions).")
+            py::arg("var_index"), py::arg("complement") = false, "Constructs projections (single-variable functions).")
         .def(
             "create_from_binary_string",
             [](aigverse::truth_table& self, const std::string& binary)
@@ -283,7 +287,7 @@ void bind_truth_table(pybind11::module_& m)
 
                 kitty::create_from_binary_string(self, binary);
             },
-            "binary"_a, "Constructs truth table from binary string.")
+            py::arg("binary"), "Constructs truth table from binary string.")
         .def(
             "create_from_hex_string",
             [](aigverse::truth_table& self, const std::string& hexadecimal)
@@ -305,7 +309,7 @@ void bind_truth_table(pybind11::module_& m)
 
                 kitty::create_from_hex_string(self, hexadecimal);
             },
-            "hexadecimal"_a, "Constructs truth table from hexadecimal string.")
+            py::arg("hexadecimal"), "Constructs truth table from hexadecimal string.")
         .def(
             "create_random", [](aigverse::truth_table& self) { kitty::create_random(self); },
             "Constructs a random truth table.")

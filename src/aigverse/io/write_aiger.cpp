@@ -5,11 +5,11 @@
 #include "aigverse/types.hpp"
 
 #include <mockturtle/io/write_aiger.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl/filesystem.h>
+#include <pybind11/stl/filesystem.h>  // NOLINT(misc-include-cleaner)
 
 #include <filesystem>
-#include <string>
 
 namespace aigverse
 {
@@ -18,13 +18,13 @@ namespace detail
 {
 
 template <typename Ntk>
-void write_aiger(pybind11::module_& m)
+void write_aiger(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "write_aiger", [](const Ntk& ntk, const std::filesystem::path& filename)
-        { mockturtle::write_aiger(ntk, filename.string()); }, "network"_a, "filename"_a);
+        { mockturtle::write_aiger(ntk, filename.string()); }, py::arg("ntk"), py::arg("filename"));
 }
 
 // Explicit instantiation for AIG
@@ -32,7 +32,7 @@ template void write_aiger<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_write_aiger(pybind11::module_& m)
+void bind_write_aiger(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::write_aiger<aigverse::aig>(m);
 }

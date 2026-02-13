@@ -7,6 +7,7 @@
 #pragma once
 
 // pybind11 core
+// NOLINTBEGIN(misc-include-cleaner)
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -41,3 +42,4 @@
 
 // aigverse types
 #include "types.hpp"
+// NOLINTEND(misc-include-cleaner)

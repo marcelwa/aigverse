@@ -5,12 +5,12 @@
 #include "aigverse/types.hpp"
 
 #include <fmt/format.h>
-#include <lorina/aiger.hpp>
 #include <lorina/diagnostics.hpp>
 #include <lorina/verilog.hpp>
 #include <mockturtle/io/verilog_reader.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl/filesystem.h>
+#include <pybind11/stl/filesystem.h>  // NOLINT(misc-include-cleaner)
 
 #include <filesystem>
 #include <stdexcept>
@@ -23,9 +23,9 @@ namespace detail
 {
 
 template <typename Ntk>
-void read_verilog(pybind11::module_& m, const std::string& network_name)
+void read_verilog(pybind11::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         fmt::format("read_verilog_into_{}", network_name).c_str(),
@@ -39,14 +39,14 @@ void read_verilog(pybind11::module_& m, const std::string& network_name)
             const auto read_verilog_result =
                 lorina::read_verilog(filename.string(), mockturtle::verilog_reader<Ntk>(ntk), &diag);
 
-            if (read_verilog_result != lorina::return_code::success)
+            if (read_verilog_result != lorina::return_code::success)  // NOLINT(misc-include-cleaner)
             {
                 throw std::runtime_error("Error reading Verilog file");
             }
 
             return ntk;
         },
-        "filename"_a);
+        py::arg("filename"));
 }
 
 // Explicit instantiation for named AIG
@@ -54,7 +54,7 @@ template void read_verilog<aigverse::named_aig>(pybind11::module_& m, const std:
 
 }  // namespace detail
 
-void bind_read_verilog(pybind11::module_& m)
+void bind_read_verilog(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::read_verilog<aigverse::named_aig>(m, "aig");
 }

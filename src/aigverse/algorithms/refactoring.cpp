@@ -8,9 +8,11 @@
 #include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/node_resynthesis/sop_factoring.hpp>
 #include <mockturtle/algorithms/refactoring.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
 
 #include <cstdint>
+#include <exception>
 #include <stdexcept>
 
 namespace aigverse
@@ -20,9 +22,9 @@ namespace detail
 {
 
 template <typename Ntk>
-void refactoring(pybind11::module_& m)
+void refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "sop_refactoring",
@@ -57,8 +59,9 @@ void refactoring(pybind11::module_& m)
                 throw std::runtime_error("Unknown error in mockturtle::sop_refactoring");
             }
         },
-        "ntk"_a, "max_pis"_a = 6, "allow_zero_gain"_a = false, "use_reconvergence_cut"_a = false,
-        "use_dont_cares"_a = false, "verbose"_a = false, pybind11::call_guard<pybind11::gil_scoped_release>());
+        py::arg("ntk"), py::arg("max_pis") = 6, py::arg("allow_zero_gain") = false,
+        py::arg("use_reconvergence_cut") = false, py::arg("use_dont_cares") = false, py::arg("verbose") = false,
+        pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG
@@ -66,7 +69,7 @@ template void refactoring<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_refactoring(pybind11::module_& m)
+void bind_refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::refactoring<aigverse::aig>(m);
 }

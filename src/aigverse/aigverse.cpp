@@ -36,7 +36,7 @@ void bind_to_edge_list(pybind11::module_& m);
 void bind_to_index_list(pybind11::module_& m);
 }  // namespace aigverse
 
-PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())
+PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())  // NOLINT(misc-include-cleaner)
 {
     // docstring
     m.doc() = "A Python library for working with logic networks, synthesis, and optimization.";

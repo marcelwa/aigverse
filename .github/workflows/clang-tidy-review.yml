@@ -1,0 +1,63 @@
+name: Clang-Tidy Review
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "**/*.hpp"
+      - "**/*.cpp"
+      - ".github/workflows/clang-tidy-review.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "**/*.hpp"
+      - "**/*.cpp"
+      - ".github/workflows/clang-tidy-review.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  clangtidy:
+    runs-on: ubuntu-latest
+    name: 🚨 Clang-Tidy
+
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake libpython3-dev
+
+      - name: Generate compilation database
+        run: >
+          cmake -B build -S .
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          -DAIGVERSE_VENDOR_PYBIND11=ON
+          -DAIGVERSE_ENABLE_IPO=OFF
+
+      - name: Run clang-tidy
+        id: linter
+        uses: cpp-linter/cpp-linter-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          style: ""
+          tidy-checks: ""
+          database: "build"
+          step-summary: true
+          thread-comments: ${{ ((github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork) && 'update') || 'false' }}
+          ignore: "build|libs/*|docs/*"
+          extra-args: "-I${{ github.workspace }}/include -I${{ github.workspace }}/src/aigverse"
+          version: "21"
+          files-changed-only: true
+
+      - if: steps.linter.outputs.checks-failed > 0
+        run: exit 1

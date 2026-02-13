@@ -7,6 +7,7 @@
 #include <mockturtle/algorithms/aig_resub.hpp>
 #include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/resubstitution.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
 
 #include <cstdint>
@@ -18,9 +19,9 @@ namespace detail
 {
 
 template <typename Ntk>
-void resubstitution(pybind11::module_& m)
+void resubstitution(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    using namespace pybind11::literals;
+    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "aig_resubstitution",
@@ -44,9 +45,11 @@ void resubstitution(pybind11::module_& m)
 
             ntk = mockturtle::cleanup_dangling(ntk);
         },
-        "ntk"_a, "max_pis"_a = 8, "max_divisors"_a = 150, "max_inserts"_a = 2, "skip_fanout_limit_for_roots"_a = 1000,
-        "skip_fanout_limit_for_divisors"_a = 100, "verbose"_a = false, "use_dont_cares"_a = false, "window_size"_a = 12,
-        "preserve_depth"_a = false, pybind11::call_guard<pybind11::gil_scoped_release>());
+        py::arg("ntk"), py::arg("max_pis") = 8, py::arg("max_divisors") = 150, py::arg("max_inserts") = 2,
+        py::arg("skip_fanout_limit_for_roots") = 1000, py::arg("skip_fanout_limit_for_divisors") = 100,
+        py::arg("verbose") = false, py::arg("use_dont_cares") = false, py::arg("window_size") = 12,
+        py::arg("preserve_depth") = false,
+        pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG
@@ -54,7 +57,7 @@ template void resubstitution<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_resubstitution(pybind11::module_& m)
+void bind_resubstitution(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::resubstitution<aigverse::aig>(m);
 }
