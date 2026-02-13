@@ -24,7 +24,7 @@ void write_dot(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 
     m.def(
         "write_dot", [](const Ntk& ntk, const std::filesystem::path& filename)
-        { mockturtle::write_dot(ntk, filename.string()); }, py::arg("network"), py::arg("filename"));
+        { mockturtle::write_dot(ntk, filename.string()); }, py::arg("ntk"), py::arg("filename"));
 }
 
 // Explicit instantiation for AIG
