@@ -5,7 +5,6 @@
 #include "aigverse/types.hpp"
 
 #include <fmt/format.h>
-#include <lorina/aiger.hpp>  // NOLINT(misc-include-cleaner)
 #include <lorina/diagnostics.hpp>
 #include <lorina/verilog.hpp>
 #include <mockturtle/io/verilog_reader.hpp>

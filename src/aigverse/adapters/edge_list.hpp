@@ -60,7 +60,7 @@ struct edge
         return !(*this == other);
     }
     /**
-     * Implicit conversion to tuple.
+     * Explicit conversion to tuple.
      */
     [[nodiscard]] constexpr explicit
     operator std::tuple<mockturtle::node<Ntk>, mockturtle::node<Ntk>, int64_t>() const noexcept
@@ -106,7 +106,7 @@ struct edge_list
      */
     edge_list(const Ntk& network, const std::vector<edge<Ntk>>& es) : ntk{network}, edges{es} {};
     /**
-     * Implicit conversion to vector.
+     * Explicit conversion to vector.
      *
      * @return Edges of the network.
      */

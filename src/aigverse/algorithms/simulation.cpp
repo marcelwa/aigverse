@@ -51,7 +51,7 @@ void simulation(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
                 throw;
             }
         },
-        py::arg("network"));
+        py::arg("network"), pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 
     m.def(
         "simulate_nodes",
