@@ -2,8 +2,6 @@
 // Created by marcel on 03.09.25.
 //
 
-#include "aigverse/algorithms/refactoring.hpp"
-
 #include "aigverse/types.hpp"
 
 #include <fmt/format.h>

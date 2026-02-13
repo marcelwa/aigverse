@@ -2,7 +2,7 @@
 // Created by marcel on 04.09.25.
 //
 
-#include "aigverse/adapters/edge_list.hpp"
+#include "edge_list.hpp"
 
 #include "aigverse/types.hpp"
 
@@ -12,7 +12,10 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <cstdint>
 #include <string>
+#include <tuple>
+#include <vector>
 
 namespace aigverse
 {
