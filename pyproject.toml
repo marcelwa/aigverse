@@ -161,7 +161,7 @@ preview = true
 fix = true
 unsafe-fixes = true
 show-fixes = true
-src = ["src", "test", "noxfile.py", "docs"]
+src = ["src", "test", "docs"]
 
 [tool.ruff.lint]
 select = ["ALL"]
