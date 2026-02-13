@@ -13,7 +13,7 @@
 #include <kitty/print.hpp>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)
 
 #include <cstdint>
 #include <sstream>
@@ -92,23 +92,23 @@ class truth_table_bit_iterator
 
 }  // namespace detail
 
-void bind_truth_table(pybind11::module_& m)
+void bind_truth_table(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
 
     namespace py = pybind11;
     using namespace pybind11::literals;
 
     py::class_<aigverse::truth_table>(m, "TruthTable")
-        .def(py::init<uint32_t>(), "num_vars"_a,
+        .def(py::init<uint32_t>(), "num_vars"_a,  // NOLINT(misc-include-cleaner)
              "Create a TruthTable with 'num_vars' variables with all bits set to 0.")
 
         // Operators
-        .def(py::self == py::self, "other"_a)
-        .def(py::self != py::self, "other"_a)
-        .def(py::self < py::self, "other"_a)
-        .def(py::self & py::self, "other"_a)
-        .def(py::self | py::self, "other"_a)
-        .def(py::self ^ py::self, "other"_a)
+        .def(py::self == py::self, "other"_a)  // NOLINT(misc-redundant-expression)
+        .def(py::self != py::self, "other"_a)  // NOLINT(misc-redundant-expression)
+        .def(py::self < py::self, "other"_a)   // NOLINT(misc-redundant-expression)
+        .def(py::self & py::self, "other"_a)   // NOLINT(misc-redundant-expression)
+        .def(py::self | py::self, "other"_a)   // NOLINT(misc-redundant-expression)
+        .def(py::self ^ py::self, "other"_a)   // NOLINT(misc-redundant-expression)
         .def(~py::self)
 
         // Python list-like convenience functions
@@ -123,7 +123,7 @@ void bind_truth_table(pybind11::module_& m)
                 }
                 if (index < 0 || static_cast<uint64_t>(index) >= self.num_bits())
                 {
-                    throw py::index_error("index out of range");
+                    throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                 }
 
                 return kitty::get_bit(self, static_cast<uint64_t>(index));
@@ -158,7 +158,7 @@ void bind_truth_table(pybind11::module_& m)
                 return py::make_iterator(detail::truth_table_bit_iterator(self, 0),
                                          detail::truth_table_bit_iterator(self, self.num_bits()));
             },
-            py::keep_alive<0, 1>())
+            py::keep_alive<0, 1>())  // NOLINT(misc-include-cleaner)
 
         // Method bindings
         .def("num_vars", &aigverse::truth_table::num_vars, "Returns the number of variables.")
@@ -170,7 +170,8 @@ void bind_truth_table(pybind11::module_& m)
             "__copy__", [](const aigverse::truth_table& self) { return self; },
             "Returns a shallow copy of the truth table.")
         .def(
-            "__deepcopy__", [](const aigverse::truth_table& self, py::dict&) { return self; },
+            "__deepcopy__",
+            [](const aigverse::truth_table& self, py::dict&) { return self; },  // NOLINT(misc-include-cleaner)
             "Returns a deep copy of the truth table.")
         .def(
             "__assign__", [](aigverse::truth_table& self, const aigverse::truth_table& other) { return self = other; },
@@ -182,8 +183,9 @@ void bind_truth_table(pybind11::module_& m)
             "Returns the hash of the truth table.")
 
         // Pickle support
-        .def(py::pickle([](const aigverse::truth_table& self) { return py::make_tuple(self.num_vars(), self._bits); },
-                        [](const py::tuple& t)
+        .def(py::pickle([](const aigverse::truth_table& self)
+                        { return py::make_tuple(self.num_vars(), self._bits); },  // NOLINT(misc-include-cleaner)
+                        [](const py::tuple& t)                                    // NOLINT(misc-include-cleaner)
                         {
                             if (t.size() != 2)
                             {
@@ -200,7 +202,7 @@ void bind_truth_table(pybind11::module_& m)
                             {
                                 throw std::runtime_error("Mismatched block count during unpickling.");
                             }
-                            kitty::create_from_words(tt, words.begin(), words.end());
+                            kitty::create_from_words(tt, words.begin(), words.end());  // NOLINT(misc-include-cleaner)
                             return tt;
                         }))
 
@@ -270,12 +272,13 @@ void bind_truth_table(pybind11::module_& m)
                         "Index of the variable must be smaller than the truth table's number of variables.");
                 }
 
-                kitty::create_nth_var(self, static_cast<uint8_t>(var_index), complement);
+                kitty::create_nth_var(self, static_cast<uint8_t>(var_index),
+                                      complement);  // NOLINT(misc-include-cleaner)
             },
             "var_index"_a, "complement"_a = false, "Constructs projections (single-variable functions).")
         .def(
             "create_from_binary_string",
-            [](aigverse::truth_table& self, const std::string& binary)
+            [](aigverse::truth_table& self, const std::string& binary)  // NOLINT(misc-include-cleaner)
             {
                 if (binary.size() != self.num_bits())
                 {
@@ -283,7 +286,7 @@ void bind_truth_table(pybind11::module_& m)
                         "Number of characters in binary string must match the number of bits in the truth table.");
                 }
 
-                kitty::create_from_binary_string(self, binary);
+                kitty::create_from_binary_string(self, binary);  // NOLINT(misc-include-cleaner)
             },
             "binary"_a, "Constructs truth table from binary string.")
         .def(
@@ -305,23 +308,27 @@ void bind_truth_table(pybind11::module_& m)
                         "Number of characters in hex string must be one fourth the number of bits in the truth table.");
                 }
 
-                kitty::create_from_hex_string(self, hexadecimal);
+                kitty::create_from_hex_string(self, hexadecimal);  // NOLINT(misc-include-cleaner)
             },
             "hexadecimal"_a, "Constructs truth table from hexadecimal string.")
         .def(
-            "create_random", [](aigverse::truth_table& self) { kitty::create_random(self); },
+            "create_random",
+            [](aigverse::truth_table& self) { kitty::create_random(self); },  // NOLINT(misc-include-cleaner)
             "Constructs a random truth table.")
         .def(
-            "create_majority", [](aigverse::truth_table& self) { kitty::create_majority(self); },
+            "create_majority",
+            [](aigverse::truth_table& self) { kitty::create_majority(self); },  // NOLINT(misc-include-cleaner)
             "Constructs a MAJ truth table.")
         .def("clear", &kitty::clear<aigverse::truth_table>, "Clears all bits.")
         .def("count_ones", &kitty::count_ones<aigverse::truth_table>, "Counts ones in truth table.")
         .def("count_zeroes", &kitty::count_zeros<aigverse::truth_table>, "Counts zeroes in truth table.")
         .def(
-            "is_const0", [](const aigverse::truth_table& self) { return kitty::is_const0(self); },
+            "is_const0",
+            [](const aigverse::truth_table& self) { return kitty::is_const0(self); },  // NOLINT(misc-include-cleaner)
             "Checks if the truth table is constant 0.")
         .def(
-            "is_const1", [](const aigverse::truth_table& self) { return kitty::is_const0(kitty::unary_not(self)); },
+            "is_const1", [](const aigverse::truth_table& self)
+            { return kitty::is_const0(kitty::unary_not(self)); },  // NOLINT(misc-include-cleaner)
             "Checks if the truth table is constant 1.")
 
         // Representations

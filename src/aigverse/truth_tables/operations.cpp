@@ -25,8 +25,9 @@ static void bind_truth_table_operations(pybind11::module_& m)
     m.def(
         "ternary_majority",
         [](const aigverse::truth_table& a, const aigverse::truth_table& b, const aigverse::truth_table& c)
-        { return kitty::ternary_majority(a, b, c); }, "a"_a, "b"_a, "c"_a,
-        "Compute the ternary majority of three truth tables.", pybind11::call_guard<pybind11::gil_scoped_release>());
+        { return kitty::ternary_majority(a, b, c); }, "a"_a, "b"_a, "c"_a,  // NOLINT(misc-include-cleaner)
+        "Compute the ternary majority of three truth tables.",
+        pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 
     m.def(
         "cofactor0",
@@ -59,7 +60,7 @@ static void bind_truth_table_operations(pybind11::module_& m)
 
 }  // namespace detail
 
-void bind_truth_table_operations(pybind11::module_& m)
+void bind_truth_table_operations(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::bind_truth_table_operations(m);
 }

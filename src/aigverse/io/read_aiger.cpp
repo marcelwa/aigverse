@@ -9,7 +9,7 @@
 #include <lorina/diagnostics.hpp>
 #include <mockturtle/io/aiger_reader.hpp>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl/filesystem.h>
+#include <pybind11/stl/filesystem.h>  // NOLINT(misc-include-cleaner)
 
 #include <filesystem>
 #include <stdexcept>
@@ -22,7 +22,7 @@ namespace detail
 {
 
 template <typename Ntk>
-void read_aiger(pybind11::module_& m, const std::string& network_name)
+void read_aiger(pybind11::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
 {
     using namespace pybind11::literals;
 
@@ -38,14 +38,14 @@ void read_aiger(pybind11::module_& m, const std::string& network_name)
             const auto read_aiger_result =
                 lorina::read_aiger(filename.string(), mockturtle::aiger_reader<Ntk>(ntk), &diag);
 
-            if (read_aiger_result != lorina::return_code::success)
+            if (read_aiger_result != lorina::return_code::success)  // NOLINT(misc-include-cleaner)
             {
                 throw std::runtime_error("Error reading AIGER file");
             }
 
             return ntk;
         },
-        "filename"_a);
+        "filename"_a);  // NOLINT(misc-include-cleaner)
 
     m.def(
         fmt::format("read_ascii_aiger_into_{}", network_name).c_str(),
@@ -59,14 +59,14 @@ void read_aiger(pybind11::module_& m, const std::string& network_name)
             const auto read_ascii_aiger_result =
                 lorina::read_ascii_aiger(filename.string(), mockturtle::aiger_reader<Ntk>(ntk), &diag);
 
-            if (read_ascii_aiger_result != lorina::return_code::success)
+            if (read_ascii_aiger_result != lorina::return_code::success)  // NOLINT(misc-include-cleaner)
             {
                 throw std::runtime_error("Error reading ASCII AIGER file");
             }
 
             return ntk;
         },
-        "filename"_a);
+        "filename"_a);  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiations for named AIG and sequential AIG
@@ -75,7 +75,7 @@ template void read_aiger<aigverse::sequential_aig>(pybind11::module_& m, const s
 
 }  // namespace detail
 
-void bind_read_aiger(pybind11::module_& m)
+void bind_read_aiger(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::read_aiger<aigverse::named_aig>(m, "aig");
     detail::read_aiger<aigverse::sequential_aig>(m, "sequential_aig");

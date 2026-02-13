@@ -7,7 +7,7 @@
 #include "aigverse/types.hpp"
 
 #include <fmt/format.h>
-#include <fmt/ranges.h>
+#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner)
 #include <mockturtle/traits.hpp>
 
 #include <cstdint>
@@ -70,7 +70,8 @@ struct edge
     /**
      * Implicit conversion to tuple.
      */
-    [[nodiscard]] constexpr operator std::tuple<mockturtle::node<Ntk>, mockturtle::node<Ntk>, int64_t>() const noexcept
+    [[nodiscard]] constexpr explicit
+    operator std::tuple<mockturtle::node<Ntk>, mockturtle::node<Ntk>, int64_t>() const noexcept
     {
         return {source, target, weight};
     }
@@ -117,7 +118,7 @@ struct edge_list
      *
      * @return Edges of the network.
      */
-    [[nodiscard]] operator std::vector<edge<Ntk>>() const noexcept
+    [[nodiscard]] explicit operator std::vector<edge<Ntk>>() const noexcept
     {
         return edges;
     }
@@ -193,7 +194,7 @@ namespace fmt
 
 // make edge compatible with fmt::format
 template <typename Ntk>
-struct formatter<aigverse::edge<Ntk>>
+struct formatter<aigverse::edge<Ntk>>  // NOLINT(misc-include-cleaner)
 {
     template <typename ParseContext>
     constexpr auto parse(ParseContext& ctx)
@@ -210,7 +211,7 @@ struct formatter<aigverse::edge<Ntk>>
 
 // make edge_list compatible with fmt::format
 template <typename Ntk>
-struct formatter<aigverse::edge_list<Ntk>>
+struct formatter<aigverse::edge_list<Ntk>>  // NOLINT(misc-include-cleaner)
 {
     template <typename ParseContext>
     constexpr auto parse(ParseContext& ctx)

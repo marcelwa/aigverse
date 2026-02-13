@@ -9,7 +9,7 @@
 #include <kitty/dynamic_truth_table.hpp>
 #include <mockturtle/algorithms/simulation.hpp>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)
 
 #include <iostream>
 #include <new>
@@ -23,9 +23,9 @@ namespace detail
 {
 
 template <typename Ntk>
-void simulation(pybind11::module_& m)
+void simulation(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;
+    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
     using namespace py::literals;
 
     m.def(
@@ -51,11 +51,11 @@ void simulation(pybind11::module_& m)
                 throw;
             }
         },
-        "network"_a);
+        "network"_a);  // NOLINT(misc-include-cleaner)
 
     m.def(
         "simulate_nodes",
-        [](const Ntk& ntk) -> std::unordered_map<uint64_t, kitty::dynamic_truth_table>
+        [](const Ntk& ntk) -> std::unordered_map<uint64_t, kitty::dynamic_truth_table>  // NOLINT(misc-include-cleaner)
         {
             if (ntk.num_pis() > 16)
             {
@@ -70,7 +70,8 @@ void simulation(pybind11::module_& m)
                     // NOLINTNEXTLINE
                     mockturtle::default_simulator<kitty::dynamic_truth_table>{static_cast<unsigned>(ntk.num_pis())});
 
-                std::unordered_map<mockturtle::node<Ntk>, kitty::dynamic_truth_table> node_to_tt{};
+                std::unordered_map<mockturtle::node<Ntk>, kitty::dynamic_truth_table>
+                    node_to_tt{};  // NOLINT(misc-include-cleaner)
 
                 // convert vector implementation to unordered_map
                 ntk.foreach_node([&n_map, &node_to_tt](const auto& n) { node_to_tt[n] = n_map[n]; });
@@ -82,7 +83,7 @@ void simulation(pybind11::module_& m)
                 throw;
             }
         },
-        "network"_a, pybind11::call_guard<pybind11::gil_scoped_release>());
+        "network"_a, pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG
@@ -90,7 +91,7 @@ template void simulation<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_simulation(pybind11::module_& m)
+void bind_simulation(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::simulation<aigverse::aig>(m);
 }

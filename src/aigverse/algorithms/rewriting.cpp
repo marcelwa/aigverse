@@ -20,7 +20,7 @@ namespace detail
 {
 
 template <typename Ntk>
-void rewriting(pybind11::module_& m)
+void rewriting(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     using namespace pybind11::literals;
 
@@ -51,7 +51,7 @@ void rewriting(pybind11::module_& m)
         "ntk"_a, "cut_size"_a = 4, "cut_limit"_a = 8, "minimize_truth_table"_a = true, "allow_zero_gain"_a = false,
         "use_dont_cares"_a = false, "min_cand_cut_size"_a = 3, "min_cand_cut_size_override"_a = std::nullopt,
         "preserve_depth"_a = false, "verbose"_a = false, "very_verbose"_a = false,
-        pybind11::call_guard<pybind11::gil_scoped_release>());
+        pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG
@@ -59,7 +59,7 @@ template void rewriting<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_rewriting(pybind11::module_& m)
+void bind_rewriting(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::rewriting<aigverse::aig>(m);
 }

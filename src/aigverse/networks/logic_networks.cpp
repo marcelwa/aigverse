@@ -4,6 +4,8 @@
 
 #include "aigverse/networks/logic_networks.hpp"
 
+#include "aigverse/types.hpp"
+
 #include <fmt/format.h>
 #include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/traits.hpp>
@@ -11,7 +13,7 @@
 #include <mockturtle/views/fanout_view.hpp>
 #include <mockturtle/views/names_view.hpp>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)
 
 #include <cstdint>
 #include <functional>
@@ -26,18 +28,18 @@ namespace detail
 {
 
 template <typename Ntk>
-void bind_network(pybind11::module_& m, const std::string& network_name)
+void bind_network(pybind11::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
 {
     namespace py = pybind11;
     using namespace pybind11::literals;
 
-    using Node = mockturtle::node<Ntk>;
+    using Node = mockturtle::node<Ntk>;  // NOLINT(readability-identifier-naming)
     py::class_<Node>(m, fmt::format("{}Node", network_name).c_str())
-        .def(py::init<const uint64_t>(), "index"_a)
+        .def(py::init<const uint64_t>(), "index"_a)  // NOLINT(misc-include-cleaner)
         .def("__hash__", [](const Node& n) { return std::hash<Node>{}(n); })
         .def("__repr__", [](const Node& n) { return fmt::format("Node({})", n); })
         .def("__eq__",
-             [](const Node& self, const py::object& other) -> bool
+             [](const Node& self, const py::object& other) -> bool  // NOLINT(misc-include-cleaner)
              {
                  if (!py::isinstance<Node>(other))
                  {
@@ -56,9 +58,9 @@ void bind_network(pybind11::module_& m, const std::string& network_name)
              })
         .def("__lt__", [](const Node& n1, const Node& n2) { return n1 < n2; });
 
-    py::implicitly_convertible<py::int_, Node>();
+    py::implicitly_convertible<py::int_, Node>();  // NOLINT(misc-include-cleaner)
 
-    using Signal = mockturtle::signal<Ntk>;
+    using Signal = mockturtle::signal<Ntk>;  // NOLINT(readability-identifier-naming)
     py::class_<Signal>(m, fmt::format("{}Signal", network_name).c_str())
         .def(py::init<const uint64_t, const bool>(), "index"_a, "complement"_a)
         .def("get_index", [](const Signal& s) { return s.index; })
@@ -197,13 +199,14 @@ void bind_network(pybind11::module_& m, const std::string& network_name)
                  {
                      aigverse::aig_index_list il{};
                      mockturtle::encode(il, ntk);
-                     return py::make_tuple(py::cast(il.raw()));
+                     return py::make_tuple(py::cast(il.raw()));  // NOLINT(misc-include-cleaner)
                  },
-                 [](const py::tuple& state)
+                 [](const py::tuple& state)  // NOLINT(misc-include-cleaner)
                  {
                      if (state.size() != 1)
                      {
-                         throw py::value_error("Invalid state: expected a tuple of size 1 containing an index list");
+                         throw py::value_error("Invalid state: expected a tuple of size 1 containing an index "
+                                               "list");  // NOLINT(misc-include-cleaner)
                      }
                      try
                      {
@@ -214,11 +217,11 @@ void bind_network(pybind11::module_& m, const std::string& network_name)
 
                          return ntk;
                      }
-                     catch (const py::cast_error& e)
+                     catch (const py::cast_error& e)  // NOLINT(misc-include-cleaner)
                      {
                          throw py::value_error(fmt::format("Invalid state: expected an index list. {}", e.what()));
                      }
-                     catch (const std::exception& e)
+                     catch (const std::exception& e)  // NOLINT(misc-include-cleaner)
                      {
                          throw py::value_error(fmt::format("Failed to restore network state: {}", e.what()));
                      }
@@ -269,7 +272,7 @@ void bind_network(pybind11::module_& m, const std::string& network_name)
             },
             "n"_a);
 
-    using Register = mockturtle::register_t;
+    using Register = mockturtle::register_t;  // NOLINT(readability-identifier-naming, misc-include-cleaner)
     py::class_<Register>(m, fmt::format("{}Register", network_name).c_str())
         .def(py::init<>())
         .def(py::init<const Register&>(), "register"_a)
@@ -277,7 +280,7 @@ void bind_network(pybind11::module_& m, const std::string& network_name)
         .def_readwrite("init", &Register::init)
         .def_readwrite("type", &Register::type);
 
-    using SequentialNtk = mockturtle::sequential<Ntk>;
+    using SequentialNtk = mockturtle::sequential<Ntk>;  // NOLINT(misc-include-cleaner)
     py::class_<SequentialNtk, Ntk>(m, fmt::format("Sequential{}", network_name).c_str())
         .def(py::init<>())
         .def("create_pi", &SequentialNtk::create_pi)
@@ -371,7 +374,7 @@ template void bind_network<aigverse::aig>(pybind11::module_&, const std::string&
 
 }  // namespace detail
 
-void bind_logic_networks(pybind11::module_& m)
+void bind_logic_networks(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::bind_network<aigverse::aig>(m, "Aig");
 }

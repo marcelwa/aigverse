@@ -7,6 +7,7 @@
 #pragma once
 
 // pybind11 core
+// NOLINTBEGIN(misc-include-cleaner)
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -38,3 +39,4 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+// NOLINTEND(misc-include-cleaner)

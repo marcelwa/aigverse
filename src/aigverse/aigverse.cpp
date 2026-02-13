@@ -24,7 +24,7 @@
 
 #define PYBIND11_DETAILED_ERROR_MESSAGES
 
-PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())
+PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())  // NOLINT(misc-include-cleaner)
 {
     // docstring
     m.doc() = "A Python library for working with logic networks, synthesis, and optimization.";

@@ -22,7 +22,7 @@ namespace detail
 {
 
 template <typename Ntk>
-void refactoring(pybind11::module_& m)
+void refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     using namespace pybind11::literals;
 
@@ -50,7 +50,7 @@ void refactoring(pybind11::module_& m)
 
                 ntk = std::move(cleaned);
             }
-            catch (const std::exception& e)
+            catch (const std::exception& e)  // NOLINT(misc-include-cleaner)
             {
                 throw std::runtime_error(fmt::format("Error in mockturtle::sop_refactoring: {}", e.what()));
             }
@@ -60,7 +60,8 @@ void refactoring(pybind11::module_& m)
             }
         },
         "ntk"_a, "max_pis"_a = 6, "allow_zero_gain"_a = false, "use_reconvergence_cut"_a = false,
-        "use_dont_cares"_a = false, "verbose"_a = false, pybind11::call_guard<pybind11::gil_scoped_release>());
+        "use_dont_cares"_a = false, "verbose"_a = false,
+        pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG
@@ -68,7 +69,7 @@ template void refactoring<aigverse::aig>(pybind11::module_& m);
 
 }  // namespace detail
 
-void bind_refactoring(pybind11::module_& m)
+void bind_refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::refactoring<aigverse::aig>(m);
 }
