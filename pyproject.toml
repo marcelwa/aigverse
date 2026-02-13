@@ -158,11 +158,13 @@ warn_unreachable = true
 [tool.ruff]
 line-length = 120
 preview = true
+fix = true
 unsafe-fixes = true
+show-fixes = true
+src = ["src", "test", "noxfile.py", "docs"]
 
 [tool.ruff.lint]
 select = ["ALL"]
-
 ignore = [
     "C90", # <...> too complex
     "COM812", # Conflicts with formatter
@@ -179,6 +181,7 @@ ignore = [
     "S403", # pickle can be insecure
     "PYI002", # strictly static pyi interface
 ]
+future-annotations = true
 
 isort.required-imports = ["from __future__ import annotations"]
 
@@ -195,6 +198,9 @@ isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.format]
+docstring-code-format = true
 
 
 [dependency-groups]
