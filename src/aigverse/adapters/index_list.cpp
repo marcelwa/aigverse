@@ -2,7 +2,7 @@
 // Created by marcel on 04.09.25.
 //
 
-#include "aigverse/adapters/index_list.hpp"
+#include "index_list.hpp"
 
 #include "aigverse/types.hpp"
 
@@ -140,10 +140,6 @@ void ntk_index_list(pybind11::module_& m, const std::string& network_name)  // N
             "il"_a, py::return_value_policy::move);  // NOLINT(misc-include-cleaner)
     }
 }
-
-// Explicit instantiation for AIG
-template void ntk_index_list<aigverse::aig>(pybind11::module_& m, const std::string& network_name);
-
 }  // namespace detail
 
 void bind_to_index_list(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)

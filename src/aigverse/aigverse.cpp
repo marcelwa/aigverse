@@ -2,27 +2,39 @@
 // Created by marcel on 04.09.24.
 //
 
-#include "aigverse/adapters/edge_list.hpp"
-#include "aigverse/adapters/index_list.hpp"
-#include "aigverse/algorithms/balancing.hpp"
-#include "aigverse/algorithms/equivalence_checking.hpp"
-#include "aigverse/algorithms/refactoring.hpp"
-#include "aigverse/algorithms/resubstitution.hpp"
-#include "aigverse/algorithms/rewriting.hpp"
-#include "aigverse/algorithms/simulation.hpp"
-#include "aigverse/io/read_aiger.hpp"
-#include "aigverse/io/read_pla.hpp"
-#include "aigverse/io/read_verilog.hpp"
-#include "aigverse/io/write_aiger.hpp"
-#include "aigverse/io/write_dot.hpp"
-#include "aigverse/io/write_verilog.hpp"
-#include "aigverse/networks/logic_networks.hpp"
-#include "aigverse/truth_tables/operations.hpp"
-#include "aigverse/truth_tables/truth_table.hpp"
-
 #include <pybind11/pybind11.h>
 
 #define PYBIND11_DETAILED_ERROR_MESSAGES
+
+namespace aigverse
+{
+// Networks
+void bind_logic_networks(pybind11::module_& m);
+
+// Truth tables
+void bind_truth_table(pybind11::module_& m);
+void bind_truth_table_operations(pybind11::module_& m);
+
+// Algorithms
+void bind_equivalence_checking(pybind11::module_& m);
+void bind_refactoring(pybind11::module_& m);
+void bind_resubstitution(pybind11::module_& m);
+void bind_rewriting(pybind11::module_& m);
+void bind_balancing(pybind11::module_& m);
+void bind_simulation(pybind11::module_& m);
+
+// I/O
+void bind_read_aiger(pybind11::module_& m);
+void bind_write_aiger(pybind11::module_& m);
+void bind_read_pla(pybind11::module_& m);
+void bind_read_verilog(pybind11::module_& m);
+void bind_write_verilog(pybind11::module_& m);
+void bind_write_dot(pybind11::module_& m);
+
+// Adapters
+void bind_to_edge_list(pybind11::module_& m);
+void bind_to_index_list(pybind11::module_& m);
+}  // namespace aigverse
 
 PYBIND11_MODULE(pyaigverse, m, pybind11::mod_gil_not_used())  // NOLINT(misc-include-cleaner)
 {

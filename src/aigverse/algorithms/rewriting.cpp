@@ -2,8 +2,6 @@
 // Created by marcel on 03.09.25.
 //
 
-#include "aigverse/algorithms/rewriting.hpp"
-
 #include "aigverse/types.hpp"
 
 #include <mockturtle/algorithms/cut_rewriting.hpp>

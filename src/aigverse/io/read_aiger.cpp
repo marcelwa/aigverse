@@ -2,7 +2,7 @@
 // Created by marcel on 03.09.25.
 //
 
-#include "aigverse/io/read_aiger.hpp"
+#include "aigverse/types.hpp"
 
 #include <fmt/format.h>
 #include <lorina/aiger.hpp>

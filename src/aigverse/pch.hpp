@@ -39,4 +39,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+// aigverse types
+#include "types.hpp"
 // NOLINTEND(misc-include-cleaner)
