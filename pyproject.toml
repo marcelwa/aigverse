@@ -240,5 +240,5 @@ dev = [
     { include-group = "adapters" },
     { include-group = "docs" },
     { include-group = "test" },
-    "nox>=2025.11.12",
+    "nox>=2025.10.16",
 ]

@@ -124,7 +124,7 @@ dev = [
     { name = "matplotlib", specifier = ">=3.0.0" },
     { name = "myst-nb", specifier = ">=1.1.2" },
     { name = "networkx", specifier = ">=3.0.0" },
-    { name = "nox", specifier = ">=2025.11.12" },
+    { name = "nox", specifier = ">=2025.10.16" },
     { name = "numpy", specifier = ">=1.23.0" },
     { name = "pybind11", specifier = ">=2.13.6" },
     { name = "pygraphviz", specifier = ">=1.9.0" },
