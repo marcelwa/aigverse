@@ -1,3 +1,8 @@
+#!/usr/bin/env -S uv run --script --quiet
+# /// script
+# dependencies = ["nox"]
+# ///
+
 """Nox sessions."""
 
 from __future__ import annotations
@@ -13,7 +18,7 @@ import nox
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-nox.needs_version = ">=2024.3.2"
+nox.needs_version = ">=2025.10.16"
 nox.options.default_venv_backend = "uv"
 
 nox.options.sessions = ["lint", "tests", "minimums"]

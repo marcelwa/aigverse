@@ -9,8 +9,8 @@
 
 ci:
   autoupdate_commit_msg: "⬆️ Bump pre-commit hooks"
-  autoupdate_schedule: quarterly
   autofix_commit_msg: "🎨 Incorporated pre-commit fixes"
+  autoupdate_schedule: quarterly
   skip: [mypy]
 
 exclude: "^(docs/examples/|.*/_deps/)"
@@ -65,6 +65,14 @@ repos:
         types: [file]
         files: (\.cmake|CMakeLists.txt)(.in)?$
 
+  # clang-format the C++ part of the code base
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v21.1.8
+    hooks:
+      - id: clang-format
+        types_or: [c++, c]
+        args: ["-style=file"]
+
   # Ensure uv lock file is up-to-date
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.10.0
@@ -75,9 +83,9 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.0
     hooks:
-      - id: ruff
-        args: ["--fix", "--show-fixes"]
       - id: ruff-format
+      - id: ruff-check
+        require_serial: true
 
   # Check static types with mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -91,14 +99,6 @@ repos:
           - pytest
           - matplotlib-stubs
           - networkx-stubs
-
-  # clang-format the C++ part of the code base
-  - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v21.1.8
-    hooks:
-      - id: clang-format
-        types_or: [c++, c]
-        args: ["-style=file"]
 
   # Clean jupyter notebooks
   - repo: https://github.com/srstevenson/nb-clean
@@ -129,12 +129,13 @@ repos:
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.36.1
     hooks:
-      - id: check-dependabot
       - id: check-github-workflows
       - id: check-readthedocs
+      - id: check-renovate
+        additional_dependencies: ["json5"]
 
   # Check the pyproject.toml file
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2026.01.02
+    rev: 2026.01.22
     hooks:
       - id: validate-pyproject
