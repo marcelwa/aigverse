@@ -57,7 +57,7 @@ jobs:
           ignore: "build|libs/*|docs/*"
           extra-args: "-I${{ github.workspace }}/include -I${{ github.workspace }}/src/aigverse"
           version: "21"
-          files-changed-only: false
+          files-changed-only: true
 
       - if: steps.linter.outputs.checks-failed > 0
         run: exit 1
