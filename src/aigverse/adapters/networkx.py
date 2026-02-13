@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
 import networkx as nx
 import numpy as np
 
-from .. import Aig, DepthAig, simulate, simulate_nodes, to_edge_list
+from .. import DepthAig, simulate, simulate_nodes, to_edge_list
+
+if TYPE_CHECKING:
+    from .. import Aig
 
 
 def to_networkx(
