@@ -2,8 +2,6 @@
 // Created by marcel on 03.09.25.
 //
 
-#include "aigverse/io/write_verilog.hpp"
-
 #include <mockturtle/io/write_verilog.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl/filesystem.h>

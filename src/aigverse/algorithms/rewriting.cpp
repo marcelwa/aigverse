@@ -2,10 +2,6 @@
 // Created by marcel on 03.09.25.
 //
 
-#include "aigverse/algorithms/rewriting.hpp"
-
-#include "aigverse/types.hpp"
-
 #include <mockturtle/algorithms/cut_rewriting.hpp>
 #include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
 #include <pybind11/pybind11.h>

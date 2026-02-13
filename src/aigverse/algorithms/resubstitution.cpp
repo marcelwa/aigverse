@@ -2,10 +2,6 @@
 // Created by marcel on 03.09.25.
 //
 
-#include "aigverse/algorithms/resubstitution.hpp"
-
-#include "aigverse/types.hpp"
-
 #include <mockturtle/algorithms/aig_resub.hpp>
 #include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/resubstitution.hpp>

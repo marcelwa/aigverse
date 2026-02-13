@@ -2,8 +2,6 @@
 // Created by marcel on 03.09.25.
 //
 
-#include "aigverse/io/read_pla.hpp"
-
 #include <fmt/format.h>
 #include <lorina/diagnostics.hpp>
 #include <mockturtle/io/pla_reader.hpp>

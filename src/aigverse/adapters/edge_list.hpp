@@ -1,10 +1,8 @@
 //
-// Created by marcel on 05.09.24.
+// Created by marcel on 04.09.25.
 //
 
 #pragma once
-
-#include "aigverse/types.hpp"
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -14,11 +12,6 @@
 #include <string>
 #include <tuple>
 #include <vector>
-
-namespace pybind11
-{
-class module_;
-}
 
 namespace aigverse
 {
@@ -170,21 +163,6 @@ template <typename Ntk>
 
     return el;
 }
-
-namespace detail
-{
-
-// Forward declaration of binding template.
-template <typename Ntk>
-void ntk_edge_list(pybind11::module_& m, const std::string& network_name);
-
-// Explicit instantiation declaration for AIG.
-extern template void ntk_edge_list<aigverse::aig>(pybind11::module_& m, const std::string& network_name);
-
-}  // namespace detail
-
-// Wrapper declaration (implemented in .cpp)
-void bind_to_edge_list(pybind11::module_& m);
 
 }  // namespace aigverse
 

@@ -1,41 +1,21 @@
 //
-// Created by marcel on 02.05.25.
+// Created by marcel on 04.09.25.
 //
 
 #pragma once
-
-#include "aigverse/types.hpp"
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <mockturtle/utils/index_list.hpp>
 
-#include <cstddef>
 #include <cstdint>
-#include <string>
 #include <tuple>
 #include <vector>
-
-namespace pybind11
-{
-class module_;
-}
 
 namespace aigverse
 {
 
-namespace detail
-{
-
-template <typename Ntk>
-void ntk_index_list(pybind11::module_& m, const std::string& network_name);
-
-extern template void ntk_index_list<aigverse::aig>(pybind11::module_& m, const std::string& network_name);
-
-}  // namespace detail
-
-// Wrapper declaration (implemented in .cpp)
-void bind_to_index_list(pybind11::module_& m);
+using aig_index_list = mockturtle::xag_index_list<true>;
 
 }  // namespace aigverse
 

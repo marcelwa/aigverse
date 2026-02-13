@@ -2,10 +2,6 @@
 // Created by marcel on 03.09.25.
 //
 
-#include "aigverse/algorithms/refactoring.hpp"
-
-#include "aigverse/types.hpp"
-
 #include <fmt/format.h>
 #include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/node_resynthesis/sop_factoring.hpp>

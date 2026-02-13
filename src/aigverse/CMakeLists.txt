@@ -7,9 +7,10 @@ pybind11_add_module(pyaigverse THIN_LTO ${AIGVERSE_PY_SOURCES})
 # Provide namespaced alias for consistent consumer usage
 add_library(aigverse::pyaigverse ALIAS pyaigverse)
 
-# Link against the public header-only target and dependencies (namespaced)
-target_link_libraries(pyaigverse PRIVATE aigverse::aigverse
-                                         aigverse::mockturtle)
+# Link against dependencies (namespaced)
+target_link_libraries(
+  pyaigverse PRIVATE aigverse::mockturtle aigverse::aigverse_options
+                     aigverse::aigverse_warnings)
 
 # Precompiled header to speed up heavy pybind11/fmt/mockturtle includes
 target_precompile_headers(
