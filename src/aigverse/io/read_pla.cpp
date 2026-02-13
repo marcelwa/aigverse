@@ -23,7 +23,7 @@ namespace detail
 template <typename Ntk>
 void read_pla(pybind11::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;
+    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         fmt::format("read_pla_into_{}", network_name).c_str(),

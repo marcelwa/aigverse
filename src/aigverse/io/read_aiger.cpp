@@ -8,6 +8,7 @@
 #include <lorina/aiger.hpp>
 #include <lorina/diagnostics.hpp>
 #include <mockturtle/io/aiger_reader.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl/filesystem.h>  // NOLINT(misc-include-cleaner)
 
@@ -24,7 +25,7 @@ namespace detail
 template <typename Ntk>
 void read_aiger(pybind11::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;
+    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         fmt::format("read_aiger_into_{}", network_name).c_str(),

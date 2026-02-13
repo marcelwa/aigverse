@@ -6,6 +6,8 @@
 
 #include <mockturtle/algorithms/equivalence_checking.hpp>
 #include <mockturtle/algorithms/miter.hpp>
+#include <mockturtle/networks/aig.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)
 
@@ -22,7 +24,7 @@ namespace detail
 template <typename Spec, typename Impl>
 void equivalence_checking(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;
+    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "equivalence_checking",

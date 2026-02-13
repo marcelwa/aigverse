@@ -8,6 +8,7 @@
 #include <mockturtle/algorithms/balancing.hpp>
 #include <mockturtle/algorithms/balancing/esop_balancing.hpp>
 #include <mockturtle/algorithms/balancing/sop_balancing.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
 
 #include <cstdint>
@@ -23,7 +24,7 @@ namespace detail
 template <typename Ntk>
 void balancing(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;
+    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "balancing",

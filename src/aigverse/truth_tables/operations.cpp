@@ -5,6 +5,7 @@
 #include "aigverse/types.hpp"
 
 #include <kitty/operations.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
 
 #include <cstdint>

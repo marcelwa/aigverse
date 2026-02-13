@@ -9,6 +9,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner)
 #include <mockturtle/utils/index_list.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/pytypes.h>
 #include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)
@@ -16,6 +17,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <type_traits>

@@ -8,7 +8,9 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner)
+#include <mockturtle/networks/sequential.hpp>
 #include <mockturtle/traits.hpp>
+#include <pybind11/attr.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/pytypes.h>
 #include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)

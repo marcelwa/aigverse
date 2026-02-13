@@ -6,10 +6,12 @@
 
 #include <kitty/dynamic_truth_table.hpp>
 #include <mockturtle/algorithms/simulation.hpp>
-#include <mockturtle/traits.hpp>  // NOLINT(misc-include-cleaner)
+#include <mockturtle/traits.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)
 
+#include <cstdint>
 #include <iostream>
 #include <new>
 #include <unordered_map>

@@ -206,8 +206,8 @@ void bind_network(pybind11::module_& m, const std::string& network_name)  // NOL
                  {
                      if (state.size() != 1)
                      {
-                         throw py::value_error("Invalid state: expected a tuple of size 1 containing an index "
-                                               "list");
+                         // NOLINTNEXTLINE(misc-include-cleaner)
+                         throw py::value_error("Invalid state: expected a tuple of size 1 containing an index list");
                      }
                      try
                      {
@@ -218,7 +218,7 @@ void bind_network(pybind11::module_& m, const std::string& network_name)  // NOL
 
                          return ntk;
                      }
-                     catch (const py::cast_error& e)
+                     catch (const py::cast_error& e)  // NOLINT(misc-include-cleaner)
                      {
                          throw py::value_error(fmt::format("Invalid state: expected an index list. {}", e.what()));
                      }

@@ -8,9 +8,11 @@
 #include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/node_resynthesis/sop_factoring.hpp>
 #include <mockturtle/algorithms/refactoring.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
 
 #include <cstdint>
+#include <exception>
 #include <stdexcept>
 
 namespace aigverse
@@ -22,7 +24,7 @@ namespace detail
 template <typename Ntk>
 void refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;
+    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "sop_refactoring",

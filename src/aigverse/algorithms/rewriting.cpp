@@ -6,6 +6,7 @@
 
 #include <mockturtle/algorithms/cut_rewriting.hpp>
 #include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
+#include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
 
 #include <cstdint>
@@ -20,7 +21,7 @@ namespace detail
 template <typename Ntk>
 void rewriting(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;
+    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "aig_cut_rewriting",

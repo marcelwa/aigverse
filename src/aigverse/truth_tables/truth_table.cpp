@@ -9,6 +9,7 @@
 #include <kitty/constructors.hpp>
 #include <kitty/dynamic_truth_table.hpp>
 #include <kitty/hash.hpp>
+#include <kitty/operations.hpp>
 #include <kitty/print.hpp>
 #include <pybind11/cast.h>
 #include <pybind11/operators.h>
@@ -19,6 +20,7 @@
 #include <cstdint>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace aigverse
@@ -123,7 +125,7 @@ void bind_truth_table(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage
                 }
                 if (index < 0 || static_cast<uint64_t>(index) >= self.num_bits())
                 {
-                    throw py::index_error("index out of range");
+                    throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                 }
 
                 return kitty::get_bit(self, static_cast<uint64_t>(index));
@@ -139,7 +141,7 @@ void bind_truth_table(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage
                 }
                 if (index < 0 || static_cast<uint64_t>(index) >= self.num_bits())
                 {
-                    throw py::index_error("index out of range");
+                    throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                 }
                 if (value)
                 {
@@ -211,7 +213,7 @@ void bind_truth_table(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage
             {
                 if (index >= self.num_bits())
                 {
-                    throw py::index_error("index out of range");
+                    throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                 }
                 kitty::set_bit(self, index);
             },
@@ -222,7 +224,7 @@ void bind_truth_table(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage
             {
                 if (index >= self.num_bits())
                 {
-                    throw py::index_error("index out of range");
+                    throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                 }
                 return kitty::get_bit(self, index);
             },
@@ -233,7 +235,7 @@ void bind_truth_table(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage
             {
                 if (index >= self.num_bits())
                 {
-                    throw py::index_error("index out of range");
+                    throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                 }
                 kitty::clear_bit(self, index);
             },
@@ -244,7 +246,7 @@ void bind_truth_table(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage
             {
                 if (index >= self.num_bits())
                 {
-                    throw py::index_error("index out of range");
+                    throw py::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                 }
                 kitty::flip_bit(self, index);
             },
