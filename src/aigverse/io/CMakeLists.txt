@@ -1,0 +1,13 @@
+add_aigverse_python_binding(
+  aigverse-io
+  bindings.cpp
+  read_aiger.cpp
+  write_aiger.cpp
+  read_pla.cpp
+  read_verilog.cpp
+  write_verilog.cpp
+  write_dot.cpp
+  MODULE_NAME
+  io
+  INSTALL_DIR
+  .)

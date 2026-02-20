@@ -58,14 +58,14 @@ ninja.version = ">=1.10"
 # Setuptools-style build caching in a local directory
 build-dir = "build/{wheel_tag}/{build_type}"
 # Explicitly set the package directory
-wheel.packages = ["src/aigverse"]
+wheel.packages = ["python/aigverse"]
 # Only build the Python bindings target
-build.targets = ["pyaigverse"]
+build.targets = ["aigverse-networks", "aigverse-algorithms", "aigverse-io", "aigverse-utils"]
 # Only install the Python package component
 install.components = ["aigverse_Python"]
 
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
-sdist.include = ["src/aigverse/_version.py"]
+sdist.include = ["python/aigverse/_version.py"]
 sdist.exclude = [
     "**/.github",
     "**/doc",
@@ -74,7 +74,7 @@ sdist.exclude = [
 ]
 
 [tool.check-sdist]
-sdist-only = ["src/aigverse/_version.py"]
+sdist-only = ["python/aigverse/_version.py"]
 git-only = [
     "docs/*",
     "test/*",
@@ -98,7 +98,7 @@ cmake.define.DISABLE_GIL = "1"
 
 
 [tool.setuptools_scm]
-write_to = "src/aigverse/_version.py"
+write_to = "python/aigverse/_version.py"
 
 
 [tool.pytest]
@@ -117,7 +117,7 @@ build = "cp3*"
 enable = ["cpython-freethreading"]
 archs = "auto64"
 skip = "*-musllinux*"
-test-command = "python -c \"from aigverse import Aig\""
+test-command = "python -c \"from aigverse.networks import Aig\""
 build-frontend = "build[uv]"
 manylinux-x86_64-image = "manylinux_2_28"
 
@@ -145,8 +145,8 @@ aigverse = { workspace = true }
 
 
 [tool.mypy]
-files = ["src/aigverse/", "noxfile.py"]
-mypy_path = ["$MYPY_CONFIG_FILE_DIR/src"]
+files = ["python/aigverse/", "test/", "noxfile.py"]
+mypy_path = ["$MYPY_CONFIG_FILE_DIR/python"]
 warn_unused_configs = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 strict = true
@@ -161,7 +161,8 @@ preview = true
 fix = true
 unsafe-fixes = true
 show-fixes = true
-src = ["src", "test", "docs"]
+src = ["python", "test", "docs"]
+exclude = ["*_version.py"]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -186,6 +187,7 @@ future-annotations = true
 isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
+"python/aigverse/__init__.py" = ["RUF067"]
 "test/**" = ["T20", "ANN", "D", "INP001"]
 "docs/**" = ["T20", "ERA001", "INP001"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]

@@ -135,7 +135,7 @@ dmypy.json
 cython_debug/
 
 # setuptools_scm
-src/aigverse/_version.py
+python/aigverse/_version.py
 
 # SKBuild cache dir
 _skbuild/
