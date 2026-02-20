@@ -1,7 +1,7 @@
 from collections.abc import Iterator
 from typing import Any, overload
 
-from .. import networks
+from . import networks
 
 class AigEdge:
     source: int | networks.AigNode

@@ -1,6 +1,6 @@
 from typing import Literal
 
-from .. import networks, utils
+from . import networks, utils
 
 def equivalence_checking(
     spec: networks.Aig,

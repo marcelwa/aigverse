@@ -1,6 +1,6 @@
 import os
 
-from .. import networks
+from . import networks
 
 def read_aiger_into_aig(filename: str | os.PathLike[str]) -> networks.NamedAig: ...
 def read_ascii_aiger_into_aig(filename: str | os.PathLike[str]) -> networks.NamedAig: ...
