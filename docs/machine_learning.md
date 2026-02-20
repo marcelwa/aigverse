@@ -39,7 +39,7 @@ import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 import numpy as np
 
-from aigverse import Aig
+from aigverse.networks import Aig
 import aigverse.adapters
 
 # Create a sample AIG
@@ -112,7 +112,7 @@ intuitive. You can use these arrays as labels or features in supervised learning
 training and evaluating models.
 
 ```{code-cell} ipython3
-from aigverse import TruthTable
+from aigverse.utils import TruthTable
 import numpy as np
 
 # Create a simple truth table, e.g., a 3-input majority function

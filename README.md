@@ -87,7 +87,7 @@ The following gives a shallow overview on `aigverse`. Detailed documentation and
 In `aigverse`, you can create a simple And-Inverter Graph (AIG) and manipulate it using various logic operations.
 
 ```python
-from aigverse import Aig
+from aigverse.networks import Aig
 
 # Create a new AIG network
 aig = Aig()
@@ -138,7 +138,7 @@ for fanin in aig.fanins(n_and):
 Named AIGs allow you to assign human-readable names to the network, inputs, outputs, and internal signals.
 
 ```python
-from aigverse import NamedAig
+from aigverse.networks import NamedAig
 
 # Create a named AIG
 named_aig = NamedAig()
@@ -169,7 +169,7 @@ You can compute the depth of the AIG network and the level of each node. Depth i
 critical path delay of a respective circuit.
 
 ```python
-from aigverse import DepthAig
+from aigverse.networks import DepthAig
 
 depth_aig = DepthAig(aig)
 print(f"Depth: {depth_aig.num_levels()}")
@@ -182,7 +182,7 @@ for node in aig.nodes():
 If needed, you can retrieve the fanouts of AIG nodes as well:
 
 ```python
-from aigverse import FanoutAig
+from aigverse.networks import FanoutAig
 
 fanout_aig = FanoutAig(aig)
 n_and = aig.get_node(f_and)
@@ -196,7 +196,7 @@ for fanout in fanout_aig.fanouts(n_and):
 `aigverse` also supports sequential AIGs, which are AIGs with registers.
 
 ```python
-from aigverse import SequentialAig
+from aigverse.networks import SequentialAig
 
 seq_aig = SequentialAig()
 x1 = seq_aig.create_pi()  # Regular PI
@@ -223,7 +223,12 @@ resynthesizes them into new structures. Cut _rewriting_ optimizes the AIG by rep
 pre-computed NPN database. Finally, _balancing_ performs (E)SOP factoring to minimize the number of levels in the AIG.
 
 ```python
-from aigverse import aig_resubstitution, sop_refactoring, aig_cut_rewriting, balancing
+from aigverse.algorithms import (
+    aig_resubstitution,
+    sop_refactoring,
+    aig_cut_rewriting,
+    balancing,
+)
 
 # Clone the AIG network for size comparison
 aig_clone = aig.clone()
@@ -242,7 +247,7 @@ print(f"Optimized AIG Size: {aig.size()}")
 Equivalence of AIGs (e.g., after optimization) can be checked using SAT-based equivalence checking.
 
 ```python
-from aigverse import equivalence_checking
+from aigverse.algorithms import equivalence_checking
 
 # Perform equivalence checking
 equiv = equivalence_checking(aig1, aig2)
@@ -261,7 +266,7 @@ Verilog and PLA.
 #### ✏️ Writing
 
 ```python
-from aigverse import write_aiger, write_verilog, write_dot
+from aigverse.io import write_aiger, write_verilog, write_dot
 
 # Write an AIG network to an AIGER file
 write_aiger(aig, "example.aig")
@@ -274,7 +279,7 @@ write_dot(aig, "example.dot")
 #### 👓 Parsing
 
 ```python
-from aigverse import (
+from aigverse.io import (
     read_aiger_into_aig,
     read_ascii_aiger_into_aig,
     read_verilog_into_aig,
@@ -335,7 +340,7 @@ manipulation of truth tables by wrapping a portion of the [kitty](https://github
 #### 🎉 Creation
 
 ```python
-from aigverse import TruthTable
+from aigverse.utils import TruthTable
 
 # Initialize a truth table with 3 variables
 tt = TruthTable(3)
@@ -364,7 +369,7 @@ print(tt.is_const0())
 #### 🔣 Symbolic Simulation of AIGs
 
 ```python
-from aigverse import simulate, simulate_nodes
+from aigverse.algorithms import simulate, simulate_nodes
 
 # Obtain the truth table of each AIG output
 tts = simulate(aig)

@@ -27,7 +27,7 @@ AIGs (And-Inverter Graphs) are a compact representation of Boolean functions usi
 The following code snippet demonstrates how to create a simple AIG representing basic logic operations.
 
 ```{code-cell} ipython3
-from aigverse import Aig
+from aigverse.networks import Aig
 
 # Create a new AIG network
 aig = Aig()
@@ -168,7 +168,7 @@ primary inputs, primary outputs, and internal signals. This is particularly usef
 interfacing with external tools that rely on human-readable signal names.
 
 ```{code-cell} ipython3
-from aigverse import NamedAig
+from aigverse.networks import NamedAig
 
 # Create a new named AIG (or construct from existing AIG)
 named_aig = NamedAig()
@@ -221,7 +221,7 @@ path delay in a circuit. You can compute the depth and level of each node using 
 class.
 
 ```{code-cell} ipython3
-from aigverse import DepthAig
+from aigverse.networks import DepthAig
 
 # Create a sample AIG
 aig = Aig()
@@ -255,7 +255,7 @@ for node in aig.nodes():
 Fanouts of AIG nodes can be collected using {py:class}`~aigverse.FanoutAig`.
 
 ```{code-cell} ipython3
-from aigverse import FanoutAig
+from aigverse.networks import FanoutAig
 
 # Create a sample AIG
 aig = Aig()
@@ -282,7 +282,7 @@ for node in fanout_aig.fanouts(aig.get_node(n4)):
 with memory elements.
 
 ```{code-cell} ipython3
-from aigverse import SequentialAig
+from aigverse.networks import SequentialAig
 
 # Create a sequential AIG
 seq_aig = SequentialAig()
@@ -324,14 +324,7 @@ When creating sequential AIGs, follow these rules:
 AIGs can be read from and written to various file formats.
 
 ```{code-cell} ipython3
-from aigverse import (
-   write_aiger,
-   write_verilog,
-   write_dot,
-   read_aiger_into_aig,
-   read_verilog_into_aig,
-   read_pla_into_aig
-)
+from aigverse.io import write_aiger, write_verilog, write_dot, read_aiger_into_aig, read_verilog_into_aig, read_pla_into_aig
 
 # Create a sample AIG
 aig = Aig()
@@ -377,7 +370,7 @@ list of integers. This is useful for ML pipelines, dataset generation, or export
 fixed-size numeric arrays are required.
 
 ```{code-cell} ipython3
-from aigverse import to_index_list, to_aig, AigIndexList
+from aigverse.utils import to_index_list, to_aig, AigIndexList
 
 # Create a sample AIG
 aig = Aig()
