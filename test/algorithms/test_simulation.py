@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from aigverse import Aig, DepthAig, TruthTable, simulate, simulate_nodes
+from aigverse.algorithms import simulate, simulate_nodes
+from aigverse.networks import Aig, DepthAig
+from aigverse.utils import TruthTable
 
 
 def test_empty_aig() -> None:

@@ -3,9 +3,9 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from aigverse import Aig, write_dot
+from aigverse.io import write_dot  # Get the temporary directory as a Path object
+from aigverse.networks import Aig
 
-# Get the temporary directory as a Path object
 temp_dir = Path(tempfile.gettempdir())
 
 

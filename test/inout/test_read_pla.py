@@ -3,7 +3,9 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from aigverse import TruthTable, read_pla_into_aig, simulate
+from aigverse.algorithms import simulate
+from aigverse.io import read_pla_into_aig
+from aigverse.utils import TruthTable
 
 dir_path = Path(os.path.realpath(__file__)).parent
 

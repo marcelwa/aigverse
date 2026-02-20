@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from aigverse import Aig, AigEdge, AigEdgeList, SequentialAig, to_edge_list
+from aigverse.networks import Aig, SequentialAig
+from aigverse.utils import AigEdge, AigEdgeList, to_edge_list
 
 
 def test_aig_edge() -> None:

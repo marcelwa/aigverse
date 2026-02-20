@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from aigverse import DepthAig
+from aigverse.networks import DepthAig
 
 
 def test_depth_aig() -> None:

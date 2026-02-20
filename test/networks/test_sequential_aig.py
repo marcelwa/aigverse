@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from aigverse import SequentialAig
+from aigverse.networks import SequentialAig
 
 
 def test_sequential_aig_initialization() -> None:
