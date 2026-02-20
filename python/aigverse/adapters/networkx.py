@@ -8,7 +8,7 @@ import networkx as nx
 import numpy as np
 
 from ..algorithms import simulate, simulate_nodes
-from ..networks import DepthAig, NamedAig
+from ..networks import AigSignal, DepthAig, NamedAig
 from ..utils import to_edge_list
 
 if TYPE_CHECKING:
@@ -89,10 +89,7 @@ def to_networkx(
     edge_type_inverted: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([0, 1], dtype=dtype)
 
     # Check if this is a NamedAig
-    has_names = isinstance(self, NamedAig)
-    self_named = cast("NamedAig", self) if has_names else None
-    if has_names:
-        from ..networks import AigSignal
+    self_named = cast("NamedAig", self) if isinstance(self, NamedAig) else None
 
     # Conditionally compute levels if requested
     if levels:
@@ -122,7 +119,7 @@ def to_networkx(
         g.graph["levels"] = depth_aig.num_levels() + 1  # + 1 for the PO level
     if graph_tts:
         g.graph["function"] = graph_funcs
-    if has_names and (network_name := self_named.get_network_name()):
+    if self_named is not None and (network_name := self_named.get_network_name()):
         g.graph["name"] = network_name
 
     # Iterate over all regular nodes in the AIG
@@ -175,7 +172,7 @@ def to_networkx(
         edge_attrs: dict[str, Any] = {"type": edge_type}
 
         # Add signal name if available (edges represent signals)
-        if has_names:
+        if self_named is not None:
             # source node is an integer (AigNode)
             src_int = src
             sig = AigSignal(src_int, bool(weight))
@@ -185,7 +182,7 @@ def to_networkx(
         g.add_edge(src, tgt, **edge_attrs)
 
     # Add PO names as attributes on edges going to synthetic PO nodes
-    if has_names:
+    if self_named is not None:
         for po_idx, _ in enumerate(self_named.pos()):
             if self_named.has_output_name(po_idx):
                 synthetic_po_node = po_idx + self_named.size()

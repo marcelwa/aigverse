@@ -34,10 +34,9 @@ tt = TruthTable(3)
 from aigverse.networks import Aig
 from aigverse.io import read_aiger_into_aig
 from aigverse.algorithms import balancing
-from aigverse.utils import TruthTable, to_aig
+from aigverse.utils import TruthTable
 
 aig = read_aiger_into_aig("design.aig")
-aig.cleanup_dangling()
 balancing(aig)
 tt = TruthTable(3)
 ```
