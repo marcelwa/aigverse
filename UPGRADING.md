@@ -13,7 +13,8 @@ you are upgrading from an older version, you will need to update your imports.
 - **Algorithms**: `balancing`, `equivalence_checking`, `simulate`, etc. are now in `aigverse.algorithms`.
 - **IO**: Reading/Writing functions are now in `aigverse.io`.
 - **Utils**: `TruthTable`, `AigEdge`, `AigEdgeList`, `AigIndexList` and helper functions like `to_edge_list`,
-  `to_index_list` are now in `aigverse.utils`.
+  `to_index_list`, `to_aig` are now in `aigverse.utils`.
+- **Cleanup**: `cleanup_dangling` is exposed as the method `aigverse.networks.Aig.cleanup_dangling`.
 
 ### Code Examples
 
@@ -33,9 +34,10 @@ tt = TruthTable(3)
 from aigverse.networks import Aig
 from aigverse.io import read_aiger_into_aig
 from aigverse.algorithms import balancing
-from aigverse.utils import TruthTable
+from aigverse.utils import TruthTable, to_aig
 
 aig = read_aiger_into_aig("design.aig")
+aig.cleanup_dangling()
 balancing(aig)
 tt = TruthTable(3)
 ```
