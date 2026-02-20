@@ -8,7 +8,7 @@ void bind_to_edge_list(pybind11::module_& m);
 void bind_to_index_list(pybind11::module_& m);
 }  // namespace aigverse
 
-PYBIND11_MODULE(utils, m)
+PYBIND11_MODULE(utils, m, pybind11::mod_gil_not_used())  // NOLINT(misc-include-cleaner)
 {
     m.doc() = "Utility data structures and functions";
     aigverse::bind_truth_table(m);
