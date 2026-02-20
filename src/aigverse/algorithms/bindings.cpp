@@ -13,6 +13,8 @@ void bind_simulation(pybind11::module_& m);
 PYBIND11_MODULE(algorithms, m, pybind11::mod_gil_not_used())  // NOLINT(misc-include-cleaner)
 {
     m.doc() = "Synthesis and optimization algorithms";
+    pybind11::module_::import("aigverse.networks");  // ensure network types are registered
+    pybind11::module_::import("aigverse.utils");     // ensure truth-table types are registered
     aigverse::bind_equivalence_checking(m);
     aigverse::bind_refactoring(m);
     aigverse::bind_resubstitution(m);

@@ -11,6 +11,7 @@ void bind_to_index_list(pybind11::module_& m);
 PYBIND11_MODULE(utils, m, pybind11::mod_gil_not_used())  // NOLINT(misc-include-cleaner)
 {
     m.doc() = "Utility data structures and functions";
+    pybind11::module_::import("aigverse.networks");  // ensure network types are registered
     aigverse::bind_truth_table(m);
     aigverse::bind_truth_table_operations(m);
     aigverse::bind_to_edge_list(m);
