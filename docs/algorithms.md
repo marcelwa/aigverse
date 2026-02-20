@@ -21,7 +21,7 @@ Simulation algorithms allow you to evaluate the outputs of a logic network for a
 
 ### Functional Simulation
 
-For simulating AIGs with truth tables, the {py:func}`~aigverse.simulate` and {py:func}`~aigverse.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes of an AIG.
+For simulating AIGs with truth tables, the {py:func}`~aigverse.algorithms.simulate` and {py:func}`~aigverse.algorithms.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes of an AIG.
 
 ```{code-cell} ipython3
 from aigverse.networks import Aig
