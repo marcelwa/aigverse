@@ -3,9 +3,10 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from aigverse.io import read_aiger_into_aig, write_aiger  # Get the temporary directory as a Path object
+from aigverse.io import read_aiger_into_aig, write_aiger
 from aigverse.networks import Aig
 
+# Get the temporary directory as a Path object
 temp_dir = Path(tempfile.gettempdir())
 
 

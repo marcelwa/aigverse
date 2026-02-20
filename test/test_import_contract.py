@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def test_root_has_no_top_level_aig_export() -> None:
@@ -13,7 +17,8 @@ def test_modular_imports_are_available() -> None:
     import aigverse
     from aigverse.networks import Aig
 
-    assert Aig is not None
+    aig = Aig()
+    assert isinstance(aig, Aig)
 
     assert hasattr(aigverse, "algorithms")
     assert hasattr(aigverse, "io")
@@ -21,11 +26,11 @@ def test_modular_imports_are_available() -> None:
     assert hasattr(aigverse, "utils")
 
 
-def test_lazy_submodule_loading() -> None:
+def test_lazy_submodule_loading(monkeypatch: pytest.MonkeyPatch) -> None:
     import aigverse
 
-    sys.modules.pop("aigverse.networks", None)
-    aigverse.__dict__.pop("networks", None)
+    monkeypatch.delitem(sys.modules, "aigverse.networks", raising=False)
+    monkeypatch.delitem(aigverse.__dict__, "networks", raising=False)
 
     assert "aigverse.networks" not in sys.modules
     _ = aigverse.networks
