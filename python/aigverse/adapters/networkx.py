@@ -90,6 +90,9 @@ def to_networkx(
 
     # Check if this is a NamedAig
     has_names = isinstance(self, NamedAig)
+    self_named = cast("NamedAig", self) if has_names else None
+    if has_names:
+        from ..networks import AigSignal
 
     # Conditionally compute levels if requested
     if levels:
@@ -119,7 +122,7 @@ def to_networkx(
         g.graph["levels"] = depth_aig.num_levels() + 1  # + 1 for the PO level
     if graph_tts:
         g.graph["function"] = graph_funcs
-    if has_names and hasattr(self, "get_network_name") and (network_name := cast("NamedAig", self).get_network_name()):
+    if has_names and (network_name := self_named.get_network_name()):
         g.graph["name"] = network_name
 
     # Iterate over all regular nodes in the AIG
@@ -146,8 +149,8 @@ def to_networkx(
         g.add_node(node, **attrs)
 
     # Iterate over synthetic PO nodes
-    for po_idx, po in enumerate(self.pos()):
-        synth_node = self.po_index(po) + self.size()
+    for po_idx, _po in enumerate(self.pos()):
+        synth_node = po_idx + self.size()
         attrs = {"index": synth_node}
 
         # Synthetic PO attributes
@@ -173,12 +176,9 @@ def to_networkx(
 
         # Add signal name if available (edges represent signals)
         if has_names:
-            from ..networks import AigSignal
-
             # source node is an integer (AigNode)
             src_int = src
             sig = AigSignal(src_int, bool(weight))
-            self_named = cast("NamedAig", self)
             if self_named.has_name(sig):
                 edge_attrs["name"] = self_named.get_name(sig)
 
@@ -186,13 +186,11 @@ def to_networkx(
 
     # Add PO names as attributes on edges going to synthetic PO nodes
     if has_names:
-        self_named = cast("NamedAig", self)
-        if hasattr(self_named, "has_output_name") and hasattr(self_named, "get_output_name"):
-            for po_idx, po in enumerate(self_named.pos()):
-                if self_named.has_output_name(po_idx):
-                    synthetic_po_node = self_named.po_index(po) + self_named.size()
-                    # Find all edges going into this synthetic PO node
-                    for pred in g.predecessors(synthetic_po_node):  # type: ignore[no-untyped-call]
-                        g.edges[pred, synthetic_po_node]["name"] = self_named.get_output_name(po_idx)
+        for po_idx, _ in enumerate(self_named.pos()):
+            if self_named.has_output_name(po_idx):
+                synthetic_po_node = po_idx + self_named.size()
+                # Find all edges going into this synthetic PO node
+                for pred in g.predecessors(synthetic_po_node):  # type: ignore[no-untyped-call]
+                    g.edges[pred, synthetic_po_node]["name"] = self_named.get_output_name(po_idx)
 
     return g
