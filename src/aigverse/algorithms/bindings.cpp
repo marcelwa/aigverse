@@ -10,7 +10,7 @@ void bind_balancing(pybind11::module_& m);
 void bind_simulation(pybind11::module_& m);
 }  // namespace aigverse
 
-PYBIND11_MODULE(algorithms, m, pybind11::mod_gil_not_used())  // NOLINT(misc-include-cleaner)
+PYBIND11_MODULE(algorithms, m)  // NOLINT(misc-include-cleaner)
 {
     m.doc() = "Synthesis and optimization algorithms";
     pybind11::module_::import("aigverse.networks");  // ensure network types are registered

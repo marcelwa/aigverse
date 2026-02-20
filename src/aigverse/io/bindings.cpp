@@ -10,7 +10,7 @@ void bind_write_verilog(pybind11::module_& m);
 void bind_write_dot(pybind11::module_& m);
 }  // namespace aigverse
 
-PYBIND11_MODULE(io, m, pybind11::mod_gil_not_used())  // NOLINT(misc-include-cleaner)
+PYBIND11_MODULE(io, m)  // NOLINT(misc-include-cleaner)
 {
     m.doc() = "Input/Output functionality";
     pybind11::module_::import("aigverse.networks");  // ensure network types are registered
