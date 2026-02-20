@@ -2,7 +2,7 @@
 requires = [
     "scikit-build-core>=0.10.1",
     "setuptools-scm>=8.1",
-    "pybind11>=2.13.6",
+    "pybind11>=2.13.6,<3",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -210,7 +210,7 @@ docstring-code-format = true
 build = [
     "scikit-build-core>=0.11.0",
     "setuptools-scm>=8.1",
-    "pybind11>=2.13.6",
+    "pybind11>=2.13.6,<3",
 ]
 adapters = [
     "networkx>=3.0.0",
