@@ -138,6 +138,7 @@ cache-keys = [
     { file = "pyproject.toml" },
     { git = { commit = true, tags = true } },
     { file = "src/**/*.cpp" },
+    { file = "python/**/*.py" },
 ]
 
 [tool.uv.sources]
