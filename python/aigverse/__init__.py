@@ -2,10 +2,26 @@
 
 from __future__ import annotations
 
+import os
+import sys
 from importlib import import_module
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ._version import version as __version__
+
+if sys.platform == "win32":
+
+    def _dll_patch() -> None:
+        package_dir = Path(__file__).resolve().parent
+        candidate_dirs = [package_dir / "bin", package_dir]
+
+        for dll_dir in candidate_dirs:
+            if dll_dir.is_dir():
+                os.add_dll_directory(str(dll_dir))
+
+    _dll_patch()
+    del _dll_patch
 
 if TYPE_CHECKING:
     from . import algorithms, io, networks, utils
