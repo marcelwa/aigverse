@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from aigverse import Aig, equivalence_checking
+from aigverse.algorithms import equivalence_checking
+from aigverse.networks import Aig
 
 
 def test_empty_aigs() -> None:

@@ -9,8 +9,6 @@
 
 from __future__ import annotations
 
-import os
-import subprocess
 import warnings
 from importlib import metadata
 from pathlib import Path
@@ -58,7 +56,6 @@ extensions = [
     "sphinxext.opengraph",
     "sphinx.ext.viewcode",
     "sphinxcontrib.inkscapeconverter",
-    "breathe",
 ]
 
 source_suffix = [".rst", ".md"]
@@ -109,7 +106,7 @@ copybutton_line_continuation_character = "\\"
 
 modindex_common_prefix = ["aigverse."]
 
-autoapi_dirs = ["../src/aigverse"]
+autoapi_dirs = ["../python/aigverse"]
 autoapi_python_use_implicit_namespaces = True
 autoapi_root = "api"
 autoapi_add_toctree_entry = False
@@ -130,15 +127,6 @@ toc_object_entries_show_parents = "hide"
 python_use_unqualified_type_names = True
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
-
-
-breathe_projects = {"aigverse": "_build/doxygen/xml"}
-breathe_default_project = "aigverse"
-
-read_the_docs_build = os.environ.get("READTHEDOCS", None) == "True"
-if read_the_docs_build:
-    subprocess.call("doxygen", shell=True)  # noqa: S602, S607
-    subprocess.call("mkdir api/cpp & breathe-apidoc -o api/cpp -m -f -T _build/doxygen/xml/", shell=True)  # noqa: S602, S607
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = "furo"

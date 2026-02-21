@@ -13,10 +13,10 @@ mystnb:
 
 # And-Inverter Graphs (AIGs)
 
-The central data structure for working with And-Inverter Graphs (AIGs) in aigverse is the {py:class}`~aigverse.Aig` class.
+The central data structure for working with And-Inverter Graphs (AIGs) in aigverse is the {py:class}`~aigverse.networks.Aig` class.
 It enables efficient representation and manipulation of logic circuits in a form that's well-suited for optimization and verification tasks.
 
-The following will demonstrate how to work with the {py:class}`~aigverse.Aig` class in Python.
+The following will demonstrate how to work with the {py:class}`~aigverse.networks.Aig` class in Python.
 
 :::{note}
 AIGs (And-Inverter Graphs) are a compact representation of Boolean functions using only AND gates and inverters (NOT gates). They are widely used in formal verification, hardware design, and optimization tasks.
@@ -27,7 +27,7 @@ AIGs (And-Inverter Graphs) are a compact representation of Boolean functions usi
 The following code snippet demonstrates how to create a simple AIG representing basic logic operations.
 
 ```{code-cell} ipython3
-from aigverse import Aig
+from aigverse.networks import Aig
 
 # Create a new AIG network
 aig = Aig()
@@ -163,12 +163,12 @@ adding additional functionality.
 
 ### Network and Signal Names
 
-The {py:class}`~aigverse.NamedAig` class extends the standard AIG with the ability to assign names to the network itself,
+The {py:class}`~aigverse.networks.NamedAig` class extends the standard AIG with the ability to assign names to the network itself,
 primary inputs, primary outputs, and internal signals. This is particularly useful for debugging, visualization, and
 interfacing with external tools that rely on human-readable signal names.
 
 ```{code-cell} ipython3
-from aigverse import NamedAig
+from aigverse.networks import NamedAig
 
 # Create a new named AIG (or construct from existing AIG)
 named_aig = NamedAig()
@@ -206,22 +206,22 @@ print(f"Has name: {named_aig.has_name(sum)}")
 ```
 
 Named AIGs are automatically created when reading from file formats that contain naming information, e.g., Verilog and
-AIGER. AIGER. See [File I/O](#file-io) for more details.
+AIGER. See [File I/O](#file-io) for more details.
 
 :::{note}
 Names are tied to the specific AIG structure. When you apply optimization algorithms or structural modifications
-(such as {py:func}`~aigverse.cleanup_dangling`), the names will be lost as the return type will be downcast to
-{py:class}`~aigverse.Aig` If preserving names is important, consider reapplying them after optimization.
+(such as {py:meth}`~aigverse.networks.Aig.cleanup_dangling`), the names will be lost as the return type will be downcast to
+{py:class}`~aigverse.networks.Aig`. If preserving names is important, consider reapplying them after optimization.
 :::
 
 ### Depth and Level Computation
 
 The depth of an AIG network represents the longest path from any input to any output, which corresponds to the critical
-path delay in a circuit. You can compute the depth and level of each node using the {py:class}`~aigverse.DepthAig`
+path delay in a circuit. You can compute the depth and level of each node using the {py:class}`~aigverse.networks.DepthAig`
 class.
 
 ```{code-cell} ipython3
-from aigverse import DepthAig
+from aigverse.networks import DepthAig
 
 # Create a sample AIG
 aig = Aig()
@@ -252,10 +252,10 @@ for node in aig.nodes():
 
 ### AIGs with Fanout Information
 
-Fanouts of AIG nodes can be collected using {py:class}`~aigverse.FanoutAig`.
+Fanouts of AIG nodes can be collected using {py:class}`~aigverse.networks.FanoutAig`.
 
 ```{code-cell} ipython3
-from aigverse import FanoutAig
+from aigverse.networks import FanoutAig
 
 # Create a sample AIG
 aig = Aig()
@@ -278,11 +278,11 @@ for node in fanout_aig.fanouts(aig.get_node(n4)):
 
 ### Sequential AIGs
 
-{py:class}`~aigverse.SequentialAig`s extend standard AIGs to include registers, which allow modeling sequential circuits
+{py:class}`~aigverse.networks.SequentialAig`s extend standard AIGs to include registers, which allow modeling sequential circuits
 with memory elements.
 
 ```{code-cell} ipython3
-from aigverse import SequentialAig
+from aigverse.networks import SequentialAig
 
 # Create a sequential AIG
 seq_aig = SequentialAig()
@@ -324,14 +324,7 @@ When creating sequential AIGs, follow these rules:
 AIGs can be read from and written to various file formats.
 
 ```{code-cell} ipython3
-from aigverse import (
-   write_aiger,
-   write_verilog,
-   write_dot,
-   read_aiger_into_aig,
-   read_verilog_into_aig,
-   read_pla_into_aig
-)
+from aigverse.io import write_aiger, write_verilog, write_dot, read_aiger_into_aig, read_verilog_into_aig, read_pla_into_aig
 
 # Create a sample AIG
 aig = Aig()
@@ -377,7 +370,7 @@ list of integers. This is useful for ML pipelines, dataset generation, or export
 fixed-size numeric arrays are required.
 
 ```{code-cell} ipython3
-from aigverse import to_index_list, to_aig, AigIndexList
+from aigverse.utils import to_index_list, to_aig, AigIndexList
 
 # Create a sample AIG
 aig = Aig()

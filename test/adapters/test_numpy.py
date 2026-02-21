@@ -12,7 +12,7 @@ except ImportError:
         allow_module_level=True,
     )
 
-from aigverse import TruthTable
+from aigverse.utils import TruthTable
 
 
 class TestNumpyConversion:

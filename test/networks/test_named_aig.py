@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from aigverse import NamedAig
+from aigverse.networks import NamedAig
 
 
 def test_named_aig() -> None:

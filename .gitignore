@@ -78,7 +78,11 @@ docs/_build/
 docs/**/build
 docs/api/
 docs/example.aig
+docs/example.dot
 docs/example.v
+docs/*.pkl
+docs/aig_pyg_dataset/
+docs/aig_pyg_adj_dataset/
 
 # PyBuilder
 .pybuilder/
@@ -135,10 +139,13 @@ dmypy.json
 cython_debug/
 
 # setuptools_scm
-src/aigverse/_version.py
+python/aigverse/_version.py
 
 # SKBuild cache dir
 _skbuild/
+build-tidy/
+build_log_error.txt
+clang-tidy-warnings.txt
 
 # Any build dirs in the tests
 test/**/build/

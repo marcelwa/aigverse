@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, cast
 
 import networkx as nx
 import numpy as np
 
-from .. import DepthAig, simulate, simulate_nodes, to_edge_list
+from ..algorithms import simulate, simulate_nodes
+from ..networks import AigSignal, DepthAig, NamedAig
+from ..utils import to_edge_list
 
 if TYPE_CHECKING:
-    from .. import Aig
+    from ..networks import Aig
 
 
 def to_networkx(
@@ -86,8 +88,8 @@ def to_networkx(
     edge_type_regular: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([1, 0], dtype=dtype)
     edge_type_inverted: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([0, 1], dtype=dtype)
 
-    # Check if this is a NamedAig by testing for the presence of name methods
-    has_names = hasattr(self, "has_name") and hasattr(self, "get_name")
+    # Check if this is a NamedAig
+    self_named = cast("NamedAig", self) if isinstance(self, NamedAig) else None
 
     # Conditionally compute levels if requested
     if levels:
@@ -117,45 +119,48 @@ def to_networkx(
         g.graph["levels"] = depth_aig.num_levels() + 1  # + 1 for the PO level
     if graph_tts:
         g.graph["function"] = graph_funcs
-    if has_names and hasattr(self, "get_network_name"):
-        network_name = self.get_network_name()
-        if network_name:  # Only add if non-empty
-            g.graph["name"] = network_name
+    if self_named is not None and (network_name := self_named.get_network_name()):
+        g.graph["name"] = network_name
 
-    # Iterate over all nodes in the AIG, plus synthetic PO nodes
-    for node in self.nodes() + [self.po_index(po) + self.size() for po in self.pos()]:
+    # Iterate over all regular nodes in the AIG
+    for node in self.nodes():
         # Prepare node attributes dictionary
+        # node is AigNode
         attrs: dict[str, Any] = {"index": node}
-        is_synthetic_po = node >= self.size()  # type: ignore[operator]
 
-        if is_synthetic_po:
-            type_vec = node_type_po
-            if levels:
-                attrs["level"] = depth_aig.num_levels() + 1
-            if fanouts:
-                attrs["fanouts"] = 0
-            if node_tts:
-                po_index = self.node_to_index(node) - self.size()
-                attrs["function"] = graph_funcs[po_index]
-        else:  # regular node
-            if self.is_constant(node):
-                type_vec = node_type_const
-            elif self.is_pi(node):
-                type_vec = node_type_pi
-            else:  # is gate
-                type_vec = node_type_gate
+        if self.is_constant(node):
+            type_vec = node_type_const
+        elif self.is_pi(node):
+            type_vec = node_type_pi
+        else:  # is gate
+            type_vec = node_type_gate
 
-            if levels:
-                attrs["level"] = depth_aig.level(node)
-            if fanouts:
-                attrs["fanouts"] = self.fanout_size(node)
-            if node_tts:
-                attrs["function"] = node_funcs[self.node_to_index(node)]
+        if levels:
+            attrs["level"] = depth_aig.level(node)
+        if fanouts:
+            attrs["fanouts"] = self.fanout_size(node)
+        if node_tts:
+            attrs["function"] = node_funcs[node]
 
         attrs["type"] = type_vec
-
-        # Add the node to the graph with its attributes
         g.add_node(node, **attrs)
+
+    # Iterate over synthetic PO nodes
+    for po_idx, _po in enumerate(self.pos()):
+        synth_node = po_idx + self.size()
+        attrs = {"index": synth_node}
+
+        # Synthetic PO attributes
+        type_vec = node_type_po
+        if levels:
+            attrs["level"] = depth_aig.num_levels() + 1
+        if fanouts:
+            attrs["fanouts"] = 0
+        if node_tts:
+            attrs["function"] = graph_funcs[po_idx]
+
+        attrs["type"] = type_vec
+        g.add_node(synth_node, **attrs)
 
     # Export the AIG as an edge list
     edges = to_edge_list(self)
@@ -167,24 +172,22 @@ def to_networkx(
         edge_attrs: dict[str, Any] = {"type": edge_type}
 
         # Add signal name if available (edges represent signals)
-        if has_names:
-            from .. import AigSignal
-
-            # src is AigNode | int, convert to int for AigSignal constructor
-            src_int = src if isinstance(src, int) else self.node_to_index(src)
+        if self_named is not None:
+            # source node is an integer (AigNode)
+            src_int = src
             sig = AigSignal(src_int, bool(weight))
-            if self.has_name(sig):  # type: ignore[attr-defined]
-                edge_attrs["name"] = self.get_name(sig)  # type: ignore[attr-defined]
+            if self_named.has_name(sig):
+                edge_attrs["name"] = self_named.get_name(sig)
 
         g.add_edge(src, tgt, **edge_attrs)
 
     # Add PO names as attributes on edges going to synthetic PO nodes
-    if has_names and hasattr(self, "has_output_name") and hasattr(self, "get_output_name"):
-        for po_idx, po in enumerate(self.pos()):
-            if self.has_output_name(po_idx):
-                synthetic_po_node = self.po_index(po) + self.size()
+    if self_named is not None:
+        for po_idx, _ in enumerate(self_named.pos()):
+            if self_named.has_output_name(po_idx):
+                synthetic_po_node = po_idx + self_named.size()
                 # Find all edges going into this synthetic PO node
                 for pred in g.predecessors(synthetic_po_node):  # type: ignore[no-untyped-call]
-                    g.edges[pred, synthetic_po_node]["name"] = self.get_output_name(po_idx)
+                    g.edges[pred, synthetic_po_node]["name"] = self_named.get_output_name(po_idx)
 
     return g

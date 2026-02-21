@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from aigverse import Aig, equivalence_checking, sop_refactoring
+from aigverse.algorithms import equivalence_checking, sop_refactoring
+from aigverse.networks import Aig
 
 
 def test_empty_aigs() -> None:

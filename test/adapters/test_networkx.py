@@ -17,12 +17,12 @@ except ImportError:
     )
 
 
-from aigverse import Aig, DepthAig, FanoutAig, SequentialAig
+from aigverse.networks import Aig, DepthAig, FanoutAig, SequentialAig
 
 
 @pytest.mark.parametrize("dependency", ["networkx", "numpy"])
 def test_missing_dependencies(dependency: str, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test that an ImportWarning is issued if a dependency is missing."""
+    """Test that a UserWarning is issued if a dependency is missing."""
     # Ensure a clean state by unloading the adapters module and removing any existing patch
     monkeypatch.delitem(sys.modules, "aigverse.adapters", raising=False)
     monkeypatch.delattr(Aig, "to_networkx", raising=False)
@@ -30,7 +30,7 @@ def test_missing_dependencies(dependency: str, monkeypatch: pytest.MonkeyPatch) 
     # Simulate that the dependency is not installed by patching 'sys.modules'
     with mock.patch.dict(sys.modules, {dependency: None}):
         # Check that the expected warning is raised when the module is imported
-        with pytest.warns(ImportWarning, match="Key libraries could not be imported"):
+        with pytest.warns(UserWarning, match="Key libraries could not be imported"):
             import aigverse.adapters  # noqa: F401
 
         # The monkey-patch should not have been applied
@@ -223,9 +223,8 @@ class TestNetworkxAdapter:
     @staticmethod
     def test_to_networkx_with_names() -> None:
         """Test that NamedAig names are preserved in NetworkX graph."""
-        from aigverse import NamedAig
+        from aigverse.networks import NamedAig  # Create a NamedAig with names
 
-        # Create a NamedAig with names
         aig = NamedAig()
         aig.set_network_name("test_network")
 
