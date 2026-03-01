@@ -106,5 +106,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: import-debug-${{ matrix.runs-on }}
-          path: import-debug-artifacts/*.log
+          path: "**/import-debug-artifacts/*.log"
           if-no-files-found: warn

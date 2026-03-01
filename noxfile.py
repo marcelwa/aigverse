@@ -153,7 +153,10 @@ def import_debug(session: nox.Session) -> None:
 
     diagnostics_args = list(session.posargs)
     python_tag = str(session.python).replace(".", "-")
-    diagnostics_log = Path("import-debug-artifacts") / f"import-debug-py{python_tag}.log"
+    workspace_root = Path(os.environ.get("GITHUB_WORKSPACE", Path.cwd()))
+    diagnostics_dir = workspace_root / "import-debug-artifacts"
+    diagnostics_dir.mkdir(parents=True, exist_ok=True)
+    diagnostics_log = diagnostics_dir / f"import-debug-py{python_tag}.log"
     diagnostics_args.extend(["--output-file", str(diagnostics_log)])
 
     if sys.platform.startswith("linux") and "--ld-debug" not in diagnostics_args:
