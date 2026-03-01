@@ -192,6 +192,7 @@ isort.required-imports = ["from __future__ import annotations"]
 "test/**" = ["T20", "ANN", "D", "INP001"]
 "docs/**" = ["T20", "ERA001", "INP001"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]
+"tools/import_crash_diagnostics.py" = ["S603", "S607"]
 "*.pyi" = ["D418", "PYI021"]
 "*.ipynb" = [
     "D", # pydocstyle

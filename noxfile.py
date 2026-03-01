@@ -11,6 +11,7 @@ import argparse
 import os
 import shutil
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import nox
@@ -111,6 +112,65 @@ def minimums(session: nox.Session) -> None:
     env = {"UV_PROJECT_ENVIRONMENT": session.virtualenv.location}
     session.run("uv", "tree", "--frozen", env=env)
     session.run("uv", "lock", "--refresh", env=env)
+
+
+@nox.session(reuse_venv=True, python=PYTHON_ALL_VERSIONS)
+def import_debug(session: nox.Session) -> None:
+    """Run import-time crash diagnostics for extension modules."""
+    env = {"UV_PROJECT_ENVIRONMENT": session.virtualenv.location}
+    cmake_args: list[str] = ["-DAIGVERSE_ENABLE_IMPORT_DIAGNOSTICS=ON"]
+
+    if os.environ.get("CI", None) and sys.platform == "win32":
+        cmake_args.append("-T ClangCL")
+
+    env["SKBUILD_CMAKE_ARGS"] = " ".join(cmake_args)
+
+    if shutil.which("cmake") is None and shutil.which("cmake3") is None:
+        session.install("cmake")
+    if shutil.which("ninja") is None:
+        session.install("ninja")
+
+    python_flag = f"--python={session.python}"
+    session.run(
+        "uv",
+        "sync",
+        "--inexact",
+        "--only-group",
+        "build",
+        python_flag,
+        env=env,
+    )
+    session.run(
+        "uv",
+        "sync",
+        "--inexact",
+        "--no-dev",
+        "--no-build-isolation-package",
+        "aigverse",
+        python_flag,
+        env=env,
+    )
+
+    diagnostics_args = list(session.posargs)
+    python_tag = str(session.python).replace(".", "-")
+    diagnostics_log = Path("import-debug-artifacts") / f"import-debug-py{python_tag}.log"
+    diagnostics_args.extend(["--output-file", str(diagnostics_log)])
+
+    if sys.platform.startswith("linux") and "--ld-debug" not in diagnostics_args:
+        diagnostics_args.append("--ld-debug")
+    if sys.platform.startswith("linux") and "--gdb-on-fail" not in diagnostics_args:
+        diagnostics_args.append("--gdb-on-fail")
+
+    session.run(
+        "uv",
+        "run",
+        "--no-sync",
+        python_flag,
+        "python",
+        "tools/import_crash_diagnostics.py",
+        *diagnostics_args,
+        env=env,
+    )
 
 
 @nox.session(reuse_venv=True)

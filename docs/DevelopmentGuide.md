@@ -349,6 +349,7 @@ We define four convenient nox sessions in the `noxfile.py`:
 - `minimums` to run the Python tests with the minimum dependencies
 - `lint` to run the Python code formatting and linting
 - `docs` to build the documentation
+- `import_debug` to collect diagnostics for import-time crashes of C++ extension modules
 
 These are explained in more detail in the following sections.
 
@@ -389,6 +390,35 @@ This ensures that the project can still be built and the tests pass with the min
 ```console
 $ nox -s minimums
 ```
+
+### Debugging Import-Time Crashes
+
+If importing `aigverse` or one of its extension modules fails with a segmentation fault on a specific
+platform or Python version, use the dedicated diagnostics session:
+
+```console
+$ nox -s import_debug-3.12
+```
+
+This session rebuilds the package with the CMake flag
+{code}`-DAIGVERSE_ENABLE_IMPORT_DIAGNOSTICS=ON` and runs the script
+{code}`tools/import_crash_diagnostics.py`.
+The diagnostics include:
+
+- Python runtime and environment information
+- extension module discovery and file locations
+- shared library dependency dumps ({code}`ldd` / {code}`readelf` on Linux, {code}`otool` on macOS, {code}`dumpbin` on Windows when available)
+- isolated import probes per extension module
+- optional GDB backtraces on Linux for failing imports
+
+You can also pass arguments directly to the script through nox, for example:
+
+```console
+$ nox -s import_debug-3.12 -- --modules algorithms utils
+```
+
+The nox session writes a per-Python log file to {code}`import-debug-artifacts/`.
+In CI, these logs are automatically uploaded as a workflow artifact when the test job fails.
 
 ### Python Code Formatting and Linting
 

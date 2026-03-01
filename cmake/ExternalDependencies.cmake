@@ -37,6 +37,33 @@ else()
   message(FATAL_ERROR "Python executable not found")
 endif()
 
+if(AIGVERSE_ENABLE_IMPORT_DIAGNOSTICS)
+  message(STATUS "[aigverse-diagnostics] Python_VERSION=${Python_VERSION}")
+  message(
+    STATUS "[aigverse-diagnostics] Python_EXECUTABLE=${Python_EXECUTABLE}")
+  message(
+    STATUS "[aigverse-diagnostics] Python_INCLUDE_DIRS=${Python_INCLUDE_DIRS}")
+  message(STATUS "[aigverse-diagnostics] Python_LIBRARIES=${Python_LIBRARIES}")
+  message(
+    STATUS "[aigverse-diagnostics] Python_LIBRARY_DIRS=${Python_LIBRARY_DIRS}")
+  message(
+    STATUS
+      "[aigverse-diagnostics] Python_RUNTIME_LIBRARY_DIRS=${Python_RUNTIME_LIBRARY_DIRS}"
+  )
+  message(STATUS "[aigverse-diagnostics] Python_SOABI=${Python_SOABI}")
+  message(STATUS "[aigverse-diagnostics] Python_SOSABI=${Python_SOSABI}")
+  message(
+    STATUS "[aigverse-diagnostics] CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
+  message(
+    STATUS
+      "[aigverse-diagnostics] CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")
+  message(
+    STATUS
+      "[aigverse-diagnostics] CMAKE_CXX_COMPILER_VERSION=${CMAKE_CXX_COMPILER_VERSION}"
+  )
+  message(STATUS "[aigverse-diagnostics] CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+endif()
+
 # First attempt to find an existing pybind11 (quiet; we'll vendor if missing)
 find_package(pybind11 ${AIGVERSE_PYBIND11_VERSION} CONFIG QUIET)
 
