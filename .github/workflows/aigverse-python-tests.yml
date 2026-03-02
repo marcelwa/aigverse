@@ -101,10 +101,22 @@ jobs:
         if: failure()
         run: uvx nox -s import_debug --verbose
 
+      - name: 🔬 Runtime crash diagnostics (on failure)
+        if: failure()
+        run: uvx nox -s runtime_debug --verbose
+
       - name: 📦 Upload import diagnostics (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: import-debug-${{ matrix.runs-on }}
           path: "**/import-debug-artifacts/*.log"
+          if-no-files-found: warn
+
+      - name: 📦 Upload runtime diagnostics (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-debug-${{ matrix.runs-on }}
+          path: "**/runtime-debug-artifacts/*.log"
           if-no-files-found: warn

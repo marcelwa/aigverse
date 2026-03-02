@@ -176,6 +176,66 @@ def import_debug(session: nox.Session) -> None:
     )
 
 
+@nox.session(reuse_venv=True, python=PYTHON_ALL_VERSIONS)
+def runtime_debug(session: nox.Session) -> None:
+    """Run runtime crash diagnostics for extension module call paths."""
+    env = {"UV_PROJECT_ENVIRONMENT": session.virtualenv.location}
+    cmake_args: list[str] = ["-DAIGVERSE_ENABLE_IMPORT_DIAGNOSTICS=ON"]
+
+    if os.environ.get("CI", None) and sys.platform == "win32":
+        cmake_args.append("-T ClangCL")
+
+    env["SKBUILD_CMAKE_ARGS"] = " ".join(cmake_args)
+
+    if shutil.which("cmake") is None and shutil.which("cmake3") is None:
+        session.install("cmake")
+    if shutil.which("ninja") is None:
+        session.install("ninja")
+
+    python_flag = f"--python={session.python}"
+    session.run(
+        "uv",
+        "sync",
+        "--inexact",
+        "--only-group",
+        "build",
+        python_flag,
+        env=env,
+    )
+    session.run(
+        "uv",
+        "sync",
+        "--inexact",
+        "--no-dev",
+        "--no-build-isolation-package",
+        "aigverse",
+        python_flag,
+        env=env,
+    )
+
+    diagnostics_args = list(session.posargs)
+    python_tag = str(session.python).replace(".", "-")
+    workspace_root = Path(os.environ.get("GITHUB_WORKSPACE", Path.cwd()))
+    diagnostics_dir = workspace_root / "runtime-debug-artifacts"
+    diagnostics_dir.mkdir(parents=True, exist_ok=True)
+    diagnostics_log = diagnostics_dir / f"runtime-debug-py{python_tag}.log"
+    diagnostics_args.extend(["--output-file", str(diagnostics_log)])
+
+    if sys.platform.startswith("linux") and "--gdb-on-fail" not in diagnostics_args:
+        diagnostics_args.append("--gdb-on-fail")
+
+    session.run(
+        "uv",
+        "run",
+        "--no-sync",
+        python_flag,
+        "python",
+        "tools/runtime_crash_diagnostics.py",
+        *diagnostics_args,
+        env=env,
+    )
+
+
 @nox.session(reuse_venv=True)
 def docs(session: nox.Session) -> None:
     """Build the docs. Use "--non-interactive" to avoid serving. Pass "-b linkcheck" to check links."""

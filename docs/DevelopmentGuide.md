@@ -343,13 +343,14 @@ $ pip install nox
 :::
 ::::
 
-We define four convenient nox sessions in the `noxfile.py`:
+We define convenient nox sessions in the `noxfile.py`:
 
 - `tests` to run the Python tests
 - `minimums` to run the Python tests with the minimum dependencies
 - `lint` to run the Python code formatting and linting
 - `docs` to build the documentation
 - `import_debug` to collect diagnostics for import-time crashes of C++ extension modules
+- `runtime_debug` to collect diagnostics for runtime crashes in C++ extension calls
 
 These are explained in more detail in the following sections.
 
@@ -418,6 +419,33 @@ $ nox -s import_debug-3.12 -- --modules algorithms utils
 ```
 
 The nox session writes a per-Python log file to {code}`import-debug-artifacts/`.
+In CI, these logs are automatically uploaded as a workflow artifact when the test job fails.
+
+### Debugging Runtime Crashes
+
+If imports succeed but tests still crash with native faults (for example heap corruption or
+segmentation faults while calling into extension functions), use the runtime diagnostics session:
+
+```console
+$ nox -s runtime_debug-3.12
+```
+
+This session rebuilds with diagnostics enabled and executes isolated runtime probes from
+{code}`tools/runtime_crash_diagnostics.py` in subprocesses. The default probes cover:
+
+- AIGER read error paths that should raise {code}`RuntimeError`
+- equivalence checking mismatch error paths that should raise {code}`RuntimeError`
+- basic success-path smoke probes for I/O and equivalence checking
+
+On Linux, failing probes automatically trigger an optional GDB backtrace.
+
+You can run only selected probes by passing script arguments through nox:
+
+```console
+$ nox -s runtime_debug-3.12 -- --probes io_read_aiger_missing alg_equivalence_mismatch
+```
+
+The nox session writes a per-Python log file to {code}`runtime-debug-artifacts/`.
 In CI, these logs are automatically uploaded as a workflow artifact when the test job fails.
 
 ### Python Code Formatting and Linting
