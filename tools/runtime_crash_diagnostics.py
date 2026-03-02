@@ -15,6 +15,9 @@ import shutil
 import signal
 import subprocess
 import sys
+import textwrap
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from operator import itemgetter
 from pathlib import Path
 
 LOGGER = logging.getLogger("aigverse.runtime_debug")
@@ -74,6 +77,98 @@ except Exception as exc:
 else:
     print("NO_EXCEPTION")
     raise SystemExit(3)
+""".strip(),
+    "io_read_aiger_malformed": """
+from pathlib import Path
+import tempfile
+from aigverse.io import read_aiger_into_aig
+
+with tempfile.NamedTemporaryFile("wb", suffix=".aig", delete=False) as handle:
+    handle.write(b"not-an-aiger\\n")
+    fixture = Path(handle.name)
+
+try:
+    read_aiger_into_aig(str(fixture))
+except RuntimeError:
+    print("EXPECTED_RUNTIME_ERROR")
+    raise SystemExit(0)
+except Exception as exc:
+    print(f"UNEXPECTED_EXCEPTION:{type(exc).__name__}:{exc}")
+    raise SystemExit(2)
+else:
+    print("NO_EXCEPTION")
+    raise SystemExit(3)
+finally:
+    fixture.unlink(missing_ok=True)
+""".strip(),
+    "io_read_ascii_aiger_malformed": """
+from pathlib import Path
+import tempfile
+from aigverse.io import read_ascii_aiger_into_aig
+
+with tempfile.NamedTemporaryFile("w", suffix=".aag", delete=False) as handle:
+    handle.write("not-an-aiger\\n")
+    fixture = Path(handle.name)
+
+try:
+    read_ascii_aiger_into_aig(str(fixture))
+except RuntimeError:
+    print("EXPECTED_RUNTIME_ERROR")
+    raise SystemExit(0)
+except Exception as exc:
+    print(f"UNEXPECTED_EXCEPTION:{type(exc).__name__}:{exc}")
+    raise SystemExit(2)
+else:
+    print("NO_EXCEPTION")
+    raise SystemExit(3)
+finally:
+    fixture.unlink(missing_ok=True)
+""".strip(),
+    "io_read_seq_aiger_malformed": """
+from pathlib import Path
+import tempfile
+from aigverse.io import read_aiger_into_sequential_aig
+
+with tempfile.NamedTemporaryFile("wb", suffix=".aig", delete=False) as handle:
+    handle.write(b"not-an-aiger\\n")
+    fixture = Path(handle.name)
+
+try:
+    read_aiger_into_sequential_aig(str(fixture))
+except RuntimeError:
+    print("EXPECTED_RUNTIME_ERROR")
+    raise SystemExit(0)
+except Exception as exc:
+    print(f"UNEXPECTED_EXCEPTION:{type(exc).__name__}:{exc}")
+    raise SystemExit(2)
+else:
+    print("NO_EXCEPTION")
+    raise SystemExit(3)
+finally:
+    fixture.unlink(missing_ok=True)
+""".strip(),
+    "io_read_ascii_seq_aiger_malformed": """
+from pathlib import Path
+import tempfile
+from aigverse.io import read_ascii_aiger_into_sequential_aig
+
+with tempfile.NamedTemporaryFile("w", suffix=".aag", delete=False) as handle:
+    handle.write("not-an-aiger\\n")
+    fixture = Path(handle.name)
+
+try:
+    read_ascii_aiger_into_sequential_aig(str(fixture))
+except RuntimeError:
+    print("EXPECTED_RUNTIME_ERROR")
+    raise SystemExit(0)
+except Exception as exc:
+    print(f"UNEXPECTED_EXCEPTION:{type(exc).__name__}:{exc}")
+    raise SystemExit(2)
+else:
+    print("NO_EXCEPTION")
+    raise SystemExit(3)
+finally:
+    fixture.unlink(missing_ok=True)
 """.strip(),
     "alg_equivalence_mismatch": """
 from aigverse.algorithms import equivalence_checking
@@ -142,6 +237,36 @@ raise SystemExit(0)
 }
 
 
+def _loop_snippet(snippet: str, repeat: int) -> str:
+    escaped_snippet = repr(snippet)
+    return textwrap.dedent(
+        f"""
+        import traceback
+
+        _AIGVERSE_REPEAT = {repeat}
+        _AIGVERSE_SNIPPET = {escaped_snippet}
+
+        for _aigverse_iteration in range(_AIGVERSE_REPEAT):
+            try:
+                exec(_AIGVERSE_SNIPPET, {{"__name__": "__main__"}})
+            except SystemExit as _exc:
+                _code = _exc.code if isinstance(_exc.code, int) else (0 if _exc.code is None else 1)
+                if _code != 0:
+                    print(f"ITERATION_FAIL:{{_aigverse_iteration}}:EXIT:{{_code}}", flush=True)
+                    raise
+                print(f"ITERATION_OK:{{_aigverse_iteration}}", flush=True)
+            except BaseException:
+                print(f"ITERATION_FAIL:{{_aigverse_iteration}}:UNCAUGHT", flush=True)
+                traceback.print_exc()
+                raise
+            else:
+                print(f"ITERATION_OK:{{_aigverse_iteration}}", flush=True)
+
+        print(f"REPEAT_DONE:{{_AIGVERSE_REPEAT}}", flush=True)
+        """
+    ).strip()
+
+
 def _configure_logging(output_file: str | None) -> None:
     handlers: list[logging.Handler] = [logging.StreamHandler(stream=sys.stdout)]
     if output_file:
@@ -171,6 +296,17 @@ def _signal_name(returncode: int) -> str | None:
 
 
 def _run_command(command: list[str], *, timeout: int | None = None) -> tuple[int, str, str, bool]:
+    def _coerce_output(value: object) -> str:
+        if value is None:
+            return ""
+        if isinstance(value, str):
+            return value
+        if isinstance(value, memoryview):
+            return value.tobytes().decode(errors="replace")
+        if isinstance(value, (bytes, bytearray)):
+            return bytes(value).decode(errors="replace")
+        return str(value)
+
     try:
         process = subprocess.run(
             command,
@@ -180,17 +316,27 @@ def _run_command(command: list[str], *, timeout: int | None = None) -> tuple[int
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        stdout = exc.stdout if isinstance(exc.stdout, str) else (exc.stdout or b"").decode(errors="replace")
-        stderr = exc.stderr if isinstance(exc.stderr, str) else (exc.stderr or b"").decode(errors="replace")
+        stdout = _coerce_output(exc.stdout)
+        stderr = _coerce_output(exc.stderr)
         return 124, stdout, stderr, True
 
     return process.returncode, process.stdout, process.stderr, False
 
 
-def _run_probe(name: str, snippet: str, *, timeout: int) -> tuple[int, str, str, bool]:
-    command = [sys.executable, "-X", "faulthandler", "-c", snippet]
+def _run_probe_worker(
+    name: str,
+    snippet: str,
+    *,
+    timeout: int,
+    repeat: int,
+    worker_index: int,
+) -> tuple[int, str, str, bool]:
+    worker_snippet = _loop_snippet(snippet, repeat)
+    command = [sys.executable, "-X", "faulthandler", "-c", worker_snippet]
     LOGGER.info("$ %s", " ".join([*command[:3], "<probe-snippet>"]))
     _print_kv("probe.name", name)
+    _print_kv("probe.worker", worker_index)
+    _print_kv("probe.repeat", repeat)
     return _run_command(command, timeout=timeout)
 
 
@@ -243,6 +389,18 @@ def main() -> int:
         help="Per-probe timeout in seconds.",
     )
     parser.add_argument(
+        "--repeat",
+        type=int,
+        default=1,
+        help="Number of repetitions per worker for each probe.",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="Number of parallel workers per probe.",
+    )
+    parser.add_argument(
         "--gdb-on-fail",
         action="store_true",
         help="Run gdb backtrace on Linux for failing probes when gdb is available.",
@@ -275,36 +433,82 @@ def main() -> int:
             LOGGER.info("- %s", name)
         return 2
 
+    if args.repeat < 1:
+        LOGGER.info("--repeat must be >= 1")
+        return 2
+    if args.workers < 1:
+        LOGGER.info("--workers must be >= 1")
+        return 2
+
+    _print_kv("repeat", args.repeat)
+    _print_kv("workers", args.workers)
+
     failures: list[str] = []
     for probe_name in args.probes:
         _print_header(f"Probe {probe_name}")
-        returncode, stdout, stderr, timed_out = _run_probe(probe_name, PROBES[probe_name], timeout=args.timeout)
+        worker_results: list[tuple[int, int, str, str, bool]] = []
+        if args.workers == 1:
+            returncode, stdout, stderr, timed_out = _run_probe_worker(
+                probe_name,
+                PROBES[probe_name],
+                timeout=args.timeout,
+                repeat=args.repeat,
+                worker_index=0,
+            )
+            worker_results.append((0, returncode, stdout, stderr, timed_out))
+        else:
+            with ThreadPoolExecutor(max_workers=args.workers) as executor:
+                futures = {
+                    executor.submit(
+                        _run_probe_worker,
+                        probe_name,
+                        PROBES[probe_name],
+                        timeout=args.timeout,
+                        repeat=args.repeat,
+                        worker_index=worker_index,
+                    ): worker_index
+                    for worker_index in range(args.workers)
+                }
+                for future in as_completed(futures):
+                    worker_index = futures[future]
+                    returncode, stdout, stderr, timed_out = future.result()
+                    worker_results.append((worker_index, returncode, stdout, stderr, timed_out))
 
-        _print_kv("probe.returncode", returncode)
-        if timed_out:
-            _print_kv("probe.timeout", True)
+        worker_results.sort(key=itemgetter(0))
+        for worker_index, returncode, stdout, stderr, timed_out in worker_results:
+            _print_kv("probe.worker", worker_index)
+            _print_kv("probe.returncode", returncode)
+            if timed_out:
+                _print_kv("probe.timeout", True)
 
-        signal_name = _signal_name(returncode)
-        if signal_name is not None:
-            _print_kv("probe.signal", signal_name)
+            signal_name = _signal_name(returncode)
+            if signal_name is not None:
+                _print_kv("probe.signal", signal_name)
 
-        LOGGER.info("--- probe stdout ---")
-        LOGGER.info("%s", stdout.strip() or "<no stdout>")
-        LOGGER.info("--- probe stderr ---")
-        LOGGER.info("%s", stderr.strip() or "<no stderr>")
+            LOGGER.info("--- probe stdout ---")
+            LOGGER.info("%s", stdout.strip() or "<no stdout>")
+            LOGGER.info("--- probe stderr ---")
+            LOGGER.info("%s", stderr.strip() or "<no stderr>")
 
-        if returncode != 0:
-            failures.append(probe_name)
-            if args.gdb_on_fail and platform.system() == "Linux" and shutil.which("gdb") is not None and not timed_out:
-                _print_header(f"gdb backtrace for {probe_name}")
-                gdb_rc, gdb_out, gdb_err, gdb_timeout = _run_gdb_trace(probe_name, PROBES[probe_name])
-                _print_kv("gdb.returncode", gdb_rc)
-                if gdb_timeout:
-                    _print_kv("gdb.timeout", True)
-                LOGGER.info("--- gdb stdout ---")
-                LOGGER.info("%s", gdb_out.strip() or "<no stdout>")
-                LOGGER.info("--- gdb stderr ---")
-                LOGGER.info("%s", gdb_err.strip() or "<no stderr>")
+            if returncode != 0:
+                failure_name = f"{probe_name}[worker={worker_index}]"
+                failures.append(failure_name)
+                if (
+                    args.gdb_on_fail
+                    and platform.system() == "Linux"
+                    and shutil.which("gdb") is not None
+                    and not timed_out
+                ):
+                    _print_header(f"gdb backtrace for {failure_name}")
+                    gdb_snippet = _loop_snippet(PROBES[probe_name], args.repeat)
+                    gdb_rc, gdb_out, gdb_err, gdb_timeout = _run_gdb_trace(failure_name, gdb_snippet)
+                    _print_kv("gdb.returncode", gdb_rc)
+                    if gdb_timeout:
+                        _print_kv("gdb.timeout", True)
+                    LOGGER.info("--- gdb stdout ---")
+                    LOGGER.info("%s", gdb_out.strip() or "<no stdout>")
+                    LOGGER.info("--- gdb stderr ---")
+                    LOGGER.info("%s", gdb_err.strip() or "<no stderr>")
 
     _print_header("Summary")
     if not failures:

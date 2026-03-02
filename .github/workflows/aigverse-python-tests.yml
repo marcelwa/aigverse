@@ -105,6 +105,10 @@ jobs:
         if: failure()
         run: uvx nox -s runtime_debug --verbose
 
+      - name: 🧪 Runtime stress diagnostics seq+par (on failure)
+        if: failure() && (matrix.runs-on == 'ubuntu-24.04-arm' || matrix.runs-on == 'windows-2025')
+        run: uvx nox -s runtime_stress --verbose
+
       - name: 📦 Upload import diagnostics (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
