@@ -349,8 +349,6 @@ We define convenient nox sessions in the `noxfile.py`:
 - `minimums` to run the Python tests with the minimum dependencies
 - `lint` to run the Python code formatting and linting
 - `docs` to build the documentation
-- `import_debug` to collect diagnostics for import-time crashes of C++ extension modules
-- `runtime_debug` to collect diagnostics for runtime crashes in C++ extension calls
 
 These are explained in more detail in the following sections.
 
@@ -390,66 +388,6 @@ This ensures that the project can still be built and the tests pass with the min
 
 ```console
 $ nox -s minimums
-```
-
-### Debugging Import-Time Crashes
-
-If importing `aigverse` or one of its extension modules fails with a segmentation fault on a specific
-platform or Python version, use the dedicated diagnostics session:
-
-```console
-$ nox -s import_debug-3.12
-```
-
-This session rebuilds the package with the CMake flag
-{code}`-DAIGVERSE_ENABLE_IMPORT_DIAGNOSTICS=ON` and runs the script
-{code}`tools/import_crash_diagnostics.py`.
-The diagnostics include:
-
-- Python runtime and environment information
-- extension module discovery and file locations
-- shared library dependency dumps ({code}`ldd` / {code}`readelf` on Linux, {code}`otool` on macOS, {code}`dumpbin` on Windows when available)
-- isolated import probes per extension module
-- optional GDB backtraces on Linux for failing imports
-
-You can also pass arguments directly to the script through nox, for example:
-
-```console
-$ nox -s import_debug-3.12 -- --modules algorithms utils
-```
-
-The nox session writes a per-Python log file to {code}`import-debug-artifacts/`.
-In CI, these logs are automatically uploaded as a workflow artifact when the test job fails.
-
-### Debugging Runtime Crashes
-
-If imports succeed but tests still crash with native faults (for example heap corruption or
-segmentation faults while calling into extension functions), use the runtime diagnostics session:
-
-```console
-$ nox -s runtime_debug-3.12
-```
-
-This session rebuilds with diagnostics enabled and executes isolated runtime probes from
-{code}`tools/runtime_crash_diagnostics.py` in subprocesses. The default probes cover:
-
-- AIGER read error paths that should raise {code}`RuntimeError`
-- malformed AIGER payloads generated on the fly (no fixture files required)
-- equivalence checking mismatch error paths that should raise {code}`RuntimeError`
-- basic success-path smoke probes for I/O and equivalence checking
-
-On Linux, failing probes automatically trigger an optional GDB backtrace.
-
-You can run only selected probes by passing script arguments through nox:
-
-```console
-$ nox -s runtime_debug-3.12 -- --probes io_read_aiger_missing alg_equivalence_mismatch
-```
-
-You can also enable repetition and parallel workers to reproduce flaky crashes:
-
-```console
-$ nox -s runtime_debug-3.12 -- --repeat 200 --workers 4 --probes io_read_aiger_malformed
 ```
 
 ### Python Code Formatting and Linting

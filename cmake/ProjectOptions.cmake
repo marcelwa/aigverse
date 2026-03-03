@@ -36,9 +36,6 @@ macro(aigverse_setup_options)
   option(AIGVERSE_ENABLE_UNITY_BUILD "Enable unity builds" OFF)
   option(AIGVERSE_ENABLE_PCH "Enable precompiled headers" OFF)
   option(AIGVERSE_ENABLE_CACHE "Enable ccache" ON)
-  option(AIGVERSE_ENABLE_IMPORT_DIAGNOSTICS
-         "Enable verbose diagnostics for Python import-time crash debugging"
-         OFF)
 
   if(NOT PROJECT_IS_TOP_LEVEL)
     mark_as_advanced(
@@ -52,8 +49,7 @@ macro(aigverse_setup_options)
       AIGVERSE_ENABLE_UNITY_BUILD
       AIGVERSE_ENABLE_COVERAGE
       AIGVERSE_ENABLE_PCH
-      AIGVERSE_ENABLE_CACHE
-      AIGVERSE_ENABLE_IMPORT_DIAGNOSTICS)
+      AIGVERSE_ENABLE_CACHE)
   endif()
 
 endmacro()

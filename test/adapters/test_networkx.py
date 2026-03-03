@@ -223,7 +223,7 @@ class TestNetworkxAdapter:
     @staticmethod
     def test_to_networkx_with_names() -> None:
         """Test that NamedAig names are preserved in NetworkX graph."""
-        from aigverse.networks import NamedAig  # Create a NamedAig with names
+        from aigverse.networks import NamedAig
 
         aig = NamedAig()
         aig.set_network_name("test_network")
