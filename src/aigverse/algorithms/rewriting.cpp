@@ -8,6 +8,7 @@
 #include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
 #include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)
 
 #include <cstdint>
 #include <optional>
