@@ -41,7 +41,8 @@ void refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
                 params.use_dont_cares        = use_dont_cares;
                 params.verbose               = verbose;
 
-                mockturtle::sop_factoring<Ntk> sop_resyn_engine{};
+                mockturtle::sop_factoring_params sop_params{};
+                mockturtle::sop_factoring<Ntk>   sop_resyn_engine{sop_params};
 
                 mockturtle::refactoring(ntk, sop_resyn_engine, params);
 
