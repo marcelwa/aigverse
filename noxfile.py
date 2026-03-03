@@ -99,11 +99,6 @@ def _run_tests(
     )
     if extra_command:
         session.run(*extra_command, env=env)
-    # On Windows CI, disable xdist to run tests sequentially for better
-    # crash diagnostics (parallel workers mask native crash traces).
-    win_ci_args: tuple[str, ...] = ()
-    if os.environ.get("CI", None) and sys.platform == "win32":
-        win_ci_args = ("--numprocesses=0", "-s", "-v")
 
     session.run(
         "uv",
@@ -112,7 +107,6 @@ def _run_tests(
         python_flag,
         *install_args,
         "pytest",
-        *win_ci_args,
         *pytest_run_args,
         *session.posargs,
         env=env,
