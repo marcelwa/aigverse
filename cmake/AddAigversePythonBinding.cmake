@@ -4,6 +4,12 @@ function(add_aigverse_python_binding target_name)
 
   pybind11_add_module(${target_name} THIN_LTO ${SOURCES})
 
+  # Disable global IPO on extension modules: cross-module LTO causes heap
+  # corruption on Windows when shared_ptr-based types are passed between
+  # separate .pyd modules. THIN_LTO (above) provides within-module LTO.
+  set_target_properties(${target_name} PROPERTIES INTERPROCEDURAL_OPTIMIZATION
+                                                  OFF)
+
   if(ARG_MODULE_NAME)
     set_target_properties(${target_name} PROPERTIES OUTPUT_NAME
                                                     ${ARG_MODULE_NAME})
