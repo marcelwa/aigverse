@@ -119,24 +119,6 @@ def test_negative_divisor_substitution() -> None:
     assert equivalence_checking(aig, aig_before)
 
 
-# Remove once the CI passes reliably
-def test_negative_divisor_substitution_repeated() -> None:
-    for _ in range(128):
-        aig = Aig()
-        x0 = aig.create_pi()
-        x1 = aig.create_pi()
-        n0 = aig.create_and(~x0, ~x1)
-        n1 = aig.create_and(x0, ~n0)
-        aig.create_po(n1)
-
-        aig_before = aig.clone()
-
-        sop_refactoring(aig)
-
-        assert aig.size() == aig_before.size() - 2
-        assert equivalence_checking(aig, aig_before)
-
-
 def test_parameters() -> None:
     aig = Aig()
 
@@ -157,6 +139,32 @@ def test_parameters() -> None:
         use_reconvergence_cut=False,
         use_dont_cares=True,
         verbose=True,
+        use_quick_factoring=False,
+        try_both_polarities=False,
+        consider_inverter_cost=True,
     )
 
     assert equivalence_checking(aig, aig2)
+
+
+def test_sop_factoring_parameters() -> None:
+    aig = Aig()
+
+    x0 = aig.create_pi()
+    x1 = aig.create_pi()
+
+    n0 = aig.create_and(~x0, ~x1)
+    n1 = aig.create_and(x0, ~n0)
+
+    aig.create_po(n1)
+
+    aig_before = aig.clone()
+
+    sop_refactoring(
+        aig,
+        use_quick_factoring=True,
+        try_both_polarities=True,
+        consider_inverter_cost=False,
+    )
+
+    assert equivalence_checking(aig, aig_before)

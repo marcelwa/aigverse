@@ -30,7 +30,8 @@ void refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
         "sop_refactoring",
         [](Ntk& ntk, const uint32_t max_pis = 6, const bool allow_zero_gain = false,
            const bool use_reconvergence_cut = false, const bool use_dont_cares = false,
-           const bool verbose = false) -> void
+           const bool use_quick_factoring = true, const bool try_both_polarities = true,
+           const bool consider_inverter_cost = false, const bool verbose = false) -> void
         {
             try
             {
@@ -42,7 +43,10 @@ void refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
                 params.verbose               = verbose;
 
                 mockturtle::sop_factoring_params sop_params{};
-                mockturtle::sop_factoring<Ntk>   sop_resyn_engine{sop_params};
+                sop_params.use_quick_factoring    = use_quick_factoring;
+                sop_params.try_both_polarities    = try_both_polarities;
+                sop_params.consider_inverter_cost = consider_inverter_cost;
+                mockturtle::sop_factoring<Ntk> sop_resyn_engine{sop_params};
 
                 mockturtle::refactoring(ntk, sop_resyn_engine, params);
 
@@ -61,7 +65,9 @@ void refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
             }
         },
         py::arg("ntk"), py::arg("max_pis") = 6, py::arg("allow_zero_gain") = false,
-        py::arg("use_reconvergence_cut") = false, py::arg("use_dont_cares") = false, py::arg("verbose") = false,
+        py::arg("use_reconvergence_cut") = false, py::arg("use_dont_cares") = false,
+        py::arg("use_quick_factoring") = true, py::arg("try_both_polarities") = true,
+        py::arg("consider_inverter_cost") = false, py::arg("verbose") = false,
         pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
