@@ -243,21 +243,24 @@ class TestNetworkxAdapter:
         assert "name" in nx_graph.graph
         assert nx_graph.graph["name"] == "test_network"
 
-        # Check edge (signal) names
-        edge_names = {}
+        # Check edge signal names
+        signal_names = {}
+        output_names = {}
         for src, tgt, data in nx_graph.edges(data=True):
-            if "name" in data:
-                edge_names[src, tgt] = data["name"]
+            if "signal_name" in data:
+                signal_names[src, tgt] = data["signal_name"]
+            if "output_name" in data:
+                output_names[src, tgt] = data["output_name"]
 
         # Verify that we have signal names on edges
         # Signals are edges, so we should find names on edges coming from nodes
-        assert len(edge_names) > 0, "Should have at least some named signals"
+        assert len(signal_names) > 0, "Should have at least some named signals"
 
         # Check for PO names on edges going to synthetic PO nodes
-        # They should also use "name" attribute
-        edge_names_list = list(edge_names.values())
-        assert "output_a" in edge_names_list
-        assert "output_and" in edge_names_list
+        # They should use "output_name" attribute
+        output_names_list = list(output_names.values())
+        assert "output_a" in output_names_list
+        assert "output_and" in output_names_list
 
     @staticmethod
     def test_to_networkx_without_names(simple_aig: Aig) -> None:

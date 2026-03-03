@@ -15,6 +15,9 @@ def sop_refactoring(
     allow_zero_gain: bool = False,
     use_reconvergence_cut: bool = False,
     use_dont_cares: bool = False,
+    use_quick_factoring: bool = True,
+    try_both_polarities: bool = True,
+    consider_inverter_cost: bool = False,
     verbose: bool = False,
 ) -> None: ...
 def aig_resubstitution(

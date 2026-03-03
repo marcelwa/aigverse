@@ -14,7 +14,6 @@ you are upgrading from an older version, you will need to update your imports.
 - **IO**: Reading/Writing functions are now in `aigverse.io`.
 - **Utils**: `TruthTable`, `AigEdge`, `AigEdgeList`, `AigIndexList` and helper functions like `to_edge_list`,
   `to_index_list`, `to_aig` are now in `aigverse.utils`.
-- **Cleanup**: `cleanup_dangling` is exposed as the method `aigverse.networks.Aig.cleanup_dangling`.
 
 ### Code Examples
 

@@ -173,21 +173,21 @@ def to_networkx(
 
         # Add signal name if available (edges represent signals)
         if self_named is not None:
-            # source node is an integer (AigNode)
-            src_int = src
-            sig = AigSignal(src_int, bool(weight))
+            sig = AigSignal(src, bool(weight))
             if self_named.has_name(sig):
-                edge_attrs["name"] = self_named.get_name(sig)
+                edge_attrs["signal_name"] = self_named.get_name(sig)
 
         g.add_edge(src, tgt, **edge_attrs)
 
     # Add PO names as attributes on edges going to synthetic PO nodes
     if self_named is not None:
         for po_idx, _ in enumerate(self_named.pos()):
-            if self_named.has_output_name(po_idx):
-                synthetic_po_node = po_idx + self_named.size()
-                # Find all edges going into this synthetic PO node
-                for pred in g.predecessors(synthetic_po_node):  # type: ignore[no-untyped-call]
-                    g.edges[pred, synthetic_po_node]["name"] = self_named.get_output_name(po_idx)
+            synth_node = po_idx + self_named.size()
+            po_output_name = self_named.get_output_name(po_idx) if self_named.has_output_name(po_idx) else None
+
+            # Find all edges going into this synthetic PO node
+            for pred in g.predecessors(synth_node):  # type: ignore[no-untyped-call]
+                if po_output_name:
+                    g.edges[pred, synth_node]["output_name"] = po_output_name
 
     return g
