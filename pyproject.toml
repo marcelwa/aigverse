@@ -85,8 +85,6 @@ mode = "git"
 build-backend = "auto"
 
 
-[tool.scikit-build.cmake.define]
-AIGVERSE_ENABLE_PCH = "ON"
 
 [[tool.scikit-build.overrides]]
 if.abi-flags = "t"

@@ -25,7 +25,6 @@ macro(aigverse_setup_options)
   option(AIGVERSE_ENABLE_SANITIZER_UNDEFINED "Enable undefined sanitizer" OFF)
   option(AIGVERSE_ENABLE_SANITIZER_THREAD "Enable thread sanitizer" OFF)
   option(AIGVERSE_ENABLE_SANITIZER_MEMORY "Enable memory sanitizer" OFF)
-  option(AIGVERSE_ENABLE_PCH "Enable precompiled headers" OFF)
   option(AIGVERSE_ENABLE_CACHE "Enable ccache" ON)
 endmacro()
 
@@ -45,11 +44,6 @@ macro(aigverse_apply_options)
     aigverse_options ${AIGVERSE_ENABLE_SANITIZER_ADDRESS}
     ${AIGVERSE_ENABLE_SANITIZER_LEAK} ${AIGVERSE_ENABLE_SANITIZER_UNDEFINED}
     ${AIGVERSE_ENABLE_SANITIZER_THREAD} ${AIGVERSE_ENABLE_SANITIZER_MEMORY})
-
-  if(AIGVERSE_ENABLE_PCH)
-    target_precompile_headers(aigverse_options INTERFACE <vector> <string>
-                              <utility>)
-  endif()
 
   if(AIGVERSE_ENABLE_CACHE)
     include(cmake/Cache.cmake)

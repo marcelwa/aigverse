@@ -24,10 +24,6 @@ function(add_aigverse_python_binding target_name)
   target_compile_definitions(${target_name}
                              PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
 
-  target_precompile_headers(
-    ${target_name} PRIVATE
-    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/aigverse/pch.hpp>")
-
   if(MSVC)
     target_compile_options(${target_name} PRIVATE /utf-8)
     target_compile_definitions(${target_name} PRIVATE UNICODE _UNICODE)
