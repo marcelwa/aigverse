@@ -8,8 +8,7 @@ import networkx as nx
 import numpy as np
 
 from ..algorithms import simulate, simulate_nodes
-from ..networks import AigSignal, DepthAig, NamedAig
-from ..utils import to_edge_list
+from ..networks import AigSignal, DepthAig, NamedAig, to_edge_list
 
 if TYPE_CHECKING:
     from ..networks import Aig

@@ -9,11 +9,11 @@ you are upgrading from an older version, you will need to update your imports.
 
 ### Key Changes
 
-- **Networks**: `Aig`, `SequentialAig`, `NamedAig`, etc. are now in `aigverse.networks`.
+- **Networks**: `Aig`, `SequentialAig`, `NamedAig`, etc., `AigEdge`, `AigEdgeList`, `AigIndexList` and helper
+  functions like `to_edge_list`, `to_index_list`, `to_aig` are now in `aigverse.networks`.
 - **Algorithms**: `balancing`, `equivalence_checking`, `simulate`, etc. are now in `aigverse.algorithms`.
 - **IO**: Reading/Writing functions are now in `aigverse.io`.
-- **Utils**: `TruthTable`, `AigEdge`, `AigEdgeList`, `AigIndexList` and helper functions like `to_edge_list`,
-  `to_index_list`, `to_aig` are now in `aigverse.utils`.
+- **Utils**: `TruthTable` and its free operation functions are now in `aigverse.utils`.
 
 ### Code Examples
 

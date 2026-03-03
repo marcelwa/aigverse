@@ -370,7 +370,7 @@ list of integers. This is useful for ML pipelines, dataset generation, or export
 fixed-size numeric arrays are required.
 
 ```{code-cell} ipython3
-from aigverse.utils import to_index_list, to_aig, AigIndexList
+from aigverse.networks import to_index_list, to_aig, AigIndexList
 
 # Create a sample AIG
 aig = Aig()

@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 
 from aigverse.algorithms import equivalence_checking, simulate
-from aigverse.networks import Aig
-from aigverse.utils import AigIndexList, TruthTable, to_aig, to_index_list
+from aigverse.networks import Aig, AigIndexList, to_aig, to_index_list
+from aigverse.utils import TruthTable
 
 
 def test_decode_empty_index_list_into_aig() -> None:
