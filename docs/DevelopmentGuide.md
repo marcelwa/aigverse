@@ -351,7 +351,6 @@ We define convenient nox sessions in the `noxfile.py`:
 - `docs` to build the documentation
 - `import_debug` to collect diagnostics for import-time crashes of C++ extension modules
 - `runtime_debug` to collect diagnostics for runtime crashes in C++ extension calls
-- `runtime_stress` to run runtime crash probes sequentially and in parallel on the same runner
 
 These are explained in more detail in the following sections.
 
@@ -452,22 +451,6 @@ You can also enable repetition and parallel workers to reproduce flaky crashes:
 ```console
 $ nox -s runtime_debug-3.12 -- --repeat 200 --workers 4 --probes io_read_aiger_malformed
 ```
-
-For convenience, we provide a dedicated stress session that applies aggressive defaults
-({code}`--repeat 300`) to the known problematic probes and runs two passes on the
-same CI runner:
-
-- sequential baseline ({code}`--workers 1`)
-- parallel stress ({code}`--workers 4`)
-
-```console
-$ nox -s runtime_stress
-```
-
-This makes the sequential-vs-parallel comparison explicit in one CI invocation.
-
-The nox session writes a per-Python log file to {code}`runtime-debug-artifacts/`.
-In CI, these logs are automatically uploaded as a workflow artifact when the test job fails.
 
 ### Python Code Formatting and Linting
 
