@@ -7,7 +7,7 @@ cmake_dependent_option(
   AIGVERSE_VENDOR_PYBIND11 "Fetch pybind11 automatically if not found" ON
   "NOT SKBUILD" OFF)
 set(AIGVERSE_PYBIND11_VERSION
-    2.13.6
+    3.0.2
     CACHE STRING "Desired pybind11 version")
 
 if(NOT SKBUILD)
