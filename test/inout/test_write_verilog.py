@@ -3,7 +3,8 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from aigverse import Aig, read_verilog_into_aig, write_verilog
+from aigverse.io import read_verilog_into_aig, write_verilog
+from aigverse.networks import Aig
 
 # Get the temporary directory as a Path object
 temp_dir = Path(tempfile.gettempdir())

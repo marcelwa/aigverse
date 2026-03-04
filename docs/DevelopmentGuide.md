@@ -343,7 +343,7 @@ $ pip install nox
 :::
 ::::
 
-We define four convenient nox sessions in the `noxfile.py`:
+We define convenient nox sessions in the `noxfile.py`:
 
 - `tests` to run the Python tests
 - `minimums` to run the Python tests with the minimum dependencies

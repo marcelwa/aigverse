@@ -4,7 +4,8 @@ from typing import Any
 
 import pytest
 
-from aigverse import Aig, AigSignal, equivalence_checking
+from aigverse.algorithms import equivalence_checking
+from aigverse.networks import Aig, AigSignal
 
 
 def test_aig_constants() -> None:

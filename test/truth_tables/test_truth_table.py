@@ -4,7 +4,7 @@ import copy
 
 import pytest
 
-from aigverse import TruthTable, cofactor0, cofactor1, ternary_majority
+from aigverse.utils import TruthTable, cofactor0, cofactor1, ternary_majority
 
 
 def test_create() -> None:

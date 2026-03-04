@@ -12,7 +12,7 @@ endif()
 
 # strongly encouraged to enable this globally to avoid conflicts between
 # -Wpedantic being enabled and -std=c++20 and -std=gnu++20 for example when
-# compiling with PCH enabled
+# compiling with strict standard modes
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Set the project name and description
@@ -28,16 +28,9 @@ include(cmake/ProjectOptions.cmake)
 include(cmake/ExternalDependencies.cmake)
 
 aigverse_setup_options()
-aigverse_global_options()
-aigverse_local_options()
+aigverse_apply_options()
 
-# don't know if this should be set globally from here or not...
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-
-set(GIT_SHA
-    "Unknown"
-    CACHE STRING "SHA this build was generated from")
-string(SUBSTRING "${GIT_SHA}" 0 8 GIT_SHORT_SHA)
 
 target_compile_features(aigverse_options
                         INTERFACE cxx_std_${CMAKE_CXX_STANDARD})

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from aigverse import Aig, AigIndexList, TruthTable, equivalence_checking, simulate, to_aig, to_index_list
+from aigverse.algorithms import equivalence_checking, simulate
+from aigverse.networks import Aig, AigIndexList, to_aig, to_index_list
+from aigverse.utils import TruthTable
 
 
 def test_decode_empty_index_list_into_aig() -> None:

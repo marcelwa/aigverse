@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from aigverse import Aig, aig_resubstitution, equivalence_checking
+from aigverse.algorithms import aig_resubstitution, equivalence_checking
+from aigverse.networks import Aig
 
 
 def test_empty_aigs() -> None:

@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from aigverse import AigSignal, read_verilog_into_aig
+from aigverse.io import read_verilog_into_aig
+from aigverse.networks import AigSignal
 
 dir_path = Path(os.path.realpath(__file__)).parent
 

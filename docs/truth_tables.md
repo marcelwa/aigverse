@@ -24,7 +24,7 @@ Truth tables provide a complete specification of a Boolean function by listing a
 Truth tables can be created in several ways:
 
 ```{code-cell} ipython3
-from aigverse import TruthTable
+from aigverse.utils import TruthTable
 
 # Initialize a truth table with 3 variables (2^3 = 8 entries)
 tt = TruthTable(3)

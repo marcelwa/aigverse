@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from aigverse import FanoutAig
+from aigverse.networks import FanoutAig
 
 
 def test_fanout_aig() -> None:

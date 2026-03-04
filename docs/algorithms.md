@@ -21,10 +21,11 @@ Simulation algorithms allow you to evaluate the outputs of a logic network for a
 
 ### Functional Simulation
 
-For simulating AIGs with truth tables, the {py:func}`~aigverse.simulate` and {py:func}`~aigverse.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes of an AIG.
+For simulating AIGs with truth tables, the {py:func}`~aigverse.algorithms.simulate` and {py:func}`~aigverse.algorithms.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes of an AIG.
 
 ```{code-cell} ipython3
-from aigverse import Aig, simulate, simulate_nodes
+from aigverse.networks import Aig
+from aigverse.algorithms import simulate, simulate_nodes
 
 # Create a sample AIG
 aig = Aig()
@@ -65,7 +66,7 @@ The typical optimization workflow involves:
 3. Verifying correctness through equivalence checking
 
 ```{code-cell} ipython3
-from aigverse import read_aiger_into_aig
+from aigverse.io import read_aiger_into_aig
 
 # Load the i10 benchmark circuit - a real-world example
 aig = read_aiger_into_aig("examples/i10.aig")
@@ -81,7 +82,7 @@ print(f"  AND gates: {aig.num_gates()}")
 Resubstitution identifies portions of logic that can be expressed using existing signals in the network. This technique is particularly effective at identifying and eliminating redundant logic.
 
 ```{code-cell} ipython3
-from aigverse import aig_resubstitution
+from aigverse.algorithms import aig_resubstitution
 
 # Clone the AIG for comparison
 aig_resub = aig.clone()
@@ -99,7 +100,7 @@ print(f"Reduction: {aig.num_gates() - aig_resub.num_gates()} gates ({(aig.num_ga
 SOP (Sum of Products) refactoring collapses parts of the AIG into truth tables, then re-synthesizes those portions using Sum-of-Products representations. This can find more efficient implementations for complex logic functions.
 
 ```{code-cell} ipython3
-from aigverse import sop_refactoring
+from aigverse.algorithms import sop_refactoring
 
 # Clone the AIG for comparison
 aig_refactor = aig.clone()
@@ -117,7 +118,7 @@ print(f"Reduction: {aig.num_gates() - aig_refactor.num_gates()} gates ({(aig.num
 Cut rewriting identifies small subgraphs (cuts) in the AIG and replaces them with pre-computed optimal implementations from a library. This technique leverages NPN-equivalence classes to find the best possible implementation for each cut.
 
 ```{code-cell} ipython3
-from aigverse import aig_cut_rewriting
+from aigverse.algorithms import aig_cut_rewriting
 
 # Clone the AIG for comparison
 aig_rewrite = aig.clone()
@@ -135,7 +136,8 @@ print(f"Reduction: {aig.num_gates() - aig_rewrite.num_gates()} gates ({(aig.num_
 Balancing performs (E)SOP factoring to minimize the number of levels in the AIG.
 
 ```{code-cell} ipython3
-from aigverse import balancing, DepthAig
+from aigverse.algorithms import balancing
+from aigverse.networks import DepthAig
 
 # Clone the AIG for comparison
 aig_balance = aig.clone()
@@ -180,7 +182,7 @@ print(f"- Total reduction: {aig.num_gates() - aig_opt.num_gates()} gates ({(aig.
 Equivalence checking algorithms verify that two logic networks implement the same function, which is especially important after performing optimizations.
 
 ```{code-cell} ipython3
-from aigverse import equivalence_checking
+from aigverse.algorithms import equivalence_checking
 
 # Verify that our optimized circuit from the previous section maintains functional equivalence
 are_equivalent = equivalence_checking(aig, aig_opt)

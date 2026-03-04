@@ -129,7 +129,7 @@ template void ntk_edge_list<aigverse::aig>(pybind11::module_& m, const std::stri
 
 }  // namespace detail
 
-void bind_to_edge_list(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void bind_ntk_edge_list(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::ntk_edge_list<aigverse::aig>(m, "Aig");
 }

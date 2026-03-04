@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from aigverse import Aig, DepthAig, TruthTable, simulate, simulate_nodes
+from aigverse.algorithms import simulate, simulate_nodes
+from aigverse.networks import Aig, DepthAig
+from aigverse.utils import TruthTable
 
 
 def test_empty_aig() -> None:
@@ -130,8 +132,6 @@ def test_maj_aig() -> None:
     majority = TruthTable(3)
     majority.create_majority()
 
-    print(f"MAJ: {majority.to_binary()}")
-
     assert len(sim) == 1
     assert sim[0] == majority
 
@@ -143,9 +143,6 @@ def test_maj_aig() -> None:
     id_tt_b.create_from_binary_string("11001100")
     id_tt_c = TruthTable(3)
     id_tt_c.create_from_binary_string("11110000")
-
-    for i in range(len(n_map)):
-        print(f"Node {i}: {n_map[i].to_binary()}")
 
     assert len(n_map) == 8
     assert n_map[0].is_const0()

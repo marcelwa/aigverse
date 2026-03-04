@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from aigverse import DepthAig, balancing
+from aigverse.algorithms import balancing
+from aigverse.networks import DepthAig
 
 
 def test_balancing_on_simple_balanced_aig() -> None:

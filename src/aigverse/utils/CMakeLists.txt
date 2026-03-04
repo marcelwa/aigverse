@@ -1,0 +1,9 @@
+add_aigverse_python_binding(
+  aigverse-utils
+  bindings.cpp
+  truth_table.cpp
+  truth_table_operations.cpp
+  MODULE_NAME
+  utils
+  INSTALL_DIR
+  .)

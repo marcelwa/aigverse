@@ -145,7 +145,7 @@ void ntk_index_list(pybind11::module_& m, const std::string& network_name)  // N
 }
 }  // namespace detail
 
-void bind_to_index_list(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void bind_ntk_index_list(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::ntk_index_list<aigverse::aig>(m, "Aig");
 }

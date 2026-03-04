@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from aigverse import (
-    AigSignal,
+from aigverse.io import (
     read_aiger_into_aig,
     read_aiger_into_sequential_aig,
     read_ascii_aiger_into_aig,
     read_ascii_aiger_into_sequential_aig,
 )
+from aigverse.networks import AigSignal
 
 dir_path = Path(os.path.realpath(__file__)).parent
 
