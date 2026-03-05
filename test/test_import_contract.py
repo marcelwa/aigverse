@@ -1,10 +1,6 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    import pytest
 
 
 def test_root_has_no_top_level_aig_export() -> None:
@@ -26,12 +22,35 @@ def test_modular_imports_are_available() -> None:
     assert hasattr(aigverse, "utils")
 
 
-def test_lazy_submodule_loading(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_lazy_submodule_loading() -> None:
+    # Verify the lazy-loading contract: accessing a submodule that is not in
+    # the package __dict__ triggers __getattr__, which calls import_module and
+    # caches the result in the package globals.
+    #
+    # We only remove from aigverse.__dict__ (not sys.modules) so that
+    # import_module returns the already-loaded C extension without
+    # re-initializing it (which would cause nanobind "already registered"
+    # warnings).
     import aigverse
 
-    monkeypatch.delitem(sys.modules, "aigverse.networks", raising=False)
-    monkeypatch.delitem(aigverse.__dict__, "networks", raising=False)
+    name = "utils"
+    fqn = f"aigverse.{name}"
 
-    assert "aigverse.networks" not in sys.modules
-    _ = aigverse.networks
-    assert "aigverse.networks" in sys.modules
+    # Remove from package globals to force the __getattr__ path.
+    saved = aigverse.__dict__.pop(name, None)
+
+    try:
+        assert name not in aigverse.__dict__
+
+        # Trigger lazy loading via attribute access (__getattr__).
+        mod = aigverse.utils
+
+        # Postconditions: the module is cached in globals and functional.
+        assert name in aigverse.__dict__
+        assert aigverse.__dict__[name] is mod
+        assert fqn in sys.modules
+        assert hasattr(mod, "TruthTable")
+    finally:
+        # Restore original state if needed.
+        if saved is not None:
+            aigverse.__dict__[name] = saved

@@ -6,9 +6,8 @@
 
 #include <mockturtle/algorithms/cut_rewriting.hpp>
 #include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
-#include <pybind11/cast.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>  // NOLINT(misc-include-cleaner)
 
 #include <cstdint>
 #include <optional>
@@ -20,9 +19,9 @@ namespace detail
 {
 
 template <typename Ntk>
-void rewriting(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void rewriting(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
+    namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "aig_cut_rewriting",
@@ -48,19 +47,19 @@ void rewriting(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 
             ntk = mockturtle::cut_rewriting(ntk, aig_npn_resyn_engine, params);
         },
-        py::arg("ntk"), py::arg("cut_size") = 4, py::arg("cut_limit") = 8, py::arg("minimize_truth_table") = true,
-        py::arg("allow_zero_gain") = false, py::arg("use_dont_cares") = false, py::arg("min_cand_cut_size") = 3,
-        py::arg("min_cand_cut_size_override") = std::nullopt, py::arg("preserve_depth") = false,
-        py::arg("verbose") = false, py::arg("very_verbose") = false,
-        pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::arg("ntk"), nb::arg("cut_size") = 4, nb::arg("cut_limit") = 8, nb::arg("minimize_truth_table") = true,
+        nb::arg("allow_zero_gain") = false, nb::arg("use_dont_cares") = false, nb::arg("min_cand_cut_size") = 3,
+        nb::arg("min_cand_cut_size_override") = std::nullopt, nb::arg("preserve_depth") = false,
+        nb::arg("verbose") = false, nb::arg("very_verbose") = false,
+        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG
-template void rewriting<aigverse::aig>(pybind11::module_& m);
+template void rewriting<aigverse::aig>(nanobind::module_& m);
 
 }  // namespace detail
 
-void bind_rewriting(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void bind_rewriting(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::rewriting<aigverse::aig>(m);
 }

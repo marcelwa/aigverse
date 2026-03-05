@@ -1,15 +1,14 @@
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 namespace aigverse
 {
-void bind_truth_table(pybind11::module_& m);
-void bind_truth_table_operations(pybind11::module_& m);
+void bind_truth_table(nanobind::module_& m);
+void bind_truth_table_operations(nanobind::module_& m);
 }  // namespace aigverse
 
-PYBIND11_MODULE(utils, m, pybind11::mod_gil_not_used())  // NOLINT(misc-include-cleaner)
+NB_MODULE(utils, m)
 {
     m.doc() = "Utility data structures and functions";
-    pybind11::module_::import("aigverse.networks");  // ensure network types are registered
     aigverse::bind_truth_table(m);
     aigverse::bind_truth_table_operations(m);
 }

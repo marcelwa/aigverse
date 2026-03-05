@@ -195,10 +195,9 @@ on the workflow summary page, or in the "Files changed" tab of the pull request.
 
 ## Working on the Python project
 
-We use [pybind11](https://pybind11.readthedocs.io/en/stable) to expose large parts of the C++ library mockturtle to Python.
+We use [nanobind](https://nanobind.readthedocs.io/en/latest/) to expose large parts of the C++ library mockturtle to Python.
 This allows to keep the performance critical parts of the code in C++ while providing a convenient interface for Python users.
-All source files related to C++-Python bindings are contained in the {code}`src/aigverse` directory, with the respective headers
-being in {code}`include/aigverse`.
+All source files related to C++-Python bindings are contained in the {code}`src/aigverse` directory.
 
 ::::::{tab-set}
 :sync-group: installer
@@ -432,7 +431,14 @@ Every public function, class, and module should have a docstring that explains w
 Ruff will check for missing docstrings and will explicitly warn you if you forget to add one.
 
 We heavily rely on [type hints](https://docs.python.org/3/library/typing.html) to document the expected types of function arguments and return values.
-For the compiled parts of the code base, we provide type hints in the form of {code}`.pyi` stub files in the {code}`src/aigverse` directory.
+For the compiled parts of the code base, we provide type hints in the form of {code}`.pyi` stub files in the {code}`python/aigverse` directory.
+These stubs are generated from the nanobind-based extension modules.
+
+You can regenerate the stubs using the dedicated {code}`nox` session:
+
+```console
+$ nox -s stubs
+```
 
 The Python API documentation is integrated into the overall documentation that we host on ReadTheDocs using the
 [sphinx-autoapi](https://sphinx-autoapi.readthedocs.io/en/latest/) extension for Sphinx.

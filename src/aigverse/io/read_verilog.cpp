@@ -8,9 +8,8 @@
 #include <lorina/diagnostics.hpp>
 #include <lorina/verilog.hpp>
 #include <mockturtle/io/verilog_reader.hpp>
-#include <pybind11/cast.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl/filesystem.h>  // NOLINT(misc-include-cleaner)
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>  // NOLINT(misc-include-cleaner)
 
 #include <filesystem>
 #include <stdexcept>
@@ -23,9 +22,9 @@ namespace detail
 {
 
 template <typename Ntk>
-void read_verilog(pybind11::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
+void read_verilog(nanobind::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
+    namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         fmt::format("read_verilog_into_{}", network_name).c_str(),
@@ -46,15 +45,15 @@ void read_verilog(pybind11::module_& m, const std::string& network_name)  // NOL
 
             return ntk;
         },
-        py::arg("filename"));
+        nb::arg("filename"));
 }
 
 // Explicit instantiation for named AIG
-template void read_verilog<aigverse::named_aig>(pybind11::module_& m, const std::string& network_name);
+template void read_verilog<aigverse::named_aig>(nanobind::module_& m, const std::string& network_name);
 
 }  // namespace detail
 
-void bind_read_verilog(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void bind_read_verilog(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::read_verilog<aigverse::named_aig>(m, "aig");
 }

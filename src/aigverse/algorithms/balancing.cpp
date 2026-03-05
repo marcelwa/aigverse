@@ -8,12 +8,12 @@
 #include <mockturtle/algorithms/balancing.hpp>
 #include <mockturtle/algorithms/balancing/esop_balancing.hpp>
 #include <mockturtle/algorithms/balancing/sop_balancing.hpp>
-#include <pybind11/cast.h>
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>  // NOLINT(misc-include-cleaner)
 
 #include <cstdint>
 #include <stdexcept>
-#include <string_view>
+#include <string>
 
 namespace aigverse
 {
@@ -22,14 +22,14 @@ namespace detail
 {
 
 template <typename Ntk>
-void balancing(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void balancing(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
+    namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "balancing",
         [](Ntk& ntk, const uint32_t cut_size = 4, const uint32_t cut_limit = 8, const bool minimize_truth_table = true,
-           const bool only_on_critical_path = false, const std::string_view& rebalance_function = "sop",
+           const bool only_on_critical_path = false, const std::string& rebalance_function = "sop",
            const bool sop_both_phases = true, const bool verbose = false) -> void
         {
             mockturtle::balancing_params ps{};
@@ -59,18 +59,18 @@ void balancing(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
                     "Unknown rebalance function: '{}'. Possible values are 'sop' and 'esop'.", rebalance_function));
             }
         },
-        py::arg("ntk"), py::arg("cut_size") = 4, py::arg("cut_limit") = 8, py::arg("minimize_truth_table") = true,
-        py::arg("only_on_critical_path") = false, py::arg("rebalance_function") = "sop",
-        py::arg("sop_both_phases") = true, py::arg("verbose") = false,
-        pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::arg("ntk"), nb::arg("cut_size") = 4, nb::arg("cut_limit") = 8, nb::arg("minimize_truth_table") = true,
+        nb::arg("only_on_critical_path") = false, nb::arg("rebalance_function") = "sop",
+        nb::arg("sop_both_phases") = true, nb::arg("verbose") = false,
+        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG
-template void balancing<aigverse::aig>(pybind11::module_& m);
+template void balancing<aigverse::aig>(nanobind::module_& m);
 
 }  // namespace detail
 
-void bind_balancing(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void bind_balancing(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::balancing<aigverse::aig>(m);
 }

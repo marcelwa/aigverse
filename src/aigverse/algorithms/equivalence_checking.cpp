@@ -7,9 +7,8 @@
 #include <mockturtle/algorithms/equivalence_checking.hpp>
 #include <mockturtle/algorithms/miter.hpp>
 #include <mockturtle/networks/aig.hpp>
-#include <pybind11/cast.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>  // NOLINT(misc-include-cleaner)
 
 #include <cstdint>
 #include <optional>
@@ -22,9 +21,9 @@ namespace detail
 {
 
 template <typename Spec, typename Impl>
-void equivalence_checking(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void equivalence_checking(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
+    namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "equivalence_checking",
@@ -45,17 +44,17 @@ void equivalence_checking(pybind11::module_& m)  // NOLINT(misc-use-internal-lin
 
             return mockturtle::equivalence_checking(miter.value(), params);
         },
-        py::arg("spec"), py::arg("impl"), py::arg("conflict_limit") = 0, py::arg("functional_reduction") = true,
-        py::arg("verbose") = false,
-        pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::arg("spec"), nb::arg("impl"), nb::arg("conflict_limit") = 0, nb::arg("functional_reduction") = true,
+        nb::arg("verbose") = false,
+        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG
-template void equivalence_checking<aigverse::aig, aigverse::aig>(pybind11::module_& m);
+template void equivalence_checking<aigverse::aig, aigverse::aig>(nanobind::module_& m);
 
 }  // namespace detail
 
-void bind_equivalence_checking(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void bind_equivalence_checking(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::equivalence_checking<aigverse::aig, aigverse::aig>(m);
 }

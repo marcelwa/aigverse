@@ -5,9 +5,8 @@
 #include "aigverse/types.hpp"
 
 #include <mockturtle/io/write_aiger.hpp>
-#include <pybind11/cast.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl/filesystem.h>  // NOLINT(misc-include-cleaner)
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>  // NOLINT(misc-include-cleaner)
 
 #include <filesystem>
 
@@ -18,21 +17,21 @@ namespace detail
 {
 
 template <typename Ntk>
-void write_aiger(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void write_aiger(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
+    namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "write_aiger", [](const Ntk& ntk, const std::filesystem::path& filename)
-        { mockturtle::write_aiger(ntk, filename.string()); }, py::arg("ntk"), py::arg("filename"));
+        { mockturtle::write_aiger(ntk, filename.string()); }, nb::arg("ntk"), nb::arg("filename"));
 }
 
 // Explicit instantiation for AIG
-template void write_aiger<aigverse::aig>(pybind11::module_& m);
+template void write_aiger<aigverse::aig>(nanobind::module_& m);
 
 }  // namespace detail
 
-void bind_write_aiger(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void bind_write_aiger(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::write_aiger<aigverse::aig>(m);
 }

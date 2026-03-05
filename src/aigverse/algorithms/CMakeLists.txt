@@ -11,3 +11,10 @@ add_aigverse_python_binding(
   algorithms
   INSTALL_DIR
   .)
+
+if(SKBUILD_STATE STREQUAL "editable")
+  install(
+    FILES ${PROJECT_SOURCE_DIR}/python/aigverse/algorithms.pyi
+    DESTINATION .
+    COMPONENT aigverse_Python)
+endif()

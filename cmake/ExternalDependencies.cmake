@@ -3,33 +3,24 @@
 include(FetchContent)
 include(CMakeDependentOption)
 
-cmake_dependent_option(
-  AIGVERSE_VENDOR_PYBIND11 "Fetch pybind11 automatically if not found" ON
-  "NOT SKBUILD" OFF)
-set(AIGVERSE_PYBIND11_VERSION
-    3.0.2
-    CACHE STRING "Desired pybind11 version")
+set(Python_FIND_VIRTUALENV
+    FIRST
+    CACHE STRING "Give precedence to virtualenvs when searching for Python")
+set(Python_FIND_FRAMEWORK
+    LAST
+    CACHE STRING "Prefer Brew/Conda to Apple framework Python")
+set(Python_ARTIFACTS_INTERACTIVE
+    ON
+    CACHE BOOL
+          "Prevent multiple searches for Python and instead cache the results.")
 
-if(NOT SKBUILD)
-  # Need Development.Module so that python_add_library/python3_add_library are
-  # defined
-  find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
-  # Try to discover a pybind11 installation provided by Python package (pip)
-  execute_process(
-    COMMAND "${Python_EXECUTABLE}" -m pybind11 --cmakedir
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    OUTPUT_VARIABLE pybind11_DIR
-    RESULT_VARIABLE pybind11_exec_res
-    ERROR_VARIABLE pybind11_exec_err)
-  if(pybind11_exec_res EQUAL 0 AND pybind11_DIR)
-    list(PREPEND CMAKE_PREFIX_PATH "${pybind11_DIR}")
-  else()
-    message(
-      DEBUG
-      "pybind11 --cmakedir query failed (code=${pybind11_exec_res}). stderr: ${pybind11_exec_err}"
-    )
-  endif()
+if(DISABLE_GIL)
+  message(STATUS "Disabling Python GIL")
+  add_compile_definitions(Py_GIL_DISABLED)
 endif()
+
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module
+                                        ${SKBUILD_SABI_COMPONENT})
 
 if(Python_EXECUTABLE)
   message(STATUS "Python executable: ${Python_EXECUTABLE}")
@@ -37,40 +28,20 @@ else()
   message(FATAL_ERROR "Python executable not found")
 endif()
 
-# First attempt to find an existing pybind11 (quiet; we'll vendor if missing)
-find_package(pybind11 ${AIGVERSE_PYBIND11_VERSION} CONFIG QUIET)
-
-if(NOT pybind11_FOUND)
-  if(AIGVERSE_VENDOR_PYBIND11)
-    message(
-      STATUS
-        "pybind11 not found; fetching v${AIGVERSE_PYBIND11_VERSION} via FetchContent"
-    )
-    FetchContent_Declare(
-      pybind11
-      GIT_REPOSITORY https://github.com/pybind/pybind11.git
-      GIT_TAG v${AIGVERSE_PYBIND11_VERSION}
-      GIT_SHALLOW TRUE
-      FIND_PACKAGE_ARGS ${AIGVERSE_PYBIND11_VERSION} CONFIG)
-    # Prevent polluting parent projects if this is used as a subtree
-    set(FETCHCONTENT_QUIET OFF)
-    FetchContent_MakeAvailable(pybind11)
-    # After vendoring, targets like pybind11::pybind11 should exist
-    if(TARGET pybind11::pybind11)
-      message(STATUS "Vendored pybind11 v${AIGVERSE_PYBIND11_VERSION} ready")
-      set(pybind11_FOUND TRUE)
-    endif()
-  else()
-    message(
-      FATAL_ERROR
-        "pybind11 (>=${AIGVERSE_PYBIND11_VERSION}) not found and AIGVERSE_VENDOR_PYBIND11=OFF. Set pybind11_DIR or enable vendorization."
-    )
-  endif()
+# Discover nanobind via its pip-installed cmake dir
+execute_process(
+  COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  OUTPUT_VARIABLE nanobind_ROOT
+  RESULT_VARIABLE nanobind_exec_res
+  ERROR_VARIABLE nanobind_exec_err)
+if(NOT nanobind_exec_res EQUAL 0)
+  message(
+    FATAL_ERROR
+      "Failed to find nanobind cmake dir (code=${nanobind_exec_res}). stderr: ${nanobind_exec_err}\n"
+      "Make sure nanobind is installed: pip install nanobind")
 endif()
-
-if(NOT pybind11_FOUND)
-  message(FATAL_ERROR "pybind11 still not available after attempted fetch.")
-endif()
+find_package(nanobind CONFIG REQUIRED)
 
 # Fetch mockturtle library
 set(MOCKTURTLE_REV

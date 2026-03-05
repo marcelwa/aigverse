@@ -7,8 +7,8 @@
 #include <fmt/format.h>
 #include <lorina/diagnostics.hpp>
 #include <mockturtle/io/pla_reader.hpp>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl/filesystem.h>  // NOLINT(misc-include-cleaner)
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>  // NOLINT(misc-include-cleaner)
 
 #include <filesystem>
 #include <stdexcept>
@@ -21,9 +21,9 @@ namespace detail
 {
 
 template <typename Ntk>
-void read_pla(pybind11::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
+void read_pla(nanobind::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
+    namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         fmt::format("read_pla_into_{}", network_name).c_str(),
@@ -43,15 +43,15 @@ void read_pla(pybind11::module_& m, const std::string& network_name)  // NOLINT(
 
             return ntk;
         },
-        py::arg("filename"));  // NOLINT(misc-include-cleaner)
+        nb::arg("filename"));  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG
-template void read_pla<aigverse::aig>(pybind11::module_& m, const std::string& network_name);
+template void read_pla<aigverse::aig>(nanobind::module_& m, const std::string& network_name);
 
 }  // namespace detail
 
-void bind_read_pla(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void bind_read_pla(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::read_pla<aigverse::aig>(m, "aig");
 }

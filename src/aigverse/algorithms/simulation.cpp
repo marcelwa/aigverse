@@ -7,9 +7,9 @@
 #include <kitty/dynamic_truth_table.hpp>
 #include <mockturtle/algorithms/simulation.hpp>
 #include <mockturtle/traits.hpp>
-#include <pybind11/cast.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // NOLINT(misc-include-cleaner)
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/unordered_map.h>  // NOLINT(misc-include-cleaner)
+#include <nanobind/stl/vector.h>         // NOLINT(misc-include-cleaner)
 
 #include <cstdint>
 #include <iostream>
@@ -24,9 +24,9 @@ namespace detail
 {
 
 template <typename Ntk>
-void simulation(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void simulation(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
+    namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "simulate",
@@ -51,7 +51,7 @@ void simulation(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
                 throw;
             }
         },
-        py::arg("ntk"), pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::arg("ntk"), nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 
     m.def(
         "simulate_nodes",
@@ -82,15 +82,15 @@ void simulation(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
                 throw;
             }
         },
-        py::arg("ntk"), pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::arg("ntk"), nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG
-template void simulation<aigverse::aig>(pybind11::module_& m);
+template void simulation<aigverse::aig>(nanobind::module_& m);
 
 }  // namespace detail
 
-void bind_simulation(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void bind_simulation(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::simulation<aigverse::aig>(m);
 }
