@@ -67,7 +67,7 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
     nb::class_<Signal>(m, fmt::format("{}Signal", network_name).c_str())
         .def(nb::init<const uint64_t, const bool>(), nb::arg("index"), nb::arg("complement"))
         .def("get_index", [](const Signal& s) { return s.index; })
-        .def("get_complement", [](const Signal& s) { return s.complement; })
+        .def("get_complement", [](const Signal& s) -> bool { return s.complement; })
         .def("get_data", [](const Signal& s) { return s.data; })
         .def("__hash__", [](const Signal& s) { return std::hash<Signal>{}(s); })
         .def("__repr__", [](const Signal& s) { return fmt::format("Signal({}{})", s.complement ? "!" : "", s.index); })

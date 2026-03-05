@@ -196,7 +196,7 @@ on the workflow summary page, or in the "Files changed" tab of the pull request.
 ## Working on the Python project
 
 We use [nanobind](https://nanobind.readthedocs.io/en/latest/) to expose large parts of the C++ library mockturtle to Python.
-This allows to keep the performance critical parts of the code in C++ while providing a convenient interface for Python users.
+This allows to keep the performance-critical parts of the code in C++ while providing a convenient interface for Python users.
 All source files related to C++-Python bindings are contained in the {code}`src/aigverse` directory.
 
 ::::::{tab-set}

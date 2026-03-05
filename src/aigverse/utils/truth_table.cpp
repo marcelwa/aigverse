@@ -222,13 +222,13 @@ void bind_truth_table(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage
             nb::arg("index"), "Sets the bit at the given index.")
         .def(
             "get_bit",
-            [](const aigverse::truth_table& self, const uint64_t index)
+            [](const aigverse::truth_table& self, const uint64_t index) -> bool
             {
                 if (index >= self.num_bits())
                 {
                     throw nb::index_error("index out of range");  // NOLINT(misc-include-cleaner)
                 }
-                return kitty::get_bit(self, index);
+                return static_cast<bool>(kitty::get_bit(self, index));
             },
             nb::arg("index"), "Returns the bit at the given index.")
         .def(

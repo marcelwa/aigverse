@@ -43,7 +43,7 @@ class TruthTable:
     def set_bit(self, index: int) -> None:
         """Sets the bit at the given index."""
 
-    def get_bit(self, index: int) -> int:
+    def get_bit(self, index: int) -> bool:
         """Returns the bit at the given index."""
 
     def clear_bit(self, index: int) -> None:

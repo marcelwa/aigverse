@@ -75,6 +75,7 @@ void ntk_edge_list(nanobind::module_& m, const std::string& network_name)  // NO
     nb::class_<EdgeList>(m, fmt::format("{}EdgeList", network_name).c_str())
         .def(nb::init<>())
         .def(nb::init<const Ntk&>(), nb::arg("ntk"))
+        .def(nb::init<const std::vector<Edge>&>(), nb::arg("edges"))
         .def(nb::init<const Ntk&, const std::vector<Edge>&>(), nb::arg("ntk"), nb::arg("edges"))
         .def_rw("ntk", &EdgeList::ntk)
         .def_rw("edges", &EdgeList::edges)

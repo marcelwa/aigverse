@@ -101,6 +101,12 @@ struct edge_list
     /**
      * Constructor.
      *
+     * @param es Edges of the network.
+     */
+    explicit edge_list(const std::vector<edge<Ntk>>& es) : edges{es} {};
+    /**
+     * Constructor.
+     *
      * @param network Network.
      * @param es Edges of the network.
      */

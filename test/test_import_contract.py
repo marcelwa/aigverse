@@ -51,6 +51,8 @@ def test_lazy_submodule_loading() -> None:
         assert fqn in sys.modules
         assert hasattr(mod, "TruthTable")
     finally:
-        # Restore original state if needed.
+        # Restore exact pre-test state.
         if saved is not None:
             aigverse.__dict__[name] = saved
+        else:
+            aigverse.__dict__.pop(name, None)

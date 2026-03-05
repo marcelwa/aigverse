@@ -1,5 +1,7 @@
 """Synthesis and optimization algorithms."""
 
+from typing import Literal
+
 import aigverse.networks
 import aigverse.utils
 
@@ -52,7 +54,7 @@ def balancing(
     cut_limit: int = 8,
     minimize_truth_table: bool = True,
     only_on_critical_path: bool = False,
-    rebalance_function: str = "sop",
+    rebalance_function: Literal["sop", "esop"] = "sop",
     sop_both_phases: bool = True,
     verbose: bool = False,
 ) -> None: ...
