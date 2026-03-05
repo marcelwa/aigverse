@@ -37,6 +37,7 @@ def test_lazy_submodule_loading() -> None:
     fqn = f"aigverse.{name}"
 
     # Remove from package globals to force the __getattr__ path.
+    had_saved = name in aigverse.__dict__
     saved = aigverse.__dict__.pop(name, None)
 
     try:
@@ -52,7 +53,7 @@ def test_lazy_submodule_loading() -> None:
         assert hasattr(mod, "TruthTable")
     finally:
         # Restore exact pre-test state.
-        if saved is not None:
+        if had_saved:
             aigverse.__dict__[name] = saved
         else:
             aigverse.__dict__.pop(name, None)
