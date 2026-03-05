@@ -1,16 +1,17 @@
-from typing import Literal
+"""Synthesis and optimization algorithms."""
 
-from . import networks, utils
+import aigverse.networks
+import aigverse.utils
 
 def equivalence_checking(
-    spec: networks.Aig,
-    impl: networks.Aig,
+    spec: aigverse.networks.Aig,
+    impl: aigverse.networks.Aig,
     conflict_limit: int = 0,
     functional_reduction: bool = True,
     verbose: bool = False,
 ) -> bool | None: ...
 def sop_refactoring(
-    ntk: networks.Aig,
+    ntk: aigverse.networks.Aig,
     max_pis: int = 6,
     allow_zero_gain: bool = False,
     use_reconvergence_cut: bool = False,
@@ -21,7 +22,7 @@ def sop_refactoring(
     verbose: bool = False,
 ) -> None: ...
 def aig_resubstitution(
-    ntk: networks.Aig,
+    ntk: aigverse.networks.Aig,
     max_pis: int = 8,
     max_divisors: int = 150,
     max_inserts: int = 2,
@@ -33,7 +34,7 @@ def aig_resubstitution(
     preserve_depth: bool = False,
 ) -> None: ...
 def aig_cut_rewriting(
-    ntk: networks.Aig,
+    ntk: aigverse.networks.Aig,
     cut_size: int = 4,
     cut_limit: int = 8,
     minimize_truth_table: bool = True,
@@ -46,14 +47,14 @@ def aig_cut_rewriting(
     very_verbose: bool = False,
 ) -> None: ...
 def balancing(
-    ntk: networks.Aig,
+    ntk: aigverse.networks.Aig,
     cut_size: int = 4,
     cut_limit: int = 8,
     minimize_truth_table: bool = True,
     only_on_critical_path: bool = False,
-    rebalance_function: Literal["sop", "esop"] = "sop",
+    rebalance_function: str = "sop",
     sop_both_phases: bool = True,
     verbose: bool = False,
 ) -> None: ...
-def simulate(ntk: networks.Aig) -> list[utils.TruthTable]: ...
-def simulate_nodes(ntk: networks.Aig) -> dict[int, utils.TruthTable]: ...
+def simulate(ntk: aigverse.networks.Aig) -> list[aigverse.utils.TruthTable]: ...
+def simulate_nodes(ntk: aigverse.networks.Aig) -> dict[int, aigverse.utils.TruthTable]: ...

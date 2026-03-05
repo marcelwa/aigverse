@@ -187,5 +187,51 @@ def docs(session: nox.Session) -> None:
     )
 
 
+@nox.session(reuse_venv=True, venv_backend="uv")
+def stubs(session: nox.Session) -> None:
+    """Generate type stubs for Python bindings using nanobind."""
+    env = {"UV_PROJECT_ENVIRONMENT": session.virtualenv.location}
+    session.run(
+        "uv",
+        "sync",
+        "--no-dev",
+        "--group",
+        "build",
+        env=env,
+    )
+
+    package_root = Path(__file__).parent / "python" / "aigverse"
+
+    session.run(
+        "python",
+        "-m",
+        "nanobind.stubgen",
+        "--recursive",
+        "--include-private",
+        "--output-dir",
+        str(package_root),
+        "--module",
+        "aigverse.networks",
+        "--module",
+        "aigverse.algorithms",
+        "--module",
+        "aigverse.io",
+        "--module",
+        "aigverse.utils",
+    )
+
+    pyi_files = list(package_root.glob("**/*.pyi"))
+
+    if not pyi_files:
+        session.warn("No .pyi files found")
+        return
+
+    if shutil.which("pre-commit") is None:
+        session.install("pre-commit")
+
+    session.run("pre-commit", "run", "ruff-format", "--files", *pyi_files, external=True)
+    session.run("pre-commit", "run", "ruff-check", "--files", *pyi_files, external=True)
+
+
 if __name__ == "__main__":
     nox.main()
