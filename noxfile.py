@@ -201,6 +201,7 @@ def stubs(session: nox.Session) -> None:
     )
 
     package_root = Path(__file__).parent / "python" / "aigverse"
+    pattern_file = package_root / "stubgen.pattern"
 
     session.run(
         "python",
@@ -208,6 +209,8 @@ def stubs(session: nox.Session) -> None:
         "nanobind.stubgen",
         "--recursive",
         "--include-private",
+        "--pattern-file",
+        str(pattern_file),
         "--output-dir",
         str(package_root),
         "--module",
@@ -229,7 +232,12 @@ def stubs(session: nox.Session) -> None:
     if shutil.which("pre-commit") is None:
         session.install("pre-commit")
 
-    session.run("pre-commit", "run", "ruff-format", "--files", *pyi_files, external=True)
+    # Allow both 0 (no issues) and 1 as success codes for fixing up stubs
+    success_codes = [0, 1]
+    session.run("pre-commit", "run", "ruff-format", "--files", *pyi_files, external=True, success_codes=success_codes)
+    session.run("pre-commit", "run", "ruff-check", "--files", *pyi_files, external=True, success_codes=success_codes)
+
+    # Run ruff-check again to ensure everything is clean
     session.run("pre-commit", "run", "ruff-check", "--files", *pyi_files, external=True)
 
 

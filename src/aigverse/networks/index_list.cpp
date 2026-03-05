@@ -80,17 +80,19 @@ void ntk_index_list(nanobind::module_& m, const std::string& network_name)  // N
                      return pos;
                  })
 
-            .def("__iter__",
-                 [](const IndexList& il)
-                 {
-                     const auto raw = il.raw();
-                     nb::list   raw_list;
-                     for (const auto& v : raw)
-                     {
-                         raw_list.append(v);
-                     }
-                     return nb::iter(raw_list);
-                 })
+            .def(
+                "__iter__",
+                [](const IndexList& il)
+                {
+                    const auto raw = il.raw();
+                    nb::list   raw_list;
+                    for (const auto& v : raw)
+                    {
+                        raw_list.append(v);
+                    }
+                    return nb::iter(raw_list);
+                },
+                nb::sig("def __iter__(self) -> Iterator[int]"))
             .def("__getitem__",
                  [](const IndexList& il, const std::size_t i)
                  {

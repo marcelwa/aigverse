@@ -12,7 +12,7 @@ void bind_simulation(nanobind::module_& m);
 
 NB_MODULE(algorithms, m)
 {
-    m.doc() = "Synthesis and optimization algorithms";
+    m.doc() = "Synthesis and optimization algorithms.";
     nanobind::module_::import_("aigverse.networks");  // ensure network types are registered
     nanobind::module_::import_("aigverse.utils");     // ensure truth-table types are registered
     aigverse::bind_equivalence_checking(m);

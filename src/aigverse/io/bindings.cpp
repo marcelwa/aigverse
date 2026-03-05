@@ -12,7 +12,7 @@ void bind_write_dot(nanobind::module_& m);
 
 NB_MODULE(io, m)
 {
-    m.doc() = "Input/Output functionality";
+    m.doc() = "Input/Output functionality.";
     nanobind::module_::import_("aigverse.networks");  // ensure network types are registered
     aigverse::bind_read_aiger(m);
     aigverse::bind_write_aiger(m);
