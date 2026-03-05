@@ -72,9 +72,17 @@ jobs:
             queries:
               - uses: security-and-quality
 
+      - name: Install uv
+        if: matrix.language == 'cpp'
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install build dependencies with uv
+        if: matrix.language == 'cpp'
+        run: uv sync --only-group build --no-install-project
+
       - name: Configure CMake
         if: matrix.language == 'cpp'
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DPython_EXECUTABLE=${{ github.workspace }}/.venv/bin/python
 
       - name: Build
         if: matrix.language == 'cpp'
