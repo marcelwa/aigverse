@@ -14,11 +14,6 @@ set(Python_ARTIFACTS_INTERACTIVE
     CACHE BOOL
           "Prevent multiple searches for Python and instead cache the results.")
 
-if(DISABLE_GIL)
-  message(STATUS "Disabling Python GIL")
-  add_compile_definitions(Py_GIL_DISABLED)
-endif()
-
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module
                                         ${SKBUILD_SABI_COMPONENT})
 
@@ -28,19 +23,11 @@ else()
   message(FATAL_ERROR "Python executable not found")
 endif()
 
-# Discover nanobind via its pip-installed cmake dir
+# Detect the installed nanobind package and import it into CMake
 execute_process(
   COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
   OUTPUT_STRIP_TRAILING_WHITESPACE
-  OUTPUT_VARIABLE nanobind_ROOT
-  RESULT_VARIABLE nanobind_exec_res
-  ERROR_VARIABLE nanobind_exec_err)
-if(NOT nanobind_exec_res EQUAL 0)
-  message(
-    FATAL_ERROR
-      "Failed to find nanobind cmake dir (code=${nanobind_exec_res}). stderr: ${nanobind_exec_err}\n"
-      "Make sure nanobind is installed: pip install nanobind")
-endif()
+  OUTPUT_VARIABLE nanobind_ROOT)
 find_package(nanobind CONFIG REQUIRED)
 
 # Fetch mockturtle library

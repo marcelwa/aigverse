@@ -87,14 +87,6 @@ mode = "git"
 build-backend = "auto"
 
 
-[[tool.scikit-build.overrides]]
-if.python-version = ">=3.13"
-if.abi-flags = "t"
-if.platform-system = "win32"
-inherit.cmake.define = "append"
-cmake.define.DISABLE_GIL = "1"
-
-
 [tool.setuptools_scm]
 write_to = "python/aigverse/_version.py"
 
