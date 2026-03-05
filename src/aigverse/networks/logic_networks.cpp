@@ -22,7 +22,6 @@
 #include <exception>
 #include <functional>
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -48,9 +47,10 @@ namespace detail
  * `std::construct_at` and remove this backport.
  */
 template <typename T, typename... Args>
-constexpr T* construct_at(T* p, Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
+static constexpr T* construct_at(T* p, Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
 {
-    return ::new (static_cast<void*>(p)) T(std::forward<Args>(args)...);
+    ::new (static_cast<void*>(p)) T(std::forward<Args>(args)...);
+    return p;
 }
 
 template <typename Ntk>
