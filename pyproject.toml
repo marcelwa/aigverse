@@ -108,7 +108,10 @@ skip = ["*-musllinux_*", "cp313t-*"]
 enable = ["cpython-freethreading"]
 archs = "auto64"
 build-frontend = "build[uv]"
-manylinux-x86_64-image = "manylinux_2_28"
+test-groups = ["test"]
+test-sources = ["test/"]
+test-command = "pytest test/"
+
 
 [tool.cibuildwheel.macos]
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
