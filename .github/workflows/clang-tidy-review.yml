@@ -46,6 +46,7 @@ jobs:
         run: >
           cmake -B build -S .
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          -DPython_EXECUTABLE=${{ github.workspace }}/.venv/bin/python
 
       - name: Run clang-tidy
         id: linter
