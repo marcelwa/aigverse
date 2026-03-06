@@ -73,8 +73,8 @@ aig = read_aiger_into_aig("examples/i10.aig")
 
 # Print statistics about the loaded circuit
 print(f"i10 benchmark:")
-print(f"  I/O: {aig.num_pis()}/{aig.num_pos()}")
-print(f"  AND gates: {aig.num_gates()}")
+print(f"  I/O: {aig.num_pis}/{aig.num_pos}")
+print(f"  AND gates: {aig.num_gates}")
 ```
 
 ### Resubstitution
@@ -90,9 +90,9 @@ aig_resub = aig.clone()
 # Apply resubstitution
 aig_resub = aig_resubstitution(aig_resub, window_size=12)
 
-print(f"Original AND gates: {aig.num_gates()}")
-print(f"After resubstitution: {aig_resub.num_gates()} AND gates")
-print(f"Reduction: {aig.num_gates() - aig_resub.num_gates()} gates ({(aig.num_gates() - aig_resub.num_gates()) / aig.num_gates() * 100:.2f}%)")
+print(f"Original AND gates: {aig.num_gates}")
+print(f"After resubstitution: {aig_resub.num_gates} AND gates")
+print(f"Reduction: {aig.num_gates - aig_resub.num_gates} gates ({(aig.num_gates - aig_resub.num_gates) / aig.num_gates * 100:.2f}%)")
 ```
 
 ### Sum-of-Products Refactoring
@@ -108,9 +108,9 @@ aig_refactor = aig.clone()
 # Apply SOP refactoring
 aig_refactor = sop_refactoring(aig_refactor, use_reconvergence_cut=True)
 
-print(f"Original AND gates: {aig.num_gates()}")
-print(f"After SOP refactoring: {aig_refactor.num_gates()} AND gates")
-print(f"Reduction: {aig.num_gates() - aig_refactor.num_gates()} gates ({(aig.num_gates() - aig_refactor.num_gates()) / aig.num_gates() * 100:.2f}%)")
+print(f"Original AND gates: {aig.num_gates}")
+print(f"After SOP refactoring: {aig_refactor.num_gates} AND gates")
+print(f"Reduction: {aig.num_gates - aig_refactor.num_gates} gates ({(aig.num_gates - aig_refactor.num_gates) / aig.num_gates * 100:.2f}%)")
 ```
 
 ### Cut Rewriting
@@ -126,9 +126,9 @@ aig_rewrite = aig.clone()
 # Apply cut rewriting
 aig_rewrite = aig_cut_rewriting(aig_rewrite, cut_size=4)
 
-print(f"Original AND gates: {aig.num_gates()}")
-print(f"After cut rewriting: {aig_rewrite.num_gates()} AND gates")
-print(f"Reduction: {aig.num_gates() - aig_rewrite.num_gates()} gates ({(aig.num_gates() - aig_rewrite.num_gates()) / aig.num_gates() * 100:.2f}%)")
+print(f"Original AND gates: {aig.num_gates}")
+print(f"After cut rewriting: {aig_rewrite.num_gates} AND gates")
+print(f"Reduction: {aig.num_gates - aig_rewrite.num_gates} gates ({(aig.num_gates - aig_rewrite.num_gates) / aig.num_gates * 100:.2f}%)")
 ```
 
 ### Balancing
@@ -146,8 +146,8 @@ aig_balance = aig.clone()
 aig_balance = balancing(aig_balance, rebalance_function="sop")
 
 # Compute depth
-original_depth = DepthAig(aig).num_levels()
-balanced_depth = DepthAig(aig_balance).num_levels()
+original_depth = DepthAig(aig).num_levels
+balanced_depth = DepthAig(aig_balance).num_levels
 
 print(f"Original depth: {original_depth} levels")
 print(f"After balancing: {balanced_depth} levels")
@@ -172,9 +172,9 @@ aig_opt = aig_resubstitution(aig_opt)
 aig_opt = sop_refactoring(aig_opt)
 
 print(f"\nTotal optimization results:")
-print(f"- Original: {aig.num_gates()} AND gates")
-print(f"- Optimized: {aig_opt.num_gates()} AND gates")
-print(f"- Total reduction: {aig.num_gates() - aig_opt.num_gates()} gates ({(aig.num_gates() - aig_opt.num_gates()) / aig.num_gates() * 100:.2f}%)")
+print(f"- Original: {aig.num_gates} AND gates")
+print(f"- Optimized: {aig_opt.num_gates} AND gates")
+print(f"- Total reduction: {aig.num_gates - aig_opt.num_gates} gates ({(aig.num_gates - aig_opt.num_gates) / aig.num_gates * 100:.2f}%)")
 ```
 
 Some algorithms offer the `inplace=True` keyword argument for performance-sensitive pipelines of chained optimization:
@@ -205,5 +205,5 @@ from aigverse.algorithms import equivalence_checking
 are_equivalent = equivalence_checking(aig, aig_opt)
 print(f"\nOriginal and optimized benchmark circuits are equivalent: {are_equivalent}")
 print(f"This confirms our optimization preserved the circuit's functionality while reducing")
-print(f"the gate count from {aig.num_gates()} to {aig_opt.num_gates()} AND gates.")
+print(f"the gate count from {aig.num_gates} to {aig_opt.num_gates} AND gates.")
 ```

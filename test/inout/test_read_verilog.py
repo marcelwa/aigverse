@@ -11,9 +11,9 @@ dir_path = Path(os.path.realpath(__file__)).parent
 
 def test_read_verilog() -> None:
     aig = read_verilog_into_aig(str(dir_path / "../resources/test.v"))
-    assert aig.size() == 6
+    assert aig.size == 6
     assert aig.nodes() == list(range(6))
-    assert aig.num_gates() == 2
+    assert aig.num_gates == 2
     assert aig.gates() == [4, 5]
     assert aig.pis() == [1, 2, 3]
 
@@ -34,6 +34,6 @@ def test_read_verilog_with_names() -> None:
     assert set(pi_names) == {"a", "b", "c"}
 
     # Test PO names (output: y1)
-    assert aig.num_pos() == 1
+    assert aig.num_pos == 1
     assert aig.has_output_name(0)
     assert aig.get_output_name(0) == "y1"

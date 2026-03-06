@@ -45,7 +45,7 @@ aig.create_po(f_and)
 aig.create_po(f_or)
 
 # Print the size of the AIG network
-print(f"AIG Size: {aig.size()}")
+print(f"AIG Size: {aig.size}")
 ```
 
 :::{note}
@@ -149,10 +149,10 @@ aig.create_po(maj_gate)
 aig.create_po(ite_gate)
 
 # Print statistics
-print(f"AIG Size: {aig.size()}")
-print(f"Number of gates: {aig.num_gates()}")
-print(f"Number of primary inputs: {aig.num_pis()}")
-print(f"Number of primary outputs: {aig.num_pos()}")
+print(f"AIG Size: {aig.size}")
+print(f"Number of gates: {aig.num_gates}")
+print(f"Number of primary inputs: {aig.num_pis}")
+print(f"Number of primary outputs: {aig.num_pos}")
 ```
 
 ## AIG Views
@@ -236,7 +236,7 @@ aig.create_po(f2)
 depth_aig = DepthAig(aig)
 
 # Get the depth of the AIG
-print(f"Depth of AIG: {depth_aig.num_levels()}")
+print(f"Depth of AIG: {depth_aig.num_levels}")
 
 # Print the level of each node
 print("\nLevel of each node:")
@@ -299,9 +299,9 @@ seq_aig.create_po(f_and)      # Regular PO
 seq_aig.create_ri(f_and)      # Register input (sequential PO)
 
 # Print information about the sequential AIG
-print(f"Number of PIs: {seq_aig.num_pis()}")
-print(f"Number of POs: {seq_aig.num_pos()}")
-print(f"Number of registers: {seq_aig.num_registers()}")
+print(f"Number of PIs: {seq_aig.num_pis}")
+print(f"Number of POs: {seq_aig.num_pos}")
+print(f"Number of registers: {seq_aig.num_registers}")
 
 # Get the register associations (RI-RO pairs)
 print("\nRegister associations:")
@@ -351,10 +351,10 @@ read_verilog_aig = read_verilog_into_aig("example.v")
 # Read from PLA format
 read_pla_aig = read_pla_into_aig("example.pla")
 
-print(f"Original AIG size: {aig.size()}")
-print(f"Read AIGER AIG size: {read_aig.size()}")
-print(f"Read Verilog AIG size: {read_verilog_aig.size()}")
-print(f"Read PLA AIG size: {read_pla_aig.size()}")
+print(f"Original AIG size: {aig.size}")
+print(f"Read AIGER AIG size: {read_aig.size}")
+print(f"Read Verilog AIG size: {read_verilog_aig.size}")
+print(f"Read PLA AIG size: {read_pla_aig.size}")
 ```
 
 :::{note}

@@ -105,7 +105,7 @@ aig.create_po(f_and)
 aig.create_po(f_or)
 
 # Print the size of the AIG network
-print(f"AIG Size: {aig.size()}")
+print(f"AIG Size: {aig.size}")
 ```
 
 Note that all primary inputs (PIs) must be created before any logic gates.
@@ -172,7 +172,7 @@ critical path delay of a respective circuit.
 from aigverse.networks import DepthAig
 
 depth_aig = DepthAig(aig)
-print(f"Depth: {depth_aig.num_levels()}")
+print(f"Depth: {depth_aig.num_levels}")
 for node in aig.nodes():
     print(f"Level of {node}: {depth_aig.level(node)}")
 ```
@@ -241,8 +241,8 @@ for optimization in [aig_resubstitution, sop_refactoring, aig_cut_rewriting, bal
     aig_opt = optimization(aig_opt)
 
 # Print the size of the unoptimized and optimized AIGs
-print(f"Original AIG Size:  {aig_clone.size()}")
-print(f"Optimized AIG Size: {aig_opt.size()}")
+print(f"Original AIG Size:  {aig_clone.size}")
+print(f"Optimized AIG Size: {aig_opt.size}")
 
 # Some algorithms offer in-place transformations for performance-oriented pipelines
 for optimization in [aig_resubstitution, sop_refactoring]:

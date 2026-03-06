@@ -79,7 +79,7 @@ def test_equivalent_node_merger() -> None:
     sop_refactoring(aig1, inplace=True)
     aig1 = cleanup_dangling(aig1)
 
-    assert aig1.size() == aig_before.size() - 2
+    assert aig1.size == aig_before.size - 2
 
     assert equivalence_checking(aig1, aig_before)
 
@@ -98,7 +98,7 @@ def test_positive_divisor_substitution() -> None:
     sop_refactoring(aig2, inplace=True)
     aig2 = cleanup_dangling(aig2)
 
-    assert aig2.size() == aig_before.size() - 1
+    assert aig2.size == aig_before.size - 1
 
     assert equivalence_checking(aig2, aig_before)
 
@@ -117,7 +117,7 @@ def test_negative_divisor_substitution() -> None:
     sop_refactoring(aig, inplace=True)
     aig = cleanup_dangling(aig)
 
-    assert aig.size() == aig_before.size() - 2
+    assert aig.size == aig_before.size - 2
 
     assert equivalence_checking(aig, aig_before)
 

@@ -19,8 +19,10 @@ This version also includes an API rework for AIG optimization workflows.
 
 ### Optimization and cleanup behavior
 
-- `aig_resubstitution`, `sop_refactoring`, `aig_cut_rewriting`, and `balancing` now return a **new cleaned** `Aig` by default.
-- `aig_resubstitution` and `sop_refactoring` support the `inplace` keyword argument (default `False`). With `inplace=True`, the input network is mutated, and the return value is `None`.
+- `aig_resubstitution`, `sop_refactoring`, `aig_cut_rewriting`, and `balancing` now return a **new cleaned** `Aig` by
+  default.
+- `aig_resubstitution` and `sop_refactoring` support the `inplace` keyword argument (default `False`). With
+  `inplace=True`, the input network is mutated, and the return value is `None`.
 - `cleanup_dangling` moved from `Aig` member API to `aigverse.algorithms.cleanup_dangling`.
 
 #### Before
@@ -97,7 +99,36 @@ from aigverse.io import read_aiger_into_aig
 aig = read_aiger_into_aig("design.aig")
 ```
 
+### Pythonic properties
+
+Network query methods are now **read-only properties** instead of callable methods.
+
+| Before (method)           | After (property)        | Affected (base) types                  |
+| ------------------------- | ----------------------- | -------------------------------------- |
+| `aig.size()`              | `aig.size`              | `Aig`, `SequentialAig`, `AigIndexList` |
+| `aig.num_pis()`           | `aig.num_pis`           | `Aig`, `SequentialAig`, `AigIndexList` |
+| `aig.num_pos()`           | `aig.num_pos`           | `Aig`, `SequentialAig`, `AigIndexList` |
+| `aig.num_gates()`         | `aig.num_gates`         | `Aig`, `SequentialAig`, `AigIndexList` |
+| `aig.is_combinational()`  | `aig.is_combinational`  | `Aig`, `SequentialAig`                 |
+| `depth_aig.num_levels()`  | `depth_aig.num_levels`  | `DepthAig`                             |
+| `seq_aig.num_cis()`       | `seq_aig.num_cis`       | `SequentialAig`                        |
+| `seq_aig.num_cos()`       | `seq_aig.num_cos`       | `SequentialAig`                        |
+| `seq_aig.num_registers()` | `seq_aig.num_registers` | `SequentialAig`                        |
+
+#### Before
+
+```python
+print(f"AIG has {aig.num_pis()} inputs and {aig.num_gates()} gates")
+```
+
+#### After
+
+```python
+print(f"AIG has {aig.num_pis} inputs and {aig.num_gates} gates")
+```
+
 ### API policy
 
-The package root intentionally does **not** re-export network classes or algorithm functions to lazily import extension modules.
+The package root intentionally does **not** re-export network classes or algorithm functions to lazily import extension
+modules.
 Use explicit modular imports (e.g. `aigverse.networks`, `aigverse.algorithms`, `aigverse.io`, `aigverse.utils`).

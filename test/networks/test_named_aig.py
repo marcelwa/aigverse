@@ -76,9 +76,9 @@ def test_named_aig_without_names() -> None:
     aig.create_po(n3)
 
     # Basic functionality should still work
-    assert aig.num_pis() == 2
-    assert aig.num_pos() == 1
-    assert aig.num_gates() == 1
+    assert aig.num_pis == 2
+    assert aig.num_pos == 1
+    assert aig.num_gates == 1
 
 
 def test_named_aig_copy_constructor() -> None:
@@ -97,8 +97,8 @@ def test_named_aig_copy_constructor() -> None:
 
     # Check that names are preserved
     assert aig2.get_network_name() == "original"
-    assert aig2.num_pis() == 2
-    assert aig2.num_pos() == 1
+    assert aig2.num_pis == 2
+    assert aig2.num_pos == 1
 
     # Get the signals in the new AIG
     x1_copy = aig2.make_signal(aig2.pi_at(0))
@@ -110,6 +110,16 @@ def test_named_aig_copy_constructor() -> None:
     assert aig2.get_name(x2_copy) == "b"
     assert aig2.has_output_name(0)
     assert aig2.get_output_name(0) == "out"
+
+
+def test_named_aig_repr() -> None:
+    aig = NamedAig()
+    aig.set_network_name("top")
+    x1 = aig.create_pi("a")
+    x2 = aig.create_pi("b")
+    aig.create_po(aig.create_and(x1, x2), "out")
+
+    assert repr(aig) == "NamedAig(name=top, pis=2, pos=1, gates=1)"
 
 
 def test_named_aig_complex_circuit() -> None:
@@ -146,8 +156,8 @@ def test_named_aig_complex_circuit() -> None:
     cout_idx = aig.create_po(cout, "carry_out")
 
     # Verify structure
-    assert aig.num_pis() == 3
-    assert aig.num_pos() == 2
+    assert aig.num_pis == 3
+    assert aig.num_pos == 2
     assert aig.get_network_name() == "full_adder"
 
     # Verify all names

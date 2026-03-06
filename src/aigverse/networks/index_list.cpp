@@ -44,10 +44,10 @@ void ntk_index_list(nanobind::module_& m, const std::string& network_name)  // N
 
             .def("raw", &IndexList::raw)
 
-            .def("size", &IndexList::size)
-            .def("num_gates", &IndexList::num_gates)
-            .def("num_pis", &IndexList::num_pis)
-            .def("num_pos", &IndexList::num_pos)
+            .def_prop_ro("size", &IndexList::size)
+            .def_prop_ro("num_gates", &IndexList::num_gates)
+            .def_prop_ro("num_pis", &IndexList::num_pis)
+            .def_prop_ro("num_pos", &IndexList::num_pos)
 
             .def("add_inputs", &IndexList::add_inputs, nb::arg("n") = 1u)
             .def("add_and", &IndexList::add_and, nb::arg("lit0"), nb::arg("lit1"))
@@ -121,9 +121,7 @@ void ntk_index_list(nanobind::module_& m, const std::string& network_name)  // N
                      v[i] = value;
                      il   = IndexList(v);  // reconstruct the index list with the new vector
                  })
-
             .def("__len__", [](const IndexList& il) { return il.size(); })
-
             .def("__repr__", [](const IndexList& il) { return fmt::format("IndexList({})", il); })
             .def("__str__", [](const IndexList& il) { return mockturtle::to_index_list_string(il); })
 
