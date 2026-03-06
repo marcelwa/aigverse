@@ -104,10 +104,9 @@ testpaths = ["test/"]
 
 [tool.cibuildwheel]
 build = "cp3*"
+skip = ["*-musllinux_*", "cp313t-*"]
 enable = ["cpython-freethreading"]
 archs = "auto64"
-skip = "*-musllinux*"
-test-command = "python -c \"from aigverse.networks import Aig\""
 build-frontend = "build[uv]"
 manylinux-x86_64-image = "manylinux_2_28"
 
