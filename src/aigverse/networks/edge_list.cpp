@@ -8,7 +8,6 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner)
-#include <mockturtle/networks/sequential.hpp>
 #include <mockturtle/traits.hpp>
 #include <nanobind/make_iterator.h>  // NOLINT(misc-include-cleaner)
 #include <nanobind/nanobind.h>

@@ -14,16 +14,14 @@
 #include <mockturtle/views/fanout_view.hpp>
 #include <mockturtle/views/names_view.hpp>
 #include <nanobind/nanobind.h>
-#include <nanobind/stl/optional.h>  // NOLINT(misc-include-cleaner)
-#include <nanobind/stl/pair.h>      // NOLINT(misc-include-cleaner)
-#include <nanobind/stl/string.h>    // NOLINT(misc-include-cleaner)
-#include <nanobind/stl/tuple.h>     // NOLINT(misc-include-cleaner)
-#include <nanobind/stl/vector.h>    // NOLINT(misc-include-cleaner)
+#include <nanobind/stl/pair.h>    // NOLINT(misc-include-cleaner)
+#include <nanobind/stl/string.h>  // NOLINT(misc-include-cleaner)
+#include <nanobind/stl/tuple.h>   // NOLINT(misc-include-cleaner)
+#include <nanobind/stl/vector.h>  // NOLINT(misc-include-cleaner)
 
 #include <cstdint>
 #include <exception>
 #include <functional>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>

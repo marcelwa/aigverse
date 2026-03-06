@@ -8,7 +8,6 @@
 #include <mockturtle/algorithms/balancing.hpp>
 #include <mockturtle/algorithms/balancing/esop_balancing.hpp>
 #include <mockturtle/algorithms/balancing/sop_balancing.hpp>
-#include <mockturtle/algorithms/cleanup.hpp>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>  // NOLINT(misc-include-cleaner)
 
@@ -47,18 +46,16 @@ void balancing(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 
                 return mockturtle::balancing(ntk, {rebalance_fn}, ps);
             }
-            else if (rebalance_function == "esop")
+            if (rebalance_function == "esop")
             {
                 mockturtle::esop_rebalancing<Ntk> rebalance_fn{};
                 rebalance_fn.both_phases = sop_both_phases;
 
                 return mockturtle::balancing(ntk, {rebalance_fn}, ps);
             }
-            else
-            {
-                throw std::invalid_argument(fmt::format(
-                    "Unknown rebalance function: '{}'. Possible values are 'sop' and 'esop'.", rebalance_function));
-            }
+
+            throw std::invalid_argument(fmt::format(
+                "Unknown rebalance function: '{}'. Possible values are 'sop' and 'esop'.", rebalance_function));
         },
         nb::arg("ntk"), nb::arg("cut_size") = 4, nb::arg("cut_limit") = 8, nb::arg("minimize_truth_table") = true,
         nb::arg("only_on_critical_path") = false, nb::arg("rebalance_function") = "sop",

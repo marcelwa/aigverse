@@ -16,7 +16,7 @@ namespace detail
 template <typename Ntk>
 void cleanup(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace nb = nanobind;
+    namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "cleanup_dangling",
