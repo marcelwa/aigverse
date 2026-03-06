@@ -115,8 +115,7 @@ manylinux-x86_64-image = "manylinux_2_28"
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
 [tool.cibuildwheel.windows]
-before-build = "uv pip install delvewheel>=1.11.2"
-environment = { CMAKE_GENERATOR = "Ninja" }
+before-build = "uv pip install delvewheel>=1.11.2,<2.0.0"
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --ignore-existing"
 
 [[tool.cibuildwheel.overrides]]
