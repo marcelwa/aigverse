@@ -82,7 +82,9 @@ jobs:
 
       - name: Configure CMake
         if: matrix.language == 'cpp'
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DPython_EXECUTABLE=${{ github.workspace }}/.venv/bin/python
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Debug
 
       - name: Build
         if: matrix.language == 'cpp'

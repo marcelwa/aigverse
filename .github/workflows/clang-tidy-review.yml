@@ -45,7 +45,6 @@ jobs:
       - name: Generate compilation database
         run: >
           cmake -B build -S .
-          -DPython_EXECUTABLE=${{ github.workspace }}/.venv/bin/python
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
       - name: Run clang-tidy
