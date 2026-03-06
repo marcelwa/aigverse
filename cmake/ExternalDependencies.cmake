@@ -26,9 +26,19 @@ endif()
 # Detect the installed nanobind package and import it into CMake
 execute_process(
   COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+  RESULT_VARIABLE nanobind_exec_result
+  ERROR_VARIABLE nanobind_exec_err
   OUTPUT_STRIP_TRAILING_WHITESPACE
   OUTPUT_VARIABLE nanobind_ROOT)
-find_package(nanobind CONFIG REQUIRED)
+
+if(NOT nanobind_exec_result EQUAL 0)
+  message(
+    FATAL_ERROR
+      "Failed to query nanobind CMake directory via '${Python_EXECUTABLE} -m nanobind --cmake_dir': ${nanobind_exec_err}"
+  )
+endif()
+
+find_package(nanobind CONFIG REQUIRED PATHS "${nanobind_ROOT}" NO_DEFAULT_PATH)
 
 # Fetch mockturtle library
 set(MOCKTURTLE_REV
