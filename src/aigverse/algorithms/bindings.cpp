@@ -3,6 +3,7 @@
 namespace aigverse
 {
 void bind_equivalence_checking(nanobind::module_& m);
+void bind_cleanup_dangling(nanobind::module_& m);
 void bind_refactoring(nanobind::module_& m);
 void bind_resubstitution(nanobind::module_& m);
 void bind_rewriting(nanobind::module_& m);
@@ -16,6 +17,7 @@ NB_MODULE(algorithms, m)
     nanobind::module_::import_("aigverse.networks");  // ensure network types are registered
     nanobind::module_::import_("aigverse.utils");     // ensure truth-table types are registered
     aigverse::bind_equivalence_checking(m);
+    aigverse::bind_cleanup_dangling(m);
     aigverse::bind_refactoring(m);
     aigverse::bind_resubstitution(m);
     aigverse::bind_rewriting(m);

@@ -14,8 +14,6 @@
 #include <nanobind/stl/tuple.h>   // NOLINT(misc-include-cleaner)
 #include <nanobind/stl/vector.h>  // NOLINT(misc-include-cleaner)
 
-#include <algorithm>
-#include <cctype>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -57,6 +55,15 @@ void ntk_index_list(nanobind::module_& m, const std::string& network_name)  // N
             .def("add_output", &IndexList::add_output, nb::arg("lit"))
 
             .def("clear", &IndexList::clear)
+            .def(
+                "to_aig",
+                [](const IndexList& il)
+                {
+                    Ntk ntk{};
+                    mockturtle::decode(ntk, il);
+                    return ntk;
+                },
+                nb::rv_policy::move)
 
             .def("gates",
                  [](const IndexList& il)
@@ -123,30 +130,6 @@ void ntk_index_list(nanobind::module_& m, const std::string& network_name)  // N
             ;
 
         nb::implicitly_convertible<nb::list, IndexList>();
-
-        m.def(
-            "to_index_list",
-            [](const Ntk& ntk)
-            {
-                IndexList il{};
-                mockturtle::encode(il, ntk);
-                return il;
-            },
-            nb::arg("ntk"), nb::rv_policy::move);  // NOLINT(misc-include-cleaner)
-
-        auto lower_case_network_name = network_name;
-        std::transform(lower_case_network_name.begin(), lower_case_network_name.end(), lower_case_network_name.begin(),
-                       [](const auto c) { return static_cast<char>(std::tolower(static_cast<unsigned char>(c))); });
-
-        m.def(
-            fmt::format("to_{}", lower_case_network_name).c_str(),
-            [](const IndexList& il)
-            {
-                Ntk ntk{};
-                mockturtle::decode(ntk, il);
-                return ntk;
-            },
-            nb::arg("il"), nb::rv_policy::move);  // NOLINT(misc-include-cleaner)
     }
 }
 }  // namespace detail

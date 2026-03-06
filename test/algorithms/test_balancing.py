@@ -27,7 +27,7 @@ def test_balancing_on_simple_balanced_aig() -> None:
     num_gates_before = aig.num_gates()
     depth_before = _depth(aig)
 
-    balancing(aig)
+    aig = balancing(aig)
 
     assert aig.num_pis() == num_pis_before
     assert aig.num_pos() == num_pos_before
@@ -47,7 +47,7 @@ def test_balancing_on_simple_balanced_aig() -> None:
     num_gates_before_clone = aig_params_test.num_gates()
     depth_before_clone = _depth(aig_params_test)
 
-    balancing(
+    aig_params_test = balancing(
         aig_params_test,
         cut_size=6,
         cut_limit=10,
@@ -87,7 +87,7 @@ def test_balancing_reduces_depth_of_long_chain() -> None:
 
     assert depth_before == 4
 
-    balancing(aig)
+    aig = balancing(aig)
 
     assert aig.num_pis() == num_pis_before
     assert aig.num_pos() == num_pos_before
@@ -112,7 +112,7 @@ def test_balancing_reduces_depth_of_long_chain() -> None:
     num_gates_before_clone = aig_params_test.num_gates()
     depth_before_clone = _depth(aig_params_test)
 
-    balancing(aig_params_test, cut_size=3, cut_limit=4, only_on_critical_path=False)
+    aig_params_test = balancing(aig_params_test, cut_size=3, cut_limit=4, only_on_critical_path=False)
     assert aig_params_test.num_pis() == num_pis_before_clone
     assert aig_params_test.num_pos() == num_pos_before_clone
     depth_after_clone = _depth(aig_params_test)
@@ -147,7 +147,7 @@ def test_balancing_complex_unbalanced_to_balanced_tree() -> None:
     assert num_gates_before == 7
     assert depth_before == 6
 
-    balancing(aig)
+    aig = balancing(aig)
 
     assert aig.num_pis() == num_pis_before
     assert aig.num_pos() == num_pos_before
@@ -167,7 +167,7 @@ def test_balancing_complex_unbalanced_to_balanced_tree() -> None:
     num_pos_before_clone = aig_crit_path_test.num_pos()
     depth_before_clone = _depth(aig_crit_path_test)
 
-    balancing(aig_crit_path_test, only_on_critical_path=True)
+    aig_crit_path_test = balancing(aig_crit_path_test, only_on_critical_path=True)
     assert aig_crit_path_test.num_pis() == num_pis_before_clone
     assert aig_crit_path_test.num_pos() == num_pos_before_clone
     assert aig_crit_path_test.num_gates() == expected_gates_after
@@ -203,7 +203,7 @@ def test_balancing_with_different_cut_sizes_on_chain() -> None:
     _create_and_chain_po(aig_cs_default, pis_count)
     assert _depth(aig_cs_default) == expected_initial_depth
 
-    balancing(aig_cs_default)
+    aig_cs_default = balancing(aig_cs_default)
     assert _depth(aig_cs_default) == expected_final_depth_optimal
 
     # Smaller cut_size (e.g., 2)
@@ -211,7 +211,7 @@ def test_balancing_with_different_cut_sizes_on_chain() -> None:
     _create_and_chain_po(aig_cs_small, pis_count)
     depth_before_cs_small = _depth(aig_cs_small)
 
-    balancing(aig_cs_small, cut_size=2, cut_limit=10)
+    aig_cs_small = balancing(aig_cs_small, cut_size=2, cut_limit=10)
     depth_after_cs_small = _depth(aig_cs_small)
     assert depth_after_cs_small <= depth_before_cs_small
     # For cut_size=2, balancing might not improve or change depth for a simple chain
@@ -223,7 +223,7 @@ def test_balancing_with_different_cut_sizes_on_chain() -> None:
     aig_cs_large = Aig()
     _create_and_chain_po(aig_cs_large, pis_count)
 
-    balancing(aig_cs_large, cut_size=6, cut_limit=12)
+    aig_cs_large = balancing(aig_cs_large, cut_size=6, cut_limit=12)
     assert _depth(aig_cs_large) == expected_final_depth_optimal
 
 
@@ -238,7 +238,7 @@ def test_esop_balancing_reduces_depth_on_xor_chain() -> None:
     depth_before = _depth(aig)
     assert depth_before == 14  # Depth of AIG XOR chain
 
-    balancing(aig, rebalance_function="esop")
+    aig = balancing(aig, rebalance_function="esop")
     depth_after = _depth(aig)
     # Current ESOP balancing on AIG XORs results in depth 8 for this 8-input case
     assert depth_after == 8, f"ESOP balancing did not produce expected depth: {depth_after} (expected 8)"
@@ -261,7 +261,7 @@ def test_esop_balancing_preserves_functionality_on_xor_and_chain() -> None:
     num_gates_before = aig.num_gates()
     depth_before = _depth(aig)
 
-    balancing(aig, rebalance_function="esop")
+    aig = balancing(aig, rebalance_function="esop")
     depth_after = _depth(aig)
     assert aig.num_pis() == num_pis_before
     assert aig.num_pos() == num_pos_before
@@ -292,5 +292,23 @@ def test_esop_balancing_with_sop_both_phases_param() -> None:
     n1 = aig.create_xor(n0, x2)
     aig.create_po(n1)
     depth_before = _depth(aig)
-    balancing(aig, rebalance_function="esop", sop_both_phases=False)
+    aig = balancing(aig, rebalance_function="esop", sop_both_phases=False)
     assert _depth(aig) <= depth_before
+
+
+def test_return_new_does_not_mutate_input() -> None:
+    aig = Aig()
+    x0 = aig.create_pi()
+    x1 = aig.create_pi()
+    x2 = aig.create_pi()
+    x3 = aig.create_pi()
+    n0 = aig.create_and(x2, x3)
+    n1 = aig.create_and(x1, n0)
+    n2 = aig.create_and(x0, n1)
+    aig.create_po(n2)
+
+    aig_before = aig.clone()
+    result = balancing(aig)
+
+    assert result is not None
+    assert _depth(aig) == _depth(aig_before)

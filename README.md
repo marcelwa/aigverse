@@ -228,18 +228,26 @@ from aigverse.algorithms import (
     sop_refactoring,
     aig_cut_rewriting,
     balancing,
+    cleanup_dangling,
 )
 
 # Clone the AIG network for size comparison
 aig_clone = aig.clone()
 
-# Optimize the AIG with several optimization algorithms
+# Optimize the AIG with several optimization algorithms.
+# By default, each algorithm returns a *new* cleaned AIG.
+aig_opt = aig
 for optimization in [aig_resubstitution, sop_refactoring, aig_cut_rewriting, balancing]:
-    optimization(aig)
+    aig_opt = optimization(aig_opt)
 
 # Print the size of the unoptimized and optimized AIGs
 print(f"Original AIG Size:  {aig_clone.size()}")
-print(f"Optimized AIG Size: {aig.size()}")
+print(f"Optimized AIG Size: {aig_opt.size()}")
+
+# Some algorithms offer in-place transformations for performance-oriented pipelines
+for optimization in [aig_resubstitution, sop_refactoring]:
+    optimization(aig, inplace=True)
+aig = cleanup_dangling(aig)
 ```
 
 ### ✅ Equivalence Checking

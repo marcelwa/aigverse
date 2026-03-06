@@ -4,8 +4,10 @@
 
 #include "aigverse/types.hpp"
 
+#include "edge_list.hpp"
+#include "index_list.hpp"
+
 #include <fmt/format.h>
-#include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/networks/sequential.hpp>
 #include <mockturtle/traits.hpp>
 #include <mockturtle/views/depth_view.hpp>
@@ -21,6 +23,7 @@
 #include <cstdint>
 #include <exception>
 #include <functional>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -197,6 +200,19 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
             "is_nary_and", [](const Ntk& ntk, const Node& n) { return ntk.is_nary_and(n); }, nb::arg("n"))
         .def(
             "is_nary_or", [](const Ntk& ntk, const Node& n) { return ntk.is_nary_or(n); }, nb::arg("n"))
+        .def(
+            "to_edge_list", [](const Ntk& ntk, const int64_t regular_weight = 0, const int64_t inverted_weight = 1)
+            { return aigverse::to_edge_list(ntk, regular_weight, inverted_weight); }, nb::arg("regular_weight") = 0,
+            nb::arg("inverted_weight") = 1, nb::rv_policy::move)
+        .def(
+            "to_index_list",
+            [](const Ntk& ntk)
+            {
+                aigverse::aig_index_list il{};
+                mockturtle::encode(il, ntk);
+                return il;
+            },
+            nb::rv_policy::move)
         .def("__getstate__",
              [](const Ntk& ntk)
              {
@@ -239,8 +255,7 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
                      const auto message = fmt::format("Failed to restore network state: {}", e.what());
                      throw nb::value_error(message.c_str());
                  }
-             })
-        .def("cleanup_dangling", [](Ntk& ntk) { ntk = mockturtle::cleanup_dangling(ntk); });
+             });
 
     using NamedNtk = mockturtle::names_view<Ntk>;
     nb::class_<NamedNtk, Ntk>(m, fmt::format("Named{}", network_name).c_str())
@@ -324,6 +339,11 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
         .def("ri_index", &SequentialNtk::ri_index, nb::arg("s"))
         .def("ro_to_ri", &SequentialNtk::ro_to_ri, nb::arg("s"))
         .def("ri_to_ro", &SequentialNtk::ri_to_ro, nb::arg("s"))
+        .def(
+            "to_edge_list",
+            [](const SequentialNtk& ntk, const int64_t regular_weight = 0, const int64_t inverted_weight = 1)
+            { return aigverse::to_edge_list(ntk, regular_weight, inverted_weight); }, nb::arg("regular_weight") = 0,
+            nb::arg("inverted_weight") = 1, nb::rv_policy::move)
         .def("pis",
              [](const SequentialNtk& ntk)
              {

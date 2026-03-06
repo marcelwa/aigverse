@@ -4,12 +4,15 @@
 
 #include "aigverse/types.hpp"
 
+#include "transform_helpers.hpp"
+
 #include <mockturtle/algorithms/aig_resub.hpp>
-#include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/resubstitution.hpp>
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>  // NOLINT(misc-include-cleaner)
 
 #include <cstdint>
+#include <optional>
 
 namespace aigverse
 {
@@ -27,7 +30,7 @@ void resubstitution(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
         [](Ntk& ntk, const uint32_t max_pis = 8, const uint32_t max_divisors = 150, const uint32_t max_inserts = 2,
            const uint32_t skip_fanout_limit_for_roots = 1000, const uint32_t skip_fanout_limit_for_divisors = 100,
            const bool verbose = false, const bool use_dont_cares = false, const uint32_t window_size = 12,
-           const bool preserve_depth = false) -> void
+           const bool preserve_depth = false, const bool inplace = false) -> std::optional<Ntk>
         {
             mockturtle::resubstitution_params params{};
             params.max_pis                        = max_pis;
@@ -40,14 +43,13 @@ void resubstitution(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
             params.window_size                    = window_size;
             params.preserve_depth                 = preserve_depth;
 
-            mockturtle::aig_resubstitution(ntk, params);
-
-            ntk = mockturtle::cleanup_dangling(ntk);
+            return run_transform(ntk, inplace,
+                                 [params](Ntk& target) { mockturtle::aig_resubstitution(target, params); });
         },
         nb::arg("ntk"), nb::arg("max_pis") = 8, nb::arg("max_divisors") = 150, nb::arg("max_inserts") = 2,
         nb::arg("skip_fanout_limit_for_roots") = 1000, nb::arg("skip_fanout_limit_for_divisors") = 100,
         nb::arg("verbose") = false, nb::arg("use_dont_cares") = false, nb::arg("window_size") = 12,
-        nb::arg("preserve_depth") = false,
+        nb::arg("preserve_depth") = false, nb::arg("inplace") = false,
         nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 

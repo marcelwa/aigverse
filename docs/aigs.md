@@ -210,7 +210,7 @@ AIGER. See [File I/O](#file-io) for more details.
 
 :::{note}
 Names are tied to the specific AIG structure. When you apply optimization algorithms or structural modifications
-(such as {py:meth}`~aigverse.networks.Aig.cleanup_dangling`), the names will be lost as the return type will be downcast to
+(such as {py:func}`~aigverse.algorithms.cleanup_dangling`), the names will be lost as the return type will be downcast to
 {py:class}`~aigverse.networks.Aig`. If preserving names is important, consider reapplying them after optimization.
 :::
 
@@ -370,7 +370,7 @@ list of integers. This is useful for ML pipelines, dataset generation, or export
 fixed-size numeric arrays are required.
 
 ```{code-cell} ipython3
-from aigverse.networks import to_index_list, to_aig, AigIndexList
+from aigverse.networks import AigIndexList
 
 # Create a sample AIG
 aig = Aig()
@@ -384,10 +384,10 @@ t2 = aig.create_xor(t0, t1)
 aig.create_po(t2)
 
 # Convert an AIG to an index list
-indices = to_index_list(aig)
+indices = aig.to_index_list()
 
 # Convert an index list back to an AIG
-aig2 = to_aig(indices)
+aig2 = indices.to_aig()
 
 # Convert to a Python list
 indices = [int(i) for i in indices]

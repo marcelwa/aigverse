@@ -8,7 +8,7 @@ import networkx as nx
 import numpy as np
 
 from ..algorithms import simulate, simulate_nodes
-from ..networks import AigSignal, DepthAig, NamedAig, to_edge_list
+from ..networks import AigSignal, DepthAig, NamedAig
 
 if TYPE_CHECKING:
     from ..networks import Aig
@@ -162,7 +162,7 @@ def to_networkx(
         g.add_node(synth_node, **attrs)
 
     # Export the AIG as an edge list
-    edges = to_edge_list(self)
+    edges = self.to_edge_list()
 
     # Iterate over all edges and add them to the graph
     for src, tgt, weight in [(e.source, e.target, e.weight) for e in edges]:

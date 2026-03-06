@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from aigverse.algorithms import equivalence_checking
+from aigverse.algorithms import cleanup_dangling, equivalence_checking
 from aigverse.networks import Aig, AigSignal
 
 
@@ -566,13 +566,20 @@ def test_cleanup_dangling() -> None:
     # Copy the AIG
     aig_copy = aig.clone()
 
-    aig.cleanup_dangling()
+    cleaned = cleanup_dangling(aig)
+    assert cleaned is not None
 
     # Check the size of the AIG after cleanup
-    assert aig.size() == 5
+    assert cleaned.size() == 5
+
+    # Default mode must not mutate input.
+    assert aig.size() == 8
 
     # Check equivalence of the original and cleaned up AIG
-    assert equivalence_checking(aig, aig_copy)
+    assert equivalence_checking(cleaned, aig_copy)
+
+    aig = cleanup_dangling(aig)
+    assert aig.size() == 5
 
 
 def test_pickle_empty_aig() -> None:

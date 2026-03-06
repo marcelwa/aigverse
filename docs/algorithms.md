@@ -88,7 +88,7 @@ from aigverse.algorithms import aig_resubstitution
 aig_resub = aig.clone()
 
 # Apply resubstitution
-aig_resubstitution(aig_resub, window_size=12)
+aig_resub = aig_resubstitution(aig_resub, window_size=12)
 
 print(f"Original AND gates: {aig.num_gates()}")
 print(f"After resubstitution: {aig_resub.num_gates()} AND gates")
@@ -106,7 +106,7 @@ from aigverse.algorithms import sop_refactoring
 aig_refactor = aig.clone()
 
 # Apply SOP refactoring
-sop_refactoring(aig_refactor, use_reconvergence_cut=True)
+aig_refactor = sop_refactoring(aig_refactor, use_reconvergence_cut=True)
 
 print(f"Original AND gates: {aig.num_gates()}")
 print(f"After SOP refactoring: {aig_refactor.num_gates()} AND gates")
@@ -124,7 +124,7 @@ from aigverse.algorithms import aig_cut_rewriting
 aig_rewrite = aig.clone()
 
 # Apply cut rewriting
-aig_cut_rewriting(aig_rewrite, cut_size=4)
+aig_rewrite = aig_cut_rewriting(aig_rewrite, cut_size=4)
 
 print(f"Original AND gates: {aig.num_gates()}")
 print(f"After cut rewriting: {aig_rewrite.num_gates()} AND gates")
@@ -143,7 +143,7 @@ from aigverse.networks import DepthAig
 aig_balance = aig.clone()
 
 # Apply balancing
-balancing(aig_balance, rebalance_function="sop")
+aig_balance = balancing(aig_balance, rebalance_function="sop")
 
 # Compute depth
 original_depth = DepthAig(aig).num_levels()
@@ -163,19 +163,36 @@ For best results, optimization techniques are typically applied in combination, 
 aig_opt = aig.clone()
 
 # First pass
-aig_resubstitution(aig_opt)
-sop_refactoring(aig_opt)
-aig_cut_rewriting(aig_opt)
+aig_opt = aig_resubstitution(aig_opt)
+aig_opt = sop_refactoring(aig_opt)
+aig_opt = aig_cut_rewriting(aig_opt)
 
 # Second pass
-aig_resubstitution(aig_opt)
-sop_refactoring(aig_opt)
+aig_opt = aig_resubstitution(aig_opt)
+aig_opt = sop_refactoring(aig_opt)
 
 print(f"\nTotal optimization results:")
 print(f"- Original: {aig.num_gates()} AND gates")
 print(f"- Optimized: {aig_opt.num_gates()} AND gates")
 print(f"- Total reduction: {aig.num_gates() - aig_opt.num_gates()} gates ({(aig.num_gates() - aig_opt.num_gates()) / aig.num_gates() * 100:.2f}%)")
 ```
+
+Some algorithms offer the `inplace=True` keyword argument for performance-sensitive pipelines of chained optimization:
+
+```{code-cell} ipython3
+from aigverse.algorithms import cleanup_dangling
+
+aig_fast = aig.clone()
+aig_resubstitution(aig_fast, inplace=True)
+sop_refactoring(aig_fast, inplace=True)
+
+# Explicit cleanup step after in-place chaining
+aig_fast = cleanup_dangling(aig_fast)
+```
+
+:::{note}
+When choosing this route, users are responsible to call {py:func}`~aigverse.algorithms.cleanup_dangling` to obtain a structurally valid AIG.
+:::
 
 ## Equivalence Checking
 

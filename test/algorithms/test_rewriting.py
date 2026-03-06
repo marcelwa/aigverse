@@ -8,7 +8,7 @@ def test_empty_aigs() -> None:
     aig1 = Aig()
     aig2 = aig1.clone()
 
-    aig_cut_rewriting(aig1)
+    aig1 = aig_cut_rewriting(aig1)
 
     assert equivalence_checking(aig1, aig2)
 
@@ -33,7 +33,7 @@ def test_simple_aigs() -> None:
     aig2.create_po(and2)
     aig2.create_po(b2)
 
-    aig_cut_rewriting(aig1)
+    aig1 = aig_cut_rewriting(aig1)
 
     assert equivalence_checking(aig1, aig2)
     assert equivalence_checking(aig1, aig1.clone())
@@ -56,11 +56,11 @@ def test_aig_and_its_negated_copy() -> None:
 
     aig2.create_po(~and3)
 
-    aig_cut_rewriting(aig1)
+    aig1 = aig_cut_rewriting(aig1)
 
     assert not equivalence_checking(aig1, aig2)
 
-    aig_cut_rewriting(aig2)
+    aig2 = aig_cut_rewriting(aig2)
 
     assert not equivalence_checking(aig1, aig2)
 
@@ -76,7 +76,7 @@ def test_equivalent_node_merger() -> None:
 
     aig_before = aig1.clone()
 
-    aig_cut_rewriting(aig1)
+    aig1 = aig_cut_rewriting(aig1)
 
     assert equivalence_checking(aig1, aig_before)
 
@@ -92,7 +92,7 @@ def test_positive_divisor_substitution() -> None:
 
     aig_before = aig2.clone()
 
-    aig_cut_rewriting(aig2)
+    aig2 = aig_cut_rewriting(aig2)
 
     assert equivalence_checking(aig2, aig_before)
 
@@ -108,7 +108,7 @@ def test_negative_divisor_substitution() -> None:
 
     aig_before = aig.clone()
 
-    aig_cut_rewriting(aig)
+    aig = aig_cut_rewriting(aig)
 
     assert equivalence_checking(aig, aig_before)
 
@@ -126,7 +126,7 @@ def test_parameters() -> None:
 
     aig2 = aig.clone()
 
-    aig_cut_rewriting(
+    aig = aig_cut_rewriting(
         aig,
         cut_size=8,
         cut_limit=12,
@@ -141,3 +141,19 @@ def test_parameters() -> None:
     )
 
     assert equivalence_checking(aig, aig2)
+
+
+def test_return_new_does_not_mutate_input() -> None:
+    aig = Aig()
+    a = aig.create_pi()
+    b = aig.create_pi()
+    and1 = aig.create_and(~a, ~b)
+    and2 = aig.create_and(a, ~and1)
+    aig.create_po(and2)
+
+    aig_before = aig.clone()
+    result = aig_cut_rewriting(aig)
+
+    assert result is not None
+    assert equivalence_checking(aig, aig_before)
+    assert equivalence_checking(result, aig_before)

@@ -7,24 +7,85 @@ This document describes breaking changes and how to upgrade.
 The `aigverse` library has been refactored into multiple extension modules to improve organization and scalability. If
 you are upgrading from an older version, you will need to update your imports.
 
+This version also includes an API rework for AIG optimization workflows.
+
 ### Key Changes
 
 - **Networks**: `Aig`, `SequentialAig`, `NamedAig`, etc., `AigEdge`, `AigEdgeList`, `AigIndexList` and helper
-  functions like `to_edge_list`, `to_index_list`, `to_aig` are now in `aigverse.networks`.
+  types are now in `aigverse.networks`.
 - **Algorithms**: `balancing`, `equivalence_checking`, `simulate`, etc. are now in `aigverse.algorithms`.
 - **IO**: Reading/Writing functions are now in `aigverse.io`.
 - **Utils**: `TruthTable` and its free operation functions are now in `aigverse.utils`.
 
-### Code Examples
+### Optimization and cleanup behavior
+
+- `aig_resubstitution`, `sop_refactoring`, `aig_cut_rewriting`, and `balancing` now return a **new cleaned** `Aig` by default.
+- `aig_resubstitution` and `sop_refactoring` support the `inplace` keyword argument (default `False`). With `inplace=True`, the input network is mutated, and the return value is `None`.
+- `cleanup_dangling` moved from `Aig` member API to `aigverse.algorithms.cleanup_dangling`.
 
 #### Before
 
 ```python
-from aigverse import Aig, read_aiger_into_aig, balancing, TruthTable
+from aigverse.algorithms import aig_resubstitution
+
+aig_resubstitution(aig)
+```
+
+#### After
+
+```python
+from aigverse.algorithms import aig_resubstitution, cleanup_dangling
+
+# Return-new default
+aig = aig_resubstitution(aig)
+
+# Optional in-place mode for performance-oriented pipelines
+aig_resubstitution(aig, inplace=True)
+aig = cleanup_dangling(aig)
+```
+
+#### Performance note
+
+If you intentionally chain `inplace=True` optimization calls for speed, you are responsible for calling
+`cleanup_dangling` at appropriate checkpoints.
+
+### Conversion API changes
+
+- Removed free functions:
+  - `to_edge_list(ntk)`
+  - `to_index_list(ntk)`
+  - `to_aig(il)`
+- Added member methods:
+  - `Aig.to_edge_list(...)`
+  - `Aig.to_index_list()`
+  - `AigIndexList.to_aig()`
+
+#### Before
+
+```python
+from aigverse.networks import to_edge_list, to_index_list, to_aig
+
+el = to_edge_list(aig)
+il = to_index_list(aig)
+aig2 = to_aig(il)
+```
+
+#### After
+
+```python
+el = aig.to_edge_list()
+il = aig.to_index_list()
+aig2 = il.to_aig()
+```
+
+### File I/O
+
+#### Before
+
+```python
+from aigverse import Aig, read_aiger_into_aig
 
 aig = read_aiger_into_aig("design.aig")
-balancing(aig)
-tt = TruthTable(3)
 ```
 
 #### After
@@ -32,15 +93,11 @@ tt = TruthTable(3)
 ```python
 from aigverse.networks import Aig
 from aigverse.io import read_aiger_into_aig
-from aigverse.algorithms import balancing
-from aigverse.utils import TruthTable
 
 aig = read_aiger_into_aig("design.aig")
-balancing(aig)
-tt = TruthTable(3)
 ```
 
 ### API policy
 
-The package root intentionally does **not** re-export network classes or algorithm functions.
+The package root intentionally does **not** re-export network classes or algorithm functions to lazily import extension modules.
 Use explicit modular imports (e.g. `aigverse.networks`, `aigverse.algorithms`, `aigverse.io`, `aigverse.utils`).

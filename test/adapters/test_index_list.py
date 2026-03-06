@@ -3,14 +3,14 @@ from __future__ import annotations
 import pytest
 
 from aigverse.algorithms import equivalence_checking, simulate
-from aigverse.networks import Aig, AigIndexList, to_aig, to_index_list
+from aigverse.networks import Aig, AigIndexList
 from aigverse.utils import TruthTable
 
 
 def test_decode_empty_index_list_into_aig() -> None:
     il = AigIndexList()
 
-    aig = to_aig(il)
+    aig = il.to_aig()
 
     assert aig.num_gates() == 0
     assert aig.num_pis() == 0
@@ -24,7 +24,7 @@ def test_decode_empty_index_list_into_aig() -> None:
 def test_encode_empty_aig_into_index_list() -> None:
     aig = Aig()
 
-    il = to_index_list(aig)
+    il = aig.to_index_list()
 
     assert il.num_pis() == 0
     assert il.num_pos() == 0
@@ -44,7 +44,7 @@ def test_decode_pi_only_index_list_into_aig() -> None:
     il.add_inputs(4)
     assert il.num_pis() == 4
 
-    aig = to_aig(il)
+    aig = il.to_aig()
 
     assert aig.num_gates() == 0
     assert aig.num_pis() == 4
@@ -58,7 +58,7 @@ def test_encode_pi_only_aig_into_index_list() -> None:
     aig.create_pi()
     aig.create_pi()
 
-    il = to_index_list(aig)
+    il = aig.to_index_list()
 
     assert il.num_pis() == 4
     assert il.num_pos() == 0
@@ -75,7 +75,7 @@ def test_encode_pi_only_aig_into_index_list() -> None:
 def test_decode_index_list_into_aig() -> None:
     il = AigIndexList([4, 1, 3, 2, 4, 6, 8, 12, 10, 14])
 
-    aig = to_aig(il)
+    aig = il.to_aig()
 
     assert aig.num_gates() == 5
     assert aig.num_pis() == 4
@@ -92,7 +92,7 @@ def test_decode_index_list_into_aig() -> None:
 def test_implicit_conversion() -> None:
     il = [4, 1, 3, 2, 4, 6, 8, 12, 10, 14]
 
-    aig = to_aig(il)  # type: ignore[arg-type]
+    aig = AigIndexList(il).to_aig()  # type: ignore[arg-type]
 
     assert aig.num_gates() == 5
     assert aig.num_pis() == 4
@@ -117,7 +117,7 @@ def test_encode_aig_into_index_list() -> None:
     t2 = aig.create_xor(t0, t1)
     aig.create_po(t2)
 
-    il = to_index_list(aig)
+    il = aig.to_index_list()
 
     assert il.num_pis() == 4
     assert il.num_pos() == 1
@@ -147,7 +147,7 @@ def test_encode_decode_aig_with_inverted_signals() -> None:
     aig.create_po(~t1)
     aig.create_po(t2)
 
-    il = to_index_list(aig)
+    il = aig.to_index_list()
 
     assert il.num_pis() == 3
     assert il.num_pos() == 2
@@ -155,7 +155,7 @@ def test_encode_decode_aig_with_inverted_signals() -> None:
     assert il.size() == 11
     assert il.raw() == [3, 2, 3, 2, 4, 4, 7, 9, 11, 11, 12]
 
-    aig2 = to_aig(il)
+    aig2 = il.to_aig()
 
     assert aig2.num_pis() == 3
     assert aig2.num_pos() == 2

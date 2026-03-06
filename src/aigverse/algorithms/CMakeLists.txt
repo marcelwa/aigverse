@@ -2,6 +2,7 @@ add_aigverse_python_binding(
   aigverse-algorithms
   bindings.cpp
   balancing.cpp
+  cleanup_dangling.cpp
   equivalence_checking.cpp
   refactoring.cpp
   resubstitution.cpp
