@@ -119,10 +119,6 @@ before-build = "uv pip install delvewheel>=1.11.2,<2.0.0"
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --ignore-existing"
 
 [[tool.cibuildwheel.overrides]]
-select = "*-macosx_arm64"
-environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
-
-[[tool.cibuildwheel.overrides]]
 select = "cp312-*"
 inherit.repair-wheel-command = "append"
 repair-wheel-command = "uvx abi3audit --strict --report {wheel}"
