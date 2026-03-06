@@ -32,7 +32,6 @@ repos:
       - id: debug-statements
       - id: end-of-file-fixer
       - id: mixed-line-ending
-      - id: requirements-txt-fixer
       - id: trailing-whitespace
 
   # Handle unwanted unicode characters
@@ -47,14 +46,6 @@ repos:
     rev: v1.44.0
     hooks:
       - id: typos
-
-  # Check for common RST mistakes
-  - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.10.0
-    hooks:
-      - id: rst-backticks
-      - id: rst-directive-colons
-      - id: rst-inline-touching-normal
 
   # CMake format and lint the CMakeLists.txt files
   - repo: https://github.com/cheshirekow/cmake-format-precommit

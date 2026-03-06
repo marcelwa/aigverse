@@ -2,11 +2,26 @@ function(add_aigverse_python_binding target_name)
   cmake_parse_arguments(ARG "" "MODULE_NAME;INSTALL_DIR" "" ${ARGN})
   set(SOURCES ${ARG_UNPARSED_ARGUMENTS})
 
-  pybind11_add_module(${target_name} THIN_LTO ${SOURCES})
+  nanobind_add_module(
+    # Extension name
+    ${target_name}
+    # Use stable Python ABI (supported in Python 3.12+)
+    STABLE_ABI
+    # Free-threaded support
+    FREE_THREADED
+    # Link-time optimization
+    LTO
+    # Suppress compiler warnings in the nanobind project
+    NB_SUPPRESS_WARNINGS
+    # Source files
+    ${SOURCES})
 
-  # Disable global IPO on extension modules: cross-module LTO causes heap
+  # Set C++ standard
+  target_compile_features(${target_name} PRIVATE cxx_std_17)
+
+  # Disable global IPO on extension modules: cross-module LTO can cause heap
   # corruption on Windows when shared_ptr-based types are passed between
-  # separate .pyd modules. THIN_LTO (above) provides within-module LTO.
+  # separate extension modules.
   set_target_properties(${target_name} PROPERTIES INTERPROCEDURAL_OPTIMIZATION
                                                   OFF)
 
@@ -20,9 +35,6 @@ function(add_aigverse_python_binding target_name)
                            aigverse::aigverse_warnings)
 
   target_include_directories(${target_name} PRIVATE "${PROJECT_SOURCE_DIR}/src")
-
-  target_compile_definitions(${target_name}
-                             PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
 
   if(MSVC)
     target_compile_options(${target_name} PRIVATE /utf-8)

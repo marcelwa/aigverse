@@ -708,25 +708,24 @@ def test_aig_setstate_exceptions():
     import copyreg
     import pickle
 
-    # Helper to create a pickle with a custom state (always a tuple for pickle protocol)
+    # Helper to create a pickle with a custom state that reconstructs via __new__.
+    # This ensures nanobind routes through __setstate__ on an uninitialized instance.
     def make_bad_pickle(state_tuple: tuple[Any, ...]) -> bytes:
         class Dummy:
             pass
 
-        copyreg.pickle(Dummy, lambda _: (Aig, state_tuple))  # type: ignore[arg-type, return-value]
+        copyreg.pickle(Dummy, lambda _: (Aig.__new__, (Aig,), state_tuple))  # type: ignore[arg-type, return-value]
         return pickle.dumps(Dummy())
 
-    # Tuple of wrong size (triggers TypeError)
-    bad_pickle = make_bad_pickle(([], 42))
-    with pytest.raises(TypeError, match="incompatible constructor arguments"):
-        pickle.loads(bad_pickle)
+    # Tuple of wrong size (triggers ValueError)
+    with pytest.raises(ValueError, match="Invalid state: expected a tuple of size 1 containing an index list"):
+        pickle.loads(make_bad_pickle(([], 42)))
 
-    # Tuple with wrong type inside (triggers TypeError)
-    bad_pickle = make_bad_pickle(("not a list",))
-    with pytest.raises(TypeError, match="incompatible constructor arguments"):
-        pickle.loads(bad_pickle)
+    # Tuple with wrong type inside (triggers ValueError)
+    with pytest.raises(ValueError, match="Invalid state: expected an index list"):
+        pickle.loads(make_bad_pickle(("not a list",)))
 
-    # Tuple with wrong element type in list (triggers TypeError)
-    bad_pickle = make_bad_pickle(([1, 2, "bad"],))
-    with pytest.raises(TypeError, match="incompatible constructor arguments"):
-        pickle.loads(bad_pickle)
+    # Tuple with wrong element type in list (triggers ValueError)
+    bad_state: tuple[Any, ...] = ([1, 2, "bad"],)
+    with pytest.raises(ValueError, match="Invalid state: expected an index list"):
+        pickle.loads(make_bad_pickle(bad_state))

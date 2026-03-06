@@ -1,8 +1,8 @@
 [build-system]
 requires = [
-    "scikit-build-core>=0.10.1",
+    "scikit-build-core>=0.11.6",
     "setuptools-scm>=8.1",
-    "pybind11~=3.0",
+    "nanobind~=2.12.0",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -59,6 +59,8 @@ ninja.version = ">=1.10"
 build-dir = "build/{wheel_tag}/{build_type}"
 # Explicitly set the package directory
 wheel.packages = ["python/aigverse"]
+# Enable Stable ABI builds for CPython 3.12+
+wheel.py-api = "cp312"
 # Only build the Python bindings target
 build.targets = ["aigverse-networks", "aigverse-algorithms", "aigverse-io", "aigverse-utils"]
 # Only install the Python package component
@@ -85,12 +87,6 @@ mode = "git"
 build-backend = "auto"
 
 
-[[tool.scikit-build.overrides]]
-if.abi-flags = "t"
-inherit.cmake.define = "append"
-cmake.define.DISABLE_GIL = "1"
-
-
 [tool.setuptools_scm]
 write_to = "python/aigverse/_version.py"
 
@@ -108,22 +104,26 @@ testpaths = ["test/"]
 
 [tool.cibuildwheel]
 build = "cp3*"
+skip = ["*-musllinux_*", "cp313t-*"]
 enable = ["cpython-freethreading"]
 archs = "auto64"
-skip = "*-musllinux*"
-test-command = "python -c \"from aigverse.networks import Aig\""
 build-frontend = "build[uv]"
-manylinux-x86_64-image = "manylinux_2_28"
+test-groups = ["test"]
+test-sources = ["test/"]
+test-command = "pytest test/"
+
 
 [tool.cibuildwheel.macos]
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
 [tool.cibuildwheel.windows]
-environment = { CMAKE_GENERATOR = "Ninja" }
+before-build = "uv pip install delvewheel>=1.11.2"
+repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --ignore-existing"
 
 [[tool.cibuildwheel.overrides]]
-select = "*-macosx_arm64"
-environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
+select = "cp312-*"
+inherit.repair-wheel-command = "append"
+repair-wheel-command = "uvx abi3audit --strict --report {wheel}"
 
 
 [tool.uv]
@@ -173,9 +173,6 @@ ignore = [
     "S101", # Use of assert detected
     "S404", # `subprocess` module is possibly insecure
     "TID252", # Prefer absolute imports over relative imports from parent modules
-    "S301", # pickle can be insecure
-    "S403", # pickle can be insecure
-    "PYI002", # strictly static pyi interface
 ]
 future-annotations = true
 
@@ -183,11 +180,11 @@ isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "python/aigverse/__init__.py" = ["RUF067"]
-"test/**" = ["T20", "ANN", "D", "INP001"]
+"test/**" = ["T20", "ANN", "D", "INP001", "S301", "S403"]
 "docs/**" = ["T20", "ERA001", "INP001"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]
 "tools/*.py" = ["S603", "S607"]
-"*.pyi" = ["D418", "PYI021"]
+"*.pyi" = ["D418", "PYI002", "PYI021", "A003"]
 "*.ipynb" = [
     "D", # pydocstyle
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
@@ -203,9 +200,9 @@ docstring-code-format = true
 
 [dependency-groups]
 build = [
-    "scikit-build-core>=0.11.0",
+    "scikit-build-core>=0.11.6",
     "setuptools-scm>=8.1",
-    "pybind11~=3.0",
+    "nanobind~=2.12.0",
 ]
 adapters = [
     "networkx>=3.0.0",

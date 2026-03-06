@@ -8,8 +8,7 @@
 #include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/node_resynthesis/sop_factoring.hpp>
 #include <mockturtle/algorithms/refactoring.hpp>
-#include <pybind11/cast.h>
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 #include <cstdint>
 #include <exception>
@@ -22,9 +21,9 @@ namespace detail
 {
 
 template <typename Ntk>
-void refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void refactoring(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
+    namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "sop_refactoring",
@@ -64,19 +63,19 @@ void refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
                 throw std::runtime_error("Unknown error in mockturtle::sop_refactoring");
             }
         },
-        py::arg("ntk"), py::arg("max_pis") = 6, py::arg("allow_zero_gain") = false,
-        py::arg("use_reconvergence_cut") = false, py::arg("use_dont_cares") = false,
-        py::arg("use_quick_factoring") = true, py::arg("try_both_polarities") = true,
-        py::arg("consider_inverter_cost") = false, py::arg("verbose") = false,
-        pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::arg("ntk"), nb::arg("max_pis") = 6, nb::arg("allow_zero_gain") = false,
+        nb::arg("use_reconvergence_cut") = false, nb::arg("use_dont_cares") = false,
+        nb::arg("use_quick_factoring") = true, nb::arg("try_both_polarities") = true,
+        nb::arg("consider_inverter_cost") = false, nb::arg("verbose") = false,
+        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG
-template void refactoring<aigverse::aig>(pybind11::module_& m);
+template void refactoring<aigverse::aig>(nanobind::module_& m);
 
 }  // namespace detail
 
-void bind_refactoring(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void bind_refactoring(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::refactoring<aigverse::aig>(m);
 }

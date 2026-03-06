@@ -7,8 +7,7 @@
 #include <mockturtle/algorithms/aig_resub.hpp>
 #include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/resubstitution.hpp>
-#include <pybind11/cast.h>
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 #include <cstdint>
 
@@ -19,9 +18,9 @@ namespace detail
 {
 
 template <typename Ntk>
-void resubstitution(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void resubstitution(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    namespace py = pybind11;  // NOLINT(misc-unused-alias-decls)
+    namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
     m.def(
         "aig_resubstitution",
@@ -45,19 +44,19 @@ void resubstitution(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
 
             ntk = mockturtle::cleanup_dangling(ntk);
         },
-        py::arg("ntk"), py::arg("max_pis") = 8, py::arg("max_divisors") = 150, py::arg("max_inserts") = 2,
-        py::arg("skip_fanout_limit_for_roots") = 1000, py::arg("skip_fanout_limit_for_divisors") = 100,
-        py::arg("verbose") = false, py::arg("use_dont_cares") = false, py::arg("window_size") = 12,
-        py::arg("preserve_depth") = false,
-        pybind11::call_guard<pybind11::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::arg("ntk"), nb::arg("max_pis") = 8, nb::arg("max_divisors") = 150, nb::arg("max_inserts") = 2,
+        nb::arg("skip_fanout_limit_for_roots") = 1000, nb::arg("skip_fanout_limit_for_divisors") = 100,
+        nb::arg("verbose") = false, nb::arg("use_dont_cares") = false, nb::arg("window_size") = 12,
+        nb::arg("preserve_depth") = false,
+        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG
-template void resubstitution<aigverse::aig>(pybind11::module_& m);
+template void resubstitution<aigverse::aig>(nanobind::module_& m);
 
 }  // namespace detail
 
-void bind_resubstitution(pybind11::module_& m)  // NOLINT(misc-use-internal-linkage)
+void bind_resubstitution(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::resubstitution<aigverse::aig>(m);
 }

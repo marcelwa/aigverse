@@ -1,19 +1,19 @@
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 namespace aigverse
 {
-void bind_read_aiger(pybind11::module_& m);
-void bind_write_aiger(pybind11::module_& m);
-void bind_read_pla(pybind11::module_& m);
-void bind_read_verilog(pybind11::module_& m);
-void bind_write_verilog(pybind11::module_& m);
-void bind_write_dot(pybind11::module_& m);
+void bind_read_aiger(nanobind::module_& m);
+void bind_write_aiger(nanobind::module_& m);
+void bind_read_pla(nanobind::module_& m);
+void bind_read_verilog(nanobind::module_& m);
+void bind_write_verilog(nanobind::module_& m);
+void bind_write_dot(nanobind::module_& m);
 }  // namespace aigverse
 
-PYBIND11_MODULE(io, m, pybind11::mod_gil_not_used())  // NOLINT(misc-include-cleaner)
+NB_MODULE(io, m)
 {
-    m.doc() = "Input/Output functionality";
-    pybind11::module_::import("aigverse.networks");  // ensure network types are registered
+    m.doc() = "Input/Output functionality.";
+    nanobind::module_::import_("aigverse.networks");  // ensure network types are registered
     aigverse::bind_read_aiger(m);
     aigverse::bind_write_aiger(m);
     aigverse::bind_read_pla(m);
