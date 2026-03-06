@@ -173,9 +173,6 @@ ignore = [
     "S101", # Use of assert detected
     "S404", # `subprocess` module is possibly insecure
     "TID252", # Prefer absolute imports over relative imports from parent modules
-    "S301", # pickle can be insecure
-    "S403", # pickle can be insecure
-    "PYI002", # strictly static pyi interface
 ]
 future-annotations = true
 
@@ -183,11 +180,11 @@ isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "python/aigverse/__init__.py" = ["RUF067"]
-"test/**" = ["T20", "ANN", "D", "INP001"]
+"test/**" = ["T20", "ANN", "D", "INP001", "S301", "S403"]
 "docs/**" = ["T20", "ERA001", "INP001"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]
 "tools/*.py" = ["S603", "S607"]
-"*.pyi" = ["D418", "PYI021", "A003"]
+"*.pyi" = ["D418", "PYI002", "PYI021", "A003"]
 "*.ipynb" = [
     "D", # pydocstyle
     "E402", # Allow imports to appear anywhere in Jupyter notebooks
