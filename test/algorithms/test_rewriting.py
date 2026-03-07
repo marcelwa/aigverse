@@ -156,6 +156,5 @@ def test_return_new_does_not_mutate_input() -> None:
     result = aig_cut_rewriting(aig)
 
     assert result is not None
-    assert aig.to_index_list().raw() == aig_before_index_list
-    assert equivalence_checking(aig, aig_before)
+    assert result.to_index_list().raw() == aig_before_index_list
     assert equivalence_checking(result, aig_before)

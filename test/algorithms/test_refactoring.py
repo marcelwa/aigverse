@@ -33,7 +33,9 @@ def test_simple_aigs() -> None:
     aig2.create_po(and2)
     aig2.create_po(b2)
 
-    sop_refactoring(aig1, inplace=True)
+    empty = sop_refactoring(aig1, inplace=True)
+
+    assert empty is None
 
     assert equivalence_checking(aig1, aig2)
     assert equivalence_checking(aig1, aig1.clone())
@@ -187,5 +189,10 @@ def test_return_new_does_not_mutate_input() -> None:
     result = sop_refactoring(aig)
 
     assert result is not None
+
+    assert aig.size == aig_before.size
+    assert aig.to_index_list().raw() == aig_before.to_index_list().raw()
+    assert result.size < aig_before.size
+
     assert equivalence_checking(aig, aig_before)
     assert equivalence_checking(result, aig_before)

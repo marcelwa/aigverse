@@ -413,14 +413,16 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
         .def("ri_index", &SequentialNtk::ri_index, nb::arg("s"))
         .def("ro_to_ri", &SequentialNtk::ro_to_ri, nb::arg("s"))
         .def("ri_to_ro", &SequentialNtk::ri_to_ro, nb::arg("s"))
-        .def("to_index_list",
-             [network_name](const SequentialNtk&) -> aigverse::aig_index_list
-             {
-                 const auto message = fmt::format("Sequential{} does not support to_index_list() because AigIndexList "
-                                                  "is combinational-only and would drop register state.",
-                                                  network_name);
-                 throw nb::type_error(message.c_str());
-             })
+        .def(
+            "to_index_list",
+            [network_name](const SequentialNtk&) -> aigverse::aig_index_list
+            {
+                const auto message = fmt::format("Sequential{} does not support to_index_list() because AigIndexList "
+                                                 "is combinational-only and would drop register state.",
+                                                 network_name);
+                throw nb::type_error(message.c_str());
+            },
+            nb::sig("def to_index_list(self) -> NoReturn"))
         .def(
             "to_edge_list",
             [](const SequentialNtk& ntk, const int64_t regular_weight = 0, const int64_t inverted_weight = 1)

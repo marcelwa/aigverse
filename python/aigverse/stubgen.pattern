@@ -1,5 +1,8 @@
 algorithms.__prefix__:
     from typing import Literal
 
+networks.__prefix__:
+    from typing import NoReturn
+
 rebalance_function: str:
     rebalance_function: Literal["sop", "esop"]
