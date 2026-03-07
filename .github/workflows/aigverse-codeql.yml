@@ -105,6 +105,8 @@ jobs:
         with:
           patterns: |
             -**/docs/**
+            -**/build/_deps/**
+            -**/.venv/**
           input: sarif-results/${{ matrix.language }}.sarif
           output: sarif-results/${{ matrix.language }}.sarif
 
