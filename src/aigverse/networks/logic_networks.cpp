@@ -267,7 +267,9 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
                  return fmt::format("{}(pis={}, pos={}, gates={}, size={})", network_name, ntk.num_pis(), ntk.num_pos(),
                                     ntk.num_gates(), ntk.size());
              })
-        .def("__iter__", [](const Ntk& ntk) { return make_node_iterator(ntk); })
+        .def(
+            "__iter__", [](const Ntk& ntk) { return make_node_iterator(ntk); },
+            nb::sig("def __iter__(self) -> Iterator[int]"))
         .def("__contains__", [](const Ntk& ntk, const nb::object& value) { return contains_node(ntk, value); })
         .def("__bool__", [](const Ntk& ntk) { return ntk.size() > 1; })
         .def("__copy__", [](const Ntk& ntk) { return ntk.clone(); })
