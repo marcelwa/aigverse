@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+
 from aigverse.networks import DepthAig
 
 
@@ -57,3 +59,20 @@ def test_depth_aig_repr() -> None:
     aig.create_po(aig.create_and(x1, x2))
 
     assert repr(aig) == "DepthAig(pis=2, pos=1, gates=1, depth=1)"
+
+
+def test_depth_aig_clone_and_copy_preserve_wrapper_type() -> None:
+    aig = DepthAig()
+    x0 = aig.create_pi()
+    x1 = aig.create_pi()
+    gate = aig.create_and(x0, x1)
+    aig.create_po(gate)
+
+    cloned = aig.clone()
+    shallow = copy.copy(aig)
+    deep = copy.deepcopy(aig)
+
+    for candidate in (cloned, shallow, deep):
+        assert isinstance(candidate, DepthAig)
+        assert candidate.num_levels == 1
+        assert candidate.level(candidate.get_node(gate)) == 1

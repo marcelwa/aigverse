@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import copy
+from typing import Any
+
 import pytest
 
 from aigverse.networks import SequentialAig
@@ -139,6 +142,59 @@ def test_sequential_aig_to_index_list_raises() -> None:
 
     with pytest.raises(TypeError, match="register state"):
         saig.to_index_list()
+
+
+def test_sequential_aig_clone_and_copy_preserve_wrapper_type() -> None:
+    saig = SequentialAig()
+    pi = saig.create_pi()
+    ro = saig.create_ro()
+    gate = saig.create_and(pi, ro)
+    saig.create_po(gate)
+    saig.create_ri(gate)
+
+    cloned = saig.clone()
+    shallow = copy.copy(saig)
+    deep = copy.deepcopy(saig)
+
+    for candidate in (cloned, shallow, deep):
+        assert isinstance(candidate, SequentialAig)
+        assert candidate.num_registers == 1
+        assert candidate.num_pos == 1
+        assert candidate.num_pis == 1
+
+
+def test_sequential_aig_pickle_raises() -> None:
+    import pickle
+
+    saig = SequentialAig()
+    pi = saig.create_pi()
+    ro = saig.create_ro()
+    gate = saig.create_and(pi, ro)
+    saig.create_po(gate)
+    saig.create_ri(gate)
+
+    with pytest.raises(ValueError, match="combinational-only"):
+        pickle.dumps(saig)
+
+
+def test_sequential_aig_setstate_raises() -> None:
+    import copyreg
+    import pickle
+
+    class Dummy:
+        pass
+
+    # Build a pickle payload that reconstructs SequentialAig via __new__,
+    # forcing nanobind to route restoration through __setstate__.
+    def make_pickle(state_tuple: tuple[Any, ...]) -> bytes:
+        copyreg.pickle(  # type: ignore[arg-type, return-value]
+            Dummy,
+            lambda _: (SequentialAig.__new__, (SequentialAig,), state_tuple),
+        )
+        return pickle.dumps(Dummy())
+
+    with pytest.raises(ValueError, match="combinational-only"):
+        pickle.loads(make_pickle(([0, 0],)))
 
 
 def test_sequential_aig_register_operations():

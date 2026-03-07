@@ -324,6 +324,10 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
         .def(nb::init<>())
         .def(nb::init<const NamedNtk&>(), nb::arg("ntk"))
         .def(nb::init<const Ntk&>(), nb::arg("ntk"))
+        .def("clone", [](const NamedNtk& ntk) { return NamedNtk{ntk}; })
+        .def("__copy__", [](const NamedNtk& ntk) { return NamedNtk{ntk}; })
+        .def(
+            "__deepcopy__", [](const NamedNtk& ntk, const nb::dict&) { return NamedNtk{ntk}; }, nb::arg("memo"))
         .def("create_pi", &NamedNtk::create_pi, nb::arg("name") = "")
         .def("create_po", &NamedNtk::create_po, nb::arg("f"), nb::arg("name") = "")
         .def("set_network_name", &NamedNtk::set_network_name, nb::arg("name"))
@@ -346,6 +350,10 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
         .def(nb::init<>())
         .def(nb::init<const DepthNtk&>(), nb::arg("ntk"))
         .def(nb::init<const Ntk&>(), nb::arg("ntk"))
+        .def("clone", [](const DepthNtk& ntk) { return DepthNtk{ntk}; })
+        .def("__copy__", [](const DepthNtk& ntk) { return DepthNtk{ntk}; })
+        .def(
+            "__deepcopy__", [](const DepthNtk& ntk, const nb::dict&) { return DepthNtk{ntk}; }, nb::arg("memo"))
         .def_prop_ro("num_levels", &DepthNtk::depth)
         .def("level", &DepthNtk::level, nb::arg("n"))
         .def("is_on_critical_path", &DepthNtk::is_on_critical_path, nb::arg("n"))
@@ -363,6 +371,10 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
         .def(nb::init<>())
         .def(nb::init<const Ntk&>(), nb::arg("ntk"))
         .def(nb::init<const FanoutNtk&>(), nb::arg("ntk"))
+        .def("clone", [](const FanoutNtk& ntk) { return FanoutNtk{ntk}; })
+        .def("__copy__", [](const FanoutNtk& ntk) { return FanoutNtk{ntk}; })
+        .def(
+            "__deepcopy__", [](const FanoutNtk& ntk, const nb::dict&) { return FanoutNtk{ntk}; }, nb::arg("memo"))
         .def(
             "fanouts",
             [](const FanoutNtk& ntk, const Node& n)
@@ -385,6 +397,11 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
     using SequentialNtk = mockturtle::sequential<Ntk>;
     nb::class_<SequentialNtk, Ntk>(m, fmt::format("Sequential{}", network_name).c_str())
         .def(nb::init<>())
+        .def("clone", [](const SequentialNtk& ntk) { return SequentialNtk{ntk}; })
+        .def("__copy__", [](const SequentialNtk& ntk) { return SequentialNtk{ntk}; })
+        .def(
+            "__deepcopy__", [](const SequentialNtk& ntk, const nb::dict&) { return SequentialNtk{ntk}; },
+            nb::arg("memo"))
         .def("create_pi", &SequentialNtk::create_pi)
         .def("create_po", &SequentialNtk::create_po, nb::arg("f"))
         .def("create_ro", &SequentialNtk::create_ro)
@@ -423,6 +440,28 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
                 throw nb::type_error(message.c_str());
             },
             nb::sig("def to_index_list(self) -> NoReturn"))
+        .def(
+            "__getstate__",
+            [network_name](const SequentialNtk&) -> nb::tuple
+            {
+                const auto message = fmt::format("Sequential{} does not support pickling via aig_index_list because "
+                                                 "it is combinational-only and would drop register/stateful data; "
+                                                 "to_index_list() is also disabled for this reason.",
+                                                 network_name);
+                throw nb::value_error(message.c_str());
+            },
+            nb::sig("def __getstate__(self) -> NoReturn"))
+        .def(
+            "__setstate__",
+            [network_name](SequentialNtk&, const nb::object&) -> void
+            {
+                const auto message = fmt::format("Sequential{} does not support unpickling via aig_index_list because "
+                                                 "it is combinational-only and would drop register/stateful data; "
+                                                 "to_index_list() is also disabled for this reason.",
+                                                 network_name);
+                throw nb::value_error(message.c_str());
+            },
+            nb::arg("state"), nb::sig("def __setstate__(self, state: object) -> NoReturn"))
         .def(
             "to_edge_list",
             [](const SequentialNtk& ntk, const int64_t regular_weight = 0, const int64_t inverted_weight = 1)

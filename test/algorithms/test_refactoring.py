@@ -9,6 +9,7 @@ def test_empty_aigs() -> None:
     aig2 = aig1.clone()
 
     sop_refactoring(aig1, inplace=True)
+    aig1 = cleanup_dangling(aig1)
 
     assert equivalence_checking(aig1, aig2)
 
@@ -37,6 +38,8 @@ def test_simple_aigs() -> None:
 
     assert empty is None
 
+    aig1 = cleanup_dangling(aig1)
+
     assert equivalence_checking(aig1, aig2)
     assert equivalence_checking(aig1, aig1.clone())
 
@@ -59,10 +62,12 @@ def test_aig_and_its_negated_copy() -> None:
     aig2.create_po(~and3)
 
     sop_refactoring(aig1, inplace=True)
+    aig1 = cleanup_dangling(aig1)
 
     assert not equivalence_checking(aig1, aig2)
 
     sop_refactoring(aig2, inplace=True)
+    aig2 = cleanup_dangling(aig2)
 
     assert not equivalence_checking(aig1, aig2)
 
@@ -150,6 +155,8 @@ def test_parameters() -> None:
         inplace=True,
     )
 
+    aig = cleanup_dangling(aig)
+
     assert equivalence_checking(aig, aig2)
 
 
@@ -173,6 +180,8 @@ def test_sop_factoring_parameters() -> None:
         consider_inverter_cost=False,
         inplace=True,
     )
+
+    aig = cleanup_dangling(aig)
 
     assert equivalence_checking(aig, aig_before)
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+
 from aigverse.networks import NamedAig
 
 
@@ -120,6 +122,28 @@ def test_named_aig_repr() -> None:
     aig.create_po(aig.create_and(x1, x2), "out")
 
     assert repr(aig) == "NamedAig(name=top, pis=2, pos=1, gates=1)"
+
+
+def test_named_aig_clone_and_copy_preserve_names() -> None:
+    aig = NamedAig()
+    aig.set_network_name("top")
+    x0 = aig.create_pi("x0")
+    x1 = aig.create_pi("x1")
+    gate = aig.create_and(x0, x1)
+    aig.set_name(gate, "and0")
+    aig.create_po(gate, "out")
+
+    cloned = aig.clone()
+    shallow = copy.copy(aig)
+    deep = copy.deepcopy(aig)
+
+    for candidate in (cloned, shallow, deep):
+        assert isinstance(candidate, NamedAig)
+        assert candidate.get_network_name() == "top"
+        assert candidate.get_name(candidate.make_signal(candidate.pi_at(0))) == "x0"
+        assert candidate.get_name(candidate.make_signal(candidate.pi_at(1))) == "x1"
+        assert candidate.has_output_name(0)
+        assert candidate.get_output_name(0) == "out"
 
 
 def test_named_aig_complex_circuit() -> None:
