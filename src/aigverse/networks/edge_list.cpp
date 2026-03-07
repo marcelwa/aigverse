@@ -8,7 +8,6 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner)
-#include <mockturtle/networks/sequential.hpp>
 #include <mockturtle/traits.hpp>
 #include <nanobind/make_iterator.h>  // NOLINT(misc-include-cleaner)
 #include <nanobind/nanobind.h>
@@ -120,11 +119,6 @@ void ntk_edge_list(nanobind::module_& m, const std::string& network_name)  // NO
         ;
 
     nb::implicitly_convertible<nb::list, EdgeList>();  // NOLINT(misc-include-cleaner)
-
-    m.def("to_edge_list", &to_edge_list<mockturtle::sequential<Ntk>>, nb::arg("ntk"), nb::arg("regular_weight") = 0,
-          nb::arg("inverted_weight") = 1);
-    m.def("to_edge_list", &to_edge_list<Ntk>, nb::arg("ntk"), nb::arg("regular_weight") = 0,
-          nb::arg("inverted_weight") = 1);
 }
 
 // Explicit instantiation for AIG

@@ -8,7 +8,7 @@ import networkx as nx
 import numpy as np
 
 from ..algorithms import simulate, simulate_nodes
-from ..networks import AigSignal, DepthAig, NamedAig, to_edge_list
+from ..networks import AigSignal, DepthAig, NamedAig
 
 if TYPE_CHECKING:
     from ..networks import Aig
@@ -111,11 +111,11 @@ def to_networkx(
 
     # Add global graph attributes
     g.graph["type"] = "AIG"
-    g.graph["num_pis"] = self.num_pis()
-    g.graph["num_pos"] = self.num_pos()
-    g.graph["num_gates"] = self.num_gates()
+    g.graph["num_pis"] = self.num_pis
+    g.graph["num_pos"] = self.num_pos
+    g.graph["num_gates"] = self.num_gates
     if levels:
-        g.graph["levels"] = depth_aig.num_levels() + 1  # + 1 for the PO level
+        g.graph["levels"] = depth_aig.num_levels + 1  # + 1 for the PO level
     if graph_tts:
         g.graph["function"] = graph_funcs
     if self_named is not None and (network_name := self_named.get_network_name()):
@@ -146,13 +146,13 @@ def to_networkx(
 
     # Iterate over synthetic PO nodes
     for po_idx, _po in enumerate(self.pos()):
-        synth_node = po_idx + self.size()
+        synth_node = po_idx + self.size
         attrs = {"index": synth_node}
 
         # Synthetic PO attributes
         type_vec = node_type_po
         if levels:
-            attrs["level"] = depth_aig.num_levels() + 1
+            attrs["level"] = depth_aig.num_levels + 1
         if fanouts:
             attrs["fanouts"] = 0
         if node_tts:
@@ -162,7 +162,7 @@ def to_networkx(
         g.add_node(synth_node, **attrs)
 
     # Export the AIG as an edge list
-    edges = to_edge_list(self)
+    edges = self.to_edge_list()
 
     # Iterate over all edges and add them to the graph
     for src, tgt, weight in [(e.source, e.target, e.weight) for e in edges]:
@@ -181,7 +181,7 @@ def to_networkx(
     # Add PO names as attributes on edges going to synthetic PO nodes
     if self_named is not None:
         for po_idx, _ in enumerate(self_named.pos()):
-            synth_node = po_idx + self_named.size()
+            synth_node = po_idx + self_named.size
             po_output_name = self_named.get_output_name(po_idx) if self_named.has_output_name(po_idx) else None
 
             # Find all edges going into this synthetic PO node

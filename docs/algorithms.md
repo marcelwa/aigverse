@@ -13,15 +13,19 @@ mystnb:
 
 # Algorithms
 
-This section covers the various algorithms available in aigverse for working with And-Inverter Graphs (AIGs) and other logic representations. These algorithms enable simulation, optimization, and verification of logic networks.
+This section covers the various algorithms available in aigverse for working with And-Inverter Graphs (AIGs) and other
+logic representations. These algorithms enable simulation, optimization, and verification of logic networks.
 
 ## Simulation
 
-Simulation algorithms allow you to evaluate the outputs of a logic network for all possible input combinations, effectively generating truth tables for the network's outputs and internal nodes.
+Simulation algorithms allow you to evaluate the outputs of a logic network for all possible input combinations,
+effectively generating truth tables for the network's outputs and internal nodes.
 
 ### Functional Simulation
 
-For simulating AIGs with truth tables, the {py:func}`~aigverse.algorithms.simulate` and {py:func}`~aigverse.algorithms.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes of an AIG.
+For simulating AIGs with truth tables, the {py:func}`~aigverse.algorithms.simulate` and {py:func}
+`~aigverse.algorithms.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes of an
+AIG.
 
 ```{code-cell} ipython3
 from aigverse.networks import Aig
@@ -55,7 +59,8 @@ for node, tt in node_tts.items():
 
 ## Optimization
 
-AIG optimization aims to reduce the number of AND gates and inverters in a circuit while maintaining its logical functionality. Different optimization techniques target various aspects of the AIG structure.
+AIG optimization aims to reduce the number of AND gates and inverters in a circuit while maintaining its logical
+functionality. Different optimization techniques target various aspects of the AIG structure.
 
 ### Basic Optimization Workflow
 
@@ -73,13 +78,14 @@ aig = read_aiger_into_aig("examples/i10.aig")
 
 # Print statistics about the loaded circuit
 print(f"i10 benchmark:")
-print(f"  I/O: {aig.num_pis()}/{aig.num_pos()}")
-print(f"  AND gates: {aig.num_gates()}")
+print(f"  I/O: {aig.num_pis}/{aig.num_pos}")
+print(f"  AND gates: {aig.num_gates}")
 ```
 
 ### Resubstitution
 
-Resubstitution identifies portions of logic that can be expressed using existing signals in the network. This technique is particularly effective at identifying and eliminating redundant logic.
+Resubstitution identifies portions of logic that can be expressed using existing signals in the network. This technique
+is particularly effective at identifying and eliminating redundant logic.
 
 ```{code-cell} ipython3
 from aigverse.algorithms import aig_resubstitution
@@ -88,16 +94,17 @@ from aigverse.algorithms import aig_resubstitution
 aig_resub = aig.clone()
 
 # Apply resubstitution
-aig_resubstitution(aig_resub, window_size=12)
+aig_resub = aig_resubstitution(aig_resub, window_size=12)
 
-print(f"Original AND gates: {aig.num_gates()}")
-print(f"After resubstitution: {aig_resub.num_gates()} AND gates")
-print(f"Reduction: {aig.num_gates() - aig_resub.num_gates()} gates ({(aig.num_gates() - aig_resub.num_gates()) / aig.num_gates() * 100:.2f}%)")
+print(f"Original AND gates: {aig.num_gates}")
+print(f"After resubstitution: {aig_resub.num_gates} AND gates")
+print(f"Reduction: {aig.num_gates - aig_resub.num_gates} gates ({(aig.num_gates - aig_resub.num_gates) / aig.num_gates * 100:.2f}%)")
 ```
 
 ### Sum-of-Products Refactoring
 
-SOP (Sum of Products) refactoring collapses parts of the AIG into truth tables, then re-synthesizes those portions using Sum-of-Products representations. This can find more efficient implementations for complex logic functions.
+SOP (Sum of Products) refactoring collapses parts of the AIG into truth tables, then re-synthesizes those portions using
+Sum-of-Products representations. This can find more efficient implementations for complex logic functions.
 
 ```{code-cell} ipython3
 from aigverse.algorithms import sop_refactoring
@@ -106,16 +113,17 @@ from aigverse.algorithms import sop_refactoring
 aig_refactor = aig.clone()
 
 # Apply SOP refactoring
-sop_refactoring(aig_refactor, use_reconvergence_cut=True)
+aig_refactor = sop_refactoring(aig_refactor, use_reconvergence_cut=True)
 
-print(f"Original AND gates: {aig.num_gates()}")
-print(f"After SOP refactoring: {aig_refactor.num_gates()} AND gates")
-print(f"Reduction: {aig.num_gates() - aig_refactor.num_gates()} gates ({(aig.num_gates() - aig_refactor.num_gates()) / aig.num_gates() * 100:.2f}%)")
+print(f"Original AND gates: {aig.num_gates}")
+print(f"After SOP refactoring: {aig_refactor.num_gates} AND gates")
+print(f"Reduction: {aig.num_gates - aig_refactor.num_gates} gates ({(aig.num_gates - aig_refactor.num_gates) / aig.num_gates * 100:.2f}%)")
 ```
 
 ### Cut Rewriting
 
-Cut rewriting identifies small subgraphs (cuts) in the AIG and replaces them with pre-computed optimal implementations from a library. This technique leverages NPN-equivalence classes to find the best possible implementation for each cut.
+Cut rewriting identifies small subgraphs (cuts) in the AIG and replaces them with pre-computed optimal implementations
+from a library. This technique leverages NPN-equivalence classes to find the best possible implementation for each cut.
 
 ```{code-cell} ipython3
 from aigverse.algorithms import aig_cut_rewriting
@@ -124,11 +132,11 @@ from aigverse.algorithms import aig_cut_rewriting
 aig_rewrite = aig.clone()
 
 # Apply cut rewriting
-aig_cut_rewriting(aig_rewrite, cut_size=4)
+aig_rewrite = aig_cut_rewriting(aig_rewrite, cut_size=4)
 
-print(f"Original AND gates: {aig.num_gates()}")
-print(f"After cut rewriting: {aig_rewrite.num_gates()} AND gates")
-print(f"Reduction: {aig.num_gates() - aig_rewrite.num_gates()} gates ({(aig.num_gates() - aig_rewrite.num_gates()) / aig.num_gates() * 100:.2f}%)")
+print(f"Original AND gates: {aig.num_gates}")
+print(f"After cut rewriting: {aig_rewrite.num_gates} AND gates")
+print(f"Reduction: {aig.num_gates - aig_rewrite.num_gates} gates ({(aig.num_gates - aig_rewrite.num_gates) / aig.num_gates * 100:.2f}%)")
 ```
 
 ### Balancing
@@ -143,11 +151,11 @@ from aigverse.networks import DepthAig
 aig_balance = aig.clone()
 
 # Apply balancing
-balancing(aig_balance, rebalance_function="sop")
+aig_balance = balancing(aig_balance, rebalance_function="sop")
 
 # Compute depth
-original_depth = DepthAig(aig).num_levels()
-balanced_depth = DepthAig(aig_balance).num_levels()
+original_depth = DepthAig(aig).num_levels
+balanced_depth = DepthAig(aig_balance).num_levels
 
 print(f"Original depth: {original_depth} levels")
 print(f"After balancing: {balanced_depth} levels")
@@ -156,30 +164,52 @@ print(f"Reduction in depth: {original_depth - balanced_depth} levels ({(original
 
 ### Combining Optimization Techniques
 
-For best results, optimization techniques are typically applied in combination, often in multiple passes. The order of application can significantly impact the final result.
+For best results, optimization techniques are typically applied in combination, often in multiple passes. The order of
+application can significantly impact the final result.
 
 ```{code-cell} ipython3
 # Apply optimization techniques in sequence
 aig_opt = aig.clone()
 
 # First pass
-aig_resubstitution(aig_opt)
-sop_refactoring(aig_opt)
-aig_cut_rewriting(aig_opt)
+aig_opt = aig_resubstitution(aig_opt)
+aig_opt = sop_refactoring(aig_opt)
+aig_opt = aig_cut_rewriting(aig_opt)
 
 # Second pass
-aig_resubstitution(aig_opt)
-sop_refactoring(aig_opt)
+aig_opt = aig_resubstitution(aig_opt)
+aig_opt = sop_refactoring(aig_opt)
 
 print(f"\nTotal optimization results:")
-print(f"- Original: {aig.num_gates()} AND gates")
-print(f"- Optimized: {aig_opt.num_gates()} AND gates")
-print(f"- Total reduction: {aig.num_gates() - aig_opt.num_gates()} gates ({(aig.num_gates() - aig_opt.num_gates()) / aig.num_gates() * 100:.2f}%)")
+print(f"- Original: {aig.num_gates} AND gates")
+print(f"- Optimized: {aig_opt.num_gates} AND gates")
+print(f"- Total reduction: {aig.num_gates - aig_opt.num_gates} gates ({(aig.num_gates - aig_opt.num_gates) / aig.num_gates * 100:.2f}%)")
 ```
+
+Some algorithms offer the `inplace=True` keyword argument for performance-sensitive pipelines of chained optimization.
+Calling functions such as {py:func}`~aigverse.algorithms.aig_resubstitution` and
+{py:func}`~aigverse.algorithms.sop_refactoring` with `inplace=True` mutates the passed network and returns `None`:
+
+```{code-cell} ipython3
+from aigverse.algorithms import cleanup_dangling
+
+aig_fast = aig.clone()
+aig_resubstitution(aig_fast, inplace=True)
+sop_refactoring(aig_fast, inplace=True)
+
+# Explicit cleanup step after in-place chaining
+aig_fast = cleanup_dangling(aig_fast)
+```
+
+:::{note}
+When choosing this route, users are responsible to call {py:func}`~aigverse.algorithms.cleanup_dangling` to obtain a
+structurally valid AIG.
+:::
 
 ## Equivalence Checking
 
-Equivalence checking algorithms verify that two logic networks implement the same function, which is especially important after performing optimizations.
+Equivalence checking algorithms verify that two logic networks implement the same function, which is especially
+important after performing optimizations.
 
 ```{code-cell} ipython3
 from aigverse.algorithms import equivalence_checking
@@ -188,5 +218,5 @@ from aigverse.algorithms import equivalence_checking
 are_equivalent = equivalence_checking(aig, aig_opt)
 print(f"\nOriginal and optimized benchmark circuits are equivalent: {are_equivalent}")
 print(f"This confirms our optimization preserved the circuit's functionality while reducing")
-print(f"the gate count from {aig.num_gates()} to {aig_opt.num_gates()} AND gates.")
+print(f"the gate count from {aig.num_gates} to {aig_opt.num_gates} AND gates.")
 ```

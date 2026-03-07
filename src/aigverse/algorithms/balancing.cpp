@@ -30,7 +30,7 @@ void balancing(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
         "balancing",
         [](Ntk& ntk, const uint32_t cut_size = 4, const uint32_t cut_limit = 8, const bool minimize_truth_table = true,
            const bool only_on_critical_path = false, const std::string& rebalance_function = "sop",
-           const bool sop_both_phases = true, const bool verbose = false) -> void
+           const bool sop_both_phases = true, const bool verbose = false) -> Ntk
         {
             mockturtle::balancing_params ps{};
             ps.cut_enumeration_ps.cut_size             = cut_size;
@@ -44,20 +44,18 @@ void balancing(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
                 mockturtle::sop_rebalancing<Ntk> rebalance_fn{};
                 rebalance_fn.both_phases_ = sop_both_phases;
 
-                ntk = mockturtle::balancing(ntk, {rebalance_fn}, ps);
+                return mockturtle::balancing(ntk, {rebalance_fn}, ps);
             }
-            else if (rebalance_function == "esop")
+            if (rebalance_function == "esop")
             {
                 mockturtle::esop_rebalancing<Ntk> rebalance_fn{};
                 rebalance_fn.both_phases = sop_both_phases;
 
-                ntk = mockturtle::balancing(ntk, {rebalance_fn}, ps);
+                return mockturtle::balancing(ntk, {rebalance_fn}, ps);
             }
-            else
-            {
-                throw std::invalid_argument(fmt::format(
-                    "Unknown rebalance function: '{}'. Possible values are 'sop' and 'esop'.", rebalance_function));
-            }
+
+            throw std::invalid_argument(fmt::format(
+                "Unknown rebalance function: '{}'. Possible values are 'sop' and 'esop'.", rebalance_function));
         },
         nb::arg("ntk"), nb::arg("cut_size") = 4, nb::arg("cut_limit") = 8, nb::arg("minimize_truth_table") = true,
         nb::arg("only_on_critical_path") = false, nb::arg("rebalance_function") = "sop",

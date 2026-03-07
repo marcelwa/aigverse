@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from aigverse.networks import Aig, AigEdge, AigEdgeList, SequentialAig, to_edge_list
+from aigverse.networks import Aig, AigEdge, AigEdgeList, SequentialAig
 
 
 def test_aig_edge() -> None:
@@ -83,7 +83,7 @@ def test_minimal_aig_to_edge_list() -> None:
     aig.create_pi()  # 1
     aig.create_pi()  # 2
 
-    edge_list = to_edge_list(aig)
+    edge_list = aig.to_edge_list()
 
     assert type(edge_list) is AigEdgeList
     assert len(edge_list) == 0  # No edges since there are no AND gates or POs
@@ -97,7 +97,7 @@ def test_no_and_aig_to_edge_list() -> None:
     aig.create_po(x1)  # 3
     aig.create_po(~x2)  # 4
 
-    edge_list = to_edge_list(aig)
+    edge_list = aig.to_edge_list()
 
     assert type(edge_list) is AigEdgeList
     assert len(edge_list) == 2
@@ -115,7 +115,7 @@ def test_constant_aig_to_edge_list() -> None:
     aig.create_po(n0)  # 4
 
     # custom weights
-    edge_list = to_edge_list(aig, regular_weight=5, inverted_weight=-5)
+    edge_list = aig.to_edge_list(regular_weight=5, inverted_weight=-5)
 
     assert type(edge_list) is AigEdgeList
     assert len(edge_list) == 3
@@ -138,7 +138,7 @@ def test_simple_aig_to_edge_list() -> None:
     aig.create_po(y3)  # 7
 
     # default weights
-    edge_list = to_edge_list(aig)
+    edge_list = aig.to_edge_list()
 
     assert type(edge_list) is AigEdgeList
 
@@ -163,7 +163,7 @@ def test_constant_node_aig_to_edge_list() -> None:
     aig.create_po(n0)  # 5
 
     # custom weights
-    edge_list = to_edge_list(aig, regular_weight=7, inverted_weight=-7)
+    edge_list = aig.to_edge_list(regular_weight=7, inverted_weight=-7)
 
     assert type(edge_list) is AigEdgeList
     assert len(edge_list) == 4
@@ -192,7 +192,7 @@ def test_medium_aig_to_edge_list() -> None:
     aig.create_po(n7)  # 14
 
     # custom weights
-    edge_list = to_edge_list(aig, regular_weight=10, inverted_weight=-10)
+    edge_list = aig.to_edge_list(regular_weight=10, inverted_weight=-10)
 
     assert type(edge_list) is AigEdgeList
 
@@ -237,7 +237,7 @@ def test_sequential_aig_to_edge_list_basic() -> None:
     aig.create_ri(f1)  # 5
 
     # Generate edge list
-    edge_list = to_edge_list(aig)
+    edge_list = aig.to_edge_list()
 
     assert len(edge_list) == 3  # x1->AND, x2->AND, AND->RI
 
@@ -283,7 +283,7 @@ def test_sequential_aig_to_edge_list_multiple_registers() -> None:
     print(f"f1: {f1}")
 
     # Generate edge list
-    edge_list = to_edge_list(aig, regular_weight=5, inverted_weight=-5)
+    edge_list = aig.to_edge_list(regular_weight=5, inverted_weight=-5)
 
     # Check total number of edges
     assert len(edge_list) == 9
@@ -318,7 +318,7 @@ def test_sequential_aig_feedback_loop() -> None:
     saig.create_ri(f1)  # 4
 
     # Generate edge list
-    edge_list = to_edge_list(saig)
+    edge_list = saig.to_edge_list()
 
     # Check for feedback loop edge (RI->RO)
     ro_node = saig.node_to_index(saig.ri_to_ro(f1))

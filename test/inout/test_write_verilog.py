@@ -22,8 +22,8 @@ def test_write_verilog() -> None:
 
     aig2 = read_verilog_into_aig(str(temp_dir / "test.v"))
 
-    assert aig2.size() == 4
+    assert aig2.size == 4
     assert aig2.nodes() == list(range(4))
-    assert aig2.num_gates() == 1
+    assert aig2.num_gates == 1
     assert aig2.gates() == [3]
     assert aig2.pis() == [1, 2]

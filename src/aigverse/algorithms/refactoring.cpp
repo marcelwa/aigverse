@@ -4,14 +4,17 @@
 
 #include "aigverse/types.hpp"
 
+#include "transform_helpers.hpp"
+
 #include <fmt/format.h>
-#include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/node_resynthesis/sop_factoring.hpp>
 #include <mockturtle/algorithms/refactoring.hpp>
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>  // NOLINT(misc-include-cleaner)
 
 #include <cstdint>
 #include <exception>
+#include <optional>
 #include <stdexcept>
 
 namespace aigverse
@@ -30,7 +33,8 @@ void refactoring(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
         [](Ntk& ntk, const uint32_t max_pis = 6, const bool allow_zero_gain = false,
            const bool use_reconvergence_cut = false, const bool use_dont_cares = false,
            const bool use_quick_factoring = true, const bool try_both_polarities = true,
-           const bool consider_inverter_cost = false, const bool verbose = false) -> void
+           const bool consider_inverter_cost = false, const bool verbose = false,
+           const bool inplace = false) -> std::optional<Ntk>
         {
             try
             {
@@ -47,12 +51,8 @@ void refactoring(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
                 sop_params.consider_inverter_cost = consider_inverter_cost;
                 mockturtle::sop_factoring<Ntk> sop_resyn_engine{sop_params};
 
-                mockturtle::refactoring(ntk, sop_resyn_engine, params);
-
-                // create a temporary network with dangling nodes cleaned up
-                auto cleaned = mockturtle::cleanup_dangling(ntk);
-
-                ntk = std::move(cleaned);
+                return run_transform(ntk, inplace, [&params, &sop_resyn_engine](Ntk& target)
+                                     { mockturtle::refactoring(target, sop_resyn_engine, params); });
             }
             catch (const std::exception& e)
             {
@@ -66,7 +66,7 @@ void refactoring(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
         nb::arg("ntk"), nb::arg("max_pis") = 6, nb::arg("allow_zero_gain") = false,
         nb::arg("use_reconvergence_cut") = false, nb::arg("use_dont_cares") = false,
         nb::arg("use_quick_factoring") = true, nb::arg("try_both_polarities") = true,
-        nb::arg("consider_inverter_cost") = false, nb::arg("verbose") = false,
+        nb::arg("consider_inverter_cost") = false, nb::arg("verbose") = false, nb::arg("inplace") = false,
         nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 

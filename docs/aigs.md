@@ -45,7 +45,7 @@ aig.create_po(f_and)
 aig.create_po(f_or)
 
 # Print the size of the AIG network
-print(f"AIG Size: {aig.size()}")
+print(f"AIG Size: {aig.size}")
 ```
 
 :::{note}
@@ -149,10 +149,10 @@ aig.create_po(maj_gate)
 aig.create_po(ite_gate)
 
 # Print statistics
-print(f"AIG Size: {aig.size()}")
-print(f"Number of gates: {aig.num_gates()}")
-print(f"Number of primary inputs: {aig.num_pis()}")
-print(f"Number of primary outputs: {aig.num_pos()}")
+print(f"AIG Size: {aig.size}")
+print(f"Number of gates: {aig.num_gates}")
+print(f"Number of primary inputs: {aig.num_pis}")
+print(f"Number of primary outputs: {aig.num_pos}")
 ```
 
 ## AIG Views
@@ -210,7 +210,7 @@ AIGER. See [File I/O](#file-io) for more details.
 
 :::{note}
 Names are tied to the specific AIG structure. When you apply optimization algorithms or structural modifications
-(such as {py:meth}`~aigverse.networks.Aig.cleanup_dangling`), the names will be lost as the return type will be downcast to
+(such as {py:func}`~aigverse.algorithms.cleanup_dangling`), the names will be lost as the return type will be downcast to
 {py:class}`~aigverse.networks.Aig`. If preserving names is important, consider reapplying them after optimization.
 :::
 
@@ -236,7 +236,7 @@ aig.create_po(f2)
 depth_aig = DepthAig(aig)
 
 # Get the depth of the AIG
-print(f"Depth of AIG: {depth_aig.num_levels()}")
+print(f"Depth of AIG: {depth_aig.num_levels}")
 
 # Print the level of each node
 print("\nLevel of each node:")
@@ -299,9 +299,9 @@ seq_aig.create_po(f_and)      # Regular PO
 seq_aig.create_ri(f_and)      # Register input (sequential PO)
 
 # Print information about the sequential AIG
-print(f"Number of PIs: {seq_aig.num_pis()}")
-print(f"Number of POs: {seq_aig.num_pos()}")
-print(f"Number of registers: {seq_aig.num_registers()}")
+print(f"Number of PIs: {seq_aig.num_pis}")
+print(f"Number of POs: {seq_aig.num_pos}")
+print(f"Number of registers: {seq_aig.num_registers}")
 
 # Get the register associations (RI-RO pairs)
 print("\nRegister associations:")
@@ -351,10 +351,10 @@ read_verilog_aig = read_verilog_into_aig("example.v")
 # Read from PLA format
 read_pla_aig = read_pla_into_aig("example.pla")
 
-print(f"Original AIG size: {aig.size()}")
-print(f"Read AIGER AIG size: {read_aig.size()}")
-print(f"Read Verilog AIG size: {read_verilog_aig.size()}")
-print(f"Read PLA AIG size: {read_pla_aig.size()}")
+print(f"Original AIG size: {aig.size}")
+print(f"Read AIGER AIG size: {read_aig.size}")
+print(f"Read Verilog AIG size: {read_verilog_aig.size}")
+print(f"Read PLA AIG size: {read_pla_aig.size}")
 ```
 
 :::{note}
@@ -370,7 +370,7 @@ list of integers. This is useful for ML pipelines, dataset generation, or export
 fixed-size numeric arrays are required.
 
 ```{code-cell} ipython3
-from aigverse.networks import to_index_list, to_aig, AigIndexList
+from aigverse.networks import AigIndexList
 
 # Create a sample AIG
 aig = Aig()
@@ -384,10 +384,10 @@ t2 = aig.create_xor(t0, t1)
 aig.create_po(t2)
 
 # Convert an AIG to an index list
-indices = to_index_list(aig)
+indices = aig.to_index_list()
 
 # Convert an index list back to an AIG
-aig2 = to_aig(indices)
+aig2 = indices.to_aig()
 
 # Convert to a Python list
 indices = [int(i) for i in indices]

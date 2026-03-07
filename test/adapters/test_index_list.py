@@ -3,18 +3,18 @@ from __future__ import annotations
 import pytest
 
 from aigverse.algorithms import equivalence_checking, simulate
-from aigverse.networks import Aig, AigIndexList, to_aig, to_index_list
+from aigverse.networks import Aig, AigIndexList
 from aigverse.utils import TruthTable
 
 
 def test_decode_empty_index_list_into_aig() -> None:
     il = AigIndexList()
 
-    aig = to_aig(il)
+    aig = il.to_aig()
 
-    assert aig.num_gates() == 0
-    assert aig.num_pis() == 0
-    assert aig.num_pos() == 0
+    assert aig.num_gates == 0
+    assert aig.num_pis == 0
+    assert aig.num_pos == 0
 
     result = simulate(aig)
 
@@ -24,12 +24,12 @@ def test_decode_empty_index_list_into_aig() -> None:
 def test_encode_empty_aig_into_index_list() -> None:
     aig = Aig()
 
-    il = to_index_list(aig)
+    il = aig.to_index_list()
 
-    assert il.num_pis() == 0
-    assert il.num_pos() == 0
-    assert il.num_gates() == 0
-    assert il.size() == 3  # [0, 0, 0]
+    assert il.num_pis == 0
+    assert il.num_pos == 0
+    assert il.num_gates == 0
+    assert il.size == 3  # [0, 0, 0]
     assert isinstance(il.raw(), list)
     assert il.raw() == [0, 0, 0]
     assert isinstance(str(il), str)
@@ -42,13 +42,13 @@ def test_decode_pi_only_index_list_into_aig() -> None:
     il = AigIndexList()
 
     il.add_inputs(4)
-    assert il.num_pis() == 4
+    assert il.num_pis == 4
 
-    aig = to_aig(il)
+    aig = il.to_aig()
 
-    assert aig.num_gates() == 0
-    assert aig.num_pis() == 4
-    assert aig.num_pos() == 0
+    assert aig.num_gates == 0
+    assert aig.num_pis == 4
+    assert aig.num_pos == 0
 
 
 def test_encode_pi_only_aig_into_index_list() -> None:
@@ -58,12 +58,12 @@ def test_encode_pi_only_aig_into_index_list() -> None:
     aig.create_pi()
     aig.create_pi()
 
-    il = to_index_list(aig)
+    il = aig.to_index_list()
 
-    assert il.num_pis() == 4
-    assert il.num_pos() == 0
-    assert il.num_gates() == 0
-    assert il.size() == 3  # [4, 0, 0]
+    assert il.num_pis == 4
+    assert il.num_pos == 0
+    assert il.num_gates == 0
+    assert il.size == 3  # [4, 0, 0]
     assert isinstance(il.raw(), list)
     assert il.raw() == [4, 0, 0]
     assert isinstance(str(il), str)
@@ -75,11 +75,11 @@ def test_encode_pi_only_aig_into_index_list() -> None:
 def test_decode_index_list_into_aig() -> None:
     il = AigIndexList([4, 1, 3, 2, 4, 6, 8, 12, 10, 14])
 
-    aig = to_aig(il)
+    aig = il.to_aig()
 
-    assert aig.num_gates() == 5
-    assert aig.num_pis() == 4
-    assert aig.num_pos() == 1
+    assert aig.num_gates == 5
+    assert aig.num_pis == 4
+    assert aig.num_pos == 1
 
     tt_spec = TruthTable(4)
     tt_spec.create_from_hex_string("7888")
@@ -92,11 +92,11 @@ def test_decode_index_list_into_aig() -> None:
 def test_implicit_conversion() -> None:
     il = [4, 1, 3, 2, 4, 6, 8, 12, 10, 14]
 
-    aig = to_aig(il)  # type: ignore[arg-type]
+    aig = AigIndexList(il).to_aig()  # type: ignore[arg-type]
 
-    assert aig.num_gates() == 5
-    assert aig.num_pis() == 4
-    assert aig.num_pos() == 1
+    assert aig.num_gates == 5
+    assert aig.num_pis == 4
+    assert aig.num_pos == 1
 
     tt_spec = TruthTable(4)
     tt_spec.create_from_hex_string("7888")
@@ -117,12 +117,12 @@ def test_encode_aig_into_index_list() -> None:
     t2 = aig.create_xor(t0, t1)
     aig.create_po(t2)
 
-    il = to_index_list(aig)
+    il = aig.to_index_list()
 
-    assert il.num_pis() == 4
-    assert il.num_pos() == 1
-    assert il.num_gates() == 5
-    assert il.size() == 14
+    assert il.num_pis == 4
+    assert il.num_pos == 1
+    assert il.num_gates == 5
+    assert il.size == 14
     assert isinstance(il.raw(), list)
     assert il.raw() == [4, 1, 5, 2, 4, 6, 8, 10, 13, 11, 12, 15, 17, 19]
     assert isinstance(str(il), str)
@@ -147,41 +147,41 @@ def test_encode_decode_aig_with_inverted_signals() -> None:
     aig.create_po(~t1)
     aig.create_po(t2)
 
-    il = to_index_list(aig)
+    il = aig.to_index_list()
 
-    assert il.num_pis() == 3
-    assert il.num_pos() == 2
-    assert il.num_gates() == 3
-    assert il.size() == 11
+    assert il.num_pis == 3
+    assert il.num_pos == 2
+    assert il.num_gates == 3
+    assert il.size == 11
     assert il.raw() == [3, 2, 3, 2, 4, 4, 7, 9, 11, 11, 12]
 
-    aig2 = to_aig(il)
+    aig2 = il.to_aig()
 
-    assert aig2.num_pis() == 3
-    assert aig2.num_pos() == 2
-    assert aig2.num_gates() == 3
+    assert aig2.num_pis == 3
+    assert aig2.num_pos == 2
+    assert aig2.num_gates == 3
 
     assert equivalence_checking(aig, aig2)
 
 
 def test_aig_index_list_methods() -> None:
     il = AigIndexList(3)
-    assert il.num_pis() == 3
+    assert il.num_pis == 3
 
     il.add_and(1, 2)
     il.add_and(2, 3)
     il.add_output(5)
 
-    assert il.num_gates() == 2
-    assert il.num_pos() == 1
+    assert il.num_gates == 2
+    assert il.num_pos == 1
     assert isinstance(il.gates(), list)
     assert isinstance(il.pos(), list)
-    assert len(il) == il.size()
+    assert len(il) == il.size
 
     il.clear()
 
     # PIs will be left
-    assert il.size() == 3
+    assert il.size == 3
 
 
 def test_index_list_iter_get_set_item() -> None:
@@ -212,7 +212,7 @@ def test_index_list_iter_get_set_item() -> None:
 
 def test_index_list_to_python_list() -> None:
     il = AigIndexList([4, 1, 3, 2, 4, 6, 8, 12, 10, 14])
-    pylist = [il.num_pis(), il.num_pos(), il.num_gates(), il.gates(), il.pos()]
+    pylist = [il.num_pis, il.num_pos, il.num_gates, il.gates(), il.pos()]
     assert pylist == [4, 1, 3, [(2, 4), (6, 8), (12, 10)], [14]]
 
     pylist = [int(i) for i in il]

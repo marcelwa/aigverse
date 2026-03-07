@@ -107,7 +107,7 @@ class TestNetworkxAdapter:
         assert g.graph["num_gates"] == 1
 
         # Node count: 1 constant + 2 PIs + 1 gate + 3 synthetic POs
-        expected_nodes = simple_aig.nodes() + [simple_aig.po_index(po) + simple_aig.size() for po in simple_aig.pos()]
+        expected_nodes = simple_aig.nodes() + [simple_aig.po_index(po) + simple_aig.size for po in simple_aig.pos()]
         assert set(g.nodes) == set(expected_nodes)
 
         # Edge count: 5

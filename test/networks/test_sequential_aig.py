@@ -1,19 +1,24 @@
 from __future__ import annotations
 
+import copy
+from typing import Any
+
+import pytest
+
 from aigverse.networks import SequentialAig
 
 
 def test_sequential_aig_initialization() -> None:
     """Test basic initialization and properties of SequentialAig."""
     saig = SequentialAig()
-    assert saig.size() == 1
-    assert saig.num_gates() == 0
-    assert saig.num_pis() == 0
-    assert saig.num_pos() == 0
-    assert saig.num_registers() == 0
-    assert saig.num_cis() == 0
-    assert saig.num_cos() == 0
-    assert saig.is_combinational()
+    assert saig.size == 1
+    assert saig.num_gates == 0
+    assert saig.num_pis == 0
+    assert saig.num_pos == 0
+    assert saig.num_registers == 0
+    assert saig.num_cis == 0
+    assert saig.num_cos == 0
+    assert saig.is_combinational
 
 
 def test_create_and_use_register_in_aig() -> None:
@@ -31,10 +36,10 @@ def test_create_and_use_register_in_aig() -> None:
     x3 = saig.create_pi()
 
     # Check initial network properties
-    assert saig.size() == 4
-    assert saig.num_registers() == 0
-    assert saig.num_pis() == 3
-    assert saig.num_pos() == 0
+    assert saig.size == 4
+    assert saig.num_registers == 0
+    assert saig.num_pis == 3
+    assert saig.num_pos == 0
 
     # Create gates and outputs
     f1 = saig.create_and(x1, x2)
@@ -50,8 +55,8 @@ def test_create_and_use_register_in_aig() -> None:
     saig.create_po(ro)
 
     # Check final network properties
-    assert saig.num_pos() == 3
-    assert saig.num_registers() == 1
+    assert saig.num_pos == 3
+    assert saig.num_registers == 1
 
     # Check each primary output
     assert saig.po_at(0) == f1
@@ -63,7 +68,7 @@ def test_create_and_use_register_in_aig() -> None:
         elif i == 1:
             assert s == ~f1
         elif i == 2:
-            assert f2.get_data() == saig.po_at(i).get_data()
+            assert f2.data == saig.po_at(i).data
         else:
             raise AssertionError
 
@@ -92,8 +97,8 @@ def test_sequential_aig_ci_co_nodes() -> None:
     saig.create_ri(pi2)
 
     # Check CI and CO counts
-    assert saig.num_cis() == 3  # 2 PIs + 1 RO
-    assert saig.num_cos() == 2  # 1 PO + 1 RI
+    assert saig.num_cis == 3  # 2 PIs + 1 RO
+    assert saig.num_cos == 2  # 1 PO + 1 RI
 
 
 def test_sequential_aig_combinational_check() -> None:
@@ -101,11 +106,11 @@ def test_sequential_aig_combinational_check() -> None:
     saig = SequentialAig()
 
     # Initially it's combinational (no registers)
-    assert saig.is_combinational()
+    assert saig.is_combinational
 
     # Add a register, making it sequential
     saig.create_ro()
-    assert not saig.is_combinational()
+    assert not saig.is_combinational
 
     # Create a new sequential AIG
     saig2 = SequentialAig()
@@ -113,7 +118,83 @@ def test_sequential_aig_combinational_check() -> None:
     # Only add PIs and POs (still combinational)
     pi = saig2.create_pi()
     saig2.create_po(pi)
-    assert saig2.is_combinational()
+    assert saig2.is_combinational
+
+
+def test_sequential_aig_repr() -> None:
+    saig = SequentialAig()
+    pi = saig.create_pi()
+    ro = saig.create_ro()
+    gate = saig.create_and(pi, ro)
+    saig.create_po(gate)
+    saig.create_ri(gate)
+
+    assert repr(saig) == "SequentialAig(pis=1, pos=1, gates=1, registers=1)"
+
+
+def test_sequential_aig_to_index_list_raises() -> None:
+    saig = SequentialAig()
+    pi = saig.create_pi()
+    ro = saig.create_ro()
+    gate = saig.create_and(pi, ro)
+    saig.create_po(gate)
+    saig.create_ri(gate)
+
+    with pytest.raises(TypeError, match="register state"):
+        saig.to_index_list()
+
+
+def test_sequential_aig_clone_and_copy_preserve_wrapper_type() -> None:
+    saig = SequentialAig()
+    pi = saig.create_pi()
+    ro = saig.create_ro()
+    gate = saig.create_and(pi, ro)
+    saig.create_po(gate)
+    saig.create_ri(gate)
+
+    cloned = saig.clone()
+    shallow = copy.copy(saig)
+    deep = copy.deepcopy(saig)
+
+    for candidate in (cloned, shallow, deep):
+        assert isinstance(candidate, SequentialAig)
+        assert candidate.num_registers == 1
+        assert candidate.num_pos == 1
+        assert candidate.num_pis == 1
+
+
+def test_sequential_aig_pickle_raises() -> None:
+    import pickle
+
+    saig = SequentialAig()
+    pi = saig.create_pi()
+    ro = saig.create_ro()
+    gate = saig.create_and(pi, ro)
+    saig.create_po(gate)
+    saig.create_ri(gate)
+
+    with pytest.raises(ValueError, match="combinational-only"):
+        pickle.dumps(saig)
+
+
+def test_sequential_aig_setstate_raises() -> None:
+    import copyreg
+    import pickle
+
+    class Dummy:
+        pass
+
+    # Build a pickle payload that reconstructs SequentialAig via __new__,
+    # forcing nanobind to route restoration through __setstate__.
+    def make_pickle(state_tuple: tuple[Any, ...]) -> bytes:
+        copyreg.pickle(  # type: ignore[arg-type, return-value]
+            Dummy,
+            lambda _: (SequentialAig.__new__, (SequentialAig,), state_tuple),
+        )
+        return pickle.dumps(Dummy())
+
+    with pytest.raises(ValueError, match="combinational-only"):
+        pickle.loads(make_pickle(([0, 0],)))
 
 
 def test_sequential_aig_register_operations():

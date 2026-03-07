@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from aigverse.algorithms import equivalence_checking, sop_refactoring
+from aigverse.algorithms import cleanup_dangling, equivalence_checking, sop_refactoring
 from aigverse.networks import Aig
 
 
@@ -8,7 +8,8 @@ def test_empty_aigs() -> None:
     aig1 = Aig()
     aig2 = aig1.clone()
 
-    sop_refactoring(aig1)
+    sop_refactoring(aig1, inplace=True)
+    aig1 = cleanup_dangling(aig1)
 
     assert equivalence_checking(aig1, aig2)
 
@@ -33,7 +34,11 @@ def test_simple_aigs() -> None:
     aig2.create_po(and2)
     aig2.create_po(b2)
 
-    sop_refactoring(aig1)
+    empty = sop_refactoring(aig1, inplace=True)
+
+    assert empty is None
+
+    aig1 = cleanup_dangling(aig1)
 
     assert equivalence_checking(aig1, aig2)
     assert equivalence_checking(aig1, aig1.clone())
@@ -56,11 +61,13 @@ def test_aig_and_its_negated_copy() -> None:
 
     aig2.create_po(~and3)
 
-    sop_refactoring(aig1)
+    sop_refactoring(aig1, inplace=True)
+    aig1 = cleanup_dangling(aig1)
 
     assert not equivalence_checking(aig1, aig2)
 
-    sop_refactoring(aig2)
+    sop_refactoring(aig2, inplace=True)
+    aig2 = cleanup_dangling(aig2)
 
     assert not equivalence_checking(aig1, aig2)
 
@@ -76,9 +83,10 @@ def test_equivalent_node_merger() -> None:
 
     aig_before = aig1.clone()
 
-    sop_refactoring(aig1)
+    sop_refactoring(aig1, inplace=True)
+    aig1 = cleanup_dangling(aig1)
 
-    assert aig1.size() == aig_before.size() - 2
+    assert aig1.size == aig_before.size - 2
 
     assert equivalence_checking(aig1, aig_before)
 
@@ -94,9 +102,10 @@ def test_positive_divisor_substitution() -> None:
 
     aig_before = aig2.clone()
 
-    sop_refactoring(aig2)
+    sop_refactoring(aig2, inplace=True)
+    aig2 = cleanup_dangling(aig2)
 
-    assert aig2.size() == aig_before.size() - 1
+    assert aig2.size == aig_before.size - 1
 
     assert equivalence_checking(aig2, aig_before)
 
@@ -112,9 +121,10 @@ def test_negative_divisor_substitution() -> None:
 
     aig_before = aig.clone()
 
-    sop_refactoring(aig)
+    sop_refactoring(aig, inplace=True)
+    aig = cleanup_dangling(aig)
 
-    assert aig.size() == aig_before.size() - 2
+    assert aig.size == aig_before.size - 2
 
     assert equivalence_checking(aig, aig_before)
 
@@ -142,7 +152,10 @@ def test_parameters() -> None:
         use_quick_factoring=False,
         try_both_polarities=False,
         consider_inverter_cost=True,
+        inplace=True,
     )
+
+    aig = cleanup_dangling(aig)
 
     assert equivalence_checking(aig, aig2)
 
@@ -165,6 +178,30 @@ def test_sop_factoring_parameters() -> None:
         use_quick_factoring=True,
         try_both_polarities=True,
         consider_inverter_cost=False,
+        inplace=True,
     )
 
+    aig = cleanup_dangling(aig)
+
     assert equivalence_checking(aig, aig_before)
+
+
+def test_return_new_does_not_mutate_input() -> None:
+    aig = Aig()
+    a = aig.create_pi()
+    b = aig.create_pi()
+    and1 = aig.create_and(~a, ~b)
+    and2 = aig.create_and(a, ~and1)
+    aig.create_po(and2)
+
+    aig_before = aig.clone()
+    result = sop_refactoring(aig)
+
+    assert result is not None
+
+    assert aig.size == aig_before.size
+    assert aig.to_index_list().raw() == aig_before.to_index_list().raw()
+    assert result.size < aig_before.size
+
+    assert equivalence_checking(aig, aig_before)
+    assert equivalence_checking(result, aig_before)

@@ -12,6 +12,9 @@ def equivalence_checking(
     functional_reduction: bool = True,
     verbose: bool = False,
 ) -> bool | None: ...
+def cleanup_dangling(
+    ntk: aigverse.networks.Aig, remove_dangling_pis: bool = False, remove_redundant_pos: bool = False
+) -> aigverse.networks.Aig: ...
 def sop_refactoring(
     ntk: aigverse.networks.Aig,
     max_pis: int = 6,
@@ -22,7 +25,8 @@ def sop_refactoring(
     try_both_polarities: bool = True,
     consider_inverter_cost: bool = False,
     verbose: bool = False,
-) -> None: ...
+    inplace: bool = False,
+) -> aigverse.networks.Aig | None: ...
 def aig_resubstitution(
     ntk: aigverse.networks.Aig,
     max_pis: int = 8,
@@ -34,7 +38,8 @@ def aig_resubstitution(
     use_dont_cares: bool = False,
     window_size: int = 12,
     preserve_depth: bool = False,
-) -> None: ...
+    inplace: bool = False,
+) -> aigverse.networks.Aig | None: ...
 def aig_cut_rewriting(
     ntk: aigverse.networks.Aig,
     cut_size: int = 4,
@@ -47,7 +52,7 @@ def aig_cut_rewriting(
     preserve_depth: bool = False,
     verbose: bool = False,
     very_verbose: bool = False,
-) -> None: ...
+) -> aigverse.networks.Aig: ...
 def balancing(
     ntk: aigverse.networks.Aig,
     cut_size: int = 4,
@@ -57,6 +62,6 @@ def balancing(
     rebalance_function: Literal["sop", "esop"] = "sop",
     sop_both_phases: bool = True,
     verbose: bool = False,
-) -> None: ...
+) -> aigverse.networks.Aig: ...
 def simulate(ntk: aigverse.networks.Aig) -> list[aigverse.utils.TruthTable]: ...
 def simulate_nodes(ntk: aigverse.networks.Aig) -> dict[int, aigverse.utils.TruthTable]: ...
