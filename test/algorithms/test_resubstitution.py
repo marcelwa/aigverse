@@ -8,8 +8,9 @@ def test_empty_aigs() -> None:
     aig1 = Aig()
     aig2 = aig1.clone()
 
-    aig_resubstitution(aig1, inplace=True)
+    result = aig_resubstitution(aig1, inplace=True)
 
+    assert result is None
     assert equivalence_checking(aig1, aig2)
 
 
@@ -76,7 +77,9 @@ def test_equivalent_node_merger() -> None:
 
     aig_before = aig1.clone()
 
-    aig_resubstitution(aig1, inplace=True)
+    result = aig_resubstitution(aig1, inplace=True)
+
+    assert result is None
     aig1 = cleanup_dangling(aig1)
 
     assert aig1.size == aig_before.size - 2
@@ -161,8 +164,11 @@ def test_return_new_does_not_mutate_input() -> None:
     aig.create_po(and2)
 
     aig_before = aig.clone()
+    aig_before_index_list = aig_before.to_index_list().raw()
     result = aig_resubstitution(aig)
 
     assert result is not None
+    assert aig.to_index_list().raw() == aig_before_index_list
+    assert result.size < aig_before.size
     assert equivalence_checking(aig, aig_before)
     assert equivalence_checking(result, aig_before)

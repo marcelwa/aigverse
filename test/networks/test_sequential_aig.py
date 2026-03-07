@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from aigverse.networks import SequentialAig
 
 
@@ -125,6 +127,18 @@ def test_sequential_aig_repr() -> None:
     saig.create_ri(gate)
 
     assert repr(saig) == "SequentialAig(pis=1, pos=1, gates=1, registers=1)"
+
+
+def test_sequential_aig_to_index_list_raises() -> None:
+    saig = SequentialAig()
+    pi = saig.create_pi()
+    ro = saig.create_ro()
+    gate = saig.create_and(pi, ro)
+    saig.create_po(gate)
+    saig.create_ri(gate)
+
+    with pytest.raises(TypeError, match="register state"):
+        saig.to_index_list()
 
 
 def test_sequential_aig_register_operations():

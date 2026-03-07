@@ -115,6 +115,16 @@ Network query methods are now **read-only properties** instead of callable metho
 | `seq_aig.num_cos()`       | `seq_aig.num_cos`       | `SequentialAig`                        |
 | `seq_aig.num_registers()` | `seq_aig.num_registers` | `SequentialAig`                        |
 
+`AigSignal` accessors follow the same rule and are now read-only properties.
+
+| Before (method)           | After (property)    |
+| ------------------------- | ------------------- |
+| `signal.get_index()`      | `signal.index`      |
+| `signal.get_complement()` | `signal.complement` |
+| `signal.get_data()`       | `signal.data`       |
+
+Migration hint: replace method calls with direct property access (drop `()`), e.g. `signal.get_index()` -> `signal.index`.
+
 #### Before
 
 ```python

@@ -13,15 +13,19 @@ mystnb:
 
 # Algorithms
 
-This section covers the various algorithms available in aigverse for working with And-Inverter Graphs (AIGs) and other logic representations. These algorithms enable simulation, optimization, and verification of logic networks.
+This section covers the various algorithms available in aigverse for working with And-Inverter Graphs (AIGs) and other
+logic representations. These algorithms enable simulation, optimization, and verification of logic networks.
 
 ## Simulation
 
-Simulation algorithms allow you to evaluate the outputs of a logic network for all possible input combinations, effectively generating truth tables for the network's outputs and internal nodes.
+Simulation algorithms allow you to evaluate the outputs of a logic network for all possible input combinations,
+effectively generating truth tables for the network's outputs and internal nodes.
 
 ### Functional Simulation
 
-For simulating AIGs with truth tables, the {py:func}`~aigverse.algorithms.simulate` and {py:func}`~aigverse.algorithms.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes of an AIG.
+For simulating AIGs with truth tables, the {py:func}`~aigverse.algorithms.simulate` and {py:func}
+`~aigverse.algorithms.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes of an
+AIG.
 
 ```{code-cell} ipython3
 from aigverse.networks import Aig
@@ -55,7 +59,8 @@ for node, tt in node_tts.items():
 
 ## Optimization
 
-AIG optimization aims to reduce the number of AND gates and inverters in a circuit while maintaining its logical functionality. Different optimization techniques target various aspects of the AIG structure.
+AIG optimization aims to reduce the number of AND gates and inverters in a circuit while maintaining its logical
+functionality. Different optimization techniques target various aspects of the AIG structure.
 
 ### Basic Optimization Workflow
 
@@ -79,7 +84,8 @@ print(f"  AND gates: {aig.num_gates}")
 
 ### Resubstitution
 
-Resubstitution identifies portions of logic that can be expressed using existing signals in the network. This technique is particularly effective at identifying and eliminating redundant logic.
+Resubstitution identifies portions of logic that can be expressed using existing signals in the network. This technique
+is particularly effective at identifying and eliminating redundant logic.
 
 ```{code-cell} ipython3
 from aigverse.algorithms import aig_resubstitution
@@ -97,7 +103,8 @@ print(f"Reduction: {aig.num_gates - aig_resub.num_gates} gates ({(aig.num_gates 
 
 ### Sum-of-Products Refactoring
 
-SOP (Sum of Products) refactoring collapses parts of the AIG into truth tables, then re-synthesizes those portions using Sum-of-Products representations. This can find more efficient implementations for complex logic functions.
+SOP (Sum of Products) refactoring collapses parts of the AIG into truth tables, then re-synthesizes those portions using
+Sum-of-Products representations. This can find more efficient implementations for complex logic functions.
 
 ```{code-cell} ipython3
 from aigverse.algorithms import sop_refactoring
@@ -115,7 +122,8 @@ print(f"Reduction: {aig.num_gates - aig_refactor.num_gates} gates ({(aig.num_gat
 
 ### Cut Rewriting
 
-Cut rewriting identifies small subgraphs (cuts) in the AIG and replaces them with pre-computed optimal implementations from a library. This technique leverages NPN-equivalence classes to find the best possible implementation for each cut.
+Cut rewriting identifies small subgraphs (cuts) in the AIG and replaces them with pre-computed optimal implementations
+from a library. This technique leverages NPN-equivalence classes to find the best possible implementation for each cut.
 
 ```{code-cell} ipython3
 from aigverse.algorithms import aig_cut_rewriting
@@ -156,7 +164,8 @@ print(f"Reduction in depth: {original_depth - balanced_depth} levels ({(original
 
 ### Combining Optimization Techniques
 
-For best results, optimization techniques are typically applied in combination, often in multiple passes. The order of application can significantly impact the final result.
+For best results, optimization techniques are typically applied in combination, often in multiple passes. The order of
+application can significantly impact the final result.
 
 ```{code-cell} ipython3
 # Apply optimization techniques in sequence
@@ -177,7 +186,9 @@ print(f"- Optimized: {aig_opt.num_gates} AND gates")
 print(f"- Total reduction: {aig.num_gates - aig_opt.num_gates} gates ({(aig.num_gates - aig_opt.num_gates) / aig.num_gates * 100:.2f}%)")
 ```
 
-Some algorithms offer the `inplace=True` keyword argument for performance-sensitive pipelines of chained optimization:
+Some algorithms offer the `inplace=True` keyword argument for performance-sensitive pipelines of chained optimization.
+Calling functions such as {py:func}`~aigverse.algorithms.aig_resubstitution` and
+{py:func}`~aigverse.algorithms.sop_refactoring` with `inplace=True` mutates the passed network and returns `None`:
 
 ```{code-cell} ipython3
 from aigverse.algorithms import cleanup_dangling
@@ -191,12 +202,14 @@ aig_fast = cleanup_dangling(aig_fast)
 ```
 
 :::{note}
-When choosing this route, users are responsible to call {py:func}`~aigverse.algorithms.cleanup_dangling` to obtain a structurally valid AIG.
+When choosing this route, users are responsible to call {py:func}`~aigverse.algorithms.cleanup_dangling` to obtain a
+structurally valid AIG.
 :::
 
 ## Equivalence Checking
 
-Equivalence checking algorithms verify that two logic networks implement the same function, which is especially important after performing optimizations.
+Equivalence checking algorithms verify that two logic networks implement the same function, which is especially
+important after performing optimizations.
 
 ```{code-cell} ipython3
 from aigverse.algorithms import equivalence_checking

@@ -152,8 +152,10 @@ def test_return_new_does_not_mutate_input() -> None:
     aig.create_po(and2)
 
     aig_before = aig.clone()
+    aig_before_index_list = aig_before.to_index_list().raw()
     result = aig_cut_rewriting(aig)
 
     assert result is not None
+    assert aig.to_index_list().raw() == aig_before_index_list
     assert equivalence_checking(aig, aig_before)
     assert equivalence_checking(result, aig_before)
