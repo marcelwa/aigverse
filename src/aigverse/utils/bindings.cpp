@@ -8,7 +8,7 @@ void bind_truth_table_operations(nanobind::module_& m);
 
 NB_MODULE(utils, m)
 {
-    m.doc() = "Utility data structures and functions.";
+    m.doc() = R"pb(Provides utility data structures and functions.)pb";
     aigverse::bind_truth_table(m);
     aigverse::bind_truth_table_operations(m);
 }
