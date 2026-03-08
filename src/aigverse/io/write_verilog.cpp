@@ -23,7 +23,12 @@ void write_verilog(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 
     m.def(
         "write_verilog", [](const Ntk& ntk, const std::filesystem::path& filename)
-        { mockturtle::write_verilog(ntk, filename.string()); }, nb::arg("ntk"), nb::arg("filename"));
+        { mockturtle::write_verilog(ntk, filename.string()); }, nb::arg("ntk"), nb::arg("filename"),
+        R"pb(Writes a logic network to a Verilog netlist.
+
+    Args:
+        ntk: The network to serialize.
+        filename: Destination path for the Verilog file.)pb");
 }
 
 // Explicit instantiation for AIG

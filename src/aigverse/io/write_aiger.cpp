@@ -23,7 +23,12 @@ void write_aiger(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 
     m.def(
         "write_aiger", [](const Ntk& ntk, const std::filesystem::path& filename)
-        { mockturtle::write_aiger(ntk, filename.string()); }, nb::arg("ntk"), nb::arg("filename"));
+        { mockturtle::write_aiger(ntk, filename.string()); }, nb::arg("ntk"), nb::arg("filename"),
+        R"pb(Writes a logic network to a binary AIGER file.
+
+    Args:
+        ntk: The network to serialize.
+        filename: Destination path for the AIGER file.)pb");
 }
 
 // Explicit instantiation for AIG
