@@ -108,19 +108,15 @@ Args:
     num_vars: Number of Boolean variables.)pb")
 
         // Operators
-        .def(nb::self == nb::self, nb::arg("other"),
-             R"pb(Checks equality with another truth table.)pb")  // NOLINT(misc-redundant-expression)
-        .def(nb::self != nb::self, nb::arg("other"),
-             R"pb(Checks inequality with another truth table.)pb")  // NOLINT(misc-redundant-expression)
-        .def(nb::self < nb::self, nb::arg("other"),
-             R"pb(Lexicographically compares two truth tables.)pb")  // NOLINT(misc-redundant-expression)
-        .def(nb::self & nb::self, nb::arg("other"),
-             R"pb(Computes bitwise AND with another truth table.)pb")  // NOLINT(misc-redundant-expression)
-        .def(nb::self | nb::self, nb::arg("other"),
-             R"pb(Computes bitwise OR with another truth table.)pb")  // NOLINT(misc-redundant-expression)
-        .def(nb::self ^ nb::self, nb::arg("other"),
-             R"pb(Computes bitwise XOR with another truth table.)pb")  // NOLINT(misc-redundant-expression)
+        // NOLINTBEGIN(misc-redundant-expression)
+        .def(nb::self == nb::self, nb::arg("other"), R"pb(Checks equality with another truth table.)pb")
+        .def(nb::self != nb::self, nb::arg("other"), R"pb(Checks inequality with another truth table.)pb")
+        .def(nb::self < nb::self, nb::arg("other"), R"pb(Lexicographically compares two truth tables.)pb")
+        .def(nb::self & nb::self, nb::arg("other"), R"pb(Computes bitwise AND with another truth table.)pb")
+        .def(nb::self | nb::self, nb::arg("other"), R"pb(Computes bitwise OR with another truth table.)pb")
+        .def(nb::self ^ nb::self, nb::arg("other"), R"pb(Computes bitwise XOR with another truth table.)pb")
         .def(~nb::self, R"pb(Computes bitwise NOT.)pb")
+        // NOLINTEND(misc-redundant-expression)
 
         // Python list-like convenience functions
         .def("__len__", &aigverse::truth_table::num_bits, R"pb(Returns the number of bits.)pb")
