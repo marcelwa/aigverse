@@ -1,7 +1,4 @@
-"""Provides utility data structures and helper functions.
-
-This module currently contains truth-table abstractions and operations.
-"""
+"""Provides utility data structures and functions."""
 
 from collections.abc import Iterator
 
@@ -43,7 +40,7 @@ class TruthTable:
         """Returns one bit by index.
 
         Args:
-            index: Bit index. Negative indices are supported.
+            index: Bit index.
 
         Returns:
             The bit value.
@@ -56,7 +53,7 @@ class TruthTable:
         """Sets one bit by index.
 
         Args:
-            index: Bit index. Negative indices are supported.
+            index: Bit index.
             value: New bit value.
 
         Raises:
@@ -105,6 +102,7 @@ class TruthTable:
 
         Raises:
             RuntimeError: If the serialized state is malformed.
+            TypeError: If nanobind cannot convert the pickle payload to the expected C++ types.
         """
 
     def set_bit(self, index: int) -> None:

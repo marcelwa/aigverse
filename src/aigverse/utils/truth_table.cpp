@@ -247,7 +247,8 @@ Args:
     state: Tuple ``(num_vars, words)``.
 
 Raises:
-    RuntimeError: If the serialized state is malformed.)pb")
+    RuntimeError: If the serialized state is malformed.
+    TypeError: If nanobind cannot convert the pickle payload to the expected C++ types.)pb")
 
         // Free functions added to the class for convenience
         .def(

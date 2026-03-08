@@ -79,7 +79,12 @@ class AigSignal:
         """
 
 class Aig:
-    """Represents an AIG and its structural operations."""
+    """Represents an AIG and its structural operations.
+
+    Note:
+        to_index_list() keeps combinational structure only.
+        Augmented view metadata is not preserved.
+    """
 
     def __init__(self) -> None:
         """Creates an empty AIG network."""
@@ -144,67 +149,67 @@ class Aig:
         """Whether the network is combinational."""
 
     def create_buf(self, a: AigSignal) -> AigSignal:
-        """Creates a buffer node."""
+        """Creates a buffer."""
 
     def create_not(self, a: AigSignal) -> AigSignal:
-        """Creates an inverter node."""
+        """Creates an inversion."""
 
     def create_and(self, a: AigSignal, b: AigSignal) -> AigSignal:
-        """Creates an AND node."""
+        """Creates an AND."""
 
     def create_nand(self, a: AigSignal, b: AigSignal) -> AigSignal:
-        """Creates a NAND node."""
+        """Creates a NAND."""
 
     def create_or(self, a: AigSignal, b: AigSignal) -> AigSignal:
-        """Creates an OR node."""
+        """Creates an OR."""
 
     def create_nor(self, a: AigSignal, b: AigSignal) -> AigSignal:
-        """Creates a NOR node."""
+        """Creates a NOR."""
 
     def create_xor(self, a: AigSignal, b: AigSignal) -> AigSignal:
-        """Creates an XOR node."""
+        """Creates an XOR."""
 
     def create_xnor(self, a: AigSignal, b: AigSignal) -> AigSignal:
-        """Creates an XNOR node."""
+        """Creates an XNOR."""
 
     def create_lt(self, a: AigSignal, b: AigSignal) -> AigSignal:
-        """Creates a less-than comparator node."""
+        """Creates a less-than comparator."""
 
     def create_le(self, a: AigSignal, b: AigSignal) -> AigSignal:
-        """Creates a less-or-equal comparator node."""
+        """Creates a less-or-equal comparator."""
 
     def create_maj(self, a: AigSignal, b: AigSignal, c: AigSignal) -> AigSignal:
-        """Creates a majority node."""
+        """Creates a majority."""
 
     def create_ite(self, cond: AigSignal, f_then: AigSignal, f_else: AigSignal) -> AigSignal:
-        """Creates an if-then-else node."""
+        """Creates an if-then-else."""
 
     def create_xor3(self, a: AigSignal, b: AigSignal, c: AigSignal) -> AigSignal:
-        """Creates a 3-input XOR node."""
+        """Creates a 3-input XOR."""
 
     def create_nary_and(self, fs: Sequence[AigSignal]) -> AigSignal:
-        """Creates an n-ary AND node."""
+        """Creates an n-ary AND."""
 
     def create_nary_or(self, fs: Sequence[AigSignal]) -> AigSignal:
-        """Creates an n-ary OR node."""
+        """Creates an n-ary OR."""
 
     def create_nary_xor(self, fs: Sequence[AigSignal]) -> AigSignal:
-        """Creates an n-ary XOR node."""
+        """Creates an n-ary XOR."""
 
     def clone_node(self, other: Aig, source: int, children: Sequence[AigSignal]) -> AigSignal:
         """Clones one node from ``other`` into this network."""
 
     def nodes(self) -> list[int]:
-        """Returns all nodes in topological order."""
+        """Returns a list of all nodes in order of creation."""
 
     def gates(self) -> list[int]:
-        """Returns all gate nodes."""
+        """Returns a list of all non-constant and non-PI nodes in order of creation."""
 
     def pis(self) -> list[int]:
-        """Returns all primary input nodes."""
+        """Returns a list of all primary input nodes in order of creation."""
 
     def pos(self) -> list[AigSignal]:
-        """Returns all primary output signals."""
+        """Returns a list of all primary output signals in order of creation."""
 
     def fanins(self, n: int) -> list[AigSignal]:
         """Returns fanin signals of node ``n``."""
@@ -295,7 +300,10 @@ class Aig:
         """
 
     def __getstate__(self) -> tuple:
-        """Returns pickle state as an index-list tuple."""
+        """Returns pickle state as an index-list tuple.
+
+        Preserves only combinational structure and does not capture augmented view metadata.
+        """
 
 class NamedAig(Aig):
     """Extends a network with input/output and node names."""
