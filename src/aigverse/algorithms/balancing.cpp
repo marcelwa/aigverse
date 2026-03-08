@@ -60,6 +60,24 @@ void balancing(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
         nb::arg("ntk"), nb::arg("cut_size") = 4, nb::arg("cut_limit") = 8, nb::arg("minimize_truth_table") = true,
         nb::arg("only_on_critical_path") = false, nb::arg("rebalance_function") = "sop",
         nb::arg("sop_both_phases") = true, nb::arg("verbose") = false,
+        R"pb(Balances a network using SOP or ESOP-based local restructuring.
+
+Args:
+    ntk: The input logic network.
+    cut_size: Maximum cut size used during cut enumeration.
+    cut_limit: Maximum number of cuts retained per node.
+    minimize_truth_table: Whether to minimize cut truth tables during enumeration.
+    only_on_critical_path: Whether to balance only nodes on the critical path.
+    rebalance_function: Rebalancing engine to use. Supported values are
+        ``"sop"`` and ``"esop"``.
+    sop_both_phases: Whether to consider both phases in SOP/ESOP balancing.
+    verbose: Whether to print verbose progress output.
+
+Returns:
+    A new balanced network.
+
+Raises:
+    ValueError: If ``rebalance_function`` is not one of the supported values.)pb",
         nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 

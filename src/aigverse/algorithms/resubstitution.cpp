@@ -50,6 +50,23 @@ void resubstitution(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
         nb::arg("skip_fanout_limit_for_roots") = 1000, nb::arg("skip_fanout_limit_for_divisors") = 100,
         nb::arg("verbose") = false, nb::arg("use_dont_cares") = false, nb::arg("window_size") = 12,
         nb::arg("preserve_depth") = false, nb::arg("inplace") = false,
+        R"pb(Performs AIG resubstitution-based optimization.
+
+Args:
+    ntk: The input logic network.
+    max_pis: Maximum number of leaves in a local window.
+    max_divisors: Maximum number of candidate divisors.
+    max_inserts: Maximum number of inserted nodes per replacement.
+    skip_fanout_limit_for_roots: Fanout threshold to skip root candidates.
+    skip_fanout_limit_for_divisors: Fanout threshold to skip divisor candidates.
+    verbose: Whether to print verbose progress output.
+    use_dont_cares: Whether to use don't-care information.
+    window_size: Window size used for don't-care computation.
+    preserve_depth: Whether replacements must preserve depth.
+    inplace: Whether to mutate ``ntk`` in place.
+
+Returns:
+    The optimized network if ``inplace`` is ``False``. Otherwise ``None``.)pb",
         nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 

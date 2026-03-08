@@ -67,6 +67,25 @@ void refactoring(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
         nb::arg("use_reconvergence_cut") = false, nb::arg("use_dont_cares") = false,
         nb::arg("use_quick_factoring") = true, nb::arg("try_both_polarities") = true,
         nb::arg("consider_inverter_cost") = false, nb::arg("verbose") = false, nb::arg("inplace") = false,
+        R"pb(Performs SOP-based network refactoring.
+
+Args:
+    ntk: The input logic network.
+    max_pis: Maximum number of leaves used in local windows.
+    allow_zero_gain: Whether substitutions with zero gain are allowed.
+    use_reconvergence_cut: Whether to use reconvergence-driven cuts.
+    use_dont_cares: Whether to use don't-care information.
+    use_quick_factoring: Whether to use the quick SOP factoring heuristic.
+    try_both_polarities: Whether both output polarities are explored.
+    consider_inverter_cost: Whether inverter cost is included in optimization.
+    verbose: Whether to print verbose progress output.
+    inplace: Whether to mutate ``ntk`` in place.
+
+Returns:
+    The refactored network if ``inplace`` is ``False``. Otherwise ``None``.
+
+Raises:
+    RuntimeError: If refactoring fails in the underlying synthesis engine.)pb",
         nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
