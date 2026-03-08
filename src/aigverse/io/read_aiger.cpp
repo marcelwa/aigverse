@@ -45,7 +45,17 @@ void read_aiger(nanobind::module_& m, const std::string& network_name)  // NOLIN
 
             return ntk;
         },
-        nb::arg("filename"));
+        nb::arg("filename"),
+        R"pb(Reads a binary AIGER file into a logic network.
+
+Args:
+    filename: Path to the AIGER file.
+
+Returns:
+    The parsed network instance.
+
+Raises:
+    RuntimeError: If parsing the AIGER file fails.)pb");
 
     m.def(
         fmt::format("read_ascii_aiger_into_{}", network_name).c_str(),
@@ -66,7 +76,17 @@ void read_aiger(nanobind::module_& m, const std::string& network_name)  // NOLIN
 
             return ntk;
         },
-        nb::arg("filename"));
+        nb::arg("filename"),
+        R"pb(Reads an ASCII AIGER file into a logic network.
+
+Args:
+    filename: Path to the ASCII AIGER file.
+
+Returns:
+    The parsed network instance.
+
+Raises:
+    RuntimeError: If parsing the ASCII AIGER file fails.)pb");
 }
 
 // Explicit instantiations for named AIG and sequential AIG

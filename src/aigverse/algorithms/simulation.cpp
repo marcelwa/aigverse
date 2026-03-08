@@ -51,7 +51,18 @@ void simulation(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
                 throw;
             }
         },
-        nb::arg("ntk"), nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::arg("ntk"),
+        R"pb(Simulates all primary outputs of a network as truth tables.
+
+Args:
+    ntk: The input logic network.
+
+Returns:
+    A list containing one truth table per primary output.
+
+Raises:
+    MemoryError: If the truth tables cannot be allocated due to memory limits.)pb",
+        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 
     m.def(
         "simulate_nodes",
@@ -82,7 +93,18 @@ void simulation(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
                 throw;
             }
         },
-        nb::arg("ntk"), nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::arg("ntk"),
+        R"pb(Simulates all nodes of a network as truth tables.
+
+Args:
+    ntk: The input logic network.
+
+Returns:
+    A dictionary that maps node identifiers to truth tables.
+
+Raises:
+    MemoryError: If the truth tables cannot be allocated due to memory limits.)pb",
+        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG

@@ -23,6 +23,15 @@ void cleanup(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
         [](const Ntk& ntk, const bool remove_dangling_pis = false, const bool remove_redundant_pos = false) -> Ntk
         { return mockturtle::cleanup_dangling(ntk, remove_dangling_pis, remove_redundant_pos); }, nb::arg("ntk"),
         nb::arg("remove_dangling_pis") = false, nb::arg("remove_redundant_pos") = false,
+        R"pb(Removes dangling logic (dead nodes) from a network.
+
+Args:
+    ntk: The input logic network.
+    remove_dangling_pis: Whether to also remove dangling primary inputs.
+    remove_redundant_pos: Whether to remove redundant primary outputs.
+
+Returns:
+    A cleaned network with dangling structures removed.)pb",
         nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 

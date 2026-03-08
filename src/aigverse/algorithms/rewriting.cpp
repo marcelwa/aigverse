@@ -51,6 +51,23 @@ void rewriting(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
         nb::arg("allow_zero_gain") = false, nb::arg("use_dont_cares") = false, nb::arg("min_cand_cut_size") = 3,
         nb::arg("min_cand_cut_size_override") = std::nullopt, nb::arg("preserve_depth") = false,
         nb::arg("verbose") = false, nb::arg("very_verbose") = false,
+        R"pb(Rewrites an AIG network using cut-based NPN resynthesis.
+
+Args:
+    ntk: The input logic network.
+    cut_size: Maximum cut size used during cut enumeration.
+    cut_limit: Maximum number of cuts retained per node.
+    minimize_truth_table: Whether to minimize cut truth tables.
+    allow_zero_gain: Whether replacements with zero gain are allowed.
+    use_dont_cares: Whether to use don't-care information.
+    min_cand_cut_size: Minimum candidate cut size.
+    min_cand_cut_size_override: Optional override for minimum candidate cut size.
+    preserve_depth: Whether replacements must preserve network depth.
+    verbose: Whether to print verbose progress output.
+    very_verbose: Whether to print highly detailed progress output.
+
+Returns:
+    A rewritten network.)pb",
         nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 

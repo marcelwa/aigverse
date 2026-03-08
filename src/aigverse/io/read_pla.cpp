@@ -43,7 +43,17 @@ void read_pla(nanobind::module_& m, const std::string& network_name)  // NOLINT(
 
             return ntk;
         },
-        nb::arg("filename"));  // NOLINT(misc-include-cleaner)
+        nb::arg("filename"),
+        R"pb(Reads a PLA file into a logic network.
+
+Args:
+    filename: Path to the PLA file.
+
+Returns:
+    The parsed network instance.
+
+Raises:
+    RuntimeError: If parsing the PLA file fails.)pb");  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for AIG

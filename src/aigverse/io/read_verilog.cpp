@@ -45,7 +45,17 @@ void read_verilog(nanobind::module_& m, const std::string& network_name)  // NOL
 
             return ntk;
         },
-        nb::arg("filename"));
+        nb::arg("filename"),
+        R"pb(Reads a synthesized gate-level Verilog netlist into a logic network.
+
+Args:
+    filename: Path to the Verilog file.
+
+Returns:
+    The parsed network instance.
+
+Raises:
+    RuntimeError: If parsing the Verilog file fails.)pb");
 }
 
 // Explicit instantiation for named AIG
