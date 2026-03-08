@@ -128,8 +128,12 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
 
     const auto signal_class_doc = fmt::format(
         "Represents a signal in an {}.\n\nSignals point to nodes and may be complemented.", all_caps_network_name);
-    const auto network_class_doc =
-        fmt::format("Represents an {} and its structural operations.", all_caps_network_name);
+    const auto network_class_doc = fmt::format(
+        "Represents an {} and its structural operations.\n\n"
+        "Note:\n"
+        "    Serialization helpers such as to_index_list() preserve only combinational structure and do not capture "
+        "augmented view metadata.",
+        all_caps_network_name);
     const auto network_init_doc = fmt::format("Creates an empty {} network.", all_caps_network_name);
 
     using Signal = mockturtle::signal<Ntk>;  // NOLINT(readability-identifier-naming)
@@ -428,7 +432,9 @@ Raises:
                 mockturtle::encode(il, ntk);
                 return nb::make_tuple(nb::cast(il.raw()));
             },
-            R"pb(Returns pickle state as an index-list tuple.)pb");
+            R"pb(Returns pickle state as an index-list tuple.
+
+Preserves only combinational structure and does not capture augmented view metadata.)pb");
 
     using NamedNtk = mockturtle::names_view<Ntk>;
     nb::class_<NamedNtk, Ntk>(m, fmt::format("Named{}", network_name).c_str(),
