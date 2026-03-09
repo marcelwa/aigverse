@@ -25,8 +25,14 @@ def test_binary_decoder_two_selects() -> None:
     sim = simulate(aig)
     assert aig.num_pis == 2
     assert aig.num_pos == 4
+    observed_minterms: set[int] = set()
     for tt in sim:
         assert tt.count_ones() == 1
+        one_positions = [i for i in range(tt.num_bits()) if tt.get_bit(i) == 1]
+        assert len(one_positions) == 1
+        observed_minterms.add(one_positions[0])
+
+    assert observed_minterms == set(range(aig.num_pos))
 
 
 def test_binary_decoder_one_select_matches_not_and_identity() -> None:

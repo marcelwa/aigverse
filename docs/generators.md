@@ -31,7 +31,15 @@ print(single.num_pis, single.num_gates)
 ## Python-Side Batching
 
 Batching is intentionally kept on the Python side for flexibility. For fixed-size datasets, call
-{py:func}`~aigverse.generators.random_aig` repeatedly.
+{py:func}`~aigverse.generators.random_aig` repeatedly with fixed `num_pis` and `num_gates`.
+
+:::{note}
+{py:func}`~aigverse.generators.random_aig` does not guarantee a fixed `num_pos` across seeds:
+mockturtle's random topology can leave a different number of dangling nodes depending on the sampled structure.
+As a result, repeated calls with identical `num_pis`/`num_gates` may still produce different output counts.
+For ML training loops, use one of these mitigation strategies when you need a uniform label shape, you can filter
+generated examples by `num_pos` or resample seeds until `num_pos` matches your target.
+:::
 
 ```{code-cell} ipython3
 from aigverse.generators import random_aig

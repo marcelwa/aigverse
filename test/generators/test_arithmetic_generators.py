@@ -51,6 +51,19 @@ def test_ripple_carry_multiplier_two_bit_truth_tables() -> None:
     sim = simulate(aig)
     assert len(sim) == 4
 
+    for assignment in range(sim[0].num_bits()):
+        a0 = (assignment >> 0) & 1
+        b0 = (assignment >> 1) & 1
+        a1 = (assignment >> 2) & 1
+        b1 = (assignment >> 3) & 1
+
+        a_val = a0 | (a1 << 1)
+        b_val = b0 | (b1 << 1)
+        product = a_val * b_val
+
+        for out_idx, tt in enumerate(sim):
+            assert tt.get_bit(assignment) == ((product >> out_idx) & 1)
+
 
 def test_ripple_carry_multiplier_one_bit_matches_and() -> None:
     generated = ripple_carry_multiplier(1)

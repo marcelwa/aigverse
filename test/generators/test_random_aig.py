@@ -19,6 +19,7 @@ def test_random_aig_reproducible_with_same_seed() -> None:
     aig1 = random_aig(num_pis=5, num_gates=12, seed=7)
 
     assert equivalence_checking(aig0, aig1)
+    assert aig0.to_index_list().raw() == aig1.to_index_list().raw()
 
 
 def test_random_aig_rejects_zero_num_pis() -> None:
