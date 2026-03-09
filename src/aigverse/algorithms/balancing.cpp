@@ -57,9 +57,9 @@ void balancing(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
             throw std::invalid_argument(fmt::format(
                 "Unknown rebalance function: '{}'. Possible values are 'sop' and 'esop'.", rebalance_function));
         },
-        nb::arg("ntk"), nb::arg("cut_size") = 4, nb::arg("cut_limit") = 8, nb::arg("minimize_truth_table") = true,
-        nb::arg("only_on_critical_path") = false, nb::arg("rebalance_function") = "sop",
-        nb::arg("sop_both_phases") = true, nb::arg("verbose") = false,
+        nb::arg("ntk"), nb::kw_only(), nb::arg("cut_size") = 4, nb::arg("cut_limit") = 8,
+        nb::arg("minimize_truth_table") = true, nb::arg("only_on_critical_path") = false,
+        nb::arg("rebalance_function") = "sop", nb::arg("sop_both_phases") = true, nb::arg("verbose") = false,
         R"pb(Balances a network using SOP or ESOP-based local restructuring.
 
 Args:

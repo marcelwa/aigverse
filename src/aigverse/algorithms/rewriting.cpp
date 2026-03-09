@@ -47,10 +47,10 @@ void rewriting(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 
             return mockturtle::cut_rewriting(ntk, aig_npn_resyn_engine, params);
         },
-        nb::arg("ntk"), nb::arg("cut_size") = 4, nb::arg("cut_limit") = 8, nb::arg("minimize_truth_table") = true,
-        nb::arg("allow_zero_gain") = false, nb::arg("use_dont_cares") = false, nb::arg("min_cand_cut_size") = 3,
-        nb::arg("min_cand_cut_size_override") = std::nullopt, nb::arg("preserve_depth") = false,
-        nb::arg("verbose") = false, nb::arg("very_verbose") = false,
+        nb::arg("ntk"), nb::kw_only(), nb::arg("cut_size") = 4, nb::arg("cut_limit") = 8,
+        nb::arg("minimize_truth_table") = true, nb::arg("allow_zero_gain") = false, nb::arg("use_dont_cares") = false,
+        nb::arg("min_cand_cut_size") = 3, nb::arg("min_cand_cut_size_override") = std::nullopt,
+        nb::arg("preserve_depth") = false, nb::arg("verbose") = false, nb::arg("very_verbose") = false,
         R"pb(Rewrites an AIG network using cut-based NPN resynthesis.
 
 Args:

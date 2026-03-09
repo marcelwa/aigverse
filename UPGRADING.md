@@ -13,7 +13,8 @@ This version also includes an API rework for AIG optimization workflows.
 
 - **Networks**: `Aig`, `SequentialAig`, `NamedAig`, etc., `AigEdge`, `AigEdgeList`, `AigIndexList` and helper
   types are now in `aigverse.networks`.
-- **Algorithms**: `balancing`, `equivalence_checking`, `simulate`, etc. are now in `aigverse.algorithms`.
+- **Algorithms**: `balancing`, `equivalence_checking`, `simulate`, etc. are now in `aigverse.algorithms`. All of their
+  parameters except the input networks are now keyword-only for better readability.
 - **IO**: Reading/Writing functions are now in `aigverse.io`.
 - **Utils**: `TruthTable` and its free operation functions are now in `aigverse.utils`.
 
@@ -123,7 +124,8 @@ Network query methods are now **read-only properties** instead of callable metho
 | `signal.get_complement()` | `signal.complement` |
 | `signal.get_data()`       | `signal.data`       |
 
-Migration hint: replace method calls with direct property access (drop `()`), e.g. `signal.get_index()` -> `signal.index`.
+Migration hint: replace method calls with direct property access (drop `()`), e.g. `signal.get_index()` ->
+`signal.index`.
 
 #### Before
 
