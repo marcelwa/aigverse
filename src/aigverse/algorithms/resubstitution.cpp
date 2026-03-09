@@ -46,10 +46,10 @@ void resubstitution(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
             return run_transform(ntk, inplace,
                                  [params](Ntk& target) { mockturtle::aig_resubstitution(target, params); });
         },
-        nb::arg("ntk"), nb::arg("max_pis") = 8, nb::arg("max_divisors") = 150, nb::arg("max_inserts") = 2,
-        nb::arg("skip_fanout_limit_for_roots") = 1000, nb::arg("skip_fanout_limit_for_divisors") = 100,
-        nb::arg("verbose") = false, nb::arg("use_dont_cares") = false, nb::arg("window_size") = 12,
-        nb::arg("preserve_depth") = false, nb::arg("inplace") = false,
+        nb::arg("ntk"), nb::kw_only(), nb::arg("max_pis") = 8, nb::arg("max_divisors") = 150,
+        nb::arg("max_inserts") = 2, nb::arg("skip_fanout_limit_for_roots") = 1000,
+        nb::arg("skip_fanout_limit_for_divisors") = 100, nb::arg("verbose") = false, nb::arg("use_dont_cares") = false,
+        nb::arg("window_size") = 12, nb::arg("preserve_depth") = false, nb::arg("inplace") = false,
         R"pb(Performs AIG resubstitution-based optimization.
 
 Args:
