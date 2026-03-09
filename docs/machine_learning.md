@@ -26,6 +26,31 @@ Adapters provide integration with machine learning workflows. To keep the base l
 not included by default in the `aigverse` package but can be installed separately via the `adapters` extra. See
 the [Installation](installation.md#machine-learning-adapters) documentation for more details.
 
+## Dataset Generation
+
+The generators module offers a reproducible way to create synthetic AIG datasets before converting them into ML-ready
+formats.
+
+```{code-cell} ipython3
+import random
+
+from aigverse.generators import random_aig
+
+rng = random.Random(1234)
+
+# Generate a reproducible, size-diverse AIG dataset
+dataset = [
+    random_aig(
+        num_pis=rng.randint(4, 6),
+        num_gates=rng.randint(20, 40),
+        seed=5000 + i,
+    )
+    for i in range(16)
+]
+
+print(len(dataset), dataset[0].num_pis, dataset[0].num_gates)
+```
+
 ### NetworkX
 
 The [NetworkX](https://networkx.org/) adapter allows you to convert an AIG into a {py:class}`~networkx.DiGraph` object.
