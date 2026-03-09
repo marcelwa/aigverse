@@ -14,7 +14,8 @@ def random_aig(*, num_pis: int, num_gates: int, seed: int = 3405688830) -> aigve
         A randomly generated AIG.
 
     Raises:
-        ValueError: If ``num_pis`` or ``num_gates`` is not greater than ``0``.
+        ValueError: If ``num_pis`` or ``num_gates`` is ``0``.
+        TypeError: If ``num_pis`` or ``num_gates`` cannot be converted to ``uint32``.
     """
 
 def ripple_carry_adder(bitwidth: int) -> aigverse.networks.Aig:

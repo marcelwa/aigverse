@@ -1,6 +1,5 @@
 #include "aigverse/types.hpp"
 
-#include <fmt/format.h>
 #include <mockturtle/generators/random_network.hpp>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>  // NOLINT(misc-include-cleaner)
@@ -19,18 +18,16 @@ namespace nb = nanobind;
 namespace
 {
 
-void validate_positive(const uint32_t value, const char* name)
-{
-    if (value == 0u)
-    {
-        throw std::invalid_argument(fmt::format("{} must be greater than 0", name));
-    }
-}
-
 aig random_aig_impl(const uint32_t num_pis, const uint32_t num_gates, const uint64_t seed)
 {
-    validate_positive(num_pis, "num_pis");
-    validate_positive(num_gates, "num_gates");
+    if (num_pis == 0u)
+    {
+        throw std::invalid_argument("num_pis must be greater than 0");
+    }
+    if (num_gates == 0u)
+    {
+        throw std::invalid_argument("num_gates must be greater than 0");
+    }
 
     mockturtle::random_network_generator_params_size ps{};
     ps.num_pis                        = num_pis;
@@ -61,7 +58,8 @@ Returns:
     A randomly generated AIG.
 
 Raises:
-    ValueError: If ``num_pis`` or ``num_gates`` is not greater than ``0``.
+    ValueError: If ``num_pis`` or ``num_gates`` is ``0``.
+    TypeError: If ``num_pis`` or ``num_gates`` cannot be converted to ``uint32``.
 )pb");
 }
 

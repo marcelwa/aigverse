@@ -30,3 +30,13 @@ def test_random_aig_rejects_zero_num_pis() -> None:
 def test_random_aig_rejects_zero_num_gates() -> None:
     with pytest.raises(ValueError, match="num_gates must be greater than 0"):
         random_aig(num_pis=2, num_gates=0)
+
+
+def test_random_aig_rejects_negative_num_pis() -> None:
+    with pytest.raises(TypeError):
+        random_aig(num_pis=-1, num_gates=3)
+
+
+def test_random_aig_rejects_negative_num_gates() -> None:
+    with pytest.raises(TypeError):
+        random_aig(num_pis=2, num_gates=-1)
