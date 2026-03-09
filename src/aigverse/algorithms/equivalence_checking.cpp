@@ -44,8 +44,8 @@ void equivalence_checking(nanobind::module_& m)  // NOLINT(misc-use-internal-lin
 
             return mockturtle::equivalence_checking(miter.value(), params);
         },
-        nb::arg("spec"), nb::arg("impl"), nb::arg("conflict_limit") = 0, nb::arg("functional_reduction") = true,
-        nb::arg("verbose") = false,
+        nb::arg("spec"), nb::arg("impl"), nb::kw_only(), nb::arg("conflict_limit") = 0,
+        nb::arg("functional_reduction") = true, nb::arg("verbose") = false,
         R"pb(Checks functional equivalence between a specification and implementation network using SAT solving.
 
 Args:

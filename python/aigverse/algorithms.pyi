@@ -8,6 +8,7 @@ import aigverse.utils
 def equivalence_checking(
     spec: aigverse.networks.Aig,
     impl: aigverse.networks.Aig,
+    *,
     conflict_limit: int = 0,
     functional_reduction: bool = True,
     verbose: bool = False,
@@ -30,7 +31,7 @@ def equivalence_checking(
     """
 
 def cleanup_dangling(
-    ntk: aigverse.networks.Aig, remove_dangling_pis: bool = False, remove_redundant_pos: bool = False
+    ntk: aigverse.networks.Aig, *, remove_dangling_pis: bool = False, remove_redundant_pos: bool = False
 ) -> aigverse.networks.Aig:
     """Removes dangling logic (dead nodes) from a network.
 
@@ -45,6 +46,7 @@ def cleanup_dangling(
 
 def sop_refactoring(
     ntk: aigverse.networks.Aig,
+    *,
     max_pis: int = 6,
     allow_zero_gain: bool = False,
     use_reconvergence_cut: bool = False,
@@ -78,6 +80,7 @@ def sop_refactoring(
 
 def aig_resubstitution(
     ntk: aigverse.networks.Aig,
+    *,
     max_pis: int = 8,
     max_divisors: int = 150,
     max_inserts: int = 2,
@@ -110,6 +113,7 @@ def aig_resubstitution(
 
 def aig_cut_rewriting(
     ntk: aigverse.networks.Aig,
+    *,
     cut_size: int = 4,
     cut_limit: int = 8,
     minimize_truth_table: bool = True,
@@ -142,6 +146,7 @@ def aig_cut_rewriting(
 
 def balancing(
     ntk: aigverse.networks.Aig,
+    *,
     cut_size: int = 4,
     cut_limit: int = 8,
     minimize_truth_table: bool = True,
