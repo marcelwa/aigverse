@@ -24,10 +24,11 @@ if sys.platform == "win32":
     del _dll_patch
 
 if TYPE_CHECKING:
-    from . import algorithms, io, networks, utils
+    from . import algorithms, generators, io, networks, utils
 
 _LAZY_SUBMODULES = {
     "algorithms",
+    "generators",
     "io",
     "networks",
     "utils",
@@ -36,6 +37,7 @@ _LAZY_SUBMODULES = {
 __all__ = [
     "__version__",
     "algorithms",
+    "generators",
     "io",
     "networks",
     "utils",

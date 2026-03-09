@@ -250,6 +250,36 @@ for optimization in [aig_resubstitution, sop_refactoring]:
 aig = cleanup_dangling(aig)
 ```
 
+### 🎲 Random AIG Generation
+
+The `aigverse.generators` module provides reproducible random AIG generation via `random_aig`.
+
+```python
+from aigverse.generators import random_aig
+
+# One random AIG
+aig = random_aig(num_pis=4, num_gates=20, seed=123)
+
+# Python-side batch generation
+dataset = [random_aig(num_pis=4, num_gates=20, seed=1000 + i) for i in range(16)]
+```
+
+### 🧱 Structured Generator Networks
+
+The same module also provides high-level arithmetic and control generators that return complete benchmark networks.
+
+```python
+from aigverse.generators import binary_decoder, ripple_carry_adder, multiplexer
+
+adder = ripple_carry_adder(8)
+mux = multiplexer(8)
+decoder = binary_decoder(8)
+
+print(adder.num_pis, adder.num_pos, adder.num_gates)
+print(mux.num_pis, mux.num_pos, mux.num_gates)
+print(decoder.num_pis, decoder.num_pos, decoder.num_gates)
+```
+
 ### ✅ Equivalence Checking
 
 Equivalence of AIGs (e.g., after optimization) can be checked using SAT-based equivalence checking.

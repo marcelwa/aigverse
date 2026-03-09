@@ -17,6 +17,7 @@ def test_modular_imports_are_available() -> None:
     assert isinstance(aig, Aig)
 
     assert hasattr(aigverse, "algorithms")
+    assert hasattr(aigverse, "generators")
     assert hasattr(aigverse, "io")
     assert hasattr(aigverse, "networks")
     assert hasattr(aigverse, "utils")

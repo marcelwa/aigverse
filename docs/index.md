@@ -49,6 +49,7 @@ installation
 aigs
 truth_tables
 algorithms
+generators
 machine_learning
 ```
 

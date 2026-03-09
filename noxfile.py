@@ -220,6 +220,8 @@ def stubs(session: nox.Session) -> None:
         "--module",
         "aigverse.io",
         "--module",
+        "aigverse.generators",
+        "--module",
         "aigverse.utils",
     )
 
