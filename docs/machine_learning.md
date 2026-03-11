@@ -130,8 +130,8 @@ plt.show()
 
 ## DLPack Tensors
 
-For high-throughput ML pipelines, `aigverse` can export AIG objects directly as graph tensors (node attributes, edge
-indices, and edge attributes) utilizing the [DLPack](https://dmlc.github.io/dlpack/latest/) protocol. This allows
+For high-throughput ML pipelines, `aigverse` can export combinational AIG objects directly as graph tensors (node
+attributes, edge indices, and edge attributes) utilizing the [DLPack](https://dmlc.github.io/dlpack/latest/) protocol. This allows
 zero-copy hand-off to modern tensor frameworks, such
 as [PyTorch](https://docs.pytorch.org/docs/stable/dlpack.html),
 [JAX](https://docs.jax.dev/en/latest/_autosummary/jax.dlpack.from_dlpack.html#jax.dlpack.from_dlpack),
