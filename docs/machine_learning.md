@@ -51,7 +51,7 @@ dataset = [
 print(len(dataset), dataset[0].num_pis, dataset[0].num_gates)
 ```
 
-### NetworkX
+## NetworkX
 
 The [NetworkX](https://networkx.org/) adapter allows you to convert an AIG into a {py:class}`~networkx.DiGraph` object.
 This enables you to leverage the rich ecosystem of graph-based machine learning and data science tools that operate on
@@ -128,14 +128,15 @@ plt.margins(x=0.2)
 plt.show()
 ```
 
-### DLPack Sparse Tensors
+## DLPack Tensors
 
-For high-throughput ML pipelines, `aigverse` can export graph tensors directly in a sparse COO-style layout where each
-tensor implements the [DLPack](https://dmlc.github.io/dlpack/latest/) protocol. This allows zero-copy hand-off to modern
+For high-throughput ML pipelines, `aigverse` can export AIG objects directly as graph tensors (node attributes, edge
+indices, and edge attributes) utilizing the [DLPack](https://dmlc.github.io/dlpack/latest/) protocol. This allows zero-copy hand-off to modern
 tensor frameworks, such
 as [PyTorch](https://docs.pytorch.org/docs/stable/dlpack.html),
 [JAX](https://docs.jax.dev/en/latest/_autosummary/jax.dlpack.from_dlpack.html#jax.dlpack.from_dlpack),
-[TensorFlow](https://www.tensorflow.org/api_docs/python/tf/experimental/dlpack/from_dlpack), etc., through `from_dlpack`.
+[TensorFlow](https://www.tensorflow.org/api_docs/python/tf/experimental/dlpack/from_dlpack), etc., through
+`from_dlpack`.
 
 ```{code-cell} ipython3
 import torch
@@ -177,7 +178,8 @@ sparse_adj = torch.sparse_coo_tensor(
 print(sparse_adj.shape)
 ```
 
-The same export also works with [NumPy's DLPack consumer API](https://numpy.org/doc/stable/release/1.22.0-notes.html#add-nep-47-compatible-dlpack-support):
+The same export also works
+with [NumPy's DLPack consumer API](https://numpy.org/doc/stable/release/1.22.0-notes.html#add-nep-47-compatible-dlpack-support):
 
 ```{code-cell} ipython3
 import numpy as np
@@ -215,7 +217,8 @@ start. A practical pattern is:
 
 1. Materialize labels once as a NumPy array.
 2. Build the input matrix with vectorized NumPy operations.
-3. Convert to framework tensors (for example, [PyTorch](https://docs.pytorch.org/docs/stable/index.html)) without copying.
+3. Convert to framework tensors (for example, [PyTorch](https://docs.pytorch.org/docs/stable/index.html)) without
+   copying.
 
 This keeps preprocessing fast and avoids Python-level loops in hot paths.
 
