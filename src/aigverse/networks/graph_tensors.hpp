@@ -15,7 +15,6 @@
 #include <initializer_list>
 #include <memory>
 #include <optional>
-#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -64,8 +63,8 @@ namespace detail
 /**
  * @brief Creates an owning NumPy-backed nanobind ndarray from a moved vector.
  *
- * The returned array keeps data alive via a capsule-owned shared pointer, making
- * it safe to consume through DLPack in downstream frameworks.
+ * The returned array keeps data alive via capsule-managed ownership of a heap
+ * vector, making it safe to consume through DLPack in downstream frameworks.
  *
  * @tparam T Element type.
  * @param data Moved data buffer.
@@ -78,16 +77,17 @@ nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::vector<T>&&       
 {
     namespace nb = nanobind;
 
-    auto        storage = std::make_shared<std::vector<T>>(std::move(data));
-    auto        holder  = std::make_unique<std::shared_ptr<std::vector<T>>>(storage);
-    nb::capsule owner(holder.get(),
-                      [](void* ptr) noexcept
-                      {
-                          delete static_cast<std::shared_ptr<std::vector<T>>*>(ptr);
-                      });  // TODO does this really need to call delete? Why not simply let the smart pointer handle it?
-    holder.release();
+    // Use unique_ptr as an exception-safe staging owner while creating the capsule.
+    // Once the capsule is constructed, ownership is intentionally transferred to
+    // the capsule deleter via release().
+    auto  storage     = std::make_unique<std::vector<T>>(std::move(data));
+    auto* raw_storage = storage.get();
+    // nanobind::capsule stores a raw pointer plus a C-style destructor callback.
+    // The callback is the final owner and performs the matching delete.
+    nb::capsule owner(raw_storage, [](void* ptr) noexcept { delete static_cast<std::vector<T>*>(ptr); });
+    storage.release();
 
-    return nb::ndarray<nb::numpy, T>(storage->data(), shape, owner);
+    return nb::ndarray<nb::numpy, T>(raw_storage->data(), shape, owner);
 }
 /**
  * @brief Exports an AIG-style network to sparse COO-like graph tensors.
