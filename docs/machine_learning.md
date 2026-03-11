@@ -131,12 +131,38 @@ plt.show()
 ## DLPack Tensors
 
 For high-throughput ML pipelines, `aigverse` can export AIG objects directly as graph tensors (node attributes, edge
-indices, and edge attributes) utilizing the [DLPack](https://dmlc.github.io/dlpack/latest/) protocol. This allows zero-copy hand-off to modern
-tensor frameworks, such
+indices, and edge attributes) utilizing the [DLPack](https://dmlc.github.io/dlpack/latest/) protocol. This allows
+zero-copy hand-off to modern tensor frameworks, such
 as [PyTorch](https://docs.pytorch.org/docs/stable/dlpack.html),
 [JAX](https://docs.jax.dev/en/latest/_autosummary/jax.dlpack.from_dlpack.html#jax.dlpack.from_dlpack),
 [TensorFlow](https://www.tensorflow.org/api_docs/python/tf/experimental/dlpack/from_dlpack), etc., through
 `from_dlpack`.
+
+Encoding and `dtype` mapping:
+
+- Edge encoding (`edge_attr`):
+  - `EdgeTensorEncoding.BINARY`: regular `0.0`, inverted `1.0`
+  - `EdgeTensorEncoding.SIGNED`: regular `+1.0`, inverted `-1.0`
+  - `EdgeTensorEncoding.ONE_HOT`: regular `[1.0, 0.0]`, inverted `[0.0, 1.0]`
+- Node encoding (`node_attr`):
+  - `NodeTensorEncoding.INTEGER`: `constant=0`, `pi=1`, `gate=2`, `po=3`
+  - `NodeTensorEncoding.ONE_HOT`: `[constant, pi, gate, po]`
+- Tensor `dtype`s:
+  - `edge_index`: `int64`
+  - `edge_attr`: `float32`
+  - `node_attr`: `float32`
+
+Tensor shapes follow the convention:
+
+$$
+\mathbf{edge\_index} \in \mathbb{Z}^{2 \times E}, \quad
+\mathbf{edge\_attr} \in \mathbb{R}^{E \times D_{\text{edge}}}, \quad
+\mathbf{node\_attr} \in \mathbb{R}^{N \times D_{\text{node}}}
+$$
+
+where $E$ is the number of edges and $N$ is the number of nodes. For edge features,
+$D_{\text{edge}} = 1$ for `BINARY` and `SIGNED`, and $D_{\text{edge}} = 2$ for `ONE_HOT`.
+The node feature width $D_{\text{node}}$ depends on the chosen node encoding and enabled optional features.
 
 ```{code-cell} ipython3
 import torch
@@ -187,28 +213,6 @@ import numpy as np
 edge_index_np = np.from_dlpack(aig.to_graph_tensors()["edge_index"])
 print(edge_index_np.shape)
 ```
-
-Encoding and dtype mapping:
-
-- Edge encoding (`edge_attr`):
-  - `EdgeTensorEncoding.BINARY`: regular `0.0`, inverted `1.0`
-  - `EdgeTensorEncoding.SIGNED`: regular `+1.0`, inverted `-1.0`
-  - `EdgeTensorEncoding.ONE_HOT`: regular `[1.0, 0.0]`, inverted `[0.0, 1.0]`
-- Node encoding (`node_attr`):
-  - `NodeTensorEncoding.INTEGER`: `constant=0`, `pi=1`, `gate=2`, `po=3`
-  - `NodeTensorEncoding.ONE_HOT`: `[constant, pi, gate, po]`
-- Tensor dtypes:
-  - `edge_index`: `int64`
-  - `edge_attr`: `float32`
-  - `node_attr`: `float32`
-
-The exported tensor shapes are:
-
-- `edge_index`: `(2, E)`
-- `edge_attr`: `(E, D_edge)`
-- `node_attr`: `(N, D_node)`
-
-where `D_edge` is `1` for `BINARY` and `SIGNED`, and `2` for `ONE_HOT`.
 
 ## Truth Tables
 
