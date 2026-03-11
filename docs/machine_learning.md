@@ -130,8 +130,8 @@ plt.show()
 
 ## DLPack Tensors
 
-For high-throughput ML pipelines, `aigverse` can export combinational AIG objects directly as graph tensors (node
-attributes, edge indices, and edge attributes) utilizing the [DLPack](https://dmlc.github.io/dlpack/latest/) protocol. This allows
+For high-throughput ML pipelines, `aigverse` can export AIG objects directly as graph tensors (node
+attributes, edge indices, and edge attributes) utilizing the [DLPack](https://dmlc.github.io/dlpack/latest/) protocol via the {py:meth}`~aigverse.networks.Aig.to_graph_tensors` method. This allows
 zero-copy hand-off to modern tensor frameworks, such
 as [PyTorch](https://docs.pytorch.org/docs/stable/dlpack.html),
 [JAX](https://docs.jax.dev/en/latest/_autosummary/jax.dlpack.from_dlpack.html#jax.dlpack.from_dlpack),
@@ -163,6 +163,15 @@ $$
 where $E$ is the number of edges and $N$ is the number of nodes. For edge features,
 $D_{\text{edge}} = 1$ for `BINARY` and `SIGNED`, and $D_{\text{edge}} = 2$ for `ONE_HOT`.
 The node feature width $D_{\text{node}}$ depends on the chosen node encoding and enabled optional features.
+
+:::{note}
+Current limitations of `to_graph_tensors`:
+
+- The export targets **combinational** networks. Sequential networks are not supported.
+- Exported tensors are backed by **CPU host memory** (NumPy-backed DLPack producer).
+- `torch.from_dlpack(...)` is zero-copy on CPU, but moving tensors to CUDA still allocates GPU memory and performs a host-to-device copy.
+- When `include_truth_table=True`, the export is restricted to at most 16 primary inputs due to the exponential growth of truth table size. This is a practical limit for ML applications, but it is not a fundamental limitation of the API.
+  :::
 
 ```{code-cell} ipython3
 import torch
