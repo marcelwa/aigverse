@@ -113,26 +113,34 @@ bool contains_node(const Ntk& ntk, const nanobind::object& value)
 
 }  // namespace
 
-void bind_graph_tensor_encoding(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
+void bind_tensor_encodings(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     namespace nb = nanobind;
 
-    nb::enum_<aigverse::graph_tensor_encoding>(m, "GraphTensorEncoding",
-                                               R"pb(Encoding mode for exported graph tensors.
+    nb::enum_<aigverse::node_tensor_encoding>(m, "NodeTensorEncoding",
+                                              R"pb(Node encoding mode for exported graph tensors.
 
-This enum controls how categorical edge and node type features are represented
-in the exported tensors. The types will be `float32` for all modes, but the encoding scheme differs:
-- `ZERO_ONE`: Categorical features are represented as binary indicators (0.0 or 1.0).
-- `ONE_MINUS_ONE`: Categorical features are represented as +1.0 for regular and -1.0 for inverted (edge-only).
-- `ONE_HOT`: Categorical features are represented as one-hot encoded vectors, where the dimension corresponds
-             to the number of categories (e.g., node types or edge types).)pb")
-        .value("ZERO_ONE", aigverse::graph_tensor_encoding::ZERO_ONE,
+    All node features use `float32`; only the categorical encoding scheme changes.
+    - `INTEGER`: Node classes are scalar labels in the first feature column.
+    - `ONE_HOT`: Node classes are one-hot vectors in `[constant, pi, gate, po]` order.)pb")
+        .value("INTEGER", aigverse::node_tensor_encoding::INTEGER,
+               R"pb(Scalar node labels in the first feature column: 0=constant, 1=pi, 2=gate, 3=po.)pb")
+        .value("ONE_HOT", aigverse::node_tensor_encoding::ONE_HOT,
+               R"pb(One-hot node labels in [constant, pi, gate, po] order.)pb");
+
+    nb::enum_<aigverse::edge_tensor_encoding>(m, "EdgeTensorEncoding",
+                                              R"pb(Edge encoding mode for exported graph tensors.
+
+    All edge features use `float32`; only the categorical encoding scheme changes.
+    - `BINARY`: Edge polarity is binary (regular=0.0, inverted=1.0).
+    - `SIGNED`: Edge polarity is signed (regular=+1.0, inverted=-1.0).
+    - `ONE_HOT`: Edge polarity is one-hot in `[regular, inverted]` order.)pb")
+        .value("BINARY", aigverse::edge_tensor_encoding::BINARY,
                R"pb(Labels are encoded as 0.0 (regular) and 1.0 (inverted).)pb")
-        .value("ONE_MINUS_ONE", aigverse::graph_tensor_encoding::ONE_MINUS_ONE,
+        .value("SIGNED", aigverse::edge_tensor_encoding::SIGNED,
                R"pb(Labels are encoded as +1.0 (regular) and -1.0 (inverted).)pb")
-        .value(
-            "ONE_HOT", aigverse::graph_tensor_encoding::ONE_HOT,
-            R"pb(Labels are encoded as one-hot vectors, where the dimension corresponds to the number of categories.)pb");
+        .value("ONE_HOT", aigverse::edge_tensor_encoding::ONE_HOT,
+               R"pb(One-hot edge labels in [regular, inverted] order.)pb");
 }
 
 template <typename Ntk>
@@ -380,35 +388,32 @@ Returns:
             nb::rv_policy::move)
         .def(
             "to_graph_tensors",
-            [](const Ntk& ntk, const aigverse::graph_tensor_encoding node_encoding,
-               const aigverse::graph_tensor_encoding edge_encoding, const bool include_level, const bool include_fanout,
+            [](const Ntk& ntk, const aigverse::node_tensor_encoding node_encoding,
+               const aigverse::edge_tensor_encoding edge_encoding, const bool include_level, const bool include_fanout,
                const bool include_truth_table)
             {
                 return aigverse::detail::to_graph_tensors(ntk, node_encoding, edge_encoding, include_level,
                                                           include_fanout, include_truth_table);
             },
-            nb::arg("node_encoding") = aigverse::graph_tensor_encoding::ONE_HOT,
-            nb::arg("edge_encoding") = aigverse::graph_tensor_encoding::ZERO_ONE, nb::arg("include_level") = true,
+            nb::arg("node_encoding") = aigverse::node_tensor_encoding::INTEGER,
+            nb::arg("edge_encoding") = aigverse::edge_tensor_encoding::BINARY, nb::arg("include_level") = true,
             nb::arg("include_fanout") = false, nb::arg("include_truth_table") = false,
             R"pb(Exports graph tensors for machine-learning workflows.
 
 Returns sparse graph topology and features as DLPack-compatible arrays.
 
 Edge encoding mapping:
-    - ``ZERO_ONE``: regular=0.0, inverted=1.0
-    - ``ONE_MINUS_ONE``: regular=+1.0, inverted=-1.0
+    - ``BINARY``: regular=0.0, inverted=1.0
+    - ``SIGNED``: regular=+1.0, inverted=-1.0
     - ``ONE_HOT``: regular=[1.0, 0.0], inverted=[0.0, 1.0]
 
 Node encoding mapping:
-    - ``ZERO_ONE``: constant=0, pi=1, gate=2, po=3
+    - ``INTEGER``: constant=0, pi=1, gate=2, po=3
     - ``ONE_HOT``: [constant, pi, gate, po]
 
-Note:
-    ``ONE_MINUS_ONE`` is edge-only and cannot be used for ``node_encoding``.
-
 Args:
-    node_encoding: Node encoding mode as :class:`~aigverse.networks.GraphTensorEncoding`.
-    edge_encoding: Edge encoding mode as :class:`~aigverse.networks.GraphTensorEncoding`.
+    node_encoding: Node encoding mode as :class:`~aigverse.networks.NodeTensorEncoding`.
+    edge_encoding: Edge encoding mode as :class:`~aigverse.networks.EdgeTensorEncoding`.
     include_level: Appends logic level as a node feature.
     include_fanout: Appends fanout size as a node feature.
     include_truth_table: Appends simulated node/output truth-table bits.
@@ -773,7 +778,7 @@ template void bind_network<aigverse::aig>(nanobind::module_&, const std::string&
 
 void bind_logic_networks(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    detail::bind_graph_tensor_encoding(m);
+    detail::bind_tensor_encodings(m);
     detail::bind_network<aigverse::aig>(m, "Aig");
 }
 

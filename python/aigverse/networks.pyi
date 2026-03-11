@@ -8,27 +8,39 @@ import enum
 from collections.abc import Iterator, Sequence
 from typing import NoReturn, overload
 
-class GraphTensorEncoding(enum.Enum):
-    """Encoding mode for exported graph tensors.
+class NodeTensorEncoding(enum.Enum):
+    """Node encoding mode for exported graph tensors.
 
-    This enum controls how categorical edge and node type features are represented
-    in the exported tensors. The types will be `float32` for all modes, but the encoding scheme differs:
-    - `ZERO_ONE`: Categorical features are represented as binary indicators (0.0 or 1.0).
-    - `ONE_MINUS_ONE`: Categorical features are represented as +1.0 for regular and -1.0 for inverted (edge-only).
-    - `ONE_HOT`: Categorical features are represented as one-hot encoded vectors, where the dimension corresponds
-                 to the number of categories (e.g., node types or edge types).
+    All node features use `float32`; only the categorical encoding scheme changes.
+    - `INTEGER`: Node classes are scalar labels in the first feature column.
+    - `ONE_HOT`: Node classes are one-hot vectors in `[constant, pi, gate, po]` order.
     """
 
-    ZERO_ONE = 0
+    INTEGER = 0
+    """
+    Scalar node labels in the first feature column: 0=constant, 1=pi, 2=gate, 3=po.
+    """
+
+    ONE_HOT = 1
+    """One-hot node labels in [constant, pi, gate, po] order."""
+
+class EdgeTensorEncoding(enum.Enum):
+    """Edge encoding mode for exported graph tensors.
+
+    All edge features use `float32`; only the categorical encoding scheme changes.
+    - `BINARY`: Edge polarity is binary (regular=0.0, inverted=1.0).
+    - `SIGNED`: Edge polarity is signed (regular=+1.0, inverted=-1.0).
+    - `ONE_HOT`: Edge polarity is one-hot in `[regular, inverted]` order.
+    """
+
+    BINARY = 0
     """Labels are encoded as 0.0 (regular) and 1.0 (inverted)."""
 
-    ONE_MINUS_ONE = 1
+    SIGNED = 1
     """Labels are encoded as +1.0 (regular) and -1.0 (inverted)."""
 
     ONE_HOT = 2
-    """
-    Labels are encoded as one-hot vectors, where the dimension corresponds to the number of categories.
-    """
+    """One-hot edge labels in [regular, inverted] order."""
 
 class AigSignal:
     """Represents a signal in an AIG.
@@ -296,8 +308,8 @@ class Aig:
 
     def to_graph_tensors(
         self,
-        node_encoding: GraphTensorEncoding = ...,
-        edge_encoding: GraphTensorEncoding = ...,
+        node_encoding: NodeTensorEncoding = ...,
+        edge_encoding: EdgeTensorEncoding = ...,
         include_level: bool = True,
         include_fanout: bool = False,
         include_truth_table: bool = False,
@@ -307,20 +319,17 @@ class Aig:
         Returns sparse graph topology and features as DLPack-compatible arrays.
 
         Edge encoding mapping:
-            - ``ZERO_ONE``: regular=0.0, inverted=1.0
-            - ``ONE_MINUS_ONE``: regular=+1.0, inverted=-1.0
+            - ``BINARY``: regular=0.0, inverted=1.0
+            - ``SIGNED``: regular=+1.0, inverted=-1.0
             - ``ONE_HOT``: regular=[1.0, 0.0], inverted=[0.0, 1.0]
 
         Node encoding mapping:
-            - ``ZERO_ONE``: constant=0, pi=1, gate=2, po=3
+            - ``INTEGER``: constant=0, pi=1, gate=2, po=3
             - ``ONE_HOT``: [constant, pi, gate, po]
 
-        Note:
-            ``ONE_MINUS_ONE`` is edge-only and cannot be used for ``node_encoding``.
-
         Args:
-            node_encoding: Node encoding mode as :class:`~aigverse.networks.GraphTensorEncoding`.
-            edge_encoding: Edge encoding mode as :class:`~aigverse.networks.GraphTensorEncoding`.
+            node_encoding: Node encoding mode as :class:`~aigverse.networks.NodeTensorEncoding`.
+            edge_encoding: Edge encoding mode as :class:`~aigverse.networks.EdgeTensorEncoding`.
             include_level: Appends logic level as a node feature.
             include_fanout: Appends fanout size as a node feature.
             include_truth_table: Appends simulated node/output truth-table bits.

@@ -23,23 +23,38 @@ namespace aigverse
 {
 
 /**
- * @brief Encoding mode for exported graph tensors.
+ * @brief Node encoding mode for exported graph tensors.
  *
- * This enum controls how categorical edge and node type features are represented
+ * This enum controls how categorical node type features are represented
  * in the exported tensors. The types will be `float32` for all modes, but the encoding scheme differs:
- * - `ZERO_ONE`: Categorical features are represented as binary indicators (0.0 or 1.0).
- * - `ONE_MINUS_ONE`: Categorical features are represented as +1.0 for regular and -1.0 for inverted (edge-only).
- * - `ONE_HOT`: Categorical features are represented as one-hot encoded vectors, where the dimension corresponds to the
- *              number of categories (e.g., node types or edge types).
+ * - `INTEGER`: Node types are represented as integer class labels.
+ * - `ONE_HOT`: Node types are represented as one-hot encoded vectors, where the dimension corresponds to the number
+ *              of node categories in the order `[constant, pi, gate, po]`.
  */
-enum class graph_tensor_encoding : uint8_t
+enum class node_tensor_encoding : uint8_t
+{
+    /// Labels are encoded as 0.0 (constant), 1.0 (PI), 2.0 (gate), and 3.0 (PO).
+    INTEGER,
+    /// Labels are encoded as one-hot vectors in the order [constant, pi, gate, po].
+    ONE_HOT,
+};
+
+/**
+ * @brief Edge encoding mode for exported graph tensors.
+ *
+ * This enum controls how categorical edge type features are represented
+ * in the exported tensors. The types will be `float32` for all modes, but the encoding scheme differs:
+ * - `BINARY`: Edge polarity is represented as binary indicators (0.0 or 1.0).
+ * - `SIGNED`: Edge polarity is represented as +1.0 for regular and -1.0 for inverted.
+ * - `ONE_HOT`: Edge polarity is represented as one-hot encoded vectors in the order `[regular, inverted]`.
+ */
+enum class edge_tensor_encoding : uint8_t
 {
     /// Labels are encoded as 0.0 (regular) and 1.0 (inverted).
-    ZERO_ONE,
+    BINARY,
     /// Labels are encoded as +1.0 (regular) and -1.0 (inverted).
-    ONE_MINUS_ONE,
-    /// Labels are encoded as one-hot vectors, where the dimension corresponds to the number of categories (e.g., node
-    /// types or edge types).
+    SIGNED,
+    /// Labels are encoded as one-hot vectors in the order [regular, inverted].
     ONE_HOT,
 };
 
@@ -95,8 +110,8 @@ nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::vector<T>&&       
  * @return Dictionary of exported tensors.
  */
 template <typename Ntk>
-nanobind::dict to_graph_tensors(const Ntk& ntk, const graph_tensor_encoding node_encoding,
-                                const graph_tensor_encoding edge_encoding, const bool include_level,
+nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_encoding,
+                                const edge_tensor_encoding edge_encoding, const bool include_level,
                                 const bool include_fanout, const bool include_truth_table)
 {
     namespace nb = nanobind;
@@ -108,11 +123,6 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const graph_tensor_encoding node
     constexpr int64_t type_gate     = 2;
     constexpr int64_t type_po       = 3;
 
-    if (node_encoding == graph_tensor_encoding::ONE_MINUS_ONE)
-    {
-        throw std::invalid_argument("node_encoding only supports ZERO_ONE or ONE_HOT; ONE_MINUS_ONE is edge-only");
-    }
-
     const auto edges      = aigverse::to_edge_list(ntk).edges;
     const auto edge_count = edges.size();
 
@@ -123,7 +133,7 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const graph_tensor_encoding node
         edge_index[edge_count + i] = static_cast<int64_t>(edges[i].target);
     }
 
-    const size_t edge_dim = edge_encoding == graph_tensor_encoding::ONE_HOT ? 2 : 1;
+    const size_t edge_dim = edge_encoding == edge_tensor_encoding::ONE_HOT ? 2 : 1;
 
     std::vector<float> edge_attr(edge_count * edge_dim, 0.0f);
     for (size_t i = 0; i < edge_count; ++i)
@@ -131,17 +141,17 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const graph_tensor_encoding node
         const auto inverted = edges[i].weight != 0;
         switch (edge_encoding)
         {
-            case graph_tensor_encoding::ZERO_ONE:
+            case edge_tensor_encoding::BINARY:
             {
                 edge_attr[i] = inverted ? 1.0f : 0.0f;
                 break;
             }
-            case graph_tensor_encoding::ONE_MINUS_ONE:
+            case edge_tensor_encoding::SIGNED:
             {
                 edge_attr[i] = inverted ? -1.0f : 1.0f;
                 break;
             }
-            case graph_tensor_encoding::ONE_HOT:
+            case edge_tensor_encoding::ONE_HOT:
             {
                 edge_attr[i * 2]     = inverted ? 0.0f : 1.0f;
                 edge_attr[i * 2 + 1] = inverted ? 1.0f : 0.0f;
@@ -167,7 +177,7 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const graph_tensor_encoding node
         }
     }
 
-    const size_t base_dim = node_encoding == graph_tensor_encoding::ONE_HOT ? node_type_one_hot_dim : 1;
+    const size_t base_dim = node_encoding == node_tensor_encoding::ONE_HOT ? node_type_one_hot_dim : 1;
     const size_t node_dim =
         base_dim + (include_level ? 1 : 0) + (include_fanout ? 1 : 0) + (include_truth_table ? tt_dim : 0);
     const size_t node_count = ntk.size() + ntk.num_pos();
@@ -184,7 +194,7 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const graph_tensor_encoding node
     const auto fill_base = [&](const size_t row, const int64_t type_index) -> size_t
     {
         const size_t offset = row * node_dim;
-        if (node_encoding == graph_tensor_encoding::ZERO_ONE)
+        if (node_encoding == node_tensor_encoding::INTEGER)
         {
             node_attr[offset] = static_cast<float>(type_index);
             return offset + 1;
