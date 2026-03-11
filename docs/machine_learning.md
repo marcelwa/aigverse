@@ -210,48 +210,38 @@ where `D_edge` is `1` for `BINARY` and `SIGNED`, and `2` for `ONE_HOT`.
 
 ## Truth Tables
 
-Truth tables can be easily converted to Python lists or [NumPy](https://numpy.org/) arrays, making them compatible with
-standard ML libraries such as [scikit-learn](https://scikit-learn.org/), [PyTorch](https://pytorch.org/), or
-[TensorFlow](https://www.tensorflow.org/). Since `TruthTable` objects are iterable, this conversion is direct and
-intuitive. You can use these arrays as labels or features in supervised learning tasks, or as part of a dataset for
-training and evaluating models.
+Truth tables are iterable, but for ML pipelines it is best to keep data in contiguous array/tensor form from the
+start. A practical pattern is:
+
+1. Materialize labels once as a NumPy array.
+2. Build the input matrix with vectorized NumPy operations.
+3. Convert to framework tensors (for example, [PyTorch](https://docs.pytorch.org/docs/stable/index.html)) without copying.
+
+This keeps preprocessing fast and avoids Python-level loops in hot paths.
 
 ```{code-cell} ipython3
-from aigverse.utils import TruthTable
 import numpy as np
+import torch
 
-# Create a simple truth table, e.g., a 3-input majority function
+from aigverse.utils import TruthTable
+
+# Create a simple truth table (3-input majority function)
 tt = TruthTable(3)
 tt.create_from_hex_string("e8")
 
-# Export to a list
-tt_list = list(tt)
-print(f"As list: {tt_list}")
+# Vectorized label extraction (shape: [2**num_vars])
+y_np = np.fromiter(tt, dtype=np.uint8)
 
-# Export to NumPy arrays of different types
-tt_np_bool = np.array(tt)
-print(f"As NumPy bool array:  {tt_np_bool}")
-tt_np_int = np.array(tt, dtype=np.int32)
-print(f"As NumPy int array:   {tt_np_int}")
-tt_np_float = np.array(tt, dtype=np.float64)
-print(f"As NumPy float array: {tt_np_float}")
+# Vectorized feature matrix generation (shape: [2**num_vars, num_vars])
+n = tt.num_vars()
+indices = np.array(range(2**n), dtype=np.uint32)[:, None]
+bit_positions = np.array(range(n - 1, -1, -1), dtype=np.uint32)
+X_np = ((indices >> bit_positions) & 1).astype(np.uint8)
 
+# Zero-copy bridge NumPy -> PyTorch
+X_torch = torch.from_numpy(X_np)
+y_torch = torch.from_numpy(y_np)
 
-# These arrays can now be used as labels for an ML model.
-# For example, let's generate the corresponding feature matrix:
-def generate_inputs(num_vars):
-    inputs = []
-    for i in range(2**num_vars):
-        # Convert i to binary and pad with zeros
-        binary = bin(i)[2:].zfill(num_vars)
-        inputs.append([int(bit) for bit in binary])
-    return np.array(inputs)
-
-
-feature_matrix = generate_inputs(tt.num_vars())
-labels = tt_np_int  # Using the integer array as labels
-
-print("\nFeature matrix (X) and labels (y) for ML:")
-print("X:\n", feature_matrix)
-print("y:\n", labels)
+print("NumPy shapes:", X_np.shape, y_np.shape)
+print("Torch shapes:", X_torch.shape, y_torch.shape)
 ```
