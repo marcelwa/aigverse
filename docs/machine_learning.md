@@ -128,6 +128,86 @@ plt.margins(x=0.2)
 plt.show()
 ```
 
+### DLPack Sparse Tensors
+
+For high-throughput ML pipelines, `aigverse` can export graph tensors directly in a sparse COO-style layout where each
+tensor implements the [DLPack](https://dmlc.github.io/dlpack/latest/) protocol. This allows zero-copy hand-off to modern
+tensor frameworks, such
+as [PyTorch](https://docs.pytorch.org/docs/stable/dlpack.html),
+[JAX](https://docs.jax.dev/en/latest/_autosummary/jax.dlpack.from_dlpack.html#jax.dlpack.from_dlpack),
+[TensorFlow](https://www.tensorflow.org/api_docs/python/tf/experimental/dlpack/from_dlpack), etc., through `from_dlpack`.
+
+```{code-cell} ipython3
+import torch
+
+from aigverse.networks import Aig, EdgeTensorEncoding, NodeTensorEncoding
+
+aig = Aig()
+a = aig.create_pi()
+b = aig.create_pi()
+g = aig.create_and(a, b)
+aig.create_po(g)
+
+dlpack_data = aig.to_graph_tensors(
+  node_encoding=NodeTensorEncoding.INTEGER,
+  edge_encoding=EdgeTensorEncoding.BINARY,
+    include_level=True,
+    include_fanout=True,
+    include_truth_table=False,
+)
+
+edge_index = torch.from_dlpack(dlpack_data["edge_index"])
+edge_attr = torch.from_dlpack(dlpack_data["edge_attr"])
+node_attr = torch.from_dlpack(dlpack_data["node_attr"])
+
+print(edge_index.shape, edge_attr.shape, node_attr.shape)
+```
+
+You can immediately construct sparse tensors in Python:
+
+```{code-cell} ipython3
+num_nodes = node_attr.shape[0]
+
+sparse_adj = torch.sparse_coo_tensor(
+    indices=edge_index,
+    values=edge_attr,
+    size=(num_nodes, num_nodes, edge_attr.shape[1]),
+)
+
+print(sparse_adj.shape)
+```
+
+The same export also works with [NumPy's DLPack consumer API](https://numpy.org/doc/stable/release/1.22.0-notes.html#add-nep-47-compatible-dlpack-support):
+
+```{code-cell} ipython3
+import numpy as np
+
+edge_index_np = np.from_dlpack(aig.to_graph_tensors()["edge_index"])
+print(edge_index_np.shape)
+```
+
+Encoding and dtype mapping:
+
+- Edge encoding (`edge_attr`):
+  - `EdgeTensorEncoding.BINARY`: regular `0.0`, inverted `1.0`
+  - `EdgeTensorEncoding.SIGNED`: regular `+1.0`, inverted `-1.0`
+  - `EdgeTensorEncoding.ONE_HOT`: regular `[1.0, 0.0]`, inverted `[0.0, 1.0]`
+- Node encoding (`node_attr`):
+  - `NodeTensorEncoding.INTEGER`: `constant=0`, `pi=1`, `gate=2`, `po=3`
+  - `NodeTensorEncoding.ONE_HOT`: `[constant, pi, gate, po]`
+- Tensor dtypes:
+  - `edge_index`: `int64`
+  - `edge_attr`: `float32`
+  - `node_attr`: `float32`
+
+The exported tensor shapes are:
+
+- `edge_index`: `(2, E)`
+- `edge_attr`: `(E, D_edge)`
+- `node_attr`: `(N, D_node)`
+
+where `D_edge` is `1` for `BINARY` and `SIGNED`, and `2` for `ONE_HOT`.
+
 ## Truth Tables
 
 Truth tables can be easily converted to Python lists or [NumPy](https://numpy.org/) arrays, making them compatible with
