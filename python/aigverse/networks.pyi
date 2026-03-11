@@ -633,6 +633,16 @@ class SequentialAig(Aig):
     def to_index_list(self) -> NoReturn:
         """Sequential networks cannot be encoded as combinational index lists."""
 
+    def to_graph_tensors(
+        self,
+        node_encoding: NodeTensorEncoding = ...,
+        edge_encoding: EdgeTensorEncoding = ...,
+        include_level: bool = True,
+        include_fanout: bool = False,
+        include_truth_table: bool = False,
+    ) -> NoReturn:
+        """Sequential networks cannot be exported as combinational graph tensors."""
+
     def __getstate__(self) -> NoReturn:
         """Sequential networks are not pickleable via combinational index-list state."""
 

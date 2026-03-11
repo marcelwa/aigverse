@@ -144,6 +144,18 @@ def test_sequential_aig_to_index_list_raises() -> None:
         saig.to_index_list()
 
 
+def test_sequential_aig_to_graph_tensors_raises() -> None:
+    saig = SequentialAig()
+    pi = saig.create_pi()
+    ro = saig.create_ro()
+    gate = saig.create_and(pi, ro)
+    saig.create_po(gate)
+    saig.create_ri(gate)
+
+    with pytest.raises(TypeError, match="register state"):
+        saig.to_graph_tensors()
+
+
 def test_sequential_aig_clone_and_copy_preserve_wrapper_type() -> None:
     saig = SequentialAig()
     pi = saig.create_pi()

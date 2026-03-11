@@ -662,6 +662,21 @@ Preserves only combinational structure and does not capture augmented view metad
             R"pb(Sequential networks cannot be encoded as combinational index lists.)pb",
             nb::sig("def to_index_list(self) -> NoReturn"))
         .def(
+            "to_graph_tensors",
+            [network_name](const SequentialNtk&, const aigverse::node_tensor_encoding,
+                           const aigverse::edge_tensor_encoding, const bool, const bool, const bool) -> nb::dict
+            {
+                const auto message = fmt::format("Sequential{} does not support to_graph_tensors() because graph "
+                                                 "tensor export is combinational-only and would drop register "
+                                                 "state.",
+                                                 network_name);
+                throw nb::type_error(message.c_str());
+            },
+            nb::arg("node_encoding") = aigverse::node_tensor_encoding::INTEGER,
+            nb::arg("edge_encoding") = aigverse::edge_tensor_encoding::BINARY, nb::arg("include_level") = true,
+            nb::arg("include_fanout") = false, nb::arg("include_truth_table") = false,
+            R"pb(Sequential networks cannot be exported as combinational graph tensors.)pb")
+        .def(
             "__getstate__",
             [network_name](const SequentialNtk&) -> nb::tuple
             {
