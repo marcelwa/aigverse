@@ -41,7 +41,7 @@ requires-python = ">=3.10"
 dynamic = ["version"]
 
 [project.optional-dependencies]
-adapters = ["networkx>=3.0.0", "numpy>=1.23.0"]
+adapters = ["networkx>=3.0.0", "numpy>=1.23.0", "torch>=2.2.0"]
 
 [project.urls]
 Source = "https://github.com/marcelwa/aigverse"
@@ -207,6 +207,7 @@ build = [
 adapters = [
     "networkx>=3.0.0",
     "numpy>=1.23.0",
+    "torch>=2.2.0",
 ]
 docs = [
     { include-group = "adapters" },
