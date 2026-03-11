@@ -1,11 +1,12 @@
 #pragma once
 
+#include "aigverse/types.hpp"
+
 #include "edge_list.hpp"
 
 #include <kitty/bit_operations.hpp>
-#include <kitty/dynamic_truth_table.hpp>
-#include <mockturtle/algorithms/simulation.hpp>
-#include <mockturtle/utils/node_map.hpp>
+#include <mockturtle/algorithms/simulation.hpp>  // NOLINT(misc-include-cleaner)
+#include <mockturtle/utils/node_map.hpp>         // NOLINT(misc-include-cleaner)
 #include <mockturtle/views/depth_view.hpp>
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
@@ -84,7 +85,11 @@ nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::vector<T>&&       
     auto* raw_storage = storage.get();
     // nanobind::capsule stores a raw pointer plus a C-style destructor callback.
     // The callback is the final owner and performs the matching delete.
-    nb::capsule owner(raw_storage, [](void* ptr) noexcept { delete static_cast<std::vector<T>*>(ptr); });
+    nb::capsule owner(raw_storage,
+                      [](void* ptr) noexcept
+                      {
+                          delete static_cast<std::vector<T>*>(ptr);  // NOLINT(cppcoreguidelines-owning-memory)
+                      });
     storage.release();
 
     return nb::ndarray<nb::numpy, T>(raw_storage->data(), shape, owner);
@@ -153,8 +158,8 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
             }
             case edge_tensor_encoding::ONE_HOT:
             {
-                edge_attr[i * 2]     = inverted ? 0.0f : 1.0f;
-                edge_attr[i * 2 + 1] = inverted ? 1.0f : 0.0f;
+                edge_attr[i * 2]       = inverted ? 0.0f : 1.0f;
+                edge_attr[(i * 2) + 1] = inverted ? 1.0f : 0.0f;
                 break;
             }
         }
