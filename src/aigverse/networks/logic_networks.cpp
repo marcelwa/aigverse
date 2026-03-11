@@ -2,11 +2,10 @@
 // Created by marcel on 03.09.25.
 //
 
+#include "aigverse/networks/edge_list.hpp"
+#include "aigverse/networks/graph_tensors.hpp"
+#include "aigverse/networks/index_list.hpp"
 #include "aigverse/types.hpp"
-
-#include "edge_list.hpp"
-#include "graph_tensors.hpp"
-#include "index_list.hpp"
 
 #include <fmt/format.h>
 #include <mockturtle/networks/sequential.hpp>

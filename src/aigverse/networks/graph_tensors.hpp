@@ -1,8 +1,7 @@
 #pragma once
 
+#include "aigverse/networks/edge_list.hpp"
 #include "aigverse/types.hpp"
-
-#include "edge_list.hpp"
 
 #include <kitty/bit_operations.hpp>
 #include <mockturtle/algorithms/simulation.hpp>  // NOLINT(misc-include-cleaner)

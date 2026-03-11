@@ -2,7 +2,7 @@
 // Created by marcel on 04.09.25.
 //
 
-#include "edge_list.hpp"
+#include "aigverse/networks/edge_list.hpp"
 
 #include "aigverse/types.hpp"
 

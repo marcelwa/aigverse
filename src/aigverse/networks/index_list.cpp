@@ -2,7 +2,7 @@
 // Created by marcel on 04.09.25.
 //
 
-#include "index_list.hpp"
+#include "aigverse/networks/index_list.hpp"
 
 #include "aigverse/types.hpp"
 
