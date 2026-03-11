@@ -121,16 +121,21 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 {
     namespace nb = nanobind;
 
+    // Number of node-type categories used for one-hot encodings:
+    // [constant, primary input, internal gate, primary output].
     constexpr size_t node_type_one_hot_dim = 4;
 
+    // Canonical integer labels for node types; shared across all node encodings.
     constexpr int64_t type_constant = 0;
     constexpr int64_t type_pi       = 1;
     constexpr int64_t type_gate     = 2;
     constexpr int64_t type_po       = 3;
 
+    // Flatten the network into an edge list to derive COO edge indices.
     const auto edges      = aigverse::to_edge_list(ntk).edges;
     const auto edge_count = edges.size();
 
+    // Preallocate the 2×E edge_index tensor in column-major (source/target) form.
     std::vector<int64_t> edge_index(2 * edge_count, 0);
     for (size_t i = 0; i < edge_count; ++i)
     {
