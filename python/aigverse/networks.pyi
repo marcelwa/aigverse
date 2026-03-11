@@ -4,8 +4,31 @@ This module includes network types, edge and index list utilities, and helper
 objects for structural manipulation.
 """
 
+import enum
 from collections.abc import Iterator, Sequence
 from typing import NoReturn, overload
+
+class GraphTensorEncoding(enum.Enum):
+    """Encoding mode for exported graph tensors.
+
+    This enum controls how categorical edge and node type features are represented
+    in the exported tensors. The types will be `float32` for all modes, but the encoding scheme differs:
+    - `ZERO_ONE`: Categorical features are represented as binary indicators (0.0 or 1.0).
+    - `ONE_MINUS_ONE`: Categorical features are represented as +1.0 for regular and -1.0 for inverted (edge-only).
+    - `ONE_HOT`: Categorical features are represented as one-hot encoded vectors, where the dimension corresponds
+                 to the number of categories (e.g., node types or edge types).
+    """
+
+    ZERO_ONE = 0
+    """Labels are encoded as 0.0 (regular) and 1.0 (inverted)."""
+
+    ONE_MINUS_ONE = 1
+    """Labels are encoded as +1.0 (regular) and -1.0 (inverted)."""
+
+    ONE_HOT = 2
+    """
+    Labels are encoded as one-hot vectors, where the dimension corresponds to the number of categories.
+    """
 
 class AigSignal:
     """Represents a signal in an AIG.
@@ -269,6 +292,43 @@ class Aig:
 
         Returns:
             The corresponding index-list representation.
+        """
+
+    def to_graph_tensors(
+        self,
+        node_encoding: GraphTensorEncoding = ...,
+        edge_encoding: GraphTensorEncoding = ...,
+        include_level: bool = True,
+        include_fanout: bool = False,
+        include_truth_table: bool = False,
+    ) -> dict:
+        """Exports graph tensors for machine-learning workflows.
+
+        Returns sparse graph topology and features as DLPack-compatible arrays.
+
+        Edge encoding mapping:
+            - ``ZERO_ONE``: regular=0.0, inverted=1.0
+            - ``ONE_MINUS_ONE``: regular=+1.0, inverted=-1.0
+            - ``ONE_HOT``: regular=[1.0, 0.0], inverted=[0.0, 1.0]
+
+        Node encoding mapping:
+            - ``ZERO_ONE``: constant=0, pi=1, gate=2, po=3
+            - ``ONE_HOT``: [constant, pi, gate, po]
+
+        Note:
+            ``ONE_MINUS_ONE`` is edge-only and cannot be used for ``node_encoding``.
+
+        Args:
+            node_encoding: Node encoding mode as :class:`~aigverse.networks.GraphTensorEncoding`.
+            edge_encoding: Edge encoding mode as :class:`~aigverse.networks.GraphTensorEncoding`.
+            include_level: Appends logic level as a node feature.
+            include_fanout: Appends fanout size as a node feature.
+            include_truth_table: Appends simulated node/output truth-table bits.
+
+        Returns:
+            A dictionary with ``edge_index`` (shape ``(2, E)``, dtype ``int64``),
+            ``edge_attr`` (shape ``(E, D_edge)``, dtype ``float32``), and ``node_attr``
+            (shape ``(N, D_node)``, dtype ``float32``).
         """
 
     def __len__(self) -> int:
