@@ -14,8 +14,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
+#include <limits>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -176,6 +178,11 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     std::vector<aigverse::truth_table>                              output_tts{};
     if (include_truth_table)
     {
+        if (ntk.num_pis() > 16)
+        {
+            throw std::invalid_argument("truth-table export is only supported up to 16 primary inputs");
+        }
+
         node_tts = mockturtle::simulate_nodes<aigverse::truth_table>(
             ntk, mockturtle::default_simulator<aigverse::truth_table>{static_cast<unsigned>(ntk.num_pis())});
         output_tts = mockturtle::simulate<aigverse::truth_table>(
@@ -199,7 +206,6 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     {
         depth_ntk.emplace(ntk);
     }
-    const auto po_level = include_level ? static_cast<float>(depth_ntk->depth() + 1) : 0.0f;
 
     const auto fill_base = [&](const size_t row, const int64_t type_index) -> size_t
     {
@@ -258,7 +264,7 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 
             if (include_level)
             {
-                node_attr[feature_offset++] = po_level;
+                node_attr[feature_offset++] = static_cast<float>(depth_ntk->level(ntk.get_node(po)) + 1);
             }
             if (include_fanout)
             {

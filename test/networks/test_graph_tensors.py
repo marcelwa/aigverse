@@ -238,3 +238,38 @@ def test_to_graph_tensors_empty_aig_edge_case() -> None:
     assert edge_index.dtype == np.int64
     assert edge_attr.dtype == np.float32
     assert node_attr.dtype == np.float32
+
+
+def test_to_graph_tensors_truth_table_pi_limit_raises() -> None:
+    """Checks include_truth_table fails fast for too many primary inputs."""
+    aig = Aig()
+    pis = [aig.create_pi() for _ in range(17)]
+    aig.create_po(pis[0])
+
+    with pytest.raises(ValueError, match="only supported up to 16 primary inputs"):
+        aig.to_graph_tensors(include_truth_table=True)
+
+
+def test_to_graph_tensors_po_levels_follow_driver_depth() -> None:
+    """Checks each PO level is derived from its driving node depth."""
+    aig = Aig()
+    a = aig.create_pi()
+    b = aig.create_pi()
+    gate = aig.create_and(a, b)
+    aig.create_po(a)
+    aig.create_po(gate)
+
+    tensors = aig.to_graph_tensors(
+        node_encoding=NodeTensorEncoding.INTEGER,
+        edge_encoding=EdgeTensorEncoding.BINARY,
+        include_level=True,
+        include_fanout=False,
+        include_truth_table=False,
+    )
+
+    node_attr = np.from_dlpack(tensors["node_attr"])
+    po_rows = node_attr[aig.size :, :]
+
+    assert po_rows.shape[0] == 2
+    assert po_rows[0, 1] == pytest.approx(1.0)
+    assert po_rows[1, 1] == pytest.approx(2.0)
