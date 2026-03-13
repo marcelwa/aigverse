@@ -5,10 +5,12 @@ from typing import TYPE_CHECKING
 import pytest
 
 from aigverse.algorithms import balancing
-from aigverse.networks import Aig, DepthAig
+from aigverse.networks import DepthAig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from aigverse.networks import Aig
 
 
 def _depth(aig: Aig) -> int:
@@ -107,21 +109,9 @@ def test_balancing_reduces_depth_of_long_chain(make_and_chain_aig: Callable[[int
     assert aig_params_test.num_gates == num_gates_before_clone
 
 
-def test_balancing_complex_unbalanced_to_balanced_tree() -> None:
+def test_balancing_complex_unbalanced_to_balanced_tree(complex_unbalanced_balancing_aig: Aig) -> None:
     """Test balancing transforms a complex unbalanced AIG into a balanced tree, reducing depth."""
-    aig = Aig()
-    pis = [aig.create_pi() for _ in range(8)]
-    x0, x1, x2, x3, x4, x5, x6, x7 = pis
-
-    # AIG definition: (x0 & x1) & (x2 & (x3 & (x4 & (x5 & (x6 & x7)))))
-    n_chain_0 = aig.create_and(x6, x7)
-    n_chain_1 = aig.create_and(x5, n_chain_0)
-    n_chain_2 = aig.create_and(x4, n_chain_1)
-    n_chain_3 = aig.create_and(x3, n_chain_2)
-    n_chain_4 = aig.create_and(x2, n_chain_3)
-    n_branch_0 = aig.create_and(x0, x1)
-    output_node = aig.create_and(n_branch_0, n_chain_4)
-    aig.create_po(output_node)
+    aig = complex_unbalanced_balancing_aig
 
     num_pis_before = aig.num_pis
     num_pos_before = aig.num_pos
@@ -222,28 +212,18 @@ def test_esop_balancing_preserves_functionality_on_xor_and_chain(mixed_xor_and_b
     assert depth_after == depth_before  # ESOP balancing may not reduce depth for all AIGs
 
 
-def test_balancing_invalid_rebalance_function_raises() -> None:
+def test_balancing_invalid_rebalance_function_raises(and_gate_aig: Aig) -> None:
     """
     Test that an invalid rebalance_function raises an exception.
     """
-    aig = Aig()
-    x0 = aig.create_pi()
-    x1 = aig.create_pi()
-    a0 = aig.create_and(x0, x1)
-    aig.create_po(a0)
+    aig = and_gate_aig
     with pytest.raises(Exception, match="Unknown rebalance function"):
         balancing(aig, rebalance_function="not_a_valid_option")  # type: ignore [arg-type]
 
 
-def test_esop_balancing_with_sop_both_phases_param() -> None:
+def test_esop_balancing_with_sop_both_phases_param(make_xor_chain_aig: Callable[[int], Aig]) -> None:
     """Test esop balancing with sop_both_phases param does not error and preserves depth."""
-    aig = Aig()
-    x0 = aig.create_pi()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    n0 = aig.create_xor(x0, x1)
-    n1 = aig.create_xor(n0, x2)
-    aig.create_po(n1)
+    aig = make_xor_chain_aig(3)
     depth_before = _depth(aig)
     aig = balancing(aig, rebalance_function="esop", sop_both_phases=False)
     assert _depth(aig) <= depth_before

@@ -82,11 +82,8 @@ def test_aig_edge_list() -> None:
     assert (repr(edge_list)) == "EdgeList([])"
 
 
-def test_minimal_aig_to_edge_list() -> None:
-    aig = Aig()
-
-    aig.create_pi()  # 1
-    aig.create_pi()  # 2
+def test_minimal_aig_to_edge_list(two_pi_no_po_aig: Aig) -> None:
+    aig = two_pi_no_po_aig
 
     edge_list = aig.to_edge_list()
 
@@ -94,13 +91,8 @@ def test_minimal_aig_to_edge_list() -> None:
     assert len(edge_list) == 0  # No edges since there are no AND gates or POs
 
 
-def test_no_and_aig_to_edge_list() -> None:
-    aig = Aig()
-
-    x1 = aig.create_pi()  # 1
-    x2 = aig.create_pi()  # 2
-    aig.create_po(x1)  # 3
-    aig.create_po(~x2)  # 4
+def test_no_and_aig_to_edge_list(two_pi_direct_po_aig: Aig) -> None:
+    aig = two_pi_direct_po_aig
 
     edge_list = aig.to_edge_list()
 
@@ -110,14 +102,8 @@ def test_no_and_aig_to_edge_list() -> None:
     assert AigEdge(2, 4, 1) in edge_list  # ~x2 to PO
 
 
-def test_constant_aig_to_edge_list() -> None:
-    # AIG with all inverted inputs
-    aig = Aig()
-
-    x0 = aig.create_pi()  # 1
-    x1 = aig.create_pi()  # 2
-    n0 = aig.create_and(~x0, ~x1)  # 3
-    aig.create_po(n0)  # 4
+def test_constant_aig_to_edge_list(two_pi_inverted_and_po_aig: Aig) -> None:
+    aig = two_pi_inverted_and_po_aig
 
     # custom weights
     edge_list = aig.to_edge_list(regular_weight=5, inverted_weight=-5)
@@ -129,18 +115,8 @@ def test_constant_aig_to_edge_list() -> None:
     assert AigEdge(3, 4, 5) in edge_list  # AND gate to PO
 
 
-def test_simple_aig_to_edge_list() -> None:
-    aig = Aig()
-
-    x1 = aig.create_pi()  # 1
-    x2 = aig.create_pi()  # 2
-    x3 = aig.create_pi()  # 3
-
-    y1 = aig.create_and(x1, ~x2)  # 4
-    y2 = aig.create_and(x2, x3)  # 5
-    y3 = aig.create_and(~y1, y2)  # 6
-
-    aig.create_po(y3)  # 7
+def test_simple_aig_to_edge_list(three_pi_three_and_po_aig: Aig) -> None:
+    aig = three_pi_three_and_po_aig
 
     # default weights
     edge_list = aig.to_edge_list()
@@ -158,14 +134,8 @@ def test_simple_aig_to_edge_list() -> None:
     assert AigEdge(6, 7, 0) in edge_list
 
 
-def test_constant_node_aig_to_edge_list() -> None:
-    aig = Aig()
-
-    x0 = aig.create_pi()  # 1
-    x1 = aig.create_pi()  # 2
-    n0 = aig.create_and(x0, x1)  # 3
-    aig.create_po(x0)  # 4
-    aig.create_po(n0)  # 5
+def test_constant_node_aig_to_edge_list(two_pi_and_two_po_aig: Aig) -> None:
+    aig = two_pi_and_two_po_aig
 
     # custom weights
     edge_list = aig.to_edge_list(regular_weight=7, inverted_weight=-7)
@@ -178,23 +148,8 @@ def test_constant_node_aig_to_edge_list() -> None:
     assert AigEdge(3, 5, 7) in edge_list  # AND gate to PO
 
 
-def test_medium_aig_to_edge_list() -> None:
-    aig = Aig()
-
-    x0 = aig.create_pi()  # 1
-    x1 = aig.create_pi()  # 2
-    x2 = aig.create_pi()  # 3
-    x3 = aig.create_pi()  # 4
-    n0 = aig.create_and(~x2, x3)  # 5
-    n1 = aig.create_and(~x2, n0)  # 6
-    n2 = aig.create_and(x3, ~n1)  # 7
-    n3 = aig.create_and(x0, ~x1)  # 8
-    n4 = aig.create_and(~n2, n3)  # 9
-    n5 = aig.create_and(x1, ~n2)  # 10
-    n6 = aig.create_and(~n4, ~n5)  # 11
-    n7 = aig.create_and(n1, n3)  # 12
-    aig.create_po(n6)  # 13
-    aig.create_po(n7)  # 14
+def test_medium_aig_to_edge_list(medium_structured_aig: Aig) -> None:
+    aig = medium_structured_aig
 
     # custom weights
     edge_list = aig.to_edge_list(regular_weight=10, inverted_weight=-10)

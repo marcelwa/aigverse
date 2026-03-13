@@ -203,3 +203,23 @@ def mixed_xor_and_balancing_aig() -> Aig:
     n5 = aig.create_xor(n3, n4)
     aig.create_po(aig.create_xor(n2, n5))
     return aig
+
+
+@pytest.fixture
+def complex_unbalanced_balancing_aig() -> Aig:
+    """Create a 7-gate unbalanced 8-input AND network.
+
+    Returns:
+        An AIG shaped as (x0 & x1) & (x2 & (x3 & (x4 & (x5 & (x6 & x7))))).
+    """
+    aig = Aig()
+    x0, x1, x2, x3, x4, x5, x6, x7 = [aig.create_pi() for _ in range(8)]
+
+    n_chain_0 = aig.create_and(x6, x7)
+    n_chain_1 = aig.create_and(x5, n_chain_0)
+    n_chain_2 = aig.create_and(x4, n_chain_1)
+    n_chain_3 = aig.create_and(x3, n_chain_2)
+    n_chain_4 = aig.create_and(x2, n_chain_3)
+    n_branch_0 = aig.create_and(x0, x1)
+    aig.create_po(aig.create_and(n_branch_0, n_chain_4))
+    return aig
