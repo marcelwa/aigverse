@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from aigverse.networks import Aig, DepthAig, NamedAig
+from aigverse.networks import Aig, DepthAig, FanoutAig, NamedAig, SequentialAig
 
 if TYPE_CHECKING:
     from aigverse.networks import AigSignal
@@ -68,3 +68,58 @@ def depth_aig_single_and() -> tuple[DepthAig, AigSignal]:
     gate = aig.create_and(x0, x1)
     aig.create_po(gate)
     return aig, gate
+
+
+@pytest.fixture
+def fanout_aig_branching() -> tuple[FanoutAig, AigSignal, AigSignal, AigSignal]:
+    """Create a FanoutAig with a branching gate fanout pattern.
+
+    Returns:
+        A tuple containing the network and three internal gate signals.
+    """
+    aig = FanoutAig()
+    x1 = aig.create_pi()
+    x2 = aig.create_pi()
+    x3 = aig.create_pi()
+
+    n4 = aig.create_and(x1, x2)
+    n5 = aig.create_and(n4, x3)
+    n6 = aig.create_and(n4, n5)
+    aig.create_po(n6)
+
+    return aig, n4, n5, n6
+
+
+@pytest.fixture
+def fanout_aig_linear() -> tuple[FanoutAig, AigSignal, AigSignal]:
+    """Create a FanoutAig where the first gate has a single fanout.
+
+    Returns:
+        A tuple containing the network and two gate signals.
+    """
+    aig = FanoutAig()
+    x0 = aig.create_pi()
+    x1 = aig.create_pi()
+    x2 = aig.create_pi()
+
+    gate0 = aig.create_and(x0, x1)
+    gate1 = aig.create_and(gate0, x2)
+    aig.create_po(gate1)
+
+    return aig, gate0, gate1
+
+
+@pytest.fixture
+def sequential_aig_single_register() -> tuple[SequentialAig, AigSignal, AigSignal, AigSignal]:
+    """Create a SequentialAig with one PI, one RO, one gate, one PO, and one RI.
+
+    Returns:
+        A tuple containing the network, PI signal, RO signal, and gate signal.
+    """
+    saig = SequentialAig()
+    pi = saig.create_pi()
+    ro = saig.create_ro()
+    gate = saig.create_and(pi, ro)
+    saig.create_po(gate)
+    saig.create_ri(gate)
+    return saig, pi, ro, gate

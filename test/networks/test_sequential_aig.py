@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import copy
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
 from aigverse.networks import SequentialAig
+
+if TYPE_CHECKING:
+    from aigverse.networks import AigSignal
 
 
 def test_sequential_aig_initialization() -> None:
@@ -121,36 +124,27 @@ def test_sequential_aig_combinational_check() -> None:
     assert saig2.is_combinational
 
 
-def test_sequential_aig_repr() -> None:
-    saig = SequentialAig()
-    pi = saig.create_pi()
-    ro = saig.create_ro()
-    gate = saig.create_and(pi, ro)
-    saig.create_po(gate)
-    saig.create_ri(gate)
+def test_sequential_aig_repr(
+    sequential_aig_single_register: tuple[SequentialAig, AigSignal, AigSignal, AigSignal],
+) -> None:
+    saig, _, _, _ = sequential_aig_single_register
 
     assert repr(saig) == "SequentialAig(pis=1, pos=1, gates=1, registers=1)"
 
 
-def test_sequential_aig_to_index_list_raises() -> None:
-    saig = SequentialAig()
-    pi = saig.create_pi()
-    ro = saig.create_ro()
-    gate = saig.create_and(pi, ro)
-    saig.create_po(gate)
-    saig.create_ri(gate)
+def test_sequential_aig_to_index_list_raises(
+    sequential_aig_single_register: tuple[SequentialAig, AigSignal, AigSignal, AigSignal],
+) -> None:
+    saig, _, _, _ = sequential_aig_single_register
 
     with pytest.raises(TypeError, match="register state"):
         saig.to_index_list()
 
 
-def test_sequential_aig_clone_and_copy_preserve_wrapper_type() -> None:
-    saig = SequentialAig()
-    pi = saig.create_pi()
-    ro = saig.create_ro()
-    gate = saig.create_and(pi, ro)
-    saig.create_po(gate)
-    saig.create_ri(gate)
+def test_sequential_aig_clone_and_copy_preserve_wrapper_type(
+    sequential_aig_single_register: tuple[SequentialAig, AigSignal, AigSignal, AigSignal],
+) -> None:
+    saig, _, _, _ = sequential_aig_single_register
 
     cloned = saig.clone()
     shallow = copy.copy(saig)
@@ -163,15 +157,12 @@ def test_sequential_aig_clone_and_copy_preserve_wrapper_type() -> None:
         assert candidate.num_pis == 1
 
 
-def test_sequential_aig_pickle_raises() -> None:
+def test_sequential_aig_pickle_raises(
+    sequential_aig_single_register: tuple[SequentialAig, AigSignal, AigSignal, AigSignal],
+) -> None:
     import pickle
 
-    saig = SequentialAig()
-    pi = saig.create_pi()
-    ro = saig.create_ro()
-    gate = saig.create_and(pi, ro)
-    saig.create_po(gate)
-    saig.create_ri(gate)
+    saig, _, _, _ = sequential_aig_single_register
 
     with pytest.raises(ValueError, match="combinational-only"):
         pickle.dumps(saig)
@@ -282,15 +273,11 @@ def test_sequential_aig_index_methods():
     assert saig.ri_index(f2) == 1  # Second RI
 
 
-def test_sequential_aig_ro_ri_conversion():
+def test_sequential_aig_ro_ri_conversion(
+    sequential_aig_single_register: tuple[SequentialAig, AigSignal, AigSignal, AigSignal],
+) -> None:
     """Test conversion between register outputs and register inputs."""
-    saig = SequentialAig()
-
-    # Create a simple circuit with a register
-    pi = saig.create_pi()
-    ro = saig.create_ro()
-    f = saig.create_and(pi, ro)
-    saig.create_ri(f)
+    saig, _, ro, f = sequential_aig_single_register
 
     # Test ro_to_ri
     ri_signal = saig.ro_to_ri(ro)
