@@ -69,3 +69,61 @@ def aig_and_negated_copy_pair() -> tuple[Aig, Aig]:
     aig2.create_po(~and3)
 
     return aig1, aig2
+
+
+@pytest.fixture
+def and_gate_aig() -> Aig:
+    """Create a 2-input AIG with a single AND output.
+
+    Returns:
+        A simple AIG network for AND simulation tests.
+    """
+    aig = Aig()
+    a = aig.create_pi()
+    b = aig.create_pi()
+    aig.create_po(aig.create_and(a, b))
+    return aig
+
+
+@pytest.fixture
+def or_gate_aig() -> Aig:
+    """Create a 2-input AIG with a single OR output.
+
+    Returns:
+        A simple AIG network for OR simulation tests.
+    """
+    aig = Aig()
+    a = aig.create_pi()
+    b = aig.create_pi()
+    aig.create_po(aig.create_or(a, b))
+    return aig
+
+
+@pytest.fixture
+def maj3_aig() -> Aig:
+    """Create a 3-input AIG with a majority output.
+
+    Returns:
+        A simple AIG network for MAJ simulation tests.
+    """
+    aig = Aig()
+    a = aig.create_pi()
+    b = aig.create_pi()
+    c = aig.create_pi()
+    aig.create_po(aig.create_maj(a, b, c))
+    return aig
+
+
+@pytest.fixture
+def and_or_two_output_aig() -> Aig:
+    """Create a 2-input AIG with AND and OR outputs.
+
+    Returns:
+        A simple AIG network for multi-output simulation tests.
+    """
+    aig = Aig()
+    a = aig.create_pi()
+    b = aig.create_pi()
+    aig.create_po(aig.create_and(a, b))
+    aig.create_po(aig.create_or(a, b))
+    return aig
