@@ -174,8 +174,8 @@ def test_aig_unary_operations() -> None:
     assert f2 == ~x1
 
 
-def test_aig_binary_operations() -> None:
-    aig = Aig()
+def test_aig_binary_operations(aig_with_two_pis: tuple[Aig, AigSignal, AigSignal]) -> None:
+    aig, x1, x2 = aig_with_two_pis
 
     # Ensure the binary operation functions exist in AIG
     assert hasattr(aig, "create_and")
@@ -184,10 +184,6 @@ def test_aig_binary_operations() -> None:
     assert hasattr(aig, "create_nor")
     assert hasattr(aig, "create_xor")
     assert hasattr(aig, "create_xnor")
-
-    # Create two primary inputs
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
 
     # Check the initial size after creating the inputs
     assert aig.size == 3
@@ -220,12 +216,8 @@ def test_aig_binary_operations() -> None:
     assert f5 == ~f6
 
 
-def test_aig_hash_nodes() -> None:
-    aig = Aig()
-
-    # Create two primary inputs
-    a = aig.create_pi()
-    b = aig.create_pi()
+def test_aig_hash_nodes(aig_with_two_pis: tuple[Aig, AigSignal, AigSignal]) -> None:
+    aig, a, b = aig_with_two_pis
 
     # Create two identical AND gates
     f = aig.create_and(a, b)
@@ -346,38 +338,27 @@ def test_aig_structural_properties() -> None:
     assert aig.fanout_size(aig.get_node(f2)) == 1
 
 
-def test_aig_len() -> None:
-    aig = Aig()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    aig.create_and(x1, x2)
+def test_aig_len(aig_with_single_and: tuple[Aig, AigSignal]) -> None:
+    aig, _ = aig_with_single_and
 
     assert len(aig) == aig.size
 
 
-def test_aig_repr() -> None:
-    aig = Aig()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    aig.create_po(aig.create_and(x1, x2))
+def test_aig_repr(simple_and_aig: Aig) -> None:
+    aig = simple_and_aig
 
     assert repr(aig) == "Aig(pis=2, pos=1, gates=1, size=4)"
 
 
-def test_aig_iter() -> None:
-    aig = Aig()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    aig.create_and(x1, x2)
+def test_aig_iter(aig_with_single_and: tuple[Aig, AigSignal]) -> None:
+    aig, _ = aig_with_single_and
 
     assert list(aig) == aig.nodes()
 
 
-def test_aig_contains() -> None:
-    aig = Aig()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    and_node = aig.get_node(aig.create_and(x1, x2))
+def test_aig_contains(aig_with_single_and: tuple[Aig, AigSignal]) -> None:
+    aig, and_signal = aig_with_single_and
+    and_node = aig.get_node(and_signal)
 
     assert 0 in aig
     assert and_node in aig
@@ -395,11 +376,8 @@ def test_aig_bool() -> None:
     assert aig
 
 
-def test_aig_copy_deepcopy() -> None:
-    aig = Aig()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    aig.create_po(aig.create_and(x1, x2))
+def test_aig_copy_deepcopy(simple_and_aig: Aig) -> None:
+    aig = simple_and_aig
 
     shallow_clone = copy.copy(aig)
     deep_clone = copy.deepcopy(aig)
