@@ -27,22 +27,8 @@ def test_simple_aigs(equivalent_two_output_aigs: tuple[Aig, Aig]) -> None:
     assert equivalence_checking(aig1, aig1.clone())
 
 
-def test_aig_and_its_negated_copy() -> None:
-    aig1 = Aig()
-
-    a1 = aig1.create_pi()
-    b1 = aig1.create_pi()
-    c1 = aig1.create_pi()
-
-    and1 = aig1.create_and(a1, b1)
-    and2 = aig1.create_and(~a1, c1)
-    and3 = aig1.create_and(and1, and2)
-
-    aig2 = aig1.clone()
-
-    aig1.create_po(and3)
-
-    aig2.create_po(~and3)
+def test_aig_and_its_negated_copy(aig_and_negated_copy_pair: tuple[Aig, Aig]) -> None:
+    aig1, aig2 = aig_and_negated_copy_pair
 
     sop_refactoring(aig1, inplace=True)
     aig1 = cleanup_dangling(aig1)
@@ -102,16 +88,8 @@ def test_negative_divisor_substitution(implicant_reduction_aig: Aig) -> None:
     assert equivalence_checking(aig, aig_before)
 
 
-def test_parameters() -> None:
-    aig = Aig()
-
-    a = aig.create_pi()
-    b = aig.create_pi()
-
-    and1 = aig.create_and(~a, ~b)
-    and2 = aig.create_and(a, ~and1)
-
-    aig.create_po(and2)
+def test_parameters(implicant_reduction_aig: Aig) -> None:
+    aig = implicant_reduction_aig
 
     aig2 = aig.clone()
 
@@ -151,13 +129,8 @@ def test_sop_factoring_parameters(implicant_reduction_aig: Aig) -> None:
     assert equivalence_checking(aig, aig_before)
 
 
-def test_return_new_does_not_mutate_input() -> None:
-    aig = Aig()
-    a = aig.create_pi()
-    b = aig.create_pi()
-    and1 = aig.create_and(~a, ~b)
-    and2 = aig.create_and(a, ~and1)
-    aig.create_po(and2)
+def test_return_new_does_not_mutate_input(implicant_reduction_aig: Aig) -> None:
+    aig = implicant_reduction_aig
 
     aig_before = aig.clone()
     result = sop_refactoring(aig)

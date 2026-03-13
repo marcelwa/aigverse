@@ -24,6 +24,31 @@ def aig_with_two_pis() -> tuple[Aig, AigSignal, AigSignal]:
 
 
 @pytest.fixture
+def standalone_aig_with_two_pis() -> tuple[Aig, AigSignal, AigSignal]:
+    """Create an independent AIG with two primary inputs.
+
+    Returns:
+        A tuple containing a standalone AIG and two PI signals.
+    """
+    aig = Aig()
+    x1 = aig.create_pi()
+    x2 = aig.create_pi()
+    return aig, x1, x2
+
+
+@pytest.fixture
+def aig_with_single_pi() -> tuple[Aig, AigSignal]:
+    """Create an AIG with one primary input.
+
+    Returns:
+        A tuple containing the AIG and its PI signal.
+    """
+    aig = Aig()
+    x1 = aig.create_pi()
+    return aig, x1
+
+
+@pytest.fixture
 def aig_with_single_and(aig_with_two_pis: tuple[Aig, AigSignal, AigSignal]) -> tuple[Aig, AigSignal]:
     """Create an AIG with two PIs and one AND gate.
 
@@ -233,3 +258,39 @@ def sequential_two_registers_full() -> tuple[
     saig.create_ri(f2)
 
     return saig, pi1, pi2, ro1, ro2, f1, f2
+
+
+@pytest.fixture
+def complex_mixed_logic_aig() -> Aig:
+    """Create a complex mixed-logic AIG with multiple outputs.
+
+    Returns:
+        A 4-PI AIG combining AND/MAJ/XOR and inverted signals, with 6 POs.
+    """
+    aig = Aig()
+
+    a = aig.create_pi()
+    b = aig.create_pi()
+    c = aig.create_pi()
+    d = aig.create_pi()
+
+    f1 = aig.create_and(a, b)
+    f2 = aig.create_and(c, d)
+    f3 = aig.create_and(f1, f2)
+
+    f4 = aig.create_maj(a, b, c)
+
+    f5 = aig.create_xor(f3, f4)
+
+    f6 = aig.create_and(~a, ~b)
+    f7 = aig.create_maj(~c, d, ~f6)
+    f8 = aig.create_xor(f5, ~f7)
+
+    aig.create_po(f3)
+    aig.create_po(f4)
+    aig.create_po(f5)
+    aig.create_po(f6)
+    aig.create_po(f7)
+    aig.create_po(f8)
+
+    return aig
