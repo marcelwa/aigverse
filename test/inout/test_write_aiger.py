@@ -1,30 +1,20 @@
 from __future__ import annotations
 
-import tempfile
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from aigverse.io import read_aiger_into_aig, write_aiger
-from aigverse.networks import Aig
 
-# Get the temporary directory as a Path object
-temp_dir = Path(tempfile.gettempdir())
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from aigverse.networks import Aig
 
 
-def test_write_aiger() -> None:
-    aig = Aig()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    x3 = aig.create_pi()
+def test_write_aiger(three_input_and_chain_aig: Aig, tmp_path: Path) -> None:
+    aig_path = tmp_path / "test.aig"
+    write_aiger(three_input_and_chain_aig, str(aig_path))
 
-    a1 = aig.create_and(x1, x2)
-    a2 = aig.create_and(x1, x3)
-    a3 = aig.create_and(a1, a2)
-
-    aig.create_po(a3)
-
-    write_aiger(aig, str(temp_dir / "test.aig"))
-
-    aig2 = read_aiger_into_aig(str(temp_dir / "test.aig"))
+    aig2 = read_aiger_into_aig(str(aig_path))
 
     assert aig2.size == 7
     assert aig2.nodes() == list(range(7))
