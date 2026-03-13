@@ -44,3 +44,28 @@ def implicant_reduction_aig() -> Aig:
     n1 = aig.create_and(x0, ~n0)
     aig.create_po(n1)
     return aig
+
+
+@pytest.fixture
+def aig_and_negated_copy_pair() -> tuple[Aig, Aig]:
+    """Create an AIG and a clone with inverted primary output.
+
+    Returns:
+        A tuple containing the original-output and negated-output networks.
+    """
+    aig1 = Aig()
+
+    a1 = aig1.create_pi()
+    b1 = aig1.create_pi()
+    c1 = aig1.create_pi()
+
+    and1 = aig1.create_and(a1, b1)
+    and2 = aig1.create_and(~a1, c1)
+    and3 = aig1.create_and(and1, and2)
+
+    aig2 = aig1.clone()
+
+    aig1.create_po(and3)
+    aig2.create_po(~and3)
+
+    return aig1, aig2

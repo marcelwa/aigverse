@@ -1,22 +1,20 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from aigverse.algorithms import equivalence_checking, simulate
 from aigverse.generators import binary_decoder, multiplexer
-from aigverse.networks import Aig
+
+if TYPE_CHECKING:
+    from aigverse.networks import Aig
 
 
-def test_mux_selects_then_or_else_word() -> None:
+def test_mux_selects_then_or_else_word(mux1_reference: Aig) -> None:
     generated = multiplexer(1)
 
-    reference = Aig()
-    cond = reference.create_pi()
-    t0 = reference.create_pi()
-    e0 = reference.create_pi()
-    reference.create_po(reference.create_ite(cond, t0, e0))
-
-    assert equivalence_checking(reference, generated)
+    assert equivalence_checking(mux1_reference, generated)
 
 
 def test_binary_decoder_two_selects() -> None:
@@ -35,15 +33,10 @@ def test_binary_decoder_two_selects() -> None:
     assert observed_minterms == set(range(aig.num_pos))
 
 
-def test_binary_decoder_one_select_matches_not_and_identity() -> None:
+def test_binary_decoder_one_select_matches_not_and_identity(decoder1_reference: Aig) -> None:
     generated = binary_decoder(1)
 
-    reference = Aig()
-    x = reference.create_pi()
-    reference.create_po(~x)
-    reference.create_po(x)
-
-    assert equivalence_checking(reference, generated)
+    assert equivalence_checking(decoder1_reference, generated)
 
 
 @pytest.mark.parametrize("bitwidth", [0])
