@@ -89,3 +89,65 @@ def sequential_feedback_aig() -> tuple[SequentialAig, AigSignal]:
     f1 = saig.create_and(x1, ro)
     saig.create_ri(f1)
     return saig, f1
+
+
+@pytest.fixture
+def sample_aig_index_list_raw() -> list[int]:
+    """Create a representative raw AIG index-list payload.
+
+    Returns:
+        A compact raw index-list encoding for a small 4-PI circuit.
+    """
+    return [4, 1, 3, 2, 4, 6, 8, 12, 10, 14]
+
+
+@pytest.fixture
+def pi_only_aig() -> Aig:
+    """Create an AIG with four primary inputs and no outputs.
+
+    Returns:
+        A PI-only AIG network.
+    """
+    aig = Aig()
+    for _ in range(4):
+        aig.create_pi()
+    return aig
+
+
+@pytest.fixture
+def xor_of_two_and_aig() -> Aig:
+    """Create a 4-input AIG computing XOR(AND(a,b), AND(c,d)).
+
+    Returns:
+        A 4-PI, 1-PO AIG network.
+    """
+    aig = Aig()
+    a = aig.create_pi()
+    b = aig.create_pi()
+    c = aig.create_pi()
+    d = aig.create_pi()
+    t0 = aig.create_and(a, b)
+    t1 = aig.create_and(c, d)
+    aig.create_po(aig.create_xor(t0, t1))
+    return aig
+
+
+@pytest.fixture
+def inverted_signals_aig() -> Aig:
+    """Create a 3-input AIG with complemented intermediate/output signals.
+
+    Returns:
+        A 3-PI, 2-PO AIG network with inverted signals.
+    """
+    aig = Aig()
+    a = aig.create_pi()
+    b = aig.create_pi()
+    c = aig.create_pi()
+
+    t0 = aig.create_and(a, b)
+    t1 = aig.create_and(b, ~c)
+    t2 = aig.create_and(~t0, ~t1)
+
+    aig.create_po(~t1)
+    aig.create_po(t2)
+    return aig

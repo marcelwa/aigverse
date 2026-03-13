@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from aigverse.networks import Aig
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @pytest.fixture
@@ -126,4 +131,75 @@ def and_or_two_output_aig() -> Aig:
     b = aig.create_pi()
     aig.create_po(aig.create_and(a, b))
     aig.create_po(aig.create_or(a, b))
+    return aig
+
+
+@pytest.fixture
+def make_and_chain_aig() -> Callable[[int], Aig]:
+    """Create right-associative AND-chain AIG builders.
+
+    Returns:
+        A function that creates an AIG with ``num_pis`` PIs and one PO.
+    """
+
+    def _builder(num_pis: int) -> Aig:
+        aig = Aig()
+        pis = [aig.create_pi() for _ in range(num_pis)]
+
+        if num_pis == 0:
+            aig.create_po(aig.get_constant(False))
+            return aig
+        if num_pis == 1:
+            aig.create_po(pis[0])
+            return aig
+
+        node = aig.create_and(pis[-2], pis[-1])
+        for index in range(num_pis - 3, -1, -1):
+            node = aig.create_and(pis[index], node)
+        aig.create_po(node)
+        return aig
+
+    return _builder
+
+
+@pytest.fixture
+def make_xor_chain_aig() -> Callable[[int], Aig]:
+    """Create XOR-chain AIG builders.
+
+    Returns:
+        A function that creates an AIG with ``num_pis`` PIs and one PO.
+    """
+
+    def _builder(num_pis: int) -> Aig:
+        if num_pis < 1:
+            msg = "num_pis must be at least 1"
+            raise ValueError(msg)
+
+        aig = Aig()
+        pis = [aig.create_pi() for _ in range(num_pis)]
+        node = pis[0]
+        for signal in pis[1:]:
+            node = aig.create_xor(node, signal)
+        aig.create_po(node)
+        return aig
+
+    return _builder
+
+
+@pytest.fixture
+def mixed_xor_and_balancing_aig() -> Aig:
+    """Create a mixed XOR/AND network used by ESOP balancing tests.
+
+    Returns:
+        A mixed-operator AIG with one primary output.
+    """
+    aig = Aig()
+    pis = [aig.create_pi() for _ in range(8)]
+    n0 = aig.create_xor(pis[0], pis[1])
+    n1 = aig.create_xor(pis[2], pis[3])
+    n2 = aig.create_and(n0, n1)
+    n3 = aig.create_and(pis[4], pis[5])
+    n4 = aig.create_and(pis[6], pis[7])
+    n5 = aig.create_xor(n3, n4)
+    aig.create_po(aig.create_xor(n2, n5))
     return aig
