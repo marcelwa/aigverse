@@ -83,22 +83,15 @@ def test_named_aig_without_names() -> None:
     assert aig.num_gates == 1
 
 
-def test_named_aig_copy_constructor() -> None:
+def test_named_aig_copy_constructor(named_aig_basic: NamedAig) -> None:
     """Test that NamedAig copy constructor preserves names."""
-    aig1 = NamedAig()
-    aig1.set_network_name("original")
-
-    x1 = aig1.create_pi("a")
-    x2 = aig1.create_pi("b")
-    n3 = aig1.create_and(x1, x2)
-    aig1.set_name(n3, "and_gate")
-    aig1.create_po(n3, "out")
+    aig1 = named_aig_basic
 
     # Copy constructor
     aig2 = NamedAig(aig1)
 
     # Check that names are preserved
-    assert aig2.get_network_name() == "original"
+    assert aig2.get_network_name() == "top"
     assert aig2.num_pis == 2
     assert aig2.num_pos == 1
 
@@ -108,30 +101,20 @@ def test_named_aig_copy_constructor() -> None:
 
     assert aig2.has_name(x1_copy)
     assert aig2.has_name(x2_copy)
-    assert aig2.get_name(x1_copy) == "a"
-    assert aig2.get_name(x2_copy) == "b"
+    assert aig2.get_name(x1_copy) == "x0"
+    assert aig2.get_name(x2_copy) == "x1"
     assert aig2.has_output_name(0)
     assert aig2.get_output_name(0) == "out"
 
 
-def test_named_aig_repr() -> None:
-    aig = NamedAig()
-    aig.set_network_name("top")
-    x1 = aig.create_pi("a")
-    x2 = aig.create_pi("b")
-    aig.create_po(aig.create_and(x1, x2), "out")
+def test_named_aig_repr(named_aig_basic: NamedAig) -> None:
+    aig = named_aig_basic
 
     assert repr(aig) == "NamedAig(name=top, pis=2, pos=1, gates=1)"
 
 
-def test_named_aig_clone_and_copy_preserve_names() -> None:
-    aig = NamedAig()
-    aig.set_network_name("top")
-    x0 = aig.create_pi("x0")
-    x1 = aig.create_pi("x1")
-    gate = aig.create_and(x0, x1)
-    aig.set_name(gate, "and0")
-    aig.create_po(gate, "out")
+def test_named_aig_clone_and_copy_preserve_names(named_aig_basic: NamedAig) -> None:
+    aig = named_aig_basic
 
     cloned = aig.clone()
     shallow = copy.copy(aig)
