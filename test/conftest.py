@@ -1,8 +1,33 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from aigverse.networks import Aig
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Apply suite markers based on test paths for consistent categorization.
+
+    Args:
+        items: Collected pytest items to classify with markers.
+    """
+    for item in items:
+        test_path = Path(str(item.fspath)).as_posix()
+
+        if "/test/algorithms/" in test_path:
+            item.add_marker(pytest.mark.algorithms)
+        elif "/test/networks/" in test_path:
+            item.add_marker(pytest.mark.networks)
+        elif "/test/inout/" in test_path:
+            item.add_marker(pytest.mark.io)
+        elif "/test/generators/" in test_path:
+            item.add_marker(pytest.mark.generators)
+        elif "/test/adapters/" in test_path:
+            item.add_marker(pytest.mark.adapters)
+        elif "/test/truth_tables/" in test_path:
+            item.add_marker(pytest.mark.tts)
 
 
 @pytest.fixture

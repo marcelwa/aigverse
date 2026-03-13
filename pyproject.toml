@@ -94,6 +94,14 @@ write_to = "python/aigverse/_version.py"
 [tool.pytest]
 minversion = "9.0"
 strict = true
+markers = [
+    "networks: Tests for network data structures",
+    "algorithms: Tests for optimization and analysis algorithms",
+    "io: Tests for read/write and serialization",
+    "generators: Tests for network generators",
+    "adapters: Tests for optional adapter integrations",
+    "tts: Tests for truth table utilities",
+]
 addopts = [
     "-ra",
     "--numprocesses=auto", # Automatically use all available CPU cores for parallel testing
