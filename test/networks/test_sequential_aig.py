@@ -188,21 +188,19 @@ def test_sequential_aig_setstate_raises() -> None:
         pickle.loads(make_pickle(([0, 0],)))
 
 
-def test_sequential_aig_register_operations():
+def test_sequential_aig_register_operations(
+    sequential_two_registers_full: tuple[
+        SequentialAig,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+    ],
+) -> None:
     """Test register operations in a sequential AIG."""
-    saig = SequentialAig()
-
-    # Create a register
-    ro1 = saig.create_ro()
-    pi1 = saig.create_pi()
-    f1 = saig.create_and(ro1, pi1)
-    saig.create_ri(f1)
-
-    # Create another register
-    ro2 = saig.create_ro()
-    pi2 = saig.create_pi()
-    f2 = saig.create_and(ro2, pi2)
-    saig.create_ri(f2)
+    saig, _pi1, _pi2, _ro1, _ro2, _f1, _f2 = sequential_two_registers_full
 
     # Test register_at (should return default empty register)
     reg = saig.register_at(0)
@@ -230,27 +228,19 @@ def test_sequential_aig_register_operations():
     assert not reg2.type
 
 
-def test_sequential_aig_index_methods():
+def test_sequential_aig_index_methods(
+    sequential_two_registers_full: tuple[
+        SequentialAig,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+    ],
+) -> None:
     """Test index methods in a sequential AIG."""
-    saig = SequentialAig()
-
-    # Create primary inputs
-    pi1 = saig.create_pi()
-    pi2 = saig.create_pi()
-
-    # Create register outputs
-    ro1 = saig.create_ro()
-    ro2 = saig.create_ro()
-
-    # Create some gates
-    f1 = saig.create_and(pi1, ro1)
-    f2 = saig.create_and(pi2, ro2)
-
-    # Create primary outputs and register inputs
-    saig.create_po(f1)
-    saig.create_po(f2)
-    saig.create_ri(f1)
-    saig.create_ri(f2)
+    saig, pi1, pi2, ro1, ro2, f1, f2 = sequential_two_registers_full
 
     # Test pi_index
     assert saig.pi_index(saig.get_node(pi1)) == 0
@@ -288,23 +278,19 @@ def test_sequential_aig_ro_ri_conversion(
     assert ro_node == saig.get_node(ro)
 
 
-def test_sequential_aig_ro_at_ri_at():
+def test_sequential_aig_ro_at_ri_at(
+    sequential_two_registers_full: tuple[
+        SequentialAig,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+    ],
+) -> None:
     """Test accessing register outputs and inputs by index."""
-    saig = SequentialAig()
-
-    # Create primary inputs
-    pi1 = saig.create_pi()
-    pi2 = saig.create_pi()
-
-    # Create register outputs
-    ro1 = saig.create_ro()
-    ro2 = saig.create_ro()
-
-    # Create register inputs
-    f1 = saig.create_and(pi1, ro1)
-    f2 = saig.create_and(pi2, ro2)
-    saig.create_ri(f1)
-    saig.create_ri(f2)
+    saig, _pi1, _pi2, ro1, ro2, f1, f2 = sequential_two_registers_full
 
     # Test ro_at and ri_at
     assert saig.ro_at(0) == saig.get_node(ro1)
@@ -313,27 +299,19 @@ def test_sequential_aig_ro_at_ri_at():
     assert saig.ri_at(1) == f2
 
 
-def test_sequential_aig_iteration():
+def test_sequential_aig_iteration(
+    sequential_two_registers_full: tuple[
+        SequentialAig,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+    ],
+) -> None:
     """Test iteration methods in a sequential AIG."""
-    saig = SequentialAig()
-
-    # Create primary inputs
-    pi1 = saig.create_pi()
-    pi2 = saig.create_pi()
-
-    # Create register outputs
-    ro1 = saig.create_ro()
-    ro2 = saig.create_ro()
-
-    # Create some gates
-    f1 = saig.create_and(pi1, ro1)
-    f2 = saig.create_and(pi2, ro2)
-
-    # Create primary outputs and register inputs
-    saig.create_po(f1)
-    saig.create_po(f2)
-    saig.create_ri(f1)
-    saig.create_ri(f2)
+    saig, pi1, pi2, ro1, ro2, f1, f2 = sequential_two_registers_full
 
     # Test CI iteration
     cis = saig.cis()

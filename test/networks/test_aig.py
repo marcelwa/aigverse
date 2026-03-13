@@ -296,8 +296,10 @@ def test_aig_clone_node() -> None:
         assert not aig2.is_complemented(fanin)
 
 
-def test_aig_structural_properties() -> None:
-    aig = Aig()
+def test_aig_structural_properties(
+    aig_with_and_or_outputs: tuple[Aig, AigSignal, AigSignal, AigSignal, AigSignal],
+) -> None:
+    aig, x1, x2, f1, f2 = aig_with_and_or_outputs
 
     # Ensure the structural property methods exist in AIG
     assert hasattr(aig, "size")
@@ -306,18 +308,6 @@ def test_aig_structural_properties() -> None:
     assert hasattr(aig, "num_gates")
     assert hasattr(aig, "fanin_size")
     assert hasattr(aig, "fanout_size")
-
-    # Create two primary inputs
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-
-    # Create AND and OR gates
-    f1 = aig.create_and(x1, x2)
-    f2 = aig.create_or(x1, x2)
-
-    # Create primary outputs
-    aig.create_po(f1)
-    aig.create_po(f2)
 
     # Check structural properties
     assert aig.size == 5
@@ -396,25 +386,10 @@ def test_aig_copy_deepcopy(simple_and_aig: Aig) -> None:
     assert deep_clone.size == 4
 
 
-def test_aig_has_and() -> None:
-    aig = Aig()
-
-    # Create primary inputs
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    x3 = aig.create_pi()
-
-    # Create AND gates
-    n4 = aig.create_and(~x1, x2)
-    n5 = aig.create_and(x1, n4)
-    n6 = aig.create_and(x3, n5)
-    n7 = aig.create_and(n4, x2)
-    n8 = aig.create_and(~n5, ~n7)
-    n9 = aig.create_and(~n8, n4)
-
-    # Create primary outputs
-    aig.create_po(n6)
-    aig.create_po(n9)
+def test_aig_has_and(
+    has_and_reference_aig: tuple[Aig, AigSignal, AigSignal, AigSignal, AigSignal, AigSignal, AigSignal, AigSignal],
+) -> None:
+    aig, x1, x2, x3, n4, n5, n7, n8 = has_and_reference_aig
 
     # Check for existing and non-existing AND gates using has_and
     assert aig.has_and(~x1, x2) is not None
@@ -426,8 +401,10 @@ def test_aig_has_and() -> None:
     assert aig.has_and(~n7, ~n5) == n8
 
 
-def test_aig_node_signal_iteration() -> None:
-    aig = Aig()
+def test_aig_node_signal_iteration(
+    aig_with_and_or_outputs: tuple[Aig, AigSignal, AigSignal, AigSignal, AigSignal],
+) -> None:
+    aig, _x1, _x2, f1, _f2 = aig_with_and_or_outputs
 
     # Ensure the structural iteration methods exist in AIG
     assert hasattr(aig, "nodes")
@@ -435,16 +412,6 @@ def test_aig_node_signal_iteration() -> None:
     assert hasattr(aig, "pos")
     assert hasattr(aig, "gates")
     assert hasattr(aig, "fanins")
-
-    # Create two primary inputs and two gates
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    f1 = aig.create_and(x1, x2)
-    f2 = aig.create_or(x1, x2)
-
-    # Create primary outputs
-    aig.create_po(f1)
-    aig.create_po(f2)
 
     assert aig.size == 5
 
@@ -594,22 +561,8 @@ def test_aig_node_signal_iteration() -> None:
     assert mask == 2
 
 
-def test_cleanup_dangling() -> None:
-    aig = Aig()
-
-    # Create primary inputs
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    x3 = aig.create_pi()
-
-    # Create AND gates
-    n4 = aig.create_and(x1, x2)
-    n5 = aig.create_and(x2, x3)
-    n6 = aig.create_and(x1, x3)
-    aig.create_and(n4, n5)
-
-    # Create primary outputs
-    aig.create_po(n6)
+def test_cleanup_dangling(cleanup_dangling_reference_aig: Aig) -> None:
+    aig = cleanup_dangling_reference_aig
 
     # Check the size of the AIG
     assert aig.size == 8
@@ -659,16 +612,10 @@ def test_pickle_empty_aig() -> None:
     assert equivalence_checking(aig, unpickled_aig)
 
 
-def test_pickle_simple_aig() -> None:
+def test_pickle_simple_aig(simple_and_aig: Aig) -> None:
     import pickle
 
-    aig = Aig()
-
-    a = aig.create_pi()
-    b = aig.create_pi()
-    f = aig.create_and(a, b)
-
-    aig.create_po(f)
+    aig = simple_and_aig
 
     # Check initial size and gate count
     assert aig.size == 4
@@ -732,26 +679,12 @@ def test_pickle_complex_aig() -> None:
     assert equivalence_checking(aig, unpickled_aig)
 
 
-def test_pickle_multiple_aigs() -> None:
+def test_pickle_multiple_aigs(simple_and_aig: Aig, simple_or_aig: Aig, simple_xor_aig: Aig) -> None:
     import pickle
 
-    aig1 = Aig()
-    a1 = aig1.create_pi()
-    b1 = aig1.create_pi()
-    f1 = aig1.create_and(a1, b1)
-    aig1.create_po(f1)
-
-    aig2 = Aig()
-    a2 = aig2.create_pi()
-    b2 = aig2.create_pi()
-    f2 = aig2.create_or(a2, b2)
-    aig2.create_po(f2)
-
-    aig3 = Aig()
-    a3 = aig3.create_pi()
-    b3 = aig3.create_pi()
-    f3 = aig3.create_xor(a3, b3)
-    aig3.create_po(f3)
+    aig1 = simple_and_aig
+    aig2 = simple_or_aig
+    aig3 = simple_xor_aig
 
     # Pickle all three AIGs together as a tuple
     pickled = pickle.dumps((aig1, aig2, aig3))

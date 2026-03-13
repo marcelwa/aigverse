@@ -123,3 +123,113 @@ def sequential_aig_single_register() -> tuple[SequentialAig, AigSignal, AigSigna
     saig.create_po(gate)
     saig.create_ri(gate)
     return saig, pi, ro, gate
+
+
+@pytest.fixture
+def aig_with_and_or_outputs(
+    aig_with_two_pis: tuple[Aig, AigSignal, AigSignal],
+) -> tuple[Aig, AigSignal, AigSignal, AigSignal, AigSignal]:
+    """Create an AIG with two PIs, AND/OR gates, and two POs.
+
+    Args:
+        aig_with_two_pis: A pre-built AIG with two primary inputs.
+
+    Returns:
+        A tuple containing the AIG, two PI signals, and the AND/OR gate signals.
+    """
+    aig, x1, x2 = aig_with_two_pis
+    and_gate = aig.create_and(x1, x2)
+    or_gate = aig.create_or(x1, x2)
+    aig.create_po(and_gate)
+    aig.create_po(or_gate)
+    return aig, x1, x2, and_gate, or_gate
+
+
+@pytest.fixture
+def has_and_reference_aig() -> tuple[Aig, AigSignal, AigSignal, AigSignal, AigSignal, AigSignal, AigSignal]:
+    """Create a reference AIG for has_and lookup behavior tests.
+
+    Returns:
+        A tuple containing the network, probe PI signals, and key internal AND signals.
+    """
+    aig = Aig()
+
+    x1 = aig.create_pi()
+    x2 = aig.create_pi()
+    x3 = aig.create_pi()
+
+    n4 = aig.create_and(~x1, x2)
+    n5 = aig.create_and(x1, n4)
+    n6 = aig.create_and(x3, n5)
+    n7 = aig.create_and(n4, x2)
+    n8 = aig.create_and(~n5, ~n7)
+    n9 = aig.create_and(~n8, n4)
+
+    aig.create_po(n6)
+    aig.create_po(n9)
+
+    return aig, x1, x2, x3, n4, n5, n7, n8
+
+
+@pytest.fixture
+def cleanup_dangling_reference_aig() -> Aig:
+    """Create an AIG with dangling logic and one observable output.
+
+    Returns:
+        A network used for cleanup_dangling behavior tests.
+    """
+    aig = Aig()
+
+    x1 = aig.create_pi()
+    x2 = aig.create_pi()
+    x3 = aig.create_pi()
+
+    n4 = aig.create_and(x1, x2)
+    n5 = aig.create_and(x2, x3)
+    n6 = aig.create_and(x1, x3)
+    aig.create_and(n4, n5)
+    aig.create_po(n6)
+
+    return aig
+
+
+@pytest.fixture
+def simple_xor_aig() -> Aig:
+    """Create a simple AIG with two PIs, one XOR gate, and one PO.
+
+    Returns:
+        A 2-input XOR AIG network.
+    """
+    aig = Aig()
+    x0 = aig.create_pi()
+    x1 = aig.create_pi()
+    aig.create_po(aig.create_xor(x0, x1))
+    return aig
+
+
+@pytest.fixture
+def sequential_two_registers_full() -> tuple[
+    SequentialAig, AigSignal, AigSignal, AigSignal, AigSignal, AigSignal, AigSignal
+]:
+    """Create a SequentialAig with two PI/RO cones and paired PO/RI signals.
+
+    Returns:
+        A tuple containing the network, two PI signals, two RO signals, and two gate signals.
+    """
+    saig = SequentialAig()
+
+    pi1 = saig.create_pi()
+    pi2 = saig.create_pi()
+
+    ro1 = saig.create_ro()
+    ro2 = saig.create_ro()
+
+    f1 = saig.create_and(pi1, ro1)
+    f2 = saig.create_and(pi2, ro2)
+
+    saig.create_po(f1)
+    saig.create_po(f2)
+    saig.create_ri(f1)
+    saig.create_ri(f2)
+
+    return saig, pi1, pi2, ro1, ro2, f1, f2
