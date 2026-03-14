@@ -1,30 +1,24 @@
 # Enable cache if available
 function(aigverse_enable_cache)
-  set(CACHE_OPTION
-      "ccache"
-      CACHE STRING "Compiler cache to be used")
-  set(CACHE_OPTION_VALUES "ccache" "sccache")
-  set_property(CACHE CACHE_OPTION PROPERTY STRINGS ${CACHE_OPTION_VALUES})
-  list(FIND CACHE_OPTION_VALUES ${CACHE_OPTION} CACHE_OPTION_INDEX)
+  # Check for available cache programs, preferring sccache.
+  find_program(SCCACHE_BINARY sccache)
+  find_program(CCACHE_BINARY ccache)
 
-  if(${CACHE_OPTION_INDEX} EQUAL -1)
-    message(
-      STATUS
-        "Using custom compiler cache system: '${CACHE_OPTION}', explicitly supported entries are ${CACHE_OPTION_VALUES}"
-    )
-  endif()
-
-  find_program(CACHE_BINARY NAMES ${CACHE_OPTION_VALUES})
-  if(CACHE_BINARY)
-    message(STATUS "${CACHE_BINARY} found and enabled")
-    set(CMAKE_CXX_COMPILER_LAUNCHER
-        ${CACHE_BINARY}
-        CACHE FILEPATH "CXX compiler cache used")
-    set(CMAKE_C_COMPILER_LAUNCHER
-        ${CACHE_BINARY}
-        CACHE FILEPATH "C compiler cache used")
+  if(SCCACHE_BINARY)
+    set(CACHE_OPTION "sccache")
+    set(CACHE_BINARY ${SCCACHE_BINARY})
+    message(STATUS "Compiler cache 'sccache' found and enabled")
+  elseif(CCACHE_BINARY)
+    set(CACHE_OPTION "ccache")
+    set(CACHE_BINARY ${CCACHE_BINARY})
+    message(STATUS "Compiler cache 'ccache' found and enabled")
   else()
-    message(
-      WARNING "${CACHE_OPTION} is enabled but was not found. Not using it")
+    set(CACHE_OPTION_VALUES "ccache" "sccache")
+    message(NOTICE
+            "No compiler cache found. Checked for: ${CACHE_OPTION_VALUES}")
+    return()
   endif()
+
+  set(CMAKE_C_COMPILER_LAUNCHER ${CACHE_BINARY})
+  set(CMAKE_CXX_COMPILER_LAUNCHER ${CACHE_BINARY})
 endfunction()
