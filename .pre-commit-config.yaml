@@ -106,11 +106,11 @@ repos:
     hooks:
       - id: ty-check
         name: ty check
-        entry: uvx ty check python/aigverse/__init__.py
-        language: system
+        entry: uvx python -c "import subprocess; import sys; r = subprocess.run(['uv', 'sync', '--no-install-project', '--inexact', '--only-group', 'test', '--only-group', 'lint']); sys.exit(r.returncode or subprocess.run(['uv', 'run', '--no-sync', 'ty', 'check']).returncode)"
+        language: unsupported
         require_serial: true
         types_or: [python, pyi, jupyter]
-        exclude: ^(docs/|core/)
+        exclude: ^(docs/)
         pass_filenames: false
         priority: 3
 
