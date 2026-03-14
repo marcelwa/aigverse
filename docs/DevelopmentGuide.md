@@ -386,7 +386,7 @@ The Python code is formatted and linted using a collection of hooks executed via
 This collection includes:
 
 - [ruff](https://docs.astral.sh/ruff/) -- an extremely fast Python linter and formatter, written in Rust.
-- [mypy](https://mypy-lang.org/) -- a static type checker for Python code.
+- [ty](https://docs.astral.sh/ty/) -- a fast Python type checker.
 
 There are two ways of using these hooks:
 
