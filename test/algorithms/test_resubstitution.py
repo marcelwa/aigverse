@@ -51,14 +51,9 @@ def test_equivalent_node_merger(implicant_reduction_aig: Aig) -> None:
     assert equivalence_checking(aig1, aig_before)
 
 
-def test_positive_divisor_substitution() -> None:
+def test_positive_divisor_substitution(positive_divisor_substitution_aig: Aig) -> None:
     # x1 * ( x0 * x1 ) ==> x0 * x1 (reduction of 1 node)
-    aig2 = Aig()
-    x0 = aig2.create_pi()
-    x1 = aig2.create_pi()
-    n0 = aig2.create_and(x0, x1)
-    n1 = aig2.create_and(x1, n0)
-    aig2.create_po(n1)
+    aig2 = positive_divisor_substitution_aig
 
     aig_before = aig2.clone()
 
@@ -84,16 +79,8 @@ def test_negative_divisor_substitution(implicant_reduction_aig: Aig) -> None:
     assert equivalence_checking(aig, aig_before)
 
 
-def test_parameters() -> None:
-    aig = Aig()
-
-    a = aig.create_pi()
-    b = aig.create_pi()
-
-    and1 = aig.create_and(~a, ~b)
-    and2 = aig.create_and(a, ~and1)
-
-    aig.create_po(and2)
+def test_parameters(implicant_reduction_aig: Aig) -> None:
+    aig = implicant_reduction_aig
 
     aig2 = aig.clone()
 
@@ -114,13 +101,8 @@ def test_parameters() -> None:
     assert equivalence_checking(aig, aig2)
 
 
-def test_return_new_does_not_mutate_input() -> None:
-    aig = Aig()
-    a = aig.create_pi()
-    b = aig.create_pi()
-    and1 = aig.create_and(~a, ~b)
-    and2 = aig.create_and(a, ~and1)
-    aig.create_po(and2)
+def test_return_new_does_not_mutate_input(implicant_reduction_aig: Aig) -> None:
+    aig = implicant_reduction_aig
 
     aig_before = aig.clone()
     aig_before_index_list = aig_before.to_index_list().raw()

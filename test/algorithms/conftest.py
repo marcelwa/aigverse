@@ -223,3 +223,18 @@ def complex_unbalanced_balancing_aig() -> Aig:
     n_branch_0 = aig.create_and(x0, x1)
     aig.create_po(aig.create_and(n_branch_0, n_chain_4))
     return aig
+
+
+@pytest.fixture
+def positive_divisor_substitution_aig() -> Aig:
+    """Create x1 * (x0 * x1), used by substitution-focused tests.
+
+    Returns:
+        A 2-PI AIG network with one output.
+    """
+    aig = Aig()
+    x0 = aig.create_pi()
+    x1 = aig.create_pi()
+    n0 = aig.create_and(x0, x1)
+    aig.create_po(aig.create_and(x1, n0))
+    return aig

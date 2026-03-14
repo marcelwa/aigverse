@@ -76,14 +76,11 @@ def test_create_and_use_register_in_aig() -> None:
             raise AssertionError
 
 
-def test_sequential_aig_ci_co_nodes() -> None:
+def test_sequential_aig_ci_co_nodes(
+    sequential_aig_ci_co_fixture: tuple[SequentialAig, AigSignal, AigSignal, AigSignal],
+) -> None:
     """Test combinational interface (CI) and combinational output (CO) nodes."""
-    saig = SequentialAig()
-
-    # Create primary inputs and register outputs
-    pi1 = saig.create_pi()
-    pi2 = saig.create_pi()
-    ro1 = saig.create_ro()
+    saig, pi1, pi2, ro1 = sequential_aig_ci_co_fixture
 
     # Both PIs and ROs are CIs
     assert saig.is_ci(saig.get_node(pi1))
@@ -94,10 +91,6 @@ def test_sequential_aig_ci_co_nodes() -> None:
     assert not saig.is_ro(saig.get_node(pi1))
     assert not saig.is_ro(saig.get_node(pi2))
     assert saig.is_ro(saig.get_node(ro1))
-
-    # Create primary outputs and register inputs
-    saig.create_po(pi1)
-    saig.create_ri(pi2)
 
     # Check CI and CO counts
     assert saig.num_cis == 3  # 2 PIs + 1 RO

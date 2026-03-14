@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import copy
+from typing import TYPE_CHECKING
 
 from aigverse.networks import NamedAig
 
+if TYPE_CHECKING:
+    from aigverse.networks import AigSignal
 
-def test_named_aig() -> None:
-    aig = NamedAig()
+
+def test_named_aig(
+    named_aig_test_circuit: tuple[NamedAig, AigSignal, AigSignal, AigSignal, AigSignal, AigSignal, AigSignal],
+) -> None:
+    aig, x1, x2, x3, n4, n5, n6 = named_aig_test_circuit
 
     # Check that NamedAig has the specific naming methods
     assert hasattr(aig, "set_network_name")
@@ -18,14 +24,7 @@ def test_named_aig() -> None:
     assert hasattr(aig, "set_output_name")
     assert hasattr(aig, "get_output_name")
 
-    # Test network name
-    aig.set_network_name("test_circuit")
     assert aig.get_network_name() == "test_circuit"
-
-    # Create primary inputs with names
-    x1 = aig.create_pi("input1")
-    x2 = aig.create_pi("input2")
-    x3 = aig.create_pi("input3")
 
     # Test that inputs have names
     assert aig.has_name(x1)
@@ -34,11 +33,6 @@ def test_named_aig() -> None:
     assert aig.get_name(x1) == "input1"
     assert aig.get_name(x2) == "input2"
     assert aig.get_name(x3) == "input3"
-
-    # Create gates
-    n4 = aig.create_and(~x1, x2)
-    n5 = aig.create_and(x1, n4)
-    n6 = aig.create_and(x3, n5)
 
     # Test setting names on internal signals
     aig.set_name(n4, "and_gate1")
@@ -63,19 +57,9 @@ def test_named_aig() -> None:
     assert aig.get_output_name(po1_idx) == "renamed_output1"
 
 
-def test_named_aig_without_names() -> None:
+def test_named_aig_without_names(named_aig_no_names: NamedAig) -> None:
     """Test that NamedAig still works when names are not provided."""
-    aig = NamedAig()
-
-    # Create inputs without names (using default empty string)
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-
-    # Create gate
-    n3 = aig.create_and(x1, x2)
-
-    # Create output without name
-    aig.create_po(n3)
+    aig = named_aig_no_names
 
     # Basic functionality should still work
     assert aig.num_pis == 2
@@ -129,38 +113,23 @@ def test_named_aig_clone_and_copy_preserve_names(named_aig_basic: NamedAig) -> N
         assert candidate.get_output_name(0) == "out"
 
 
-def test_named_aig_complex_circuit() -> None:
+def test_named_aig_complex_circuit(
+    named_aig_full_adder: tuple[
+        NamedAig,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        AigSignal,
+        int,
+        int,
+    ],
+) -> None:
     """Test a more complex circuit with multiple levels and names."""
-    aig = NamedAig()
-    aig.set_network_name("full_adder")
-
-    # Create inputs
-    a = aig.create_pi("a")
-    b = aig.create_pi("b")
-    cin = aig.create_pi("cin")
-
-    # Build full adder logic
-    # with sum = a ^ b ^ cin
-    # and  cout = (a & b) | (cin & (a ^ b))
-
-    a_xor_b = aig.create_xor(a, b)
-    aig.set_name(a_xor_b, "a_xor_b")
-
-    sum_out = aig.create_xor(a_xor_b, cin)
-    aig.set_name(sum_out, "sum")
-
-    a_and_b = aig.create_and(a, b)
-    aig.set_name(a_and_b, "a_and_b")
-
-    cin_and_xor = aig.create_and(cin, a_xor_b)
-    aig.set_name(cin_and_xor, "cin_and_xor")
-
-    cout = aig.create_or(a_and_b, cin_and_xor)
-    aig.set_name(cout, "cout")
-
-    # Create outputs
-    sum_idx = aig.create_po(sum_out, "sum")
-    cout_idx = aig.create_po(cout, "carry_out")
+    aig, a, b, cin, a_xor_b, sum_out, a_and_b, cin_and_xor, cout, sum_idx, cout_idx = named_aig_full_adder
 
     # Verify structure
     assert aig.num_pis == 3
