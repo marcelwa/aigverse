@@ -187,7 +187,7 @@ def test_sequential_aig_setstate_raises() -> None:
     # Build a pickle payload that reconstructs SequentialAig via __new__,
     # forcing nanobind to route restoration through __setstate__.
     def make_pickle(state_tuple: tuple[Any, ...]) -> bytes:
-        copyreg.pickle(  # type: ignore[arg-type, return-value]
+        copyreg.pickle(
             Dummy,
             lambda _: (SequentialAig.__new__, (SequentialAig,), state_tuple),
         )

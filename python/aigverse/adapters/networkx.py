@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Final, cast
+from typing import TYPE_CHECKING, Any, Final
 
 import networkx as nx
 import numpy as np
@@ -88,7 +88,7 @@ def to_networkx(
     edge_type_inverted: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([0, 1], dtype=dtype)
 
     # Check if this is a NamedAig
-    self_named = cast("NamedAig", self) if isinstance(self, NamedAig) else None
+    self_named = self if isinstance(self, NamedAig) else None
 
     # Conditionally compute levels if requested
     if levels:
@@ -185,7 +185,7 @@ def to_networkx(
             po_output_name = self_named.get_output_name(po_idx) if self_named.has_output_name(po_idx) else None
 
             # Find all edges going into this synthetic PO node
-            for pred in g.predecessors(synth_node):  # type: ignore[no-untyped-call]
+            for pred in g.predecessors(synth_node):
                 if po_output_name:
                     g.edges[pred, synth_node]["output_name"] = po_output_name
 

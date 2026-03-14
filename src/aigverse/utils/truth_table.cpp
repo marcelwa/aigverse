@@ -106,11 +106,31 @@ void bind_truth_table(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage
 
 Args:
     num_vars: Number of Boolean variables.)pb")
-
         // Operators
+        // Equality/Inequality need to accept arbitrary Python objects for a compatible __eq__/__ne__ signature.
+        .def(
+            "__eq__",
+            [](const aigverse::truth_table& self, const nb::object& other) -> bool
+            {
+                if (!nb::isinstance<aigverse::truth_table>(other))
+                {
+                    return false;
+                }
+                return self == nb::cast<const aigverse::truth_table&>(other);
+            },
+            nb::arg("other"), R"pb(Checks equality with another truth table.)pb")
+        .def(
+            "__ne__",
+            [](const aigverse::truth_table& self, const nb::object& other) -> bool
+            {
+                if (!nb::isinstance<aigverse::truth_table>(other))
+                {
+                    return true;
+                }
+                return self != nb::cast<const aigverse::truth_table&>(other);
+            },
+            nb::arg("other"), R"pb(Checks inequality with another truth table.)pb")
         // NOLINTBEGIN(misc-redundant-expression)
-        .def(nb::self == nb::self, nb::arg("other"), R"pb(Checks equality with another truth table.)pb")
-        .def(nb::self != nb::self, nb::arg("other"), R"pb(Checks inequality with another truth table.)pb")
         .def(nb::self < nb::self, nb::arg("other"), R"pb(Lexicographically compares two truth tables.)pb")
         .def(nb::self & nb::self, nb::arg("other"), R"pb(Computes bitwise AND with another truth table.)pb")
         .def(nb::self | nb::self, nb::arg("other"), R"pb(Computes bitwise OR with another truth table.)pb")

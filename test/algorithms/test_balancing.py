@@ -279,7 +279,7 @@ def test_balancing_invalid_rebalance_function_raises() -> None:
     a0 = aig.create_and(x0, x1)
     aig.create_po(a0)
     with pytest.raises(Exception, match="Unknown rebalance function"):
-        balancing(aig, rebalance_function="not_a_valid_option")  # type: ignore [arg-type]
+        balancing(aig, rebalance_function="not_a_valid_option")  # ty: ignore[invalid-argument-type]
 
 
 def test_esop_balancing_with_sop_both_phases_param() -> None:

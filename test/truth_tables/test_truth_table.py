@@ -505,7 +505,7 @@ def test_list_like_access() -> None:
     assert tt[7] is True
 
     # __iter__
-    bits = list(tt)  # type: ignore[unreachable]  # mypy false positive
+    bits = list(tt)
     expected_bits = [True, False, True, False, False, True, False, True]
     assert bits == expected_bits
 

@@ -106,7 +106,7 @@ repos:
     hooks:
       - id: ty-check
         name: ty check
-        entry: uvx python -c "import subprocess; import sys; r = subprocess.run(['uv', 'sync', '--no-install-project', '--inexact', '--only-group', 'test', '--only-group', 'lint']); sys.exit(r.returncode or subprocess.run(['uv', 'run', '--no-sync', 'ty', 'check']).returncode)"
+        entry: uvx python -c "import subprocess; import sys; r = subprocess.run(['uv', 'sync', '--no-install-project', '--inexact', '--only-group', 'test', '--only-group', 'adapters', '--only-group', 'lint']); sys.exit(r.returncode or subprocess.run(['uv', 'run', '--no-sync', 'ty', 'check']).returncode)"
         language: unsupported
         require_serial: true
         types_or: [python, pyi, jupyter]
