@@ -19,6 +19,10 @@ function(aigverse_enable_cache)
     return()
   endif()
 
-  set(CMAKE_C_COMPILER_LAUNCHER ${CACHE_BINARY})
-  set(CMAKE_CXX_COMPILER_LAUNCHER ${CACHE_BINARY})
+  set(CMAKE_C_COMPILER_LAUNCHER
+      ${CACHE_BINARY}
+      PARENT_SCOPE)
+  set(CMAKE_CXX_COMPILER_LAUNCHER
+      ${CACHE_BINARY}
+      PARENT_SCOPE)
 endfunction()

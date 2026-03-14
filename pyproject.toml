@@ -114,7 +114,7 @@ test-command = "pytest test/"
 
 
 [tool.cibuildwheel.linux]
-before-all = "uv tool install sccache>=0.10.0"
+before-all = "uv tool install 'sccache>=0.10.0'"
 environment = { PATH="$PATH:/root/.local/bin" }
 before-test = "uvx sccache --show-stats"
 
