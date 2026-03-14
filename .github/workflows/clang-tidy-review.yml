@@ -61,8 +61,8 @@ jobs:
           thread-comments: ${{ ((github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork) && 'update') || 'false' }}
           ignore: "build|libs/*|docs/*"
           extra-args: "-I${{ github.workspace }}/include -I${{ github.workspace }}/src/aigverse"
-          version: "22"
-          files-changed-only: false
+          version: "21"
+          files-changed-only: true
 
       - if: steps.linter.outputs.checks-failed > 0
         run: exit 1
