@@ -69,12 +69,8 @@ jobs:
       - name: Clone Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
-        with:
-          key: "${{matrix.runs-on}}-aigverse"
-          save: true
-          max-size: 10G
+      - name: Install sccache
+        run: uv tool install sccache
 
       - if: runner.os == 'Linux'
         name: Setup mold
@@ -88,3 +84,6 @@ jobs:
 
       - name: 🐍 Test
         run: uvx nox -s tests --verbose
+
+      - name: Show sccache stats
+        run: sccache --show-stats

@@ -91,12 +91,9 @@ jobs:
       - name: Set up MSVC development environment (Windows only)
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
-        with:
-          key: "${{matrix.runs-on}}-aigverse"
-          save: true
-          max-size: 10G
+      - name: Install sccache
+        if: ${{ !startsWith(inputs.runs-on, 'ubuntu') }}
+        run: uv tool install sccache
 
       - if: runner.os == 'Linux'
         name: Setup mold
@@ -117,6 +114,10 @@ jobs:
           name: cibw-wheels-${{ matrix.runs-on }}-${{ strategy.job-index }}
           path: wheelhouse/*.whl
           overwrite: true
+
+      - name: Show sccache stats
+        if: ${{ !startsWith(inputs.runs-on, 'ubuntu') }}
+        run: sccache --show-stats
 
   publish_to_pypi:
     needs: [build_sdist, build_wheels]
