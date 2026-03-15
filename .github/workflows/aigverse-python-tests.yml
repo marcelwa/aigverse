@@ -69,9 +69,6 @@ jobs:
       - name: Clone Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Install sccache
-        run: uv tool install sccache
-
       - if: runner.os == 'Linux'
         name: Setup mold
         uses: rui314/setup-mold@v1
@@ -81,6 +78,9 @@ jobs:
         with:
           enable-cache: true
           save-cache: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Install sccache
+        run: uv tool install sccache
 
       - name: 🐍 Test
         run: uvx nox -s tests --verbose

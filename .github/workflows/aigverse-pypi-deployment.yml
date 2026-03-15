@@ -91,10 +91,6 @@ jobs:
       - name: Set up MSVC development environment (Windows only)
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
-      - name: Install sccache
-        if: ${{ !startsWith(inputs.runs-on, 'ubuntu') }}
-        run: uv tool install sccache
-
       - if: runner.os == 'Linux'
         name: Setup mold
         uses: rui314/setup-mold@v1
@@ -104,6 +100,10 @@ jobs:
         with:
           enable-cache: true
           save-cache: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Install sccache
+        if: ${{ !startsWith(inputs.runs-on, 'ubuntu') }}
+        run: uv tool install sccache
 
       - name: Build wheels
         uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e # v3.3
