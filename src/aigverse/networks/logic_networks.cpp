@@ -2,10 +2,10 @@
 // Created by marcel on 03.09.25.
 //
 
+#include "aigverse/networks/edge_list.hpp"
+#include "aigverse/networks/graph_tensors.hpp"
+#include "aigverse/networks/index_list.hpp"
 #include "aigverse/types.hpp"
-
-#include "edge_list.hpp"
-#include "index_list.hpp"
 
 #include <fmt/format.h>
 #include <mockturtle/networks/sequential.hpp>
@@ -111,6 +111,36 @@ bool contains_node(const Ntk& ntk, const nanobind::object& value)
 }
 
 }  // namespace
+
+void bind_tensor_encodings(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
+{
+    namespace nb = nanobind;
+
+    nb::enum_<aigverse::node_tensor_encoding>(m, "NodeTensorEncoding",
+                                              R"pb(Node encoding mode for exported graph tensors.
+
+    All node features use `float32`; only the categorical encoding scheme changes.
+    - `INTEGER`: Node classes are scalar labels in the first feature column.
+    - `ONE_HOT`: Node classes are one-hot vectors in `[constant, pi, gate, po]` order.)pb")
+        .value("INTEGER", aigverse::node_tensor_encoding::INTEGER,
+               R"pb(Scalar node labels in the first feature column: 0=constant, 1=pi, 2=gate, 3=po.)pb")
+        .value("ONE_HOT", aigverse::node_tensor_encoding::ONE_HOT,
+               R"pb(One-hot node labels in [constant, pi, gate, po] order.)pb");
+
+    nb::enum_<aigverse::edge_tensor_encoding>(m, "EdgeTensorEncoding",
+                                              R"pb(Edge encoding mode for exported graph tensors.
+
+    All edge features use `float32`; only the categorical encoding scheme changes.
+    - `BINARY`: Edge polarity is binary (regular=0.0, inverted=1.0).
+    - `SIGNED`: Edge polarity is signed (regular=+1.0, inverted=-1.0).
+    - `ONE_HOT`: Edge polarity is one-hot in `[regular, inverted]` order.)pb")
+        .value("BINARY", aigverse::edge_tensor_encoding::BINARY,
+               R"pb(Labels are encoded as 0.0 (regular) and 1.0 (inverted).)pb")
+        .value("SIGNED", aigverse::edge_tensor_encoding::SIGNED,
+               R"pb(Labels are encoded as +1.0 (regular) and -1.0 (inverted).)pb")
+        .value("ONE_HOT", aigverse::edge_tensor_encoding::ONE_HOT,
+               R"pb(One-hot edge labels in [regular, inverted] order.)pb");
+}
 
 template <typename Ntk>
 void bind_network(nanobind::module_& m, const std::string& network_name)  // NOLINT(misc-use-internal-linkage)
@@ -355,6 +385,43 @@ Returns:
 Returns:
     The corresponding index-list representation.)pb",
             nb::rv_policy::move)
+        .def(
+            "to_graph_tensors",
+            [](const Ntk& ntk, const aigverse::node_tensor_encoding node_encoding,
+               const aigverse::edge_tensor_encoding edge_encoding, const bool include_level, const bool include_fanout,
+               const bool include_truth_table)
+            {
+                return aigverse::detail::to_graph_tensors(ntk, node_encoding, edge_encoding, include_level,
+                                                          include_fanout, include_truth_table);
+            },
+            nb::arg("node_encoding") = aigverse::node_tensor_encoding::INTEGER,
+            nb::arg("edge_encoding") = aigverse::edge_tensor_encoding::BINARY, nb::arg("include_level") = true,
+            nb::arg("include_fanout") = false, nb::arg("include_truth_table") = false,
+            R"pb(Exports graph tensors for machine-learning workflows.
+
+Returns sparse graph topology and features as DLPack-compatible arrays.
+
+Edge encoding mapping:
+    - ``BINARY``: regular=0.0, inverted=1.0
+    - ``SIGNED``: regular=+1.0, inverted=-1.0
+    - ``ONE_HOT``: regular=[1.0, 0.0], inverted=[0.0, 1.0]
+
+Node encoding mapping:
+    - ``INTEGER``: constant=0, pi=1, gate=2, po=3
+    - ``ONE_HOT``: [constant, pi, gate, po]
+
+Args:
+    node_encoding: Node encoding mode as :class:`~aigverse.networks.NodeTensorEncoding`.
+    edge_encoding: Edge encoding mode as :class:`~aigverse.networks.EdgeTensorEncoding`.
+    include_level: Appends logic level as a node feature.
+    include_fanout: Appends fanout size as a node feature.
+    include_truth_table: Appends simulated node/output truth-table bits.
+
+Returns:
+    A dictionary with ``edge_index`` (shape ``(2, E)``, dtype ``int64``),
+    ``edge_attr`` (shape ``(E, D_edge)``, dtype ``float32``), and ``node_attr``
+    (shape ``(N, D_node)``, dtype ``float32``).
+)pb")
         .def("__len__", &Ntk::size, R"pb(Returns the number of nodes.)pb")
         .def(
             "__repr__",
@@ -594,6 +661,21 @@ Preserves only combinational structure and does not capture augmented view metad
             R"pb(Sequential networks cannot be encoded as combinational index lists.)pb",
             nb::sig("def to_index_list(self) -> NoReturn"))
         .def(
+            "to_graph_tensors",
+            [network_name](const SequentialNtk&, const aigverse::node_tensor_encoding,
+                           const aigverse::edge_tensor_encoding, const bool, const bool, const bool) -> nb::dict
+            {
+                const auto message = fmt::format("Sequential{} does not support to_graph_tensors() because graph "
+                                                 "tensor export is combinational-only and would drop register "
+                                                 "state.",
+                                                 network_name);
+                throw nb::type_error(message.c_str());
+            },
+            nb::arg("node_encoding") = aigverse::node_tensor_encoding::INTEGER,
+            nb::arg("edge_encoding") = aigverse::edge_tensor_encoding::BINARY, nb::arg("include_level") = true,
+            nb::arg("include_fanout") = false, nb::arg("include_truth_table") = false,
+            R"pb(Sequential networks cannot be exported as combinational graph tensors.)pb")
+        .def(
             "__getstate__",
             [network_name](const SequentialNtk&) -> nb::tuple
             {
@@ -710,6 +792,7 @@ template void bind_network<aigverse::aig>(nanobind::module_&, const std::string&
 
 void bind_logic_networks(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
+    detail::bind_tensor_encodings(m);
     detail::bind_network<aigverse::aig>(m, "Aig");
 }
 

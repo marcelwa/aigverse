@@ -4,12 +4,47 @@ This module includes network types, edge and index list utilities, and helper
 objects for structural manipulation.
 """
 
+import enum
 from collections.abc import Iterator, Sequence
 from typing import TYPE_CHECKING, NoReturn, overload
 
 if TYPE_CHECKING:
     import networkx as nx
     import numpy as np
+
+class NodeTensorEncoding(enum.Enum):
+    """Node encoding mode for exported graph tensors.
+
+    All node features use `float32`; only the categorical encoding scheme changes.
+    - `INTEGER`: Node classes are scalar labels in the first feature column.
+    - `ONE_HOT`: Node classes are one-hot vectors in `[constant, pi, gate, po]` order.
+    """
+
+    INTEGER = 0
+    """
+    Scalar node labels in the first feature column: 0=constant, 1=pi, 2=gate, 3=po.
+    """
+
+    ONE_HOT = 1
+    """One-hot node labels in [constant, pi, gate, po] order."""
+
+class EdgeTensorEncoding(enum.Enum):
+    """Edge encoding mode for exported graph tensors.
+
+    All edge features use `float32`; only the categorical encoding scheme changes.
+    - `BINARY`: Edge polarity is binary (regular=0.0, inverted=1.0).
+    - `SIGNED`: Edge polarity is signed (regular=+1.0, inverted=-1.0).
+    - `ONE_HOT`: Edge polarity is one-hot in `[regular, inverted]` order.
+    """
+
+    BINARY = 0
+    """Labels are encoded as 0.0 (regular) and 1.0 (inverted)."""
+
+    SIGNED = 1
+    """Labels are encoded as +1.0 (regular) and -1.0 (inverted)."""
+
+    ONE_HOT = 2
+    """One-hot edge labels in [regular, inverted] order."""
 
 class AigSignal:
     """Represents a signal in an AIG.
@@ -273,6 +308,40 @@ class Aig:
 
         Returns:
             The corresponding index-list representation.
+        """
+
+    def to_graph_tensors(
+        self,
+        node_encoding: NodeTensorEncoding = ...,
+        edge_encoding: EdgeTensorEncoding = ...,
+        include_level: bool = True,
+        include_fanout: bool = False,
+        include_truth_table: bool = False,
+    ) -> dict:
+        """Exports graph tensors for machine-learning workflows.
+
+        Returns sparse graph topology and features as DLPack-compatible arrays.
+
+        Edge encoding mapping:
+            - ``BINARY``: regular=0.0, inverted=1.0
+            - ``SIGNED``: regular=+1.0, inverted=-1.0
+            - ``ONE_HOT``: regular=[1.0, 0.0], inverted=[0.0, 1.0]
+
+        Node encoding mapping:
+            - ``INTEGER``: constant=0, pi=1, gate=2, po=3
+            - ``ONE_HOT``: [constant, pi, gate, po]
+
+        Args:
+            node_encoding: Node encoding mode as :class:`~aigverse.networks.NodeTensorEncoding`.
+            edge_encoding: Edge encoding mode as :class:`~aigverse.networks.EdgeTensorEncoding`.
+            include_level: Appends logic level as a node feature.
+            include_fanout: Appends fanout size as a node feature.
+            include_truth_table: Appends simulated node/output truth-table bits.
+
+        Returns:
+            A dictionary with ``edge_index`` (shape ``(2, E)``, dtype ``int64``),
+            ``edge_attr`` (shape ``(E, D_edge)``, dtype ``float32``), and ``node_attr``
+            (shape ``(N, D_node)``, dtype ``float32``).
         """
 
     if TYPE_CHECKING:
@@ -632,6 +701,16 @@ class SequentialAig(Aig):
 
     def to_index_list(self) -> NoReturn:
         """Sequential networks cannot be encoded as combinational index lists."""
+
+    def to_graph_tensors(
+        self,
+        node_encoding: NodeTensorEncoding = ...,
+        edge_encoding: EdgeTensorEncoding = ...,
+        include_level: bool = True,
+        include_fanout: bool = False,
+        include_truth_table: bool = False,
+    ) -> NoReturn:
+        """Sequential networks cannot be exported as combinational graph tensors."""
 
     def __getstate__(self) -> NoReturn:
         """Sequential networks are not pickleable via combinational index-list state."""

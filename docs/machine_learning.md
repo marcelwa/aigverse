@@ -51,7 +51,7 @@ dataset = [
 print(len(dataset), dataset[0].num_pis, dataset[0].num_gates)
 ```
 
-### NetworkX
+## NetworkX
 
 The [NetworkX](https://networkx.org/) adapter allows you to convert an AIG into a {py:class}`~networkx.DiGraph` object.
 This enables you to leverage the rich ecosystem of graph-based machine learning and data science tools that operate on
@@ -128,50 +128,136 @@ plt.margins(x=0.2)
 plt.show()
 ```
 
-## Truth Tables
+## DLPack Tensors
 
-Truth tables can be easily converted to Python lists or [NumPy](https://numpy.org/) arrays, making them compatible with
-standard ML libraries such as [scikit-learn](https://scikit-learn.org/), [PyTorch](https://pytorch.org/), or
-[TensorFlow](https://www.tensorflow.org/). Since `TruthTable` objects are iterable, this conversion is direct and
-intuitive. You can use these arrays as labels or features in supervised learning tasks, or as part of a dataset for
-training and evaluating models.
+For high-throughput ML pipelines, `aigverse` can export AIG objects directly as graph tensors (node
+attributes, edge indices, and edge attributes) utilizing the [DLPack](https://dmlc.github.io/dlpack/latest/) protocol via the {py:meth}`~aigverse.networks.Aig.to_graph_tensors` method. This allows
+zero-copy hand-off to modern tensor frameworks, such
+as [PyTorch](https://docs.pytorch.org/docs/stable/dlpack.html),
+[JAX](https://docs.jax.dev/en/latest/_autosummary/jax.dlpack.from_dlpack.html#jax.dlpack.from_dlpack),
+[TensorFlow](https://www.tensorflow.org/api_docs/python/tf/experimental/dlpack/from_dlpack), etc., through
+`from_dlpack`.
+
+Encoding and `dtype` mapping:
+
+- Edge encoding (`edge_attr`):
+  - `EdgeTensorEncoding.BINARY`: regular `0.0`, inverted `1.0`
+  - `EdgeTensorEncoding.SIGNED`: regular `+1.0`, inverted `-1.0`
+  - `EdgeTensorEncoding.ONE_HOT`: regular `[1.0, 0.0]`, inverted `[0.0, 1.0]`
+- Node encoding (`node_attr`):
+  - `NodeTensorEncoding.INTEGER`: `constant=0`, `pi=1`, `gate=2`, `po=3`
+  - `NodeTensorEncoding.ONE_HOT`: `[constant, pi, gate, po]`
+- Tensor `dtype`s:
+  - `edge_index`: `int64`
+  - `edge_attr`: `float32`
+  - `node_attr`: `float32`
+
+Tensor shapes follow the convention:
+
+$$
+\mathbf{edge\_index} \in \mathbb{Z}^{2 \times E}, \quad
+\mathbf{edge\_attr} \in \mathbb{R}^{E \times D_{\text{edge}}}, \quad
+\mathbf{node\_attr} \in \mathbb{R}^{N \times D_{\text{node}}}
+$$
+
+where $E$ is the number of edges and $N$ is the number of nodes. For edge features,
+$D_{\text{edge}} = 1$ for `BINARY` and `SIGNED`, and $D_{\text{edge}} = 2$ for `ONE_HOT`.
+The node feature width $D_{\text{node}}$ depends on the chosen node encoding and enabled optional features.
+
+:::{note}
+Current limitations of `to_graph_tensors`:
+
+- The export targets **combinational** networks. Sequential networks are not supported.
+- Exported tensors are backed by **CPU host memory** (NumPy-backed DLPack producer).
+- `torch.from_dlpack(...)` is zero-copy on CPU, but moving tensors to CUDA still allocates GPU memory and performs a host-to-device copy.
+- When `include_truth_table=True`, the export is restricted to at most 16 primary inputs due to the exponential growth of truth table size. This is a practical limit for ML applications, but it is not a fundamental limitation of the API.
+  :::
 
 ```{code-cell} ipython3
-from aigverse.utils import TruthTable
+import torch
+
+from aigverse.networks import Aig, EdgeTensorEncoding, NodeTensorEncoding
+
+aig = Aig()
+a = aig.create_pi()
+b = aig.create_pi()
+g = aig.create_and(a, b)
+aig.create_po(g)
+
+dlpack_data = aig.to_graph_tensors(
+  node_encoding=NodeTensorEncoding.INTEGER,
+  edge_encoding=EdgeTensorEncoding.BINARY,
+    include_level=True,
+    include_fanout=True,
+    include_truth_table=False,
+)
+
+edge_index = torch.from_dlpack(dlpack_data["edge_index"])
+edge_attr = torch.from_dlpack(dlpack_data["edge_attr"])
+node_attr = torch.from_dlpack(dlpack_data["node_attr"])
+
+print(edge_index.shape, edge_attr.shape, node_attr.shape)
+```
+
+You can immediately construct sparse tensors in Python:
+
+```{code-cell} ipython3
+num_nodes = node_attr.shape[0]
+
+sparse_adj = torch.sparse_coo_tensor(
+    indices=edge_index,
+    values=edge_attr,
+    size=(num_nodes, num_nodes, edge_attr.shape[1]),
+)
+
+print(sparse_adj.shape)
+```
+
+The same export also works
+with [NumPy's DLPack consumer API](https://numpy.org/doc/stable/release/1.22.0-notes.html#add-nep-47-compatible-dlpack-support):
+
+```{code-cell} ipython3
 import numpy as np
 
-# Create a simple truth table, e.g., a 3-input majority function
+edge_index_np = np.from_dlpack(aig.to_graph_tensors()["edge_index"])
+print(edge_index_np.shape)
+```
+
+## Truth Tables
+
+Truth tables are iterable, but for ML pipelines it is best to keep data in contiguous array/tensor form from the
+start. A practical pattern is:
+
+1. Materialize labels once as a NumPy array.
+2. Build the input matrix with vectorized NumPy operations.
+3. Convert to framework tensors (for example, [PyTorch](https://docs.pytorch.org/docs/stable/index.html)) without
+   copying.
+
+This keeps preprocessing fast and avoids Python-level loops in hot paths.
+
+```{code-cell} ipython3
+import numpy as np
+import torch
+
+from aigverse.utils import TruthTable
+
+# Create a simple truth table (3-input majority function)
 tt = TruthTable(3)
 tt.create_from_hex_string("e8")
 
-# Export to a list
-tt_list = list(tt)
-print(f"As list: {tt_list}")
+# Vectorized label extraction (shape: [2**num_vars])
+y_np = np.fromiter(tt, dtype=np.uint8)
 
-# Export to NumPy arrays of different types
-tt_np_bool = np.array(tt)
-print(f"As NumPy bool array:  {tt_np_bool}")
-tt_np_int = np.array(tt, dtype=np.int32)
-print(f"As NumPy int array:   {tt_np_int}")
-tt_np_float = np.array(tt, dtype=np.float64)
-print(f"As NumPy float array: {tt_np_float}")
+# Vectorized feature matrix generation (shape: [2**num_vars, num_vars])
+n = tt.num_vars()
+indices = np.array(range(2**n), dtype=np.uint32)[:, None]
+bit_positions = np.array(range(n - 1, -1, -1), dtype=np.uint32)
+X_np = ((indices >> bit_positions) & 1).astype(np.uint8)
 
+# Zero-copy bridge NumPy -> PyTorch
+X_torch = torch.from_numpy(X_np)
+y_torch = torch.from_numpy(y_np)
 
-# These arrays can now be used as labels for an ML model.
-# For example, let's generate the corresponding feature matrix:
-def generate_inputs(num_vars):
-    inputs = []
-    for i in range(2**num_vars):
-        # Convert i to binary and pad with zeros
-        binary = bin(i)[2:].zfill(num_vars)
-        inputs.append([int(bit) for bit in binary])
-    return np.array(inputs)
-
-
-feature_matrix = generate_inputs(tt.num_vars())
-labels = tt_np_int  # Using the integer array as labels
-
-print("\nFeature matrix (X) and labels (y) for ML:")
-print("X:\n", feature_matrix)
-print("y:\n", labels)
+print("NumPy shapes:", X_np.shape, y_np.shape)
+print("Torch shapes:", X_torch.shape, y_torch.shape)
 ```
