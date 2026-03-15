@@ -129,11 +129,32 @@ struct edge_list
      */
     std::vector<edge<Ntk>> edges{};
 };
+/**
+ * @brief Converts a network to an edge list.
+ *
+ * @tparam Ntk Network type.
+ * @param ntk Network.
+ * @param regular_weight Weight assigned to non-inverted edges.
+ * @param inverted_weight Weight assigned to inverted edges.
+ * @return Edge list representation of the network.
+ */
 template <typename Ntk>
 [[nodiscard]] edge_list<typename Ntk::base_type> to_edge_list(const Ntk& ntk, const int64_t regular_weight = 0,
                                                               const int64_t inverted_weight = 1) noexcept
 {
     auto el = edge_list<typename Ntk::base_type>(ntk);
+
+    // estimate edge count for initial vector reservation
+    std::size_t edge_count =
+        (static_cast<std::size_t>(Ntk::max_fanin_size) * static_cast<std::size_t>(ntk.num_gates())) +
+        static_cast<std::size_t>(ntk.num_pos());
+
+    if constexpr (mockturtle::has_foreach_ri_v<Ntk> && mockturtle::has_ri_to_ro_v<Ntk>)
+    {
+        edge_count += static_cast<std::size_t>(ntk.num_registers());
+    }
+
+    el.edges.reserve(edge_count);
 
     // constants, primary inputs, and regular nodes
     ntk.foreach_node(
