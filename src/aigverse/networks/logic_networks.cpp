@@ -10,6 +10,7 @@
 #include <fmt/format.h>
 #include <mockturtle/networks/sequential.hpp>
 #include <mockturtle/traits.hpp>
+#include <mockturtle/views/cut_view.hpp>
 #include <mockturtle/views/depth_view.hpp>
 #include <mockturtle/views/fanout_view.hpp>
 #include <mockturtle/views/names_view.hpp>
@@ -528,6 +529,93 @@ Preserves only combinational structure and does not capture augmented view metad
                 return fanouts;
             },
             nb::arg("n"), R"pb(Returns fanout nodes of node ``n``.)pb");
+
+    using CutNtk = mockturtle::cut_view<Ntk>;
+    nb::class_<CutNtk, Ntk>(m, fmt::format("Cut{}", network_name).c_str(),
+                            R"pb(Implements an isolated view on a single cut in a network.
+
+This view creates a network from a single cut with a single output `root`
+and a set of `leaves`. The view assumes that all nodes' visited flags are
+set to 0 before creating the view and guarantees that all nodes in the view
+will have a 0 visited flag after construction.)pb")
+        .def(nb::init<const Ntk&, const std::vector<Node>&, const Signal&>(), nb::arg("ntk"), nb::arg("leaves"),
+             nb::arg("root"),
+             R"pb(Creates a cut view from a network, leaf nodes, and root signal.
+
+Args:
+    ntk: The base network.
+    leaves: Vector of leaf nodes (boundary of the cut).
+    root: The root signal (output) of the cut.)pb")
+        .def(nb::init<const Ntk&, const std::vector<Signal>&, const Signal&>(), nb::arg("ntk"), nb::arg("leaves"),
+             nb::arg("root"),
+             R"pb(Creates a cut view from a network, leaf signals, and root signal.
+
+Args:
+    ntk: The base network.
+    leaves: Vector of leaf signals (boundary of the cut).
+    root: The root signal (output) of the cut.)pb")
+        .def(
+            "clone", [](const CutNtk& ntk) { return CutNtk{ntk}; }, R"pb(Creates a structural copy of the cut view.)pb")
+        .def(
+            "__copy__", [](const CutNtk& ntk) { return CutNtk{ntk}; }, R"pb(Returns a shallow copy of the cut view.)pb")
+        .def(
+            "__deepcopy__", [](const CutNtk& ntk, const nb::dict&) { return CutNtk{ntk}; }, nb::arg("memo"),
+            R"pb(Returns a deep copy of the cut view.)pb")
+        .def(
+            "nodes", [](const CutNtk& ntk) { return collect_nodes(ntk); },
+            R"pb(Returns a list of all nodes in the cut view.)pb")
+        .def(
+            "gates",
+            [](const CutNtk& ntk)
+            {
+                std::vector<Node> gates;
+                gates.reserve(ntk.num_gates());
+                ntk.foreach_gate([&gates](const auto& g) { gates.push_back(g); });
+                return gates;
+            },
+            R"pb(Returns a list of all gate nodes in the cut view.)pb")
+        .def(
+            "pis",
+            [](const CutNtk& ntk)
+            {
+                std::vector<Node> pis;
+                pis.reserve(ntk.num_pis());
+                ntk.foreach_pi([&pis](const auto& pi) { pis.push_back(pi); });
+                return pis;
+            },
+            R"pb(Returns a list of all primary input (leaf) nodes in the cut view.)pb")
+        .def(
+            "pos",
+            [](const CutNtk& ntk)
+            {
+                std::vector<Signal> pos;
+                pos.reserve(ntk.num_pos());
+                ntk.foreach_po([&pos](const auto& po) { pos.push_back(po); });
+                return pos;
+            },
+            R"pb(Returns a list containing the root signal of the cut view.)pb")
+        .def(
+            "is_pi", [](const CutNtk& ntk, const Node& n) { return ntk.is_pi(n); }, nb::arg("n"),
+            R"pb(Returns whether ``n`` is a primary input (leaf) in the cut view.)pb")
+        .def_prop_ro(
+            "size", [](const CutNtk& ntk) { return ntk.size(); }, R"pb(Number of nodes in the cut view.)pb")
+        .def_prop_ro(
+            "num_pis", [](const CutNtk& ntk) { return ntk.num_pis(); },
+            R"pb(Number of primary inputs (leaves) in the cut view.)pb")
+        .def_prop_ro(
+            "num_pos", [](const CutNtk& ntk) { return ntk.num_pos(); },
+            R"pb(Number of primary outputs (always 1 for cut view).)pb")
+        .def_prop_ro(
+            "num_gates", [](const CutNtk& ntk) { return ntk.num_gates(); },
+            R"pb(Number of logic gates in the cut view.)pb")
+        .def(
+            "__repr__",
+            [network_name](const CutNtk& ntk)
+            {
+                return fmt::format("Cut{}(leaves={}, gates={}, size={})", network_name, ntk.num_pis(), ntk.num_gates(),
+                                   ntk.size());
+            },
+            R"pb(Returns a developer-friendly string representation.)pb");
 
     using Register = mockturtle::register_t;  // NOLINT(readability-identifier-naming)
     nb::class_<Register>(m, fmt::format("{}Register", network_name).c_str(),
