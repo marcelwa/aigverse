@@ -102,7 +102,7 @@ jobs:
           save-cache: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Install sccache
-        if: ${{ !startsWith(inputs.runs-on, 'ubuntu') }}
+        if: ${{ !startsWith(matrix.runs-on, 'ubuntu') }}
         run: uv tool install sccache
 
       - name: Build wheels
@@ -116,7 +116,7 @@ jobs:
           overwrite: true
 
       - name: Show sccache stats
-        if: ${{ !startsWith(inputs.runs-on, 'ubuntu') }}
+        if: ${{ !startsWith(matrix.runs-on, 'ubuntu') }}
         run: sccache --show-stats
 
   publish_to_pypi:
