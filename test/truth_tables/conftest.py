@@ -37,11 +37,11 @@ def tt2_and(tt2_from_binary: Callable[[str], TruthTable]) -> TruthTable:
 
 
 @pytest.fixture
-def tt2_or(tt2_from_binary: Callable[[str], TruthTable]) -> TruthTable:
-    """Create the 2-variable OR truth table.
+def tt2_mask_a_or_b(tt2_from_binary: Callable[[str], TruthTable]) -> TruthTable:
+    """Create the expected OR mask for test_simple_operators inputs.
 
     Returns:
-        A 2-variable truth table for logical OR.
+        The 2-variable truth table matching 1001 OR 1100.
     """
     return tt2_from_binary("1101")
 

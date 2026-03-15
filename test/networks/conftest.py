@@ -24,19 +24,6 @@ def aig_with_two_pis() -> tuple[Aig, AigSignal, AigSignal]:
 
 
 @pytest.fixture
-def standalone_aig_with_two_pis() -> tuple[Aig, AigSignal, AigSignal]:
-    """Create an independent AIG with two primary inputs.
-
-    Returns:
-        A tuple containing a standalone AIG and two PI signals.
-    """
-    aig = Aig()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    return aig, x1, x2
-
-
-@pytest.fixture
 def aig_with_single_pi() -> tuple[Aig, AigSignal]:
     """Create an AIG with one primary input.
 
@@ -58,7 +45,10 @@ def aig_with_single_and(aig_with_two_pis: tuple[Aig, AigSignal, AigSignal]) -> t
     Returns:
         A tuple with the AIG and the AND gate signal.
     """
-    aig, x1, x2 = aig_with_two_pis
+    base_aig, _x1, _x2 = aig_with_two_pis
+    aig = base_aig.clone()
+    x1 = aig.make_signal(aig.pi_at(0))
+    x2 = aig.make_signal(aig.pi_at(1))
     gate = aig.create_and(x1, x2)
     return aig, gate
 

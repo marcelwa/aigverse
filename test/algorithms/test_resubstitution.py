@@ -66,7 +66,7 @@ def test_positive_divisor_substitution(positive_divisor_substitution_aig: Aig) -
 
 
 def test_negative_divisor_substitution(implicant_reduction_aig: Aig) -> None:
-    # !x0 * !(!x0 * !x1) == > !x0 * x1 (reduction of 2 nodes)
+    # x0 * !(!x0 * !x1) == > x0 (reduction of 2 nodes)
     aig = implicant_reduction_aig
 
     aig_before = aig.clone()

@@ -257,14 +257,17 @@ def test_aig_clone_network(aig_with_single_and: tuple[Aig, AigSignal]) -> None:
 
 def test_aig_clone_node(
     aig_with_single_and: tuple[Aig, AigSignal],
-    standalone_aig_with_two_pis: tuple[Aig, AigSignal, AigSignal],
+    aig_with_two_pis: tuple[Aig, AigSignal, AigSignal],
 ) -> None:
     # Ensure the clone_node method exists in AIG
     assert hasattr(Aig, "clone_node")
 
     # Create two AIG networks
     aig1, f1 = aig_with_single_and
-    aig2, a2, b2 = standalone_aig_with_two_pis
+    base_aig, _a2, _b2 = aig_with_two_pis
+    aig2 = base_aig.clone()
+    a2 = aig2.make_signal(aig2.pi_at(0))
+    b2 = aig2.make_signal(aig2.pi_at(1))
 
     # Check the size of aig1
     assert aig1.size == 4

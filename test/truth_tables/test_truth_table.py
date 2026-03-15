@@ -250,13 +250,14 @@ def test_count_ones_large() -> None:
 
 def test_simple_operators(
     tt2_and: TruthTable,
-    tt2_or: TruthTable,
+    tt2_mask_a_or_b: TruthTable,
     tt2_from_binary: Callable[[str], TruthTable],
 ) -> None:
     a = tt2_from_binary("1001")
     b = tt2_from_binary("1100")
+    # These expected masks intentionally correspond to the specific a/b assignments above.
     a_and_b = tt2_and
-    a_or_b = tt2_or
+    a_or_b = tt2_mask_a_or_b
     a_xor_b = tt2_from_binary("0101")
 
     assert a & b == a_and_b
