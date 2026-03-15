@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from aigverse.algorithms import balancing
-from aigverse.networks import Aig, DepthAig
+from aigverse.networks import DepthAig
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from aigverse.networks import Aig
 
 
 def _depth(aig: Aig) -> int:
@@ -11,16 +18,9 @@ def _depth(aig: Aig) -> int:
     return view.num_levels
 
 
-def test_balancing_on_simple_balanced_aig() -> None:
+def test_balancing_on_simple_balanced_aig(make_and_chain_aig: Callable[[int], Aig]) -> None:
     """Test balancing on an already simple balanced AIG preserves its structure."""
-    aig = Aig()
-    x0 = aig.create_pi()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-
-    a0 = aig.create_and(x0, x1)
-    a1 = aig.create_and(a0, x2)
-    aig.create_po(a1)
+    aig = make_and_chain_aig(3)
 
     num_pis_before = aig.num_pis
     num_pos_before = aig.num_pos
@@ -62,21 +62,9 @@ def test_balancing_on_simple_balanced_aig() -> None:
     assert _depth(aig_params_test) == depth_before_clone
 
 
-def test_balancing_reduces_depth_of_long_chain() -> None:
+def test_balancing_reduces_depth_of_long_chain(make_and_chain_aig: Callable[[int], Aig]) -> None:
     """Test that balancing significantly reduces depth for a long, unbalanced chain."""
-    aig = Aig()
-    x0 = aig.create_pi()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    x3 = aig.create_pi()
-    x4 = aig.create_pi()
-
-    # Create an unbalanced chain: x0 & (x1 & (x2 & (x3 & x4)))
-    n0 = aig.create_and(x3, x4)
-    n1 = aig.create_and(x2, n0)
-    n2 = aig.create_and(x1, n1)
-    n3 = aig.create_and(x0, n2)
-    aig.create_po(n3)
+    aig = make_and_chain_aig(5)
 
     num_pis_before = aig.num_pis
     num_pos_before = aig.num_pos
@@ -121,21 +109,9 @@ def test_balancing_reduces_depth_of_long_chain() -> None:
     assert aig_params_test.num_gates == num_gates_before_clone
 
 
-def test_balancing_complex_unbalanced_to_balanced_tree() -> None:
+def test_balancing_complex_unbalanced_to_balanced_tree(complex_unbalanced_balancing_aig: Aig) -> None:
     """Test balancing transforms a complex unbalanced AIG into a balanced tree, reducing depth."""
-    aig = Aig()
-    pis = [aig.create_pi() for _ in range(8)]
-    x0, x1, x2, x3, x4, x5, x6, x7 = pis
-
-    # AIG definition: (x0 & x1) & (x2 & (x3 & (x4 & (x5 & (x6 & x7)))))
-    n_chain_0 = aig.create_and(x6, x7)
-    n_chain_1 = aig.create_and(x5, n_chain_0)
-    n_chain_2 = aig.create_and(x4, n_chain_1)
-    n_chain_3 = aig.create_and(x3, n_chain_2)
-    n_chain_4 = aig.create_and(x2, n_chain_3)
-    n_branch_0 = aig.create_and(x0, x1)
-    output_node = aig.create_and(n_branch_0, n_chain_4)
-    aig.create_po(output_node)
+    aig = complex_unbalanced_balancing_aig
 
     num_pis_before = aig.num_pis
     num_pos_before = aig.num_pos
@@ -176,39 +152,21 @@ def test_balancing_complex_unbalanced_to_balanced_tree() -> None:
     assert depth_after_clone < depth_before_clone
 
 
-def _create_and_chain_po(aig: Aig, num_pis: int) -> None:
-    """Helper to create an AND chain of num_pis inputs and a PO."""
-    pis_list = [aig.create_pi() for _ in range(num_pis)]
-    if num_pis == 0:
-        aig.create_po(aig.get_constant(False))
-        return
-    if num_pis == 1:
-        aig.create_po(pis_list[0])
-        return
-
-    current_node = aig.create_and(pis_list[-2], pis_list[-1])
-    for i in range(num_pis - 3, -1, -1):
-        current_node = aig.create_and(pis_list[i], current_node)
-    aig.create_po(current_node)
-
-
-def test_balancing_with_different_cut_sizes_on_chain() -> None:
+def test_balancing_with_different_cut_sizes_on_chain(make_and_chain_aig: Callable[[int], Aig]) -> None:
     """Test balancing a chain with varying cut_size parameters."""
     pis_count = 7
     expected_initial_depth = pis_count - 1
     expected_final_depth_optimal = 3  # log2(7) rounded up
 
     # Default cut_size (4)
-    aig_cs_default = Aig()
-    _create_and_chain_po(aig_cs_default, pis_count)
+    aig_cs_default = make_and_chain_aig(pis_count)
     assert _depth(aig_cs_default) == expected_initial_depth
 
     aig_cs_default = balancing(aig_cs_default)
     assert _depth(aig_cs_default) == expected_final_depth_optimal
 
     # Smaller cut_size (e.g., 2)
-    aig_cs_small = Aig()
-    _create_and_chain_po(aig_cs_small, pis_count)
+    aig_cs_small = make_and_chain_aig(pis_count)
     depth_before_cs_small = _depth(aig_cs_small)
 
     aig_cs_small = balancing(aig_cs_small, cut_size=2, cut_limit=10)
@@ -220,21 +178,15 @@ def test_balancing_with_different_cut_sizes_on_chain() -> None:
     )
 
     # Larger cut_size (e.g., 6)
-    aig_cs_large = Aig()
-    _create_and_chain_po(aig_cs_large, pis_count)
+    aig_cs_large = make_and_chain_aig(pis_count)
 
     aig_cs_large = balancing(aig_cs_large, cut_size=6, cut_limit=12)
     assert _depth(aig_cs_large) == expected_final_depth_optimal
 
 
-def test_esop_balancing_reduces_depth_on_xor_chain() -> None:
+def test_esop_balancing_reduces_depth_on_xor_chain(make_xor_chain_aig: Callable[[int], Aig]) -> None:
     """Test ESOP balancing behavior on a chain of XORs (XAG-like)."""
-    aig = Aig()
-    pis = [aig.create_pi() for _ in range(8)]
-    node = pis[0]
-    for i in range(1, 8):
-        node = aig.create_xor(node, pis[i])
-    aig.create_po(node)
+    aig = make_xor_chain_aig(8)
     depth_before = _depth(aig)
     assert depth_before == 14  # Depth of AIG XOR chain
 
@@ -244,18 +196,9 @@ def test_esop_balancing_reduces_depth_on_xor_chain() -> None:
     assert depth_after == 8, f"ESOP balancing did not produce expected depth: {depth_after} (expected 8)"
 
 
-def test_esop_balancing_preserves_functionality_on_xor_and_chain() -> None:
+def test_esop_balancing_preserves_functionality_on_xor_and_chain(mixed_xor_and_balancing_aig: Aig) -> None:
     """Test ESOP balancing preserves PI/PO/gate count and depth for a mixed XOR/AND AIG."""
-    aig = Aig()
-    pis = [aig.create_pi() for _ in range(8)]
-    n0 = aig.create_xor(pis[0], pis[1])
-    n1 = aig.create_xor(pis[2], pis[3])
-    n2 = aig.create_and(n0, n1)
-    n3 = aig.create_and(pis[4], pis[5])
-    n4 = aig.create_and(pis[6], pis[7])
-    n5 = aig.create_xor(n3, n4)
-    out = aig.create_xor(n2, n5)
-    aig.create_po(out)
+    aig = mixed_xor_and_balancing_aig
     num_pis_before = aig.num_pis
     num_pos_before = aig.num_pos
     num_gates_before = aig.num_gates
@@ -269,43 +212,25 @@ def test_esop_balancing_preserves_functionality_on_xor_and_chain() -> None:
     assert depth_after == depth_before  # ESOP balancing may not reduce depth for all AIGs
 
 
-def test_balancing_invalid_rebalance_function_raises() -> None:
+def test_balancing_invalid_rebalance_function_raises(and_gate_aig: Aig) -> None:
     """
     Test that an invalid rebalance_function raises an exception.
     """
-    aig = Aig()
-    x0 = aig.create_pi()
-    x1 = aig.create_pi()
-    a0 = aig.create_and(x0, x1)
-    aig.create_po(a0)
+    aig = and_gate_aig
     with pytest.raises(Exception, match="Unknown rebalance function"):
         balancing(aig, rebalance_function="not_a_valid_option")  # type: ignore [arg-type]
 
 
-def test_esop_balancing_with_sop_both_phases_param() -> None:
+def test_esop_balancing_with_sop_both_phases_param(make_xor_chain_aig: Callable[[int], Aig]) -> None:
     """Test esop balancing with sop_both_phases param does not error and preserves depth."""
-    aig = Aig()
-    x0 = aig.create_pi()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    n0 = aig.create_xor(x0, x1)
-    n1 = aig.create_xor(n0, x2)
-    aig.create_po(n1)
+    aig = make_xor_chain_aig(3)
     depth_before = _depth(aig)
     aig = balancing(aig, rebalance_function="esop", sop_both_phases=False)
     assert _depth(aig) <= depth_before
 
 
-def test_return_new_does_not_mutate_input() -> None:
-    aig = Aig()
-    x0 = aig.create_pi()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    x3 = aig.create_pi()
-    n0 = aig.create_and(x2, x3)
-    n1 = aig.create_and(x1, n0)
-    n2 = aig.create_and(x0, n1)
-    aig.create_po(n2)
+def test_return_new_does_not_mutate_input(make_and_chain_aig: Callable[[int], Aig]) -> None:
+    aig = make_and_chain_aig(4)
 
     aig_before = aig.clone()
     result = balancing(aig)

@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import copy
+from typing import TYPE_CHECKING
 
 from aigverse.networks import DepthAig
+
+if TYPE_CHECKING:
+    from aigverse.networks import AigSignal
 
 
 def test_depth_aig() -> None:
@@ -52,21 +56,14 @@ def test_depth_aig() -> None:
     assert aig2.num_levels == 4
 
 
-def test_depth_aig_repr() -> None:
-    aig = DepthAig()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    aig.create_po(aig.create_and(x1, x2))
+def test_depth_aig_repr(depth_aig_single_and: tuple[DepthAig, AigSignal]) -> None:
+    aig, _ = depth_aig_single_and
 
     assert repr(aig) == "DepthAig(pis=2, pos=1, gates=1, depth=1)"
 
 
-def test_depth_aig_clone_and_copy_preserve_wrapper_type() -> None:
-    aig = DepthAig()
-    x0 = aig.create_pi()
-    x1 = aig.create_pi()
-    gate = aig.create_and(x0, x1)
-    aig.create_po(gate)
+def test_depth_aig_clone_and_copy_preserve_wrapper_type(depth_aig_single_and: tuple[DepthAig, AigSignal]) -> None:
+    aig, gate = depth_aig_single_and
 
     cloned = aig.clone()
     shallow = copy.copy(aig)

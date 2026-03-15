@@ -389,6 +389,39 @@ This ensures that the project can still be built and the tests pass with the min
 $ nox -s minimums
 ```
 
+### Test Fixtures and Markers
+
+The test suite uses layered {code}`pytest` fixtures to keep test setup reusable and localized:
+
+- {code}`test/conftest.py` for cross-suite fixtures and global test behavior.
+- Domain-level fixture files like {code}`test/networks/conftest.py`, {code}`test/algorithms/conftest.py`,
+  {code}`test/adapters/conftest.py`, and {code}`test/generators/conftest.py`.
+
+When adding tests, prefer reusing an existing fixture over recreating the same network setup inline.
+If a setup pattern is reused in multiple files, move it into the closest shared {code}`conftest.py`.
+
+Pytest markers are also configured to support targeted runs.
+Useful marker filters include:
+
+- {code}`networks`
+- {code}`algorithms`
+- {code}`io`
+- {code}`generators`
+- {code}`adapters`
+- {code}`tts`
+
+Run a marker subset on a specific Python version with:
+
+```console
+$ nox -s tests-3.12 -- -m algorithms
+```
+
+or run a file-level subset with:
+
+```console
+$ nox -s tests -- test/algorithms/test_simulation.py
+```
+
 ### Python Code Formatting and Linting
 
 The Python code is formatted and linted using a collection of [pre-commit hooks](https://pre-commit.com/).

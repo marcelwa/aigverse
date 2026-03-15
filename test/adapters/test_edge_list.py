@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
-from aigverse.networks import Aig, AigEdge, AigEdgeList, SequentialAig
+from aigverse.networks import Aig, AigEdge, AigEdgeList
+
+if TYPE_CHECKING:
+    from aigverse.networks import AigSignal, SequentialAig
 
 
 def test_aig_edge() -> None:
@@ -77,11 +82,8 @@ def test_aig_edge_list() -> None:
     assert (repr(edge_list)) == "EdgeList([])"
 
 
-def test_minimal_aig_to_edge_list() -> None:
-    aig = Aig()
-
-    aig.create_pi()  # 1
-    aig.create_pi()  # 2
+def test_minimal_aig_to_edge_list(two_pi_no_po_aig: Aig) -> None:
+    aig = two_pi_no_po_aig
 
     edge_list = aig.to_edge_list()
 
@@ -89,13 +91,8 @@ def test_minimal_aig_to_edge_list() -> None:
     assert len(edge_list) == 0  # No edges since there are no AND gates or POs
 
 
-def test_no_and_aig_to_edge_list() -> None:
-    aig = Aig()
-
-    x1 = aig.create_pi()  # 1
-    x2 = aig.create_pi()  # 2
-    aig.create_po(x1)  # 3
-    aig.create_po(~x2)  # 4
+def test_no_and_aig_to_edge_list(two_pi_direct_po_aig: Aig) -> None:
+    aig = two_pi_direct_po_aig
 
     edge_list = aig.to_edge_list()
 
@@ -105,14 +102,8 @@ def test_no_and_aig_to_edge_list() -> None:
     assert AigEdge(2, 4, 1) in edge_list  # ~x2 to PO
 
 
-def test_constant_aig_to_edge_list() -> None:
-    # AIG with all inverted inputs
-    aig = Aig()
-
-    x0 = aig.create_pi()  # 1
-    x1 = aig.create_pi()  # 2
-    n0 = aig.create_and(~x0, ~x1)  # 3
-    aig.create_po(n0)  # 4
+def test_constant_aig_to_edge_list(two_pi_inverted_and_po_aig: Aig) -> None:
+    aig = two_pi_inverted_and_po_aig
 
     # custom weights
     edge_list = aig.to_edge_list(regular_weight=5, inverted_weight=-5)
@@ -124,18 +115,8 @@ def test_constant_aig_to_edge_list() -> None:
     assert AigEdge(3, 4, 5) in edge_list  # AND gate to PO
 
 
-def test_simple_aig_to_edge_list() -> None:
-    aig = Aig()
-
-    x1 = aig.create_pi()  # 1
-    x2 = aig.create_pi()  # 2
-    x3 = aig.create_pi()  # 3
-
-    y1 = aig.create_and(x1, ~x2)  # 4
-    y2 = aig.create_and(x2, x3)  # 5
-    y3 = aig.create_and(~y1, y2)  # 6
-
-    aig.create_po(y3)  # 7
+def test_simple_aig_to_edge_list(three_pi_three_and_po_aig: Aig) -> None:
+    aig = three_pi_three_and_po_aig
 
     # default weights
     edge_list = aig.to_edge_list()
@@ -153,14 +134,8 @@ def test_simple_aig_to_edge_list() -> None:
     assert AigEdge(6, 7, 0) in edge_list
 
 
-def test_constant_node_aig_to_edge_list() -> None:
-    aig = Aig()
-
-    x0 = aig.create_pi()  # 1
-    x1 = aig.create_pi()  # 2
-    n0 = aig.create_and(x0, x1)  # 3
-    aig.create_po(x0)  # 4
-    aig.create_po(n0)  # 5
+def test_constant_node_aig_to_edge_list(two_pi_and_two_po_aig: Aig) -> None:
+    aig = two_pi_and_two_po_aig
 
     # custom weights
     edge_list = aig.to_edge_list(regular_weight=7, inverted_weight=-7)
@@ -173,23 +148,8 @@ def test_constant_node_aig_to_edge_list() -> None:
     assert AigEdge(3, 5, 7) in edge_list  # AND gate to PO
 
 
-def test_medium_aig_to_edge_list() -> None:
-    aig = Aig()
-
-    x0 = aig.create_pi()  # 1
-    x1 = aig.create_pi()  # 2
-    x2 = aig.create_pi()  # 3
-    x3 = aig.create_pi()  # 4
-    n0 = aig.create_and(~x2, x3)  # 5
-    n1 = aig.create_and(~x2, n0)  # 6
-    n2 = aig.create_and(x3, ~n1)  # 7
-    n3 = aig.create_and(x0, ~x1)  # 8
-    n4 = aig.create_and(~n2, n3)  # 9
-    n5 = aig.create_and(x1, ~n2)  # 10
-    n6 = aig.create_and(~n4, ~n5)  # 11
-    n7 = aig.create_and(n1, n3)  # 12
-    aig.create_po(n6)  # 13
-    aig.create_po(n7)  # 14
+def test_medium_aig_to_edge_list(medium_structured_aig: Aig) -> None:
+    aig = medium_structured_aig
 
     # custom weights
     edge_list = aig.to_edge_list(regular_weight=10, inverted_weight=-10)
@@ -218,23 +178,9 @@ def test_medium_aig_to_edge_list() -> None:
     assert AigEdge(12, 14, 10) in edge_list
 
 
-def test_sequential_aig_to_edge_list_basic() -> None:
+def test_sequential_aig_to_edge_list_basic(sequential_single_register_aig: tuple[SequentialAig, AigSignal]) -> None:
     """Test edge list generation with a simple sequential AIG containing one register."""
-    # Create a sequential AIG
-    aig = SequentialAig()
-
-    # Create primary inputs
-    x1 = aig.create_pi()  # 1
-    x2 = aig.create_pi()  # 2
-
-    # Create a register output (RO) - paired with the RI by index
-    aig.create_ro()  # 3 - RO node
-
-    # Create some combinational logic
-    f1 = aig.create_and(x1, x2)  # 4
-
-    # Create a register input (RI)
-    aig.create_ri(f1)  # 5
+    aig, f1 = sequential_single_register_aig
 
     # Generate edge list
     edge_list = aig.to_edge_list()
@@ -247,47 +193,17 @@ def test_sequential_aig_to_edge_list_basic() -> None:
     assert AigEdge(aig.node_to_index(aig.get_node(f1)), ro_node, 0) in edge_list
 
 
-def test_sequential_aig_to_edge_list_multiple_registers() -> None:
+def test_sequential_aig_to_edge_list_multiple_registers(
+    sequential_two_registers_aig: tuple[SequentialAig, AigSignal, AigSignal, AigSignal],
+) -> None:
     """Test edge list generation with multiple registers."""
-    # Create a sequential AIG
-    aig = SequentialAig()
-
-    # Create primary inputs
-    x1 = aig.create_pi()  # 1
-    x2 = aig.create_pi()  # 2
-
-    # Create register outputs (ROs) - paired with RIs by index
-    ro1 = aig.create_ro()  # 3
-    ro2 = aig.create_ro()  # 4
-
-    # Create some more logic using register outputs
-    f1 = aig.create_and(ro1, ro2)  # 5
-
-    # Create combinational logic
-    f2 = aig.create_and(x1, x2)  # 6
-    f3 = aig.create_and(x1, ~x2)  # 7
-
-    # Create a primary output
-    aig.create_po(f3)  # 8
-
-    # Create register inputs (RIs)
-    aig.create_ri(f1)  # 9
-    aig.create_ri(f2)  # 10
-
-    print()
-    print(f"cis: {aig.cis()}")
-    print(f"cos: {aig.cos()}")
-    print(f"ros: {aig.ros()}")
-    print(f"ris: {aig.ris()}")
-    print(f"registers: {aig.registers()}")
-    print(f"f1: {f1}")
+    aig, _f1, _f2, _f3 = sequential_two_registers_aig
 
     # Generate edge list
     edge_list = aig.to_edge_list(regular_weight=5, inverted_weight=-5)
 
     # Check total number of edges
     assert len(edge_list) == 9
-    print(edge_list)
 
     assert AigEdge(1, 6, 5) in edge_list  # x1 to AND gate
     assert AigEdge(2, 6, 5) in edge_list  # x2 to AND gate
@@ -300,22 +216,9 @@ def test_sequential_aig_to_edge_list_multiple_registers() -> None:
     assert AigEdge(7, 8, 5) in edge_list  # AND gate to PO
 
 
-def test_sequential_aig_feedback_loop() -> None:
+def test_sequential_aig_feedback_loop(sequential_feedback_aig: tuple[SequentialAig, AigSignal]) -> None:
     """Test edge list generation with registers forming a feedback loop."""
-    # Create a sequential AIG
-    saig = SequentialAig()
-
-    # Create primary input
-    x1 = saig.create_pi()  # 1
-
-    # Create register output first (feedback loops start with RO)
-    ro = saig.create_ro()  # 2
-
-    # Create logic that uses both primary input and register output
-    f1 = saig.create_and(x1, ro)  # 3
-
-    # Create register input that feeds back to the register output
-    saig.create_ri(f1)  # 4
+    saig, f1 = sequential_feedback_aig
 
     # Generate edge list
     edge_list = saig.to_edge_list()

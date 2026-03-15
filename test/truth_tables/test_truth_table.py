@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import copy
+from typing import TYPE_CHECKING
 
 import pytest
 
 from aigverse.utils import TruthTable, cofactor0, cofactor1, ternary_majority
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def test_create() -> None:
@@ -71,8 +75,8 @@ def test_equality_operator() -> None:
     # Create two identical TruthTables
     tt1 = TruthTable(2)
     tt2 = TruthTable(2)
-    tt1.create_from_binary_string("1010")
-    tt2.create_from_binary_string("1010")
+    tt1.create_nth_var(0)
+    tt2.create_nth_var(0)
 
     # Verify that they are considered equal
     assert tt1 == tt2
@@ -82,12 +86,10 @@ def test_equality_operator() -> None:
     assert tt1 != tt2
 
 
-def test_inequality_operator() -> None:
+def test_inequality_operator(tt2_from_binary: Callable[[str], TruthTable]) -> None:
     # Create two different TruthTables
-    tt1 = TruthTable(2)
-    tt2 = TruthTable(2)
-    tt1.create_from_binary_string("1100")
-    tt2.create_from_binary_string("1010")
+    tt1 = tt2_from_binary("1100")
+    tt2 = tt2_from_binary("1010")
 
     # Verify that they are considered not equal
     assert tt1 != tt2
@@ -97,12 +99,10 @@ def test_inequality_operator() -> None:
     assert tt1 == tt2
 
 
-def test_less_than_operator() -> None:
+def test_less_than_operator(tt2_from_binary: Callable[[str], TruthTable]) -> None:
     # Create two TruthTables with different binary representations
-    tt1 = TruthTable(2)
-    tt2 = TruthTable(2)
-    tt1.create_from_binary_string("0110")
-    tt2.create_from_binary_string("1000")
+    tt1 = tt2_from_binary("0110")
+    tt2 = tt2_from_binary("1000")
 
     # Verify that tt1 is less than tt2
     assert tt1 < tt2
@@ -248,21 +248,17 @@ def test_count_ones_large() -> None:
         assert ctr == tt.count_ones()
 
 
-def test_simple_operators() -> None:
-    a = TruthTable(2)
-    a.create_from_binary_string("1001")
-
-    b = TruthTable(2)
-    b.create_from_binary_string("1100")
-
-    a_and_b = TruthTable(2)
-    a_and_b.create_from_binary_string("1000")
-
-    a_or_b = TruthTable(2)
-    a_or_b.create_from_binary_string("1101")
-
-    a_xor_b = TruthTable(2)
-    a_xor_b.create_from_binary_string("0101")
+def test_simple_operators(
+    tt2_and: TruthTable,
+    tt2_mask_a_or_b: TruthTable,
+    tt2_from_binary: Callable[[str], TruthTable],
+) -> None:
+    a = tt2_from_binary("1001")
+    b = tt2_from_binary("1100")
+    # These expected masks intentionally correspond to the specific a/b assignments above.
+    a_and_b = tt2_and
+    a_or_b = tt2_mask_a_or_b
+    a_xor_b = tt2_from_binary("0101")
 
     assert a & b == a_and_b
     assert a | b == a_or_b

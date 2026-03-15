@@ -1,27 +1,19 @@
 from __future__ import annotations
 
-import tempfile
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from aigverse.io import write_dot
-from aigverse.networks import Aig
 
-# Get the temporary directory as a Path object
-temp_dir = Path(tempfile.gettempdir())
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from aigverse.networks import Aig
 
 
-def test_write_dot_creates_file() -> None:
-    aig = Aig()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    f = aig.create_and(x1, x2)
-    aig.create_po(f)
+def test_write_dot_creates_file(simple_and_aig: Aig, tmp_path: Path) -> None:
+    dot_path = tmp_path / "aig.dot"
 
-    dot_path = temp_dir / "aig.dot"
-    if dot_path.exists():
-        dot_path.unlink()
-
-    write_dot(aig, str(dot_path))
+    write_dot(simple_and_aig, str(dot_path))
     assert dot_path.exists()
 
     content = dot_path.read_text()
