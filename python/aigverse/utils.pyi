@@ -12,10 +12,10 @@ class TruthTable:
             num_vars: Number of Boolean variables.
         """
 
-    def __eq__(self, other: TruthTable) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Checks equality with another truth table."""
 
-    def __ne__(self, other: TruthTable) -> bool:
+    def __ne__(self, other: object) -> bool:
         """Checks inequality with another truth table."""
 
     def __lt__(self, other: TruthTable) -> bool:

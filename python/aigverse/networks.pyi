@@ -6,7 +6,11 @@ objects for structural manipulation.
 
 import enum
 from collections.abc import Iterator, Sequence
-from typing import NoReturn, overload
+from typing import TYPE_CHECKING, NoReturn, overload
+
+if TYPE_CHECKING:
+    import networkx as nx
+    import numpy as np
 
 class NodeTensorEncoding(enum.Enum):
     """Node encoding mode for exported graph tensors.
@@ -339,6 +343,71 @@ class Aig:
             ``edge_attr`` (shape ``(E, D_edge)``, dtype ``float32``), and ``node_attr``
             (shape ``(N, D_node)``, dtype ``float32``).
         """
+
+    if TYPE_CHECKING:
+        def to_networkx(
+            self,
+            *,
+            levels: bool = False,
+            fanouts: bool = False,
+            node_tts: bool = False,
+            graph_tts: bool = False,
+            dtype: type[np.generic] = ...,
+        ) -> nx.DiGraph:
+            """Converts an :class:`~aigverse.Aig` to a :class:`~networkx.DiGraph`.
+
+            This function transforms the AIG into a directed graph representation
+            using the NetworkX library. It allows for the inclusion of various
+            attributes for the graph, its nodes, and edges, making it suitable
+            for graph-based machine learning tasks.
+
+            Note that the constant-0 node is always included in the graph, as
+            index 0, even if it is not referenced by any edges.
+
+            Args:
+                self: The AIG object to convert.
+                levels: If True, computes and adds level information for each node
+                    and the total number of levels to the graph, as attributes
+                    ``levels`` and ``level``, respectively. Defaults to False.
+                fanouts: If True, adds fanout size information for each node
+                    as a ``fanouts`` attribute. Defaults to False.
+                node_tts: If True, computes and adds a truth table for each node
+                    as a ``function`` attribute. Defaults to False.
+                graph_tts: If True, computes and adds the graph's overall truth
+                    table as a ``function`` attribute to the graph. Defaults to False.
+                dtype: The data type for truth tables and all one-hot encodings.
+                    Defaults to :obj:`~numpy.int8`. For machine learning tasks, a
+                    floating-point type such as :obj:`~numpy.float32` or
+                    :obj:`~numpy.float64` may be more appropriate, as it allows
+                    for gradient-based optimization.
+
+            Returns:
+                A :class:`~networkx.DiGraph` representing the AIG.
+
+            Graph Attributes:
+                - type (str): ``"AIG"``.
+                - num_pis (int): Number of primary inputs.
+                - num_pos (int): Number of primary outputs.
+                - num_gates (int): Number of AND gates.
+                - levels (int, optional): Total number of levels in the AIG.
+                - function (list[:class:`~numpy.ndarray`], optional): Graph's truth tables.
+                - name (str, optional): Network name (only for :class:`~aigverse.NamedAig`).
+
+            Node Attributes:
+                - index (int): The node's identifier.
+                - level (int, optional): The level of the node in the AIG.
+                - function (:class:`~numpy.ndarray`, optional): The node's truth table.
+                - type (:class:`~numpy.ndarray`): A one-hot encoded vector representing
+                    the node type (``[const, pi, gate, po]``). The data type is determined
+                    by the ``dtype`` argument, defaulting to :obj:`~numpy.int8`.
+
+            Edge Attributes:
+                - type (:class:`~numpy.ndarray`): A one-hot encoded vector representing the edge
+                    type (``[regular, inverted]``). The data type is determined by the
+                    ``dtype`` argument, defaulting to :obj:`~numpy.int8`.
+                - name (str, optional): Signal name or primary output name for edges to synthetic
+                    PO nodes (only for :class:`~aigverse.NamedAig`).
+            """
 
     def __len__(self) -> int:
         """Returns the number of nodes."""

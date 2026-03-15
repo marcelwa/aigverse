@@ -51,12 +51,8 @@ def test_decode_pi_only_index_list_into_aig() -> None:
     assert aig.num_pos == 0
 
 
-def test_encode_pi_only_aig_into_index_list() -> None:
-    aig = Aig()
-    aig.create_pi()
-    aig.create_pi()
-    aig.create_pi()
-    aig.create_pi()
+def test_encode_pi_only_aig_into_index_list(pi_only_aig: Aig) -> None:
+    aig = pi_only_aig
 
     il = aig.to_index_list()
 
@@ -72,8 +68,8 @@ def test_encode_pi_only_aig_into_index_list() -> None:
     assert repr(il) == "IndexList(#PIs: 4, #POs: 0, #Gates: 0, Gates: [], POs: [])"
 
 
-def test_decode_index_list_into_aig() -> None:
-    il = AigIndexList([4, 1, 3, 2, 4, 6, 8, 12, 10, 14])
+def test_decode_index_list_into_aig(sample_aig_index_list_raw: list[int]) -> None:
+    il = AigIndexList(sample_aig_index_list_raw)
 
     aig = il.to_aig()
 
@@ -89,10 +85,10 @@ def test_decode_index_list_into_aig() -> None:
     assert tt_spec == tt_aig
 
 
-def test_implicit_conversion() -> None:
-    il = [4, 1, 3, 2, 4, 6, 8, 12, 10, 14]
+def test_implicit_conversion(sample_aig_index_list_raw: list[int]) -> None:
+    il = sample_aig_index_list_raw
 
-    aig = AigIndexList(il).to_aig()  # type: ignore[arg-type]
+    aig = AigIndexList(il).to_aig()
 
     assert aig.num_gates == 5
     assert aig.num_pis == 4
@@ -106,16 +102,8 @@ def test_implicit_conversion() -> None:
     assert tt_spec == tt_aig
 
 
-def test_encode_aig_into_index_list() -> None:
-    aig = Aig()
-    a = aig.create_pi()
-    b = aig.create_pi()
-    c = aig.create_pi()
-    d = aig.create_pi()
-    t0 = aig.create_and(a, b)
-    t1 = aig.create_and(c, d)
-    t2 = aig.create_xor(t0, t1)
-    aig.create_po(t2)
+def test_encode_aig_into_index_list(xor_of_two_and_aig: Aig) -> None:
+    aig = xor_of_two_and_aig
 
     il = aig.to_index_list()
 
@@ -134,18 +122,8 @@ def test_encode_aig_into_index_list() -> None:
     )
 
 
-def test_encode_decode_aig_with_inverted_signals() -> None:
-    aig = Aig()
-    a = aig.create_pi()
-    b = aig.create_pi()
-    c = aig.create_pi()
-
-    t0 = aig.create_and(a, b)
-    t1 = aig.create_and(b, ~c)
-    t2 = aig.create_and(~t0, ~t1)
-
-    aig.create_po(~t1)
-    aig.create_po(t2)
+def test_encode_decode_aig_with_inverted_signals(inverted_signals_aig: Aig) -> None:
+    aig = inverted_signals_aig
 
     il = aig.to_index_list()
 
@@ -184,8 +162,8 @@ def test_aig_index_list_methods() -> None:
     assert il.size == 3
 
 
-def test_index_list_iter_get_set_item() -> None:
-    il = AigIndexList([4, 1, 3, 2, 4, 6, 8, 12, 10, 14])
+def test_index_list_iter_get_set_item(sample_aig_index_list_raw: list[int]) -> None:
+    il = AigIndexList(sample_aig_index_list_raw)
 
     # Test __iter__
     assert list(iter(il)) == [4, 1, 3, 2, 4, 6, 8, 12, 10, 14]
@@ -210,8 +188,8 @@ def test_index_list_iter_get_set_item() -> None:
         il[100] = 1
 
 
-def test_index_list_to_python_list() -> None:
-    il = AigIndexList([4, 1, 3, 2, 4, 6, 8, 12, 10, 14])
+def test_index_list_to_python_list(sample_aig_index_list_raw: list[int]) -> None:
+    il = AigIndexList(sample_aig_index_list_raw)
     pylist = [il.num_pis, il.num_pos, il.num_gates, il.gates(), il.pos()]
     assert pylist == [4, 1, 3, [(2, 4), (6, 8), (12, 10)], [14]]
 

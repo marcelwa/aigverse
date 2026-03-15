@@ -67,30 +67,6 @@ def test_import(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delitem(sys.modules, "aigverse.adapters", raising=False)
 
 
-@pytest.fixture
-def _import_adapters() -> None:
-    """Fixture to ensure adapters are imported for each test in the TestNetworkxAdapter class."""
-    import aigverse.adapters  # noqa: F401
-
-
-@pytest.fixture
-def simple_aig() -> Aig:
-    """Create a simple AIG with 2 PIs, 1 AND gate, and 3 POs.
-
-    Returns:
-        Aig: An instance of Aig with the specified structure.
-    """
-    aig = Aig()
-    a = aig.create_pi()
-    b = aig.create_pi()
-    g = aig.create_and(a, b)
-    aig.create_po(a)
-    aig.create_po(b)
-    aig.create_po(g)
-
-    return aig
-
-
 @pytest.mark.usefixtures("_import_adapters")
 class TestNetworkxAdapter:
     """Test suite for the NetworkX adapter functionality."""

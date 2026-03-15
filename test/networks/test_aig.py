@@ -116,15 +116,14 @@ def test_aig_primary_inputs() -> None:
     assert a.data == 3
 
 
-def test_aig_primary_outputs() -> None:
-    aig = Aig()
+def test_aig_primary_outputs(aig_with_single_pi: tuple[Aig, AigSignal]) -> None:
+    aig, x1 = aig_with_single_pi
 
     # Ensure the create_po function exists in AIG
     assert hasattr(aig, "create_po")
 
-    # Create constant and primary input
+    # Create constant
     c0 = aig.get_constant(False)
-    x1 = aig.create_pi()
 
     # Check initial size and input/output properties
     assert aig.size == 2
@@ -149,15 +148,12 @@ def test_aig_primary_outputs() -> None:
     assert pos[2] == ~x1
 
 
-def test_aig_unary_operations() -> None:
-    aig = Aig()
+def test_aig_unary_operations(aig_with_single_pi: tuple[Aig, AigSignal]) -> None:
+    aig, x1 = aig_with_single_pi
 
     # Ensure the create_buf and create_not functions exist in AIG
     assert hasattr(aig, "create_buf")
     assert hasattr(aig, "create_not")
-
-    # Create a primary input
-    x1 = aig.create_pi()
 
     # Check the initial size after creating the primary input
     assert aig.size == 2
@@ -174,8 +170,8 @@ def test_aig_unary_operations() -> None:
     assert f2 == ~x1
 
 
-def test_aig_binary_operations() -> None:
-    aig = Aig()
+def test_aig_binary_operations(aig_with_two_pis: tuple[Aig, AigSignal, AigSignal]) -> None:
+    aig, x1, x2 = aig_with_two_pis
 
     # Ensure the binary operation functions exist in AIG
     assert hasattr(aig, "create_and")
@@ -184,10 +180,6 @@ def test_aig_binary_operations() -> None:
     assert hasattr(aig, "create_nor")
     assert hasattr(aig, "create_xor")
     assert hasattr(aig, "create_xnor")
-
-    # Create two primary inputs
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
 
     # Check the initial size after creating the inputs
     assert aig.size == 3
@@ -220,12 +212,8 @@ def test_aig_binary_operations() -> None:
     assert f5 == ~f6
 
 
-def test_aig_hash_nodes() -> None:
-    aig = Aig()
-
-    # Create two primary inputs
-    a = aig.create_pi()
-    b = aig.create_pi()
+def test_aig_hash_nodes(aig_with_two_pis: tuple[Aig, AigSignal, AigSignal]) -> None:
+    aig, a, b = aig_with_two_pis
 
     # Create two identical AND gates
     f = aig.create_and(a, b)
@@ -239,15 +227,12 @@ def test_aig_hash_nodes() -> None:
     assert aig.get_node(f) == aig.get_node(g)
 
 
-def test_aig_clone_network() -> None:
+def test_aig_clone_network(aig_with_single_and: tuple[Aig, AigSignal]) -> None:
     # Ensure the clone method exists in AIG
     assert hasattr(Aig, "clone")
 
     # Create an initial AIG network and add nodes
-    aig0 = Aig()
-    a = aig0.create_pi()
-    b = aig0.create_pi()
-    f0 = aig0.create_and(a, b)
+    aig0, f0 = aig_with_single_and
 
     # Check initial size and gate count
     assert aig0.size == 4
@@ -270,25 +255,22 @@ def test_aig_clone_network() -> None:
     assert aig_clone.num_gates == 1
 
 
-def test_aig_clone_node() -> None:
+def test_aig_clone_node(
+    aig_with_single_and: tuple[Aig, AigSignal],
+    aig_with_two_pis: tuple[Aig, AigSignal, AigSignal],
+) -> None:
     # Ensure the clone_node method exists in AIG
     assert hasattr(Aig, "clone_node")
 
     # Create two AIG networks
-    aig1 = Aig()
-    aig2 = Aig()
-
-    # Create nodes in aig1
-    a1 = aig1.create_pi()
-    b1 = aig1.create_pi()
-    f1 = aig1.create_and(a1, b1)
+    aig1, f1 = aig_with_single_and
+    base_aig, _a2, _b2 = aig_with_two_pis
+    aig2 = base_aig.clone()
+    a2 = aig2.make_signal(aig2.pi_at(0))
+    b2 = aig2.make_signal(aig2.pi_at(1))
 
     # Check the size of aig1
     assert aig1.size == 4
-
-    # Create nodes in aig2
-    a2 = aig2.create_pi()
-    b2 = aig2.create_pi()
 
     # Check the size of aig2 before cloning
     assert aig2.size == 3
@@ -304,8 +286,10 @@ def test_aig_clone_node() -> None:
         assert not aig2.is_complemented(fanin)
 
 
-def test_aig_structural_properties() -> None:
-    aig = Aig()
+def test_aig_structural_properties(
+    aig_with_and_or_outputs: tuple[Aig, AigSignal, AigSignal, AigSignal, AigSignal],
+) -> None:
+    aig, x1, x2, f1, f2 = aig_with_and_or_outputs
 
     # Ensure the structural property methods exist in AIG
     assert hasattr(aig, "size")
@@ -314,18 +298,6 @@ def test_aig_structural_properties() -> None:
     assert hasattr(aig, "num_gates")
     assert hasattr(aig, "fanin_size")
     assert hasattr(aig, "fanout_size")
-
-    # Create two primary inputs
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-
-    # Create AND and OR gates
-    f1 = aig.create_and(x1, x2)
-    f2 = aig.create_or(x1, x2)
-
-    # Create primary outputs
-    aig.create_po(f1)
-    aig.create_po(f2)
 
     # Check structural properties
     assert aig.size == 5
@@ -346,38 +318,27 @@ def test_aig_structural_properties() -> None:
     assert aig.fanout_size(aig.get_node(f2)) == 1
 
 
-def test_aig_len() -> None:
-    aig = Aig()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    aig.create_and(x1, x2)
+def test_aig_len(aig_with_single_and: tuple[Aig, AigSignal]) -> None:
+    aig, _ = aig_with_single_and
 
     assert len(aig) == aig.size
 
 
-def test_aig_repr() -> None:
-    aig = Aig()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    aig.create_po(aig.create_and(x1, x2))
+def test_aig_repr(simple_and_aig: Aig) -> None:
+    aig = simple_and_aig
 
     assert repr(aig) == "Aig(pis=2, pos=1, gates=1, size=4)"
 
 
-def test_aig_iter() -> None:
-    aig = Aig()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    aig.create_and(x1, x2)
+def test_aig_iter(aig_with_single_and: tuple[Aig, AigSignal]) -> None:
+    aig, _ = aig_with_single_and
 
     assert list(aig) == aig.nodes()
 
 
-def test_aig_contains() -> None:
-    aig = Aig()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    and_node = aig.get_node(aig.create_and(x1, x2))
+def test_aig_contains(aig_with_single_and: tuple[Aig, AigSignal]) -> None:
+    aig, and_signal = aig_with_single_and
+    and_node = aig.get_node(and_signal)
 
     assert 0 in aig
     assert and_node in aig
@@ -386,20 +347,16 @@ def test_aig_contains() -> None:
     assert 1.5 not in aig
 
 
-def test_aig_bool() -> None:
+def test_aig_bool(aig_with_single_pi: tuple[Aig, AigSignal]) -> None:
     assert not Aig()
 
-    aig = Aig()
-    aig.create_pi()
+    aig, _ = aig_with_single_pi
 
     assert aig
 
 
-def test_aig_copy_deepcopy() -> None:
-    aig = Aig()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    aig.create_po(aig.create_and(x1, x2))
+def test_aig_copy_deepcopy(simple_and_aig: Aig) -> None:
+    aig = simple_and_aig
 
     shallow_clone = copy.copy(aig)
     deep_clone = copy.deepcopy(aig)
@@ -418,25 +375,10 @@ def test_aig_copy_deepcopy() -> None:
     assert deep_clone.size == 4
 
 
-def test_aig_has_and() -> None:
-    aig = Aig()
-
-    # Create primary inputs
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    x3 = aig.create_pi()
-
-    # Create AND gates
-    n4 = aig.create_and(~x1, x2)
-    n5 = aig.create_and(x1, n4)
-    n6 = aig.create_and(x3, n5)
-    n7 = aig.create_and(n4, x2)
-    n8 = aig.create_and(~n5, ~n7)
-    n9 = aig.create_and(~n8, n4)
-
-    # Create primary outputs
-    aig.create_po(n6)
-    aig.create_po(n9)
+def test_aig_has_and(
+    has_and_reference_aig: tuple[Aig, AigSignal, AigSignal, AigSignal, AigSignal, AigSignal, AigSignal, AigSignal],
+) -> None:
+    aig, x1, x2, x3, n4, n5, n7, n8 = has_and_reference_aig
 
     # Check for existing and non-existing AND gates using has_and
     assert aig.has_and(~x1, x2) is not None
@@ -448,8 +390,10 @@ def test_aig_has_and() -> None:
     assert aig.has_and(~n7, ~n5) == n8
 
 
-def test_aig_node_signal_iteration() -> None:
-    aig = Aig()
+def test_aig_node_signal_iteration(
+    aig_with_and_or_outputs: tuple[Aig, AigSignal, AigSignal, AigSignal, AigSignal],
+) -> None:
+    aig, _x1, _x2, f1, _f2 = aig_with_and_or_outputs
 
     # Ensure the structural iteration methods exist in AIG
     assert hasattr(aig, "nodes")
@@ -457,16 +401,6 @@ def test_aig_node_signal_iteration() -> None:
     assert hasattr(aig, "pos")
     assert hasattr(aig, "gates")
     assert hasattr(aig, "fanins")
-
-    # Create two primary inputs and two gates
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    f1 = aig.create_and(x1, x2)
-    f2 = aig.create_or(x1, x2)
-
-    # Create primary outputs
-    aig.create_po(f1)
-    aig.create_po(f2)
 
     assert aig.size == 5
 
@@ -616,22 +550,8 @@ def test_aig_node_signal_iteration() -> None:
     assert mask == 2
 
 
-def test_cleanup_dangling() -> None:
-    aig = Aig()
-
-    # Create primary inputs
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    x3 = aig.create_pi()
-
-    # Create AND gates
-    n4 = aig.create_and(x1, x2)
-    n5 = aig.create_and(x2, x3)
-    n6 = aig.create_and(x1, x3)
-    aig.create_and(n4, n5)
-
-    # Create primary outputs
-    aig.create_po(n6)
+def test_cleanup_dangling(cleanup_dangling_reference_aig: Aig) -> None:
+    aig = cleanup_dangling_reference_aig
 
     # Check the size of the AIG
     assert aig.size == 8
@@ -681,16 +601,10 @@ def test_pickle_empty_aig() -> None:
     assert equivalence_checking(aig, unpickled_aig)
 
 
-def test_pickle_simple_aig() -> None:
+def test_pickle_simple_aig(simple_and_aig: Aig) -> None:
     import pickle
 
-    aig = Aig()
-
-    a = aig.create_pi()
-    b = aig.create_pi()
-    f = aig.create_and(a, b)
-
-    aig.create_po(f)
+    aig = simple_and_aig
 
     # Check initial size and gate count
     assert aig.size == 4
@@ -708,39 +622,10 @@ def test_pickle_simple_aig() -> None:
     assert equivalence_checking(aig, unpickled_aig)
 
 
-def test_pickle_complex_aig() -> None:
+def test_pickle_complex_aig(complex_mixed_logic_aig: Aig) -> None:
     import pickle
 
-    aig = Aig()
-
-    a = aig.create_pi()
-    b = aig.create_pi()
-    c = aig.create_pi()
-    d = aig.create_pi()
-
-    # Create AND gates
-    f1 = aig.create_and(a, b)
-    f2 = aig.create_and(c, d)
-    f3 = aig.create_and(f1, f2)
-
-    # Create a MAJ gate (majority of a, b, c)
-    f4 = aig.create_maj(a, b, c)
-
-    # Create an XOR gate (between f3 and f4)
-    f5 = aig.create_xor(f3, f4)
-
-    # Use signal inversions
-    f6 = aig.create_and(~a, ~b)
-    f7 = aig.create_maj(~c, d, ~f6)
-    f8 = aig.create_xor(f5, ~f7)
-
-    # Create primary outputs
-    aig.create_po(f3)
-    aig.create_po(f4)
-    aig.create_po(f5)
-    aig.create_po(f6)
-    aig.create_po(f7)
-    aig.create_po(f8)
+    aig = complex_mixed_logic_aig
 
     # Pickle and unpickle the AIG network using the pickle module
     pickled_data = pickle.dumps(aig)
@@ -754,26 +639,12 @@ def test_pickle_complex_aig() -> None:
     assert equivalence_checking(aig, unpickled_aig)
 
 
-def test_pickle_multiple_aigs() -> None:
+def test_pickle_multiple_aigs(simple_and_aig: Aig, simple_or_aig: Aig, simple_xor_aig: Aig) -> None:
     import pickle
 
-    aig1 = Aig()
-    a1 = aig1.create_pi()
-    b1 = aig1.create_pi()
-    f1 = aig1.create_and(a1, b1)
-    aig1.create_po(f1)
-
-    aig2 = Aig()
-    a2 = aig2.create_pi()
-    b2 = aig2.create_pi()
-    f2 = aig2.create_or(a2, b2)
-    aig2.create_po(f2)
-
-    aig3 = Aig()
-    a3 = aig3.create_pi()
-    b3 = aig3.create_pi()
-    f3 = aig3.create_xor(a3, b3)
-    aig3.create_po(f3)
+    aig1 = simple_and_aig
+    aig2 = simple_or_aig
+    aig3 = simple_xor_aig
 
     # Pickle all three AIGs together as a tuple
     pickled = pickle.dumps((aig1, aig2, aig3))
@@ -794,7 +665,7 @@ def test_aig_setstate_exceptions():
         class Dummy:
             pass
 
-        copyreg.pickle(Dummy, lambda _: (Aig.__new__, (Aig,), state_tuple))  # type: ignore[arg-type, return-value]
+        copyreg.pickle(Dummy, lambda _: (Aig.__new__, (Aig,), state_tuple))
         return pickle.dumps(Dummy())
 
     # Tuple of wrong size (triggers ValueError)

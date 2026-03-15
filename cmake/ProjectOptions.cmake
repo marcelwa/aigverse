@@ -25,7 +25,7 @@ macro(aigverse_setup_options)
   option(AIGVERSE_ENABLE_SANITIZER_UNDEFINED "Enable undefined sanitizer" OFF)
   option(AIGVERSE_ENABLE_SANITIZER_THREAD "Enable thread sanitizer" OFF)
   option(AIGVERSE_ENABLE_SANITIZER_MEMORY "Enable memory sanitizer" OFF)
-  option(AIGVERSE_ENABLE_CACHE "Enable ccache" ON)
+  option(AIGVERSE_ENABLE_CACHE "Enable compiler cache" ON)
 endmacro()
 
 macro(aigverse_apply_options)

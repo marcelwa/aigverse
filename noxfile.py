@@ -51,10 +51,10 @@ def preserve_lockfile() -> Generator[None]:
 @nox.session(reuse_venv=True, default=True)
 def lint(session: nox.Session) -> None:
     """Run the linter."""
-    if shutil.which("pre-commit") is None:
-        session.install("pre-commit")
+    if shutil.which("prek") is None:
+        session.install("prek")
 
-    session.run("pre-commit", "run", "--all-files", *session.posargs, external=True)
+    session.run("prek", "run", "--all-files", *session.posargs, external=True)
 
 
 def _run_tests(
@@ -231,16 +231,16 @@ def stubs(session: nox.Session) -> None:
         session.warn("No .pyi files found")
         return
 
-    if shutil.which("pre-commit") is None:
-        session.install("pre-commit")
+    if shutil.which("prek") is None:
+        session.install("prek")
 
     # Allow both 0 (no issues) and 1 as success codes for fixing up stubs
     success_codes = [0, 1]
-    session.run("pre-commit", "run", "ruff-format", "--files", *pyi_files, external=True, success_codes=success_codes)
-    session.run("pre-commit", "run", "ruff-check", "--files", *pyi_files, external=True, success_codes=success_codes)
+    session.run("prek", "run", "ruff-format", "--files", *pyi_files, external=True, success_codes=success_codes)
+    session.run("prek", "run", "ruff-check", "--files", *pyi_files, external=True, success_codes=success_codes)
 
     # Run ruff-check again to ensure everything is clean
-    session.run("pre-commit", "run", "ruff-check", "--files", *pyi_files, external=True)
+    session.run("prek", "run", "ruff-check", "--files", *pyi_files, external=True)
 
 
 if __name__ == "__main__":
