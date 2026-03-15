@@ -121,6 +121,12 @@ test-sources = ["test/"]
 test-command = "pytest test/"
 
 
+[tool.cibuildwheel.linux]
+before-all = "uv tool install 'sccache>=0.10.0'"
+environment = { PATH="$PATH:/root/.local/bin" }
+before-test = "uvx sccache --show-stats"
+
+
 [tool.cibuildwheel.macos]
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
@@ -147,15 +153,14 @@ cache-keys = [
 aigverse = { workspace = true }
 
 
-[tool.mypy]
-files = ["python/aigverse/", "test/", "noxfile.py"]
-mypy_path = ["$MYPY_CONFIG_FILE_DIR/python"]
-warn_unused_configs = true
-enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
-strict = true
-disallow_untyped_defs = false
-explicit_package_bases = true
-warn_unreachable = true
+[tool.ty.terminal]
+# Error if ty emits any warning-level diagnostics.
+error-on-warning = true
+
+[tool.ty.src]
+exclude = [
+    "docs/**",
+]
 
 
 [tool.ruff]
@@ -237,10 +242,14 @@ test = [
     "pytest-sugar>=1.1.1",
     "pytest-xdist>=3.8.0",
 ]
+lint = [
+    "ty==0.0.23",
+    "nox>=2025.10.16",
+]
 dev = [
     { include-group = "build" },
     { include-group = "adapters" },
     { include-group = "docs" },
     { include-group = "test" },
-    "nox>=2025.10.16",
+    { include-group = "lint" },
 ]

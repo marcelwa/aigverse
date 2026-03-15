@@ -88,7 +88,7 @@ def test_decode_index_list_into_aig(sample_aig_index_list_raw: list[int]) -> Non
 def test_implicit_conversion(sample_aig_index_list_raw: list[int]) -> None:
     il = sample_aig_index_list_raw
 
-    aig = AigIndexList(il).to_aig()  # type: ignore[arg-type]
+    aig = AigIndexList(il).to_aig()
 
     assert aig.num_gates == 5
     assert aig.num_pis == 4

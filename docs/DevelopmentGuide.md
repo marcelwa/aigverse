@@ -69,52 +69,43 @@ Ready to contribute to the project? This guide will get you started.
    ::::
    Check out their excellent [documentation](https://docs.astral.sh/uv/) for more information.
 
-5. We also highly recommend to install and set up [pre-commit](https://pre-commit.com/) to automatically
+5. We also highly recommend installing and setting up [prek](https://prek.j178.dev/) to automatically
    run a set of checks before each commit.
 
    ::::{tab-set}
    :::{tab-item} via `uv`
    :sync: uv
-   The easiest way to install pre-commit is via [uv](https://docs.astral.sh/uv/).
+   The easiest way to install prek is via [uv](https://docs.astral.sh/uv/).
 
    ```console
-   $ uv tool install pre-commit
-   ```
-
-   :::
-   :::{tab-item} via `brew`
-   :sync: brew
-   If you use macOS, then pre-commit is in Homebrew, and you can use
-
-   ```console
-   $ brew install pre-commit
+   $ uv tool install prek
    ```
 
    :::
    :::{tab-item} via `pipx`
    :sync: pipx
-   If you prefer to use [pipx](https://pypa.github.io/pipx/), you can install pre-commit with
+   If you prefer to use [pipx](https://pypa.github.io/pipx/), you can install prek with
 
    ```console
-   $ pipx install pre-commit
+   $ pipx install prek
    ```
 
    :::
    :::{tab-item} via `pip`
    :sync: pip
-   If you prefer to use regular `pip` (preferably in a virtual environment), you can install pre-commit with
+   If you prefer to use regular `pip` (preferably in a virtual environment), you can install prek with
 
    ```console
-   $ pip install pre-commit
+   $ pip install prek
    ```
 
    :::
    ::::
 
-   Afterward, you can install the pre-commit hooks with
+   Afterward, you can install the Git hooks with
 
    ```console
-   $ pre-commit install
+   $ prek install
    ```
 
 ## Working on the bindings (C++)
@@ -179,9 +170,9 @@ $ clang-tidy <FILE> -- -I <PATH_TO_INCLUDE_DIRECTORY>
 where {code}`<FILE>` is the file you want to analyze and {code}`<PATH_TO_INCLUDE_DIRECTORY>` is the path to the {code}`include` directory of the project.
 :::
 
-Our pre-commit configuration also includes clang-format.
-If you have installed pre-commit, it will automatically run clang-format on your code before each commit.
-If you do not have pre-commit setup, the [pre-commit.ci](https://pre-commit.ci) bot will run clang-format on your code
+Our hook configuration also includes clang-format.
+If you have installed prek, it will automatically run clang-format on your code before each commit.
+If you do not have the hooks set up locally, the [pre-commit.ci](https://pre-commit.ci) bot will run clang-format on your code
 and automatically format it according to the style guide.
 
 :::{tip}
@@ -424,18 +415,18 @@ $ nox -s tests -- test/algorithms/test_simulation.py
 
 ### Python Code Formatting and Linting
 
-The Python code is formatted and linted using a collection of [pre-commit hooks](https://pre-commit.com/).
+The Python code is formatted and linted using a collection of hooks executed via [prek](https://prek.j178.dev/).
 This collection includes:
 
 - [ruff](https://docs.astral.sh/ruff/) -- an extremely fast Python linter and formatter, written in Rust.
-- [mypy](https://mypy-lang.org/) -- a static type checker for Python code.
+- [ty](https://docs.astral.sh/ty/) -- a fast Python type checker.
 
 There are two ways of using these hooks:
 
 - You can install the hooks manually by running
 
   ```console
-  $ pre-commit install
+  $ prek install
   ```
 
   in the project root directory.
@@ -449,10 +440,10 @@ There are two ways of using these hooks:
   ```
 
   :::{note}
-  If you don't want to use {code}`nox`, you can also run the hooks directly using {code}`pre-commit`.
+  If you don't want to use {code}`nox`, you can also run the hooks directly using {code}`prek`.
 
   ```console
-  $ pre-commit run --all-files
+  $ prek run --all-files
   ```
 
   :::

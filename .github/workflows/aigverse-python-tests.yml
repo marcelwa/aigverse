@@ -48,9 +48,12 @@ jobs:
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
+        with:
+          enable-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
 
-      - name: Run mypy
-        run: uvx --with pre-commit-uv pre-commit run -a mypy
+      - name: Run ty
+        run: uvx prek run -a ty-check
 
       - name: Run check-sdist
         run: uvx check-sdist --inject-junk
@@ -66,19 +69,21 @@ jobs:
       - name: Clone Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
-        with:
-          key: "${{matrix.runs-on}}-aigverse"
-          save: true
-          max-size: 10G
-
       - if: runner.os == 'Linux'
         name: Setup mold
         uses: rui314/setup-mold@v1
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
+        with:
+          enable-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Install sccache
+        run: uv tool install sccache
 
       - name: 🐍 Test
         run: uvx nox -s tests --verbose
+
+      - name: Show sccache stats
+        run: sccache --show-stats

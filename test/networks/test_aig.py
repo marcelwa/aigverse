@@ -665,7 +665,7 @@ def test_aig_setstate_exceptions():
         class Dummy:
             pass
 
-        copyreg.pickle(Dummy, lambda _: (Aig.__new__, (Aig,), state_tuple))  # type: ignore[arg-type, return-value]
+        copyreg.pickle(Dummy, lambda _: (Aig.__new__, (Aig,), state_tuple))
         return pickle.dumps(Dummy())
 
     # Tuple of wrong size (triggers ValueError)

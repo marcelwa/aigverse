@@ -218,7 +218,7 @@ def test_balancing_invalid_rebalance_function_raises(and_gate_aig: Aig) -> None:
     """
     aig = and_gate_aig
     with pytest.raises(Exception, match="Unknown rebalance function"):
-        balancing(aig, rebalance_function="not_a_valid_option")  # type: ignore [arg-type]
+        balancing(aig, rebalance_function="not_a_valid_option")  # ty: ignore[invalid-argument-type]
 
 
 def test_esop_balancing_with_sop_both_phases_param(make_xor_chain_aig: Callable[[int], Aig]) -> None:

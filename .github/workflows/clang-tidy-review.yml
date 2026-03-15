@@ -38,6 +38,9 @@ jobs:
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
+        with:
+          enable-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Install build dependencies with uv
         run: uv sync --only-group build --no-install-project
