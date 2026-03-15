@@ -48,6 +48,9 @@ jobs:
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
+        with:
+          enable-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Run ty
         run: uvx prek run -a ty-check
@@ -79,6 +82,9 @@ jobs:
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
+        with:
+          enable-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
 
       - name: 🐍 Test
         run: uvx nox -s tests --verbose
