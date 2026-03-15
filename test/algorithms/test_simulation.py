@@ -50,15 +50,8 @@ def test_const1_aig() -> None:
     assert n_map[0].is_const0()  # node tt is still const0
 
 
-def test_and_aig() -> None:
-    aig = Aig()
-
-    a = aig.create_pi()
-    b = aig.create_pi()
-
-    and1 = aig.create_and(a, b)
-
-    aig.create_po(and1)
+def test_and_aig(and_gate_aig: Aig) -> None:
+    aig = and_gate_aig
 
     sim = simulate(aig)
 
@@ -82,15 +75,8 @@ def test_and_aig() -> None:
     assert n_map[3] == conjunction
 
 
-def test_or_aig() -> None:
-    aig = Aig()
-
-    a = aig.create_pi()
-    b = aig.create_pi()
-
-    or1 = aig.create_or(a, b)
-
-    aig.create_po(or1)
+def test_or_aig(or_gate_aig: Aig) -> None:
+    aig = or_gate_aig
 
     sim = simulate(aig)
 
@@ -116,16 +102,8 @@ def test_or_aig() -> None:
     assert n_map[3] == ~disjunction
 
 
-def test_maj_aig() -> None:
-    aig = Aig()
-
-    a = aig.create_pi()
-    b = aig.create_pi()
-    c = aig.create_pi()
-
-    maj1 = aig.create_maj(a, b, c)
-
-    aig.create_po(maj1)
+def test_maj_aig(maj3_aig: Aig) -> None:
+    aig = maj3_aig
 
     sim = simulate(aig)
 
@@ -153,19 +131,10 @@ def test_maj_aig() -> None:
     assert n_map[7] == ~majority
 
 
-def test_multi_output_aig() -> None:
+def test_multi_output_aig(and_or_two_output_aig: Aig) -> None:
     # also test DepthAig
     for ntk in [Aig, DepthAig]:
-        aig = ntk()
-
-        a = aig.create_pi()
-        b = aig.create_pi()
-
-        and1 = aig.create_and(a, b)
-        or1 = aig.create_or(a, b)
-
-        aig.create_po(and1)
-        aig.create_po(or1)
+        aig = and_or_two_output_aig if ntk is Aig else ntk(and_or_two_output_aig)
 
         sim = simulate(aig)
 

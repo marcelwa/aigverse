@@ -11,10 +11,11 @@ from aigverse.generators import (
     ripple_carry_multiplier,
     sideways_sum_adder,
 )
-from aigverse.networks import Aig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from aigverse.networks import Aig
 
 
 def test_rca_and_cla_implement_same_function() -> None:
@@ -24,16 +25,10 @@ def test_rca_and_cla_implement_same_function() -> None:
     assert equivalence_checking(aig_ripple, aig_cla)
 
 
-def test_sideways_sum_adder_two_bits_matches_half_adder() -> None:
+def test_sideways_sum_adder_two_bits_matches_half_adder(half_adder_reference: Aig) -> None:
     generated = sideways_sum_adder(2)
 
-    reference = Aig()
-    a = reference.create_pi()
-    b = reference.create_pi()
-    reference.create_po(reference.create_xor(a, b))
-    reference.create_po(reference.create_and(a, b))
-
-    assert equivalence_checking(reference, generated)
+    assert equivalence_checking(half_adder_reference, generated)
 
 
 def test_sideways_sum_adder_counts_ones_for_two_bits() -> None:
@@ -65,16 +60,10 @@ def test_ripple_carry_multiplier_two_bit_truth_tables() -> None:
             assert tt.get_bit(assignment) == ((product >> out_idx) & 1)
 
 
-def test_ripple_carry_multiplier_one_bit_matches_and() -> None:
+def test_ripple_carry_multiplier_one_bit_matches_and(one_bit_multiplier_reference: Aig) -> None:
     generated = ripple_carry_multiplier(1)
 
-    reference = Aig()
-    a = reference.create_pi()
-    b = reference.create_pi()
-    reference.create_po(reference.create_and(a, b))
-    reference.create_po(reference.get_constant(False))
-
-    assert equivalence_checking(reference, generated)
+    assert equivalence_checking(one_bit_multiplier_reference, generated)
 
 
 def test_high_level_network_builders_have_expected_io_sizes() -> None:

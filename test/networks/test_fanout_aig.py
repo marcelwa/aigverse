@@ -1,26 +1,17 @@
 from __future__ import annotations
 
 import copy
+from typing import TYPE_CHECKING
 
 from aigverse.networks import FanoutAig
 
+if TYPE_CHECKING:
+    from aigverse.networks import AigSignal
 
-def test_fanout_aig() -> None:
-    aig = FanoutAig()
+
+def test_fanout_aig(fanout_aig_branching: tuple[FanoutAig, AigSignal, AigSignal, AigSignal]) -> None:
+    aig, n4, n5, n6 = fanout_aig_branching
     assert hasattr(aig, "fanouts")
-
-    # Create primary inputs
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    x3 = aig.create_pi()
-
-    # Create AND gates
-    n4 = aig.create_and(x1, x2)
-    n5 = aig.create_and(n4, x3)
-    n6 = aig.create_and(n4, n5)
-
-    # Create primary outputs
-    aig.create_po(n6)
 
     # Check the fanout of n4
     fanout_list = aig.fanouts(aig.get_node(n4))
@@ -33,14 +24,10 @@ def test_fanout_aig() -> None:
     assert aig.fanout_size(aig.get_node(n6)) == 1
 
 
-def test_fanout_aig_clone_and_copy_preserve_wrapper_type() -> None:
-    aig = FanoutAig()
-    x0 = aig.create_pi()
-    x1 = aig.create_pi()
-    x2 = aig.create_pi()
-    gate0 = aig.create_and(x0, x1)
-    gate1 = aig.create_and(gate0, x2)
-    aig.create_po(gate1)
+def test_fanout_aig_clone_and_copy_preserve_wrapper_type(
+    fanout_aig_linear: tuple[FanoutAig, AigSignal, AigSignal],
+) -> None:
+    aig, gate0, _ = fanout_aig_linear
 
     cloned = aig.clone()
     shallow = copy.copy(aig)
