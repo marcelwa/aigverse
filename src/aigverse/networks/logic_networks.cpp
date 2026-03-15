@@ -331,10 +331,9 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
             "is_nary_or", [](const Ntk& ntk, const Node& n) { return ntk.is_nary_or(n); }, nb::arg("n"),
             R"pb(Returns whether ``n`` is an n-ary OR node.)pb")
         .def(
-            "to_edge_list",
-            [](const Ntk& ntk, const int64_t regular_weight = 0, const int64_t inverted_weight = 1)
-            { return aigverse::to_edge_list(ntk, regular_weight, inverted_weight); },
-            nb::arg("regular_weight") = 0, nb::arg("inverted_weight") = 1,
+            "to_edge_list", [](const Ntk& ntk, const int64_t regular_weight = 0, const int64_t inverted_weight = 1)
+            { return aigverse::to_edge_list(ntk, regular_weight, inverted_weight); }, nb::arg("regular_weight") = 0,
+            nb::arg("inverted_weight") = 1,
             R"pb(Converts the network to an edge list.
 
 Args:
@@ -709,9 +708,9 @@ Args:
         .def(
             "to_edge_list",
             [](const SequentialNtk& ntk, const int64_t regular_weight = 0, const int64_t inverted_weight = 1)
-            { return aigverse::to_edge_list(ntk, regular_weight, inverted_weight); },
-            nb::arg("regular_weight") = 0, nb::arg("inverted_weight") = 1,
-            R"pb(Converts the sequential network to an edge list.)pb", nb::rv_policy::move)
+            { return aigverse::to_edge_list(ntk, regular_weight, inverted_weight); }, nb::arg("regular_weight") = 0,
+            nb::arg("inverted_weight") = 1, R"pb(Converts the sequential network to an edge list.)pb",
+            nb::rv_policy::move)
         .def(
             "pis",
             [](const SequentialNtk& ntk)
