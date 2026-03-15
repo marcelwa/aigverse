@@ -16,14 +16,18 @@ def test_cut_aig() -> None:
     f1 = aig.create_and(x1, x2)
     aig.create_po(f1)
 
+    # Create a cut view
     leaves = [x1, x2]
     root = f1
     cut_aig = CutAig(aig, leaves, root)
 
+    # Check basic properties
     assert hasattr(cut_aig, "size")
     assert hasattr(cut_aig, "num_gates")
     assert hasattr(cut_aig, "num_pis")
     assert hasattr(cut_aig, "num_pos")
+
+    # The cut should have 2 leaves (PIs) and 1 gate
     assert cut_aig.num_pis == 2
     assert cut_aig.num_pos == 1
     assert cut_aig.num_gates == 1
@@ -42,9 +46,12 @@ def test_cut_aig_with_signals() -> None:
     f3 = aig.create_xor(f1, f2)
     aig.create_po(f3)
 
+    # Create a cut view with all PIs as leaves
     leaves = [a, b, c, d]
     root = f3
     cut_aig = CutAig(aig, leaves, root)
+
+    # Should contain all 4 PIs as leaves
     assert cut_aig.num_pis == 4
     assert cut_aig.num_gates == 5
 
@@ -58,18 +65,26 @@ def test_cut_aig_iteration() -> None:
     f1 = aig.create_and(x1, x2)
     aig.create_po(f1)
 
+    # Create cut for the output
     leaves = [x1, x2]
     root = f1
     cut_aig = CutAig(aig, leaves, root)
-    nodes = cut_aig.nodes()
-    assert len(nodes) == cut_aig.size
-    assert 0 in nodes
 
-    pis = cut_aig.pis()
+    # Iterate over all nodes
+    nodes = list(cut_aig.nodes())
+    assert len(nodes) == cut_aig.size
+    assert 0 in nodes  # constant node
+
+    # Iterate over PIs
+    pis = list(cut_aig.pis())
     assert len(pis) == cut_aig.num_pis
-    gates = cut_aig.gates()
+
+    # Iterate over gates
+    gates = list(cut_aig.gates())
     assert len(gates) == cut_aig.num_gates
-    pos = cut_aig.pos()
+
+    # Iterate over POs
+    pos = list(cut_aig.pos())
     assert len(pos) == 1
 
 
@@ -84,6 +99,7 @@ def test_cut_aig_index_mapping() -> None:
 
     cut_aig = CutAig(aig, [x1, x2], f1)
 
+    # Test node_to_index and index_to_node
     for node in cut_aig.nodes():
         index = cut_aig.node_to_index(node)
         recovered_node = cut_aig.index_to_node(index)
@@ -99,8 +115,12 @@ def test_cut_aig_is_pi() -> None:
     aig.create_po(f1)
 
     cut_aig = CutAig(aig, [x1, x2], f1)
+
+    # Check that leaf nodes are PIs in the cut
     assert cut_aig.is_pi(aig.get_node(x1))
     assert cut_aig.is_pi(aig.get_node(x2))
+
+    # Check that gate node is not a PI
     assert not cut_aig.is_pi(aig.get_node(f1))
 
 
