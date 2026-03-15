@@ -152,7 +152,10 @@ def aig_with_and_or_outputs(
     Returns:
         A tuple containing the AIG, two PI signals, and the AND/OR gate signals.
     """
-    aig, x1, x2 = aig_with_two_pis
+    base_aig, _x1, _x2 = aig_with_two_pis
+    aig = base_aig.clone()
+    x1 = aig.make_signal(aig.pi_at(0))
+    x2 = aig.make_signal(aig.pi_at(1))
     and_gate = aig.create_and(x1, x2)
     or_gate = aig.create_or(x1, x2)
     aig.create_po(and_gate)
