@@ -1,6 +1,5 @@
 #pragma once
 
-#include "aigverse/networks/edge_list.hpp"
 #include "aigverse/types.hpp"
 
 #include <kitty/bit_operations.hpp>
@@ -73,8 +72,8 @@ namespace detail
  * @return NumPy-backed ndarray that owns the provided data.
  */
 template <typename T>
-nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::vector<T>&&                     data,
-                                                         const std::initializer_list<size_t>& shape)
+nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::vector<T>&&                          data,
+                                                         const std::initializer_list<std::size_t>& shape)
 {
     namespace nb = nanobind;
 
@@ -116,14 +115,14 @@ nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::vector<T>&&       
  */
 template <typename Ntk>
 nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_encoding,
-                                const edge_tensor_encoding edge_encoding, const bool include_level,
-                                const bool include_fanout, const bool include_truth_table)
+                                const edge_tensor_encoding edge_encoding, const bool include_level = false,
+                                const bool include_fanout = false, const bool include_truth_table = false)
 {
     namespace nb = nanobind;
 
     // Number of node-type categories used for one-hot encodings:
     // [constant, primary input, internal gate, primary output].
-    constexpr size_t node_type_one_hot_dim = 4;
+    constexpr std::size_t node_type_one_hot_dim = 4;
 
     // Canonical integer labels for node types; shared across all node encodings.
     constexpr int64_t type_constant = 0;
@@ -131,46 +130,89 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     constexpr int64_t type_gate     = 2;
     constexpr int64_t type_po       = 3;
 
-    // Flatten the network into an edge list to derive COO edge indices.
-    const auto edges      = aigverse::to_edge_list(ntk).edges;
-    const auto edge_count = edges.size();
+    // Calculate the number of edges in the network to preallocate the output buffer
+    // NOTE: this will break for mixed-fanin nodes but is perfectly fine for AIGs
+    std::size_t edge_count =
+        (static_cast<std::size_t>(Ntk::max_fanin_size) * static_cast<std::size_t>(ntk.num_gates())) +
+        static_cast<std::size_t>(ntk.num_pos());
+    if constexpr (mockturtle::has_foreach_ri_v<Ntk> && mockturtle::has_ri_to_ro_v<Ntk>)
+    {
+        edge_count += static_cast<std::size_t>(ntk.num_registers());
+    }
 
     // Preallocate the 2×E edge_index tensor in column-major (source/target) form.
     std::vector<int64_t> edge_index(2 * edge_count, 0);
-    for (size_t i = 0; i < edge_count; ++i)
-    {
-        edge_index[i]              = static_cast<int64_t>(edges[i].source);
-        edge_index[edge_count + i] = static_cast<int64_t>(edges[i].target);
-    }
 
-    const size_t edge_dim = edge_encoding == edge_tensor_encoding::ONE_HOT ? 2 : 1;
+    const std::size_t edge_dim = edge_encoding == edge_tensor_encoding::ONE_HOT ? 2 : 1;
 
     std::vector<float> edge_attr(edge_count * edge_dim, 0.0f);
-    for (size_t i = 0; i < edge_count; ++i)
+
+    std::size_t edge_cursor = 0;
+    const auto  append_edge = [&](const int64_t source, const int64_t target, const bool inverted)
     {
-        const auto inverted = edges[i].weight != 0;
+        edge_index[edge_cursor]              = source;
+        edge_index[edge_count + edge_cursor] = target;
+
         switch (edge_encoding)
         {
             case edge_tensor_encoding::BINARY:
             {
-                edge_attr[i] = inverted ? 1.0f : 0.0f;
+                edge_attr[edge_cursor] = inverted ? 1.0f : 0.0f;
                 break;
             }
             case edge_tensor_encoding::SIGNED:
             {
-                edge_attr[i] = inverted ? -1.0f : 1.0f;
+                edge_attr[edge_cursor] = inverted ? -1.0f : 1.0f;
                 break;
             }
             case edge_tensor_encoding::ONE_HOT:
             {
-                edge_attr[i * 2]       = inverted ? 0.0f : 1.0f;
-                edge_attr[(i * 2) + 1] = inverted ? 1.0f : 0.0f;
+                edge_attr[edge_cursor * 2]       = inverted ? 0.0f : 1.0f;
+                edge_attr[(edge_cursor * 2) + 1] = inverted ? 1.0f : 0.0f;
                 break;
             }
         }
+
+        ++edge_cursor;
+    };
+
+    ntk.foreach_node(
+        [&](const auto& n)
+        {
+            const auto target = static_cast<int64_t>(ntk.node_to_index(n));
+            ntk.foreach_fanin(n,
+                              [&](const auto& f)
+                              {
+                                  const auto source = static_cast<int64_t>(ntk.node_to_index(ntk.get_node(f)));
+                                  append_edge(source, target, ntk.is_complemented(f));
+                              });
+        });
+
+    ntk.foreach_po(
+        [&](const auto& po)
+        {
+            const auto source = static_cast<int64_t>(ntk.node_to_index(ntk.get_node(po)));
+            const auto target = static_cast<int64_t>(ntk.size() + ntk.po_index(po));
+            append_edge(source, target, ntk.is_complemented(po));
+        });
+
+    if constexpr (mockturtle::has_foreach_ri_v<Ntk> && mockturtle::has_ri_to_ro_v<Ntk>)
+    {
+        ntk.foreach_ri(
+            [&](const auto& ri)
+            {
+                const auto source = static_cast<int64_t>(ntk.node_to_index(ntk.get_node(ri)));
+                const auto target = static_cast<int64_t>(ntk.node_to_index(ntk.ri_to_ro(ri)));
+                append_edge(source, target, ntk.is_complemented(ri));
+            });
     }
 
-    size_t tt_dim = 0;
+    if (edge_cursor != edge_count)
+    {
+        throw std::runtime_error("inconsistent edge count during graph tensor export");
+    }
+
+    std::size_t tt_dim = 0;
 
     std::optional<mockturtle::node_map<aigverse::truth_table, Ntk>> node_tts{};
     std::vector<aigverse::truth_table>                              output_tts{};
@@ -192,10 +234,10 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
         }
     }
 
-    const size_t base_dim = node_encoding == node_tensor_encoding::ONE_HOT ? node_type_one_hot_dim : 1;
-    const size_t node_dim =
+    const std::size_t base_dim = node_encoding == node_tensor_encoding::ONE_HOT ? node_type_one_hot_dim : 1;
+    const std::size_t node_dim =
         base_dim + (include_level ? 1 : 0) + (include_fanout ? 1 : 0) + (include_truth_table ? tt_dim : 0);
-    const size_t node_count = ntk.size() + ntk.num_pos();
+    const std::size_t node_count = ntk.size() + ntk.num_pos();
 
     std::vector<float> node_attr(node_count * node_dim, 0.0f);
 
@@ -205,23 +247,23 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
         depth_ntk.emplace(ntk);
     }
 
-    const auto fill_base = [&](const size_t row, const int64_t type_index) -> size_t
+    const auto fill_base = [&](const std::size_t row, const int64_t type_index) -> std::size_t
     {
-        const size_t offset = row * node_dim;
+        const std::size_t offset = row * node_dim;
         if (node_encoding == node_tensor_encoding::INTEGER)
         {
             node_attr[offset] = static_cast<float>(type_index);
             return offset + 1;
         }
 
-        node_attr[offset + static_cast<size_t>(type_index)] = 1.0f;
+        node_attr[offset + static_cast<std::size_t>(type_index)] = 1.0f;
         return offset + node_type_one_hot_dim;
     };
 
     ntk.foreach_node(
         [&](const auto& n)
         {
-            const auto row        = static_cast<size_t>(ntk.node_to_index(n));
+            const auto row        = static_cast<std::size_t>(ntk.node_to_index(n));
             int64_t    type_index = type_gate;
             if (ntk.is_constant(n))
             {
@@ -245,7 +287,7 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
             if (include_truth_table)
             {
                 const auto& tt = node_tts.value()[n];
-                for (size_t i = 0; i < tt_dim; ++i)
+                for (std::size_t i = 0; i < tt_dim; ++i)
                 {
                     node_attr[feature_offset + i] = kitty::get_bit(tt, static_cast<uint64_t>(i)) ? 1.0f : 0.0f;
                 }
@@ -255,8 +297,8 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     ntk.foreach_po(
         [&](const auto& po)
         {
-            const auto po_idx = static_cast<size_t>(ntk.po_index(po));
-            const auto row    = static_cast<size_t>(ntk.size()) + po_idx;
+            const auto po_idx = static_cast<std::size_t>(ntk.po_index(po));
+            const auto row    = static_cast<std::size_t>(ntk.size()) + po_idx;
 
             auto feature_offset = fill_base(row, type_po);
 
@@ -271,7 +313,7 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
             if (include_truth_table)
             {
                 const auto& tt = output_tts[po_idx];
-                for (size_t i = 0; i < tt_dim; ++i)
+                for (std::size_t i = 0; i < tt_dim; ++i)
                 {
                     node_attr[feature_offset + i] = kitty::get_bit(tt, i) ? 1.0f : 0.0f;
                 }
