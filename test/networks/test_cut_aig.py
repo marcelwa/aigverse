@@ -214,5 +214,11 @@ def test_cut_aig_immutability() -> None:
         cut_aig.create_lt(x1, x2)
     with pytest.raises(RuntimeError, match="create_le is not available on immutable view"):
         cut_aig.create_le(x1, x2)
+    with pytest.raises(RuntimeError, match="create_nary_and is not available on immutable view"):
+        cut_aig.create_nary_and([x1, x2])
+    with pytest.raises(RuntimeError, match="create_nary_or is not available on immutable view"):
+        cut_aig.create_nary_or([x1, x2])
+    with pytest.raises(RuntimeError, match="create_nary_xor is not available on immutable view"):
+        cut_aig.create_nary_xor([x1, x2])
     with pytest.raises(RuntimeError, match="clone_node is not available on immutable view"):
         cut_aig.clone_node(aig, aig.get_node(x1), [x1])
