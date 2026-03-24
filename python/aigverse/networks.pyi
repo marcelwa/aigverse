@@ -430,9 +430,13 @@ class CutAig(Aig):
     """Implements an isolated view on a single cut in a network.
 
     This view creates a network from a single cut with a single output `root`
-    and a set of `leaves`. The view assumes that all nodes' visited flags are
-    set to 0 before creating the view and guarantees that all nodes in the view
-    will have a 0 visited flag after construction.
+    and a set of `leaves`. This is an immutable view; network-modifying methods
+    are not available.
+
+    Note:
+        This view clears all nodes' visited flags before construction to ensure
+        the cut is constructed correctly. The view guarantees that all nodes in
+        the view will have a 0 visited flag after construction.
     """
 
     @overload
@@ -494,6 +498,69 @@ class CutAig(Aig):
     @property
     def num_gates(self) -> int:
         """Number of logic gates in the cut view."""
+
+    def node_to_index(self, n: int) -> int:
+        """Returns the integer index of a node."""
+
+    def index_to_node(self, index: int) -> int:
+        """Returns the node for an index."""
+
+    def create_pi(self) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_po(self, f: AigSignal) -> None:
+        """Not available on immutable view."""
+
+    def create_buf(self, a: AigSignal) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_not(self, a: AigSignal) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_and(self, a: AigSignal, b: AigSignal) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_nand(self, a: AigSignal, b: AigSignal) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_or(self, a: AigSignal, b: AigSignal) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_nor(self, a: AigSignal, b: AigSignal) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_xor(self, a: AigSignal, b: AigSignal) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_xnor(self, a: AigSignal, b: AigSignal) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_lt(self, a: AigSignal, b: AigSignal) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_le(self, a: AigSignal, b: AigSignal) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_maj(self, a: AigSignal, b: AigSignal, c: AigSignal) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_ite(self, cond: AigSignal, f_then: AigSignal, f_else: AigSignal) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_xor3(self, a: AigSignal, b: AigSignal, c: AigSignal) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_nary_and(self, fs: Sequence[AigSignal]) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_nary_or(self, fs: Sequence[AigSignal]) -> AigSignal:
+        """Not available on immutable view."""
+
+    def create_nary_xor(self, fs: Sequence[AigSignal]) -> AigSignal:
+        """Not available on immutable view."""
+
+    def clone_node(self, other: Aig, source: int, children: Sequence[AigSignal]) -> AigSignal:
+        """Not available on immutable view."""
 
 class AigRegister:
     """Represents metadata for one sequential register."""

@@ -331,10 +331,9 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
             "is_nary_or", [](const Ntk& ntk, const Node& n) { return ntk.is_nary_or(n); }, nb::arg("n"),
             R"pb(Returns whether ``n`` is an n-ary OR node.)pb")
         .def(
-            "to_edge_list",
-            [](const Ntk& ntk, const int64_t regular_weight = 0, const int64_t inverted_weight = 1)
-            { return aigverse::to_edge_list(ntk, regular_weight, inverted_weight); },
-            nb::arg("regular_weight") = 0, nb::arg("inverted_weight") = 1,
+            "to_edge_list", [](const Ntk& ntk, const int64_t regular_weight = 0, const int64_t inverted_weight = 1)
+            { return aigverse::to_edge_list(ntk, regular_weight, inverted_weight); }, nb::arg("regular_weight") = 0,
+            nb::arg("inverted_weight") = 1,
             R"pb(Converts the network to an edge list.
 
 Args:
@@ -532,24 +531,43 @@ Preserves only combinational structure and does not capture augmented view metad
             nb::arg("n"), R"pb(Returns fanout nodes of node ``n``.)pb");
 
     using CutNtk = mockturtle::cut_view<Ntk>;
+
+    auto clear_visited = [](const Ntk& ntk) { ntk.foreach_node([&ntk](const auto& n) { ntk.set_visited(n, 0); }); };
+
     nb::class_<CutNtk, Ntk>(m, fmt::format("Cut{}", network_name).c_str(),
                             R"pb(Implements an isolated view on a single cut in a network.
 
 This view creates a network from a single cut with a single output `root`
-and a set of `leaves`. The view assumes that all nodes' visited flags are
-set to 0 before creating the view and guarantees that all nodes in the view
-will have a 0 visited flag after construction.)pb")
-        .def(nb::init<const Ntk&, const std::vector<Node>&, const Signal&>(), nb::arg("ntk"), nb::arg("leaves"),
-             nb::arg("root"),
-             R"pb(Creates a cut view from a network, leaf nodes, and root signal.
+and a set of `leaves`. This is an immutable view; network-modifying methods
+are not available.
+
+Note:
+    This view clears all nodes' visited flags before construction to ensure
+    the cut is constructed correctly. The view guarantees that all nodes in
+    the view will have a 0 visited flag after construction.)pb")
+        .def(
+            "__init__",
+            [clear_visited](CutNtk* self, const Ntk& ntk, const std::vector<Node>& leaves, const Signal& root)
+            {
+                clear_visited(ntk);
+                new (self) CutNtk(ntk, leaves, root);
+            },
+            nb::arg("ntk"), nb::arg("leaves"), nb::arg("root"),
+            R"pb(Creates a cut view from a network, leaf nodes, and root signal.
 
 Args:
     ntk: The base network.
     leaves: Vector of leaf nodes (boundary of the cut).
     root: The root signal (output) of the cut.)pb")
-        .def(nb::init<const Ntk&, const std::vector<Signal>&, const Signal&>(), nb::arg("ntk"), nb::arg("leaves"),
-             nb::arg("root"),
-             R"pb(Creates a cut view from a network, leaf signals, and root signal.
+        .def(
+            "__init__",
+            [clear_visited](CutNtk* self, const Ntk& ntk, const std::vector<Signal>& leaves, const Signal& root)
+            {
+                clear_visited(ntk);
+                new (self) CutNtk(ntk, leaves, root);
+            },
+            nb::arg("ntk"), nb::arg("leaves"), nb::arg("root"),
+            R"pb(Creates a cut view from a network, leaf signals, and root signal.
 
 Args:
     ntk: The base network.
@@ -569,8 +587,8 @@ Args:
             "gates",
             [](const CutNtk& ntk)
             {
-                std::vector<Node> gates;
-                gates.reserve(ntk.num_gates());
+                std::vector<Node> gates{};
+                gates.reserve(static_cast<size_t>(ntk.num_gates()));
                 ntk.foreach_gate([&gates](const auto& g) { gates.push_back(g); });
                 return gates;
             },
@@ -579,8 +597,8 @@ Args:
             "pis",
             [](const CutNtk& ntk)
             {
-                std::vector<Node> pis;
-                pis.reserve(ntk.num_pis());
+                std::vector<Node> pis{};
+                pis.reserve(static_cast<size_t>(ntk.num_pis()));
                 ntk.foreach_pi([&pis](const auto& pi) { pis.push_back(pi); });
                 return pis;
             },
@@ -589,8 +607,8 @@ Args:
             "pos",
             [](const CutNtk& ntk)
             {
-                std::vector<Signal> pos;
-                pos.reserve(ntk.num_pos());
+                std::vector<Signal> pos{};
+                pos.reserve(static_cast<size_t>(ntk.num_pos()));
                 ntk.foreach_po([&pos](const auto& po) { pos.push_back(po); });
                 return pos;
             },
@@ -610,13 +628,96 @@ Args:
             "num_gates", [](const CutNtk& ntk) { return ntk.num_gates(); },
             R"pb(Number of logic gates in the cut view.)pb")
         .def(
+            "node_to_index", [](const CutNtk& ntk, const Node& n) { return ntk.node_to_index(n); }, nb::arg("n"),
+            R"pb(Returns the integer index of a node.)pb")
+        .def(
+            "index_to_node", [](const CutNtk& ntk, const uint32_t index) { return ntk.index_to_node(index); },
+            nb::arg("index"), R"pb(Returns the node for an index.)pb")
+        .def(
             "__repr__",
             [network_name](const CutNtk& ntk)
             {
                 return fmt::format("Cut{}(leaves={}, gates={}, size={})", network_name, ntk.num_pis(), ntk.num_gates(),
                                    ntk.size());
             },
-            R"pb(Returns a developer-friendly string representation.)pb");
+            R"pb(Returns a developer-friendly string representation.)pb")
+        // Network-modifying methods that are exposed on Aig must be blocked on CutAig
+        .def(
+            "create_pi",
+            [](CutNtk&) -> Signal { throw std::runtime_error("create_pi is not available on immutable view"); },
+            R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_po",
+            [](CutNtk&, const Signal&) { throw std::runtime_error("create_po is not available on immutable view"); },
+            nb::arg("f"), R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_buf", [](CutNtk&, const Signal&) -> Signal
+            { throw std::runtime_error("create_buf is not available on immutable view"); }, nb::arg("a"),
+            R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_not", [](CutNtk&, const Signal&) -> Signal
+            { throw std::runtime_error("create_not is not available on immutable view"); }, nb::arg("a"),
+            R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_and", [](CutNtk&, const Signal&, const Signal&) -> Signal
+            { throw std::runtime_error("create_and is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
+            R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_nand", [](CutNtk&, const Signal&, const Signal&) -> Signal
+            { throw std::runtime_error("create_nand is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
+            R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_or", [](CutNtk&, const Signal&, const Signal&) -> Signal
+            { throw std::runtime_error("create_or is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
+            R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_nor", [](CutNtk&, const Signal&, const Signal&) -> Signal
+            { throw std::runtime_error("create_nor is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
+            R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_xor", [](CutNtk&, const Signal&, const Signal&) -> Signal
+            { throw std::runtime_error("create_xor is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
+            R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_xnor", [](CutNtk&, const Signal&, const Signal&) -> Signal
+            { throw std::runtime_error("create_xnor is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
+            R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_lt", [](CutNtk&, const Signal&, const Signal&) -> Signal
+            { throw std::runtime_error("create_lt is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
+            R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_le", [](CutNtk&, const Signal&, const Signal&) -> Signal
+            { throw std::runtime_error("create_le is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
+            R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_maj", [](CutNtk&, const Signal&, const Signal&, const Signal&) -> Signal
+            { throw std::runtime_error("create_maj is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
+            nb::arg("c"), R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_ite", [](CutNtk&, const Signal&, const Signal&, const Signal&) -> Signal
+            { throw std::runtime_error("create_ite is not available on immutable view"); }, nb::arg("cond"),
+            nb::arg("f_then"), nb::arg("f_else"), R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_xor3", [](CutNtk&, const Signal&, const Signal&, const Signal&) -> Signal
+            { throw std::runtime_error("create_xor3 is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
+            nb::arg("c"), R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_nary_and", [](CutNtk&, const std::vector<Signal>&) -> Signal
+            { throw std::runtime_error("create_nary_and is not available on immutable view"); }, nb::arg("fs"),
+            R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_nary_or", [](CutNtk&, const std::vector<Signal>&) -> Signal
+            { throw std::runtime_error("create_nary_or is not available on immutable view"); }, nb::arg("fs"),
+            R"pb(Not available on immutable view.)pb")
+        .def(
+            "create_nary_xor", [](CutNtk&, const std::vector<Signal>&) -> Signal
+            { throw std::runtime_error("create_nary_xor is not available on immutable view"); }, nb::arg("fs"),
+            R"pb(Not available on immutable view.)pb")
+        .def(
+            "clone_node", [](CutNtk&, const Ntk&, const Node&, const std::vector<Signal>&) -> Signal
+            { throw std::runtime_error("clone_node is not available on immutable view"); }, nb::arg("other"),
+            nb::arg("source"), nb::arg("children"), R"pb(Not available on immutable view.)pb");
 
     using Register = mockturtle::register_t;  // NOLINT(readability-identifier-naming)
     nb::class_<Register>(m, fmt::format("{}Register", network_name).c_str(),
@@ -709,9 +810,9 @@ Args:
         .def(
             "to_edge_list",
             [](const SequentialNtk& ntk, const int64_t regular_weight = 0, const int64_t inverted_weight = 1)
-            { return aigverse::to_edge_list(ntk, regular_weight, inverted_weight); },
-            nb::arg("regular_weight") = 0, nb::arg("inverted_weight") = 1,
-            R"pb(Converts the sequential network to an edge list.)pb", nb::rv_policy::move)
+            { return aigverse::to_edge_list(ntk, regular_weight, inverted_weight); }, nb::arg("regular_weight") = 0,
+            nb::arg("inverted_weight") = 1, R"pb(Converts the sequential network to an edge list.)pb",
+            nb::rv_policy::move)
         .def(
             "pis",
             [](const SequentialNtk& ntk)
