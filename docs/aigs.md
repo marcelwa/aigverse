@@ -294,40 +294,31 @@ f1 = aig.create_and(x1, x2)
 f2 = aig.create_and(f1, x3)
 aig.create_po(f2)
 
-# Create a cut view with x1, x2 as leaves and f1 as root
+# Create a small cut view with x1, x2 as leaves and f1 as root
 # This is valid because f1 only depends on x1 and x2
 cut_aig = CutAig(aig, [x1, x2], f1)
 
-print(f"Cut has {cut_aig.num_pis} PIs (leaves)")
-print(f"Cut has {cut_aig.num_pos} PO (root)")
-print(f"Cut has {cut_aig.num_gates} gates")
+print(f"Small cut has {cut_aig.num_pis} PIs (leaves)")
+print(f"Small cut has {cut_aig.num_pos} POs (roots)")
+print(f"Small cut has {cut_aig.num_gates} gates")
 
 # Iterate over leaves (PIs in the cut)
-print("\nLeaf nodes:")
+print("\nLeaf nodes in small cut:")
 for leaf in cut_aig.pis():
     print(f"  Leaf: {leaf}")
 
 # Iterate over gates in the cut
-print("\nGates in cut:")
+print("\nGates in small cut:")
 for gate in cut_aig.gates():
     print(f"  Gate: {gate}")
-```
 
-You can also create larger cuts that include multiple gates:
-
-```{code-cell} ipython3
-# Create a cut with all PIs as leaves and f2 as root
+# Create a larger cut with all PIs as leaves and f2 as root
 # This cut includes both f1 and f2 gates
 cut_aig2 = CutAig(aig, [x1, x2, x3], f2)
 
 print(f"\nLarger cut has {cut_aig2.num_pis} PIs (leaves)")
-print(f"Larger cut has {cut_aig2.num_pos} PO (root)")
+print(f"Larger cut has {cut_aig2.num_pos} POs (roots)")
 print(f"Larger cut has {cut_aig2.num_gates} gates")
-
-# The leaves are all primary inputs
-print("\nLeaves in larger cut:")
-for leaf in cut_aig2.pis():
-    print(f"  Leaf: {leaf}")
 
 # The gates include both f1 and f2
 print("\nGates in larger cut:")
@@ -336,7 +327,7 @@ for gate in cut_aig2.gates():
 ```
 
 :::{note}
-A cut is only valid if all dependencies of the root node are either included in the leaves or can be reached through nodes within the cut. The cut view assumes that all nodes' visited flags are set to 0 before creating the view.
+A cut is only valid if all dependencies of the root node are either included in the leaves or can be reached through nodes within the cut. The cut view clears all nodes' visited flags before construction to ensure the cut is constructed correctly.
 :::
 
 ### Sequential AIGs
