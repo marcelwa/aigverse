@@ -104,7 +104,7 @@ jobs:
           output: sarif-results
 
       - name: Filter SARIF file to exclude library warnings
-        uses: advanced-security/filter-sarif@main
+        uses: advanced-security/filter-sarif@e70b38d66b897aecb4c6f727c7b410617895db16 # main
         with:
           patterns: |
             -**/docs/**
