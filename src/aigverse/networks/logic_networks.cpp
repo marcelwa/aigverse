@@ -394,7 +394,7 @@ Returns:
                 return aigverse::detail::to_graph_tensors(ntk, node_encoding, edge_encoding, levels, fanouts, node_tts);
             },
             nb::arg("node_encoding") = aigverse::node_tensor_encoding::INTEGER,
-            nb::arg("edge_encoding") = aigverse::edge_tensor_encoding::BINARY, nb::arg("levels") = true,
+            nb::arg("edge_encoding") = aigverse::edge_tensor_encoding::BINARY, nb::kw_only(), nb::arg("levels") = true,
             nb::arg("fanouts") = false, nb::arg("node_tts") = false,
             R"pb(Exports graph tensors for machine-learning workflows.
 
@@ -671,7 +671,7 @@ Preserves only combinational structure and does not capture augmented view metad
                 throw nb::type_error(message.c_str());
             },
             nb::arg("node_encoding") = aigverse::node_tensor_encoding::INTEGER,
-            nb::arg("edge_encoding") = aigverse::edge_tensor_encoding::BINARY, nb::arg("levels") = true,
+            nb::arg("edge_encoding") = aigverse::edge_tensor_encoding::BINARY, nb::kw_only(), nb::arg("levels") = true,
             nb::arg("fanouts") = false, nb::arg("node_tts") = false,
             R"pb(Sequential networks cannot be exported as combinational graph tensors.)pb")
         .def(
