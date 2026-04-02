@@ -314,9 +314,9 @@ class Aig:
         self,
         node_encoding: NodeTensorEncoding = ...,
         edge_encoding: EdgeTensorEncoding = ...,
-        include_level: bool = True,
-        include_fanout: bool = False,
-        include_truth_table: bool = False,
+        levels: bool = True,
+        fanouts: bool = False,
+        node_tts: bool = False,
     ) -> dict:
         """Exports graph tensors for machine-learning workflows.
 
@@ -334,9 +334,9 @@ class Aig:
         Args:
             node_encoding: Node encoding mode as :class:`~aigverse.networks.NodeTensorEncoding`.
             edge_encoding: Edge encoding mode as :class:`~aigverse.networks.EdgeTensorEncoding`.
-            include_level: Appends logic level as a node feature.
-            include_fanout: Appends fanout size as a node feature.
-            include_truth_table: Appends simulated node/output truth-table bits.
+            levels: Appends logic level as a node feature.
+            fanouts: Appends fanout size as a node feature.
+            node_tts: Appends simulated node/output truth-table bits.
 
         Returns:
             A dictionary with ``edge_index`` (shape ``(2, E)``, dtype ``int64``),
@@ -706,9 +706,9 @@ class SequentialAig(Aig):
         self,
         node_encoding: NodeTensorEncoding = ...,
         edge_encoding: EdgeTensorEncoding = ...,
-        include_level: bool = True,
-        include_fanout: bool = False,
-        include_truth_table: bool = False,
+        levels: bool = True,
+        fanouts: bool = False,
+        node_tts: bool = False,
     ) -> NoReturn:
         """Sequential networks cannot be exported as combinational graph tensors."""
 

@@ -108,15 +108,15 @@ nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::vector<T>&&       
  * @param ntk Input network.
  * @param node_encoding Node-type encoding mode.
  * @param edge_encoding Edge-type encoding mode.
- * @param include_level Whether to append depth-based level features.
- * @param include_fanout Whether to append fanout-size features.
- * @param include_truth_table Whether to append truth-table bits.
+ * @param levels Whether to append depth-based level features.
+ * @param fanouts Whether to append fanout-size features.
+ * @param node_tts Whether to append node truth-table bits.
  * @return Dictionary of exported tensors.
  */
 template <typename Ntk>
 nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_encoding,
-                                const edge_tensor_encoding edge_encoding, const bool include_level = false,
-                                const bool include_fanout = false, const bool include_truth_table = false)
+                                const edge_tensor_encoding edge_encoding, const bool levels = false,
+                                const bool fanouts = false, const bool node_tts = false)
 {
     namespace nb = nanobind;
 
@@ -214,35 +214,34 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 
     std::size_t tt_dim = 0;
 
-    std::optional<mockturtle::node_map<aigverse::truth_table, Ntk>> node_tts{};
-    std::vector<aigverse::truth_table>                              output_tts{};
-    if (include_truth_table)
+    std::optional<mockturtle::node_map<aigverse::truth_table, Ntk>> node_truth_tables{};
+    std::vector<aigverse::truth_table>                              output_truth_tables{};
+    if (node_tts)
     {
         if (ntk.num_pis() > 16)
         {
             throw std::invalid_argument("truth-table export is only supported up to 16 primary inputs");
         }
 
-        node_tts = mockturtle::simulate_nodes<aigverse::truth_table>(
+        node_truth_tables = mockturtle::simulate_nodes<aigverse::truth_table>(
             ntk, mockturtle::default_simulator<aigverse::truth_table>{static_cast<unsigned>(ntk.num_pis())});
-        output_tts = mockturtle::simulate<aigverse::truth_table>(
+        output_truth_tables = mockturtle::simulate<aigverse::truth_table>(
             ntk, mockturtle::default_simulator<aigverse::truth_table>{static_cast<unsigned>(ntk.num_pis())});
 
         if (ntk.size() > 0)
         {
-            tt_dim = node_tts.value()[ntk.get_constant(false)].num_bits();
+            tt_dim = node_truth_tables.value()[ntk.get_constant(false)].num_bits();
         }
     }
 
-    const std::size_t base_dim = node_encoding == node_tensor_encoding::ONE_HOT ? node_type_one_hot_dim : 1;
-    const std::size_t node_dim =
-        base_dim + (include_level ? 1 : 0) + (include_fanout ? 1 : 0) + (include_truth_table ? tt_dim : 0);
+    const std::size_t base_dim   = node_encoding == node_tensor_encoding::ONE_HOT ? node_type_one_hot_dim : 1;
+    const std::size_t node_dim   = base_dim + (levels ? 1 : 0) + (fanouts ? 1 : 0) + (node_tts ? tt_dim : 0);
     const std::size_t node_count = ntk.size() + ntk.num_pos();
 
     std::vector<float> node_attr(node_count * node_dim, 0.0f);
 
     std::optional<mockturtle::depth_view<Ntk>> depth_ntk{};
-    if (include_level)
+    if (levels)
     {
         depth_ntk.emplace(ntk);
     }
@@ -276,17 +275,17 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 
             auto feature_offset = fill_base(row, type_index);
 
-            if (include_level)
+            if (levels)
             {
                 node_attr[feature_offset++] = static_cast<float>(depth_ntk->level(n));
             }
-            if (include_fanout)
+            if (fanouts)
             {
                 node_attr[feature_offset++] = static_cast<float>(ntk.fanout_size(n));
             }
-            if (include_truth_table)
+            if (node_tts)
             {
-                const auto& tt = node_tts.value()[n];
+                const auto& tt = node_truth_tables.value()[n];
                 for (std::size_t i = 0; i < tt_dim; ++i)
                 {
                     node_attr[feature_offset + i] = kitty::get_bit(tt, static_cast<uint64_t>(i)) ? 1.0f : 0.0f;
@@ -302,17 +301,17 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 
             auto feature_offset = fill_base(row, type_po);
 
-            if (include_level)
+            if (levels)
             {
                 node_attr[feature_offset++] = static_cast<float>(depth_ntk->level(ntk.get_node(po)) + 1);
             }
-            if (include_fanout)
+            if (fanouts)
             {
                 node_attr[feature_offset++] = 0.0f;
             }
-            if (include_truth_table)
+            if (node_tts)
             {
-                const auto& tt = output_tts[po_idx];
+                const auto& tt = output_truth_tables[po_idx];
                 for (std::size_t i = 0; i < tt_dim; ++i)
                 {
                     node_attr[feature_offset + i] = kitty::get_bit(tt, i) ? 1.0f : 0.0f;

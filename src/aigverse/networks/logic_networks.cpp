@@ -388,15 +388,14 @@ Returns:
         .def(
             "to_graph_tensors",
             [](const Ntk& ntk, const aigverse::node_tensor_encoding node_encoding,
-               const aigverse::edge_tensor_encoding edge_encoding, const bool include_level, const bool include_fanout,
-               const bool include_truth_table)
+               const aigverse::edge_tensor_encoding edge_encoding, const bool levels, const bool fanouts,
+               const bool node_tts)
             {
-                return aigverse::detail::to_graph_tensors(ntk, node_encoding, edge_encoding, include_level,
-                                                          include_fanout, include_truth_table);
+                return aigverse::detail::to_graph_tensors(ntk, node_encoding, edge_encoding, levels, fanouts, node_tts);
             },
             nb::arg("node_encoding") = aigverse::node_tensor_encoding::INTEGER,
-            nb::arg("edge_encoding") = aigverse::edge_tensor_encoding::BINARY, nb::arg("include_level") = true,
-            nb::arg("include_fanout") = false, nb::arg("include_truth_table") = false,
+            nb::arg("edge_encoding") = aigverse::edge_tensor_encoding::BINARY, nb::arg("levels") = true,
+            nb::arg("fanouts") = false, nb::arg("node_tts") = false,
             R"pb(Exports graph tensors for machine-learning workflows.
 
 Returns sparse graph topology and features as DLPack-compatible arrays.
@@ -413,9 +412,9 @@ Node encoding mapping:
 Args:
     node_encoding: Node encoding mode as :class:`~aigverse.networks.NodeTensorEncoding`.
     edge_encoding: Edge encoding mode as :class:`~aigverse.networks.EdgeTensorEncoding`.
-    include_level: Appends logic level as a node feature.
-    include_fanout: Appends fanout size as a node feature.
-    include_truth_table: Appends simulated node/output truth-table bits.
+    levels: Appends logic level as a node feature.
+    fanouts: Appends fanout size as a node feature.
+    node_tts: Appends simulated node/output truth-table bits.
 
 Returns:
     A dictionary with ``edge_index`` (shape ``(2, E)``, dtype ``int64``),
@@ -672,8 +671,8 @@ Preserves only combinational structure and does not capture augmented view metad
                 throw nb::type_error(message.c_str());
             },
             nb::arg("node_encoding") = aigverse::node_tensor_encoding::INTEGER,
-            nb::arg("edge_encoding") = aigverse::edge_tensor_encoding::BINARY, nb::arg("include_level") = true,
-            nb::arg("include_fanout") = false, nb::arg("include_truth_table") = false,
+            nb::arg("edge_encoding") = aigverse::edge_tensor_encoding::BINARY, nb::arg("levels") = true,
+            nb::arg("fanouts") = false, nb::arg("node_tts") = false,
             R"pb(Sequential networks cannot be exported as combinational graph tensors.)pb")
         .def(
             "__getstate__",

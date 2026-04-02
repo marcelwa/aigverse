@@ -86,7 +86,7 @@ def test_to_graph_tensors_one_hot_dimensions(sample_aig: Aig) -> None:
     tensors = sample_aig.to_graph_tensors(
         node_encoding=NodeTensorEncoding.ONE_HOT,
         edge_encoding=EdgeTensorEncoding.ONE_HOT,
-        include_level=False,
+        levels=False,
     )
 
     edge_attr = tensors["edge_attr"]
@@ -101,7 +101,7 @@ def test_to_graph_tensors_signed_edge_encoding_values(sample_aig: Aig) -> None:
     tensors = sample_aig.to_graph_tensors(
         node_encoding=NodeTensorEncoding.INTEGER,
         edge_encoding=EdgeTensorEncoding.SIGNED,
-        include_level=False,
+        levels=False,
     )
     edge_attr = np.from_dlpack(tensors["edge_attr"])
 
@@ -115,9 +115,9 @@ def test_to_graph_tensors_truth_table_feature_dim(sample_aig: Aig) -> None:
     tensors = sample_aig.to_graph_tensors(
         node_encoding=NodeTensorEncoding.ONE_HOT,
         edge_encoding=EdgeTensorEncoding.BINARY,
-        include_level=False,
-        include_fanout=True,
-        include_truth_table=True,
+        levels=False,
+        fanouts=True,
+        node_tts=True,
     )
 
     node_attr = tensors["node_attr"]
@@ -197,9 +197,9 @@ def test_to_graph_tensors_large_aig_shapes_and_dtypes(large_aig: Aig) -> None:
     tensors = large_aig.to_graph_tensors(
         node_encoding=NodeTensorEncoding.ONE_HOT,
         edge_encoding=EdgeTensorEncoding.SIGNED,
-        include_level=True,
-        include_fanout=True,
-        include_truth_table=False,
+        levels=True,
+        fanouts=True,
+        node_tts=False,
     )
 
     edge_index = np.from_dlpack(tensors["edge_index"])
@@ -222,9 +222,9 @@ def test_to_graph_tensors_empty_aig_edge_case() -> None:
     tensors = empty_aig.to_graph_tensors(
         node_encoding=NodeTensorEncoding.INTEGER,
         edge_encoding=EdgeTensorEncoding.ONE_HOT,
-        include_level=False,
-        include_fanout=False,
-        include_truth_table=False,
+        levels=False,
+        fanouts=False,
+        node_tts=False,
     )
 
     edge_index = np.from_dlpack(tensors["edge_index"])
@@ -241,13 +241,13 @@ def test_to_graph_tensors_empty_aig_edge_case() -> None:
 
 
 def test_to_graph_tensors_truth_table_pi_limit_raises() -> None:
-    """Checks include_truth_table fails fast for too many primary inputs."""
+    """Checks node_tts fails fast for too many primary inputs."""
     aig = Aig()
     pis = [aig.create_pi() for _ in range(17)]
     aig.create_po(pis[0])
 
     with pytest.raises(ValueError, match="only supported up to 16 primary inputs"):
-        aig.to_graph_tensors(include_truth_table=True)
+        aig.to_graph_tensors(node_tts=True)
 
 
 def test_to_graph_tensors_po_levels_follow_driver_depth() -> None:
@@ -262,9 +262,9 @@ def test_to_graph_tensors_po_levels_follow_driver_depth() -> None:
     tensors = aig.to_graph_tensors(
         node_encoding=NodeTensorEncoding.INTEGER,
         edge_encoding=EdgeTensorEncoding.BINARY,
-        include_level=True,
-        include_fanout=False,
-        include_truth_table=False,
+        levels=True,
+        fanouts=False,
+        node_tts=False,
     )
 
     node_attr = np.from_dlpack(tensors["node_attr"])
