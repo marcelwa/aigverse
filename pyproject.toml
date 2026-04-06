@@ -33,6 +33,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Natural Language :: English",
     "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Typing :: Typed"
 ]
 
@@ -94,6 +95,7 @@ write_to = "python/aigverse/_version.py"
 [tool.pytest]
 minversion = "9.0"
 strict = true
+filterwarnings = ["error"]
 markers = [
     "networks: Tests for network data structures",
     "algorithms: Tests for optimization and analysis algorithms",
@@ -210,6 +212,14 @@ convention = "google"
 [tool.ruff.format]
 docstring-code-format = true
 
+[tool.repo-review]
+ignore = [
+  "GH200", # Renovate instead of Dependabot
+  "MY100", # ty instead of mypy
+  "PC140", # ty instead of mypy
+  "PC160", # Mirrored crate-ci/typos
+  "PC170", # No rST files
+]
 
 [dependency-groups]
 build = [
