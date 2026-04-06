@@ -23,9 +23,10 @@
 applications. It allows you to represent and manipulate logic circuits efficiently, making it easier to integrate logic
 synthesis and optimization tasks into machine learning pipelines. `aigverse` is built directly upon the
 powerful [EPFL Logic Synthesis Libraries](https://arxiv.org/abs/1805.05121), particularly
-[mockturtle](https://github.com/lsils/mockturtle), providing a high-level Python interface to state-of-the-art
-algorithms for And-Inverter Graph (AIG) manipulation and logic synthesis, widely used in formal verification, hardware
-design, and optimization tasks.
+[mockturtle](https://github.com/lsils/mockturtle), [kitty](https://github.com/lsils/kitty), and
+[lorina](https://github.com/hriener/lorina) providing a high-level Python interface to state-of-the-art
+algorithms for And-Inverter Graph (AIG) manipulation and logic synthesis, widely used in formal verification,
+hardware design, and optimization tasks.
 
 <p align="center">
   <a href="https://aigverse.readthedocs.io/">
@@ -56,8 +57,7 @@ libraries, enabling the development of novel AI-driven synthesis and optimizatio
 ## 📦 Installation
 
 `aigverse` is built using the EPFL Logic Synthesis Libraries with [nanobind](https://github.com/wjakob/nanobind).
-It is available via PyPI for all major operating systems and supports Python 3.10 to 3.14 (with
-optional [free-threading](https://docs.python.org/3/howto/free-threading-python.html) for 3.13 and 3.14).
+It is available via PyPI for all major operating systems and supports all currently active Python versions, with [Stable ABI](https://docs.python.org/3/c-api/stable.html) for 3.12+ and [free-threading](https://docs.python.org/3/howto/free-threading-python.html) support for 3.14+.
 
 ```bash
 pip install aigverse
