@@ -1,7 +1,7 @@
 # Installation
 
-`aigverse` offers Python bindings on top of the [EPFL Logic Synthesis Libraries](https://arxiv.org/abs/1805.05121) together with custom adapters that enable convenient integration into machine learning pipelines.
-The resulting Python package is available on [PyPI](https://pypi.org/project/aigverse/) and can be installed on all major operating systems using all modern Python versions.
+`aigverse` wraps mature C/C++ synthesis backends from the [EPFL Logic Synthesis Libraries](https://arxiv.org/abs/1805.05121) with an idiomatic Python interface for Python-first workflows.
+Optional adapters extend this core with graph and array interoperability for downstream ML and data science pipelines. The resulting Python package is available on [PyPI](https://pypi.org/project/aigverse/) and can be installed on all major operating systems and all active Python versions.
 
 :::::{tip}
 We highly recommend using [`uv`](https://docs.astral.sh/uv/) for working with Python projects.
@@ -112,9 +112,9 @@ setup(
 
 ## Machine Learning Adapters
 
-To keep the library as light-weight as possible for default logic synthesis tasks, machine learning integration adapters
-for `aigverse` are not installed by default as those require many additional dependencies. Instead, you can opt in to
-the adapters by installing the `aigverse[adapters]` extra:
+The base installation intentionally excludes ML and data science adapters so that core synthesis workflows remain
+lightweight and free of heavy optional dependencies. Install the `aigverse[adapters]` extra when you need graph or
+numeric interoperability in Python ML/data science pipelines:
 
 ::::{tab-set}
 :sync-group: installer

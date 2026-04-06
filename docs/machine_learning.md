@@ -13,18 +13,18 @@ mystnb:
 
 # Machine Learning Integration
 
-The field of logic synthesis is turning to data science and machine learning to tackle its most complex optimization
-challenges. Traditional heuristic methods are being augmented, and in some cases replaced, by ML models that can predict
-circuit properties, guide optimization steps, or uncover novel logic structures. This emerging paradigm hinges on the
-ability to seamlessly integrate with the rich ecosystems of data science. By converting AIGs into formats such as graphs
-and numerical arrays, you can unlock the powerful analytical and predictive capabilities of modern machine learning
-workflows.
+Many ML and data science workflows are Python-first, while mature logic synthesis data structures and algorithms are
+predominantly implemented in C/C++ toolchains. Without reusable infrastructure, projects often reimplement synthesis
+functionality in Python or rely on brittle wrappers and file-conversion scripts around external tools. `aigverse`
+addresses this gap by exposing native AIG construction, manipulation, optimization, and analysis through an idiomatic
+Python API, and by providing optional adapters for graph and numeric representations. This enables reproducible dataset
+generation, feature extraction, and downstream model experimentation from within standard Python workflows.
 
 ## Adapters
 
-Adapters provide integration with machine learning workflows. To keep the base library lightweight, these adapters are
-not included by default in the `aigverse` package but can be installed separately via the `adapters` extra. See
-the [Installation](installation.md#machine-learning-adapters) documentation for more details.
+Adapters are the interoperability layer for ML and data science workflows. To keep the base library lightweight, they
+are optional and installed via the `adapters` extra only when needed. See the
+[Installation](installation.md#machine-learning-adapters) documentation for more details.
 
 ## Dataset Generation
 
@@ -54,9 +54,9 @@ print(len(dataset), dataset[0].num_pis, dataset[0].num_gates)
 ### NetworkX
 
 The [NetworkX](https://networkx.org/) adapter allows you to convert an AIG into a {py:class}`~networkx.DiGraph` object.
-This enables you to leverage the rich ecosystem of graph-based machine learning and data science tools that operate on
-NetworkX graphs. Once converted, you can easily extract node and edge features, visualize the structure (e.g., with
-[Matplotlib](https://matplotlib.org/)), or use it as input to graph ML models.
+This enables use of graph-analysis and graph-learning tooling that operates on NetworkX graphs. Once converted, you can
+extract node and edge features, visualize the structure (e.g., with [Matplotlib](https://matplotlib.org/)), or feed
+the graph into downstream model pipelines.
 
 ```{code-cell} ipython3
 import matplotlib.pyplot as plt
