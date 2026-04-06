@@ -81,6 +81,31 @@ pip install "aigverse[adapters]"
 This will install additional dependencies required for ML workflows. See the
 [documentation](https://aigverse.readthedocs.io/en/latest/installation.html#machine-learning-adapters) for more details.
 
+### 🤖 MCP Server
+
+`aigverse` ships an optional [MCP](https://modelcontextprotocol.io/) server that gives LLM-based coding agents
+on-demand access to the documentation and API reference. Install the `mcp` extra:
+
+```bash
+pip install "aigverse[mcp]"
+```
+
+Then configure your MCP client (e.g., Claude Desktop, Cursor, Windsurf) to launch the server:
+
+```json
+{
+  "mcpServers": {
+    "aigverse": {
+      "command": "aigverse-mcp-server"
+    }
+  }
+}
+```
+
+The server exposes three tools: `get_documentation` to fetch guide pages, `lookup_api_symbol` for per-symbol API
+reference lookups, and `search_documentation` for keyword search. See the
+[documentation](https://aigverse.readthedocs.io/en/latest/mcp.html) for the full guide.
+
 ## 🚀 Usage
 
 The following demonstrates core workflows in `aigverse`. Detailed documentation and examples are available at

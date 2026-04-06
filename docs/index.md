@@ -64,6 +64,7 @@ truth_tables
 algorithms
 generators
 machine_learning
+mcp
 ```
 
 ````{only} not latex

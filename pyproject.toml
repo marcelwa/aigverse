@@ -33,6 +33,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Natural Language :: English",
     "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Typing :: Typed"
 ]
 
@@ -42,6 +43,10 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 adapters = ["networkx>=3.0.0", "numpy>=1.23.0"]
+mcp = ["fastmcp>=2.0.0", "httpx>=0.28.0", "beautifulsoup4>=4.12.0", "markdownify>=0.14.1"]
+
+[project.scripts]
+aigverse-mcp-server = "aigverse.mcp_server:main"
 
 [project.urls]
 Source = "https://github.com/marcelwa/aigverse"
@@ -94,6 +99,7 @@ write_to = "python/aigverse/_version.py"
 [tool.pytest]
 minversion = "9.0"
 strict = true
+filterwarnings = ["error"]
 markers = [
     "networks: Tests for network data structures",
     "algorithms: Tests for optimization and analysis algorithms",
@@ -210,6 +216,14 @@ convention = "google"
 [tool.ruff.format]
 docstring-code-format = true
 
+[tool.repo-review]
+ignore = [
+  "GH200", # Renovate instead of Dependabot
+  "MY100", # ty instead of mypy
+  "PC140", # ty instead of mypy
+  "PC160", # Mirrored crate-ci/typos
+  "PC170", # No rST files
+]
 
 [dependency-groups]
 build = [
@@ -246,10 +260,17 @@ lint = [
     "ty==0.0.24",
     "nox>=2025.10.16",
 ]
+mcp = [
+    "fastmcp>=2.0.0",
+    "httpx>=0.28.0",
+    "beautifulsoup4>=4.12.0",
+    "markdownify>=0.14.1",
+]
 dev = [
     { include-group = "build" },
     { include-group = "adapters" },
     { include-group = "docs" },
     { include-group = "test" },
     { include-group = "lint" },
+    { include-group = "mcp" },
 ]
