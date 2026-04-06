@@ -67,7 +67,7 @@ jobs:
         uses: rui314/setup-mold@v1
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@38697555549f1db7851b81482ff19f1fa5c4fedc # v4.34.1
+        uses: github/codeql-action/init@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
         with:
           languages: ${{matrix.language}}
           build-mode: ${{ matrix.build-mode }}
@@ -77,7 +77,7 @@ jobs:
 
       - name: Install the latest version of uv
         if: matrix.language == 'cpp'
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           enable-cache: true
           save-cache: ${{ github.ref == 'refs/heads/main' }}
@@ -98,13 +98,13 @@ jobs:
         run: cmake --build build -j4
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@38697555549f1db7851b81482ff19f1fa5c4fedc # v4.34.1
+        uses: github/codeql-action/analyze@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
         with:
           upload: False
           output: sarif-results
 
       - name: Filter SARIF file to exclude library warnings
-        uses: advanced-security/filter-sarif@main
+        uses: advanced-security/filter-sarif@83be8931196fc98d9c506ff10e17763fed75bd1b # main
         with:
           patterns: |
             -**/docs/**
@@ -114,6 +114,6 @@ jobs:
           output: sarif-results/${{ matrix.language }}.sarif
 
       - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@38697555549f1db7851b81482ff19f1fa5c4fedc # v4.34.1
+        uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
         with:
           sarif_file: sarif-results/${{ matrix.language }}.sarif
