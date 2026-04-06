@@ -1,8 +1,9 @@
 # aigverse: A Python Library for Logic Networks, Synthesis, and Optimization
 
-[![CI](https://img.shields.io/github/actions/workflow/status/marcelwa/aigverse/aigverse-pypi-deployment.yml?label=CI&logo=github&style=flat-square)](https://github.com/marcelwa/aigverse/actions/workflows/aigverse-pypi-deployment.yml)
-[![Documentation Status](https://img.shields.io/readthedocs/aigverse?label=Docs&logo=readthedocs&style=flat-square)](https://aigverse.readthedocs.io/)
+[![CI](https://img.shields.io/github/actions/workflow/status/marcelwa/aigverse/aigverse-python-tests.yml?label=CI&logo=github&style=flat-square)](https://github.com/marcelwa/aigverse/actions/workflows/aigverse-python-tests.yml)
+[![Documentation](https://img.shields.io/readthedocs/aigverse?label=Docs&logo=readthedocs&style=flat-square)](https://aigverse.readthedocs.io/)
 [![PyPI](https://img.shields.io/static/v1?label=PyPI&message=aigverse&logo=pypi&color=informational&style=flat-square)](https://pypi.org/project/aigverse/)
+[![Python](https://img.shields.io/static/v1?label=Python&message=3.10%2B&logo=python&color=3776AB&style=flat-square)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/marcelwa/aigverse?label=License&style=flat-square)](https://github.com/marcelwa/aigverse/blob/main/LICENSE)
 [![Release](https://img.shields.io/github/v/release/marcelwa/aigverse?label=aigverse&style=flat-square)](https://github.com/marcelwa/aigverse/releases)
 
