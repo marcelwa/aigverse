@@ -60,7 +60,6 @@ jobs:
       - name: Check if stub files are up to date
         run: |
           uvx nox -s stubs
-          uvx prek run -a ruff-format
           if [[ -n "$(git status --porcelain python)" ]]; then
             echo "Stub files are not up to date. Please run 'nox -s stubs' and commit the changes."
             git --no-pager diff python
