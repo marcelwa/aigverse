@@ -408,7 +408,8 @@ For more information on the index list format, see
 
 AIGs support Python's [`pickle`](https://docs.python.org/3/library/pickle.html) protocol, allowing you to serialize and
 deserialize AIG objects for persistent storage. This is useful for saving intermediate results, sharing AIGs between
-processes, quickly restoring previously computed networks, or interface with data science or machine learning workflows.
+processes, quickly restoring previously computed networks, or integrating with Python-first data science and machine
+learning workflows.
 
 ```{code-cell} ipython3
 import pickle
