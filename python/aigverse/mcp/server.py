@@ -10,7 +10,7 @@ Run via the installed entry-point::
 
 Or directly::
 
-    python -m aigverse.mcp_server
+    python -m aigverse.mcp
 """
 
 from __future__ import annotations
@@ -19,6 +19,9 @@ import json
 import logging
 import re
 from typing import TYPE_CHECKING
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 import httpx
 import markdownify
@@ -90,10 +93,38 @@ def _fetch_page(url: str) -> str:
 
     Returns:
         The raw HTML string of the fetched page.
+
+    Raises:
+        ValueError: If *url* is not an HTTPS URL.
+        httpx.HTTPError: If both httpx and urllib-based fetch attempts fail.
     """
-    resp = _client.get(url)
-    resp.raise_for_status()
-    return resp.text
+    parsed = urlparse(url)
+    if parsed.scheme != "https":
+        msg = f"Unsupported URL scheme for documentation fetch: {parsed.scheme!r}"
+        raise ValueError(msg)
+
+    try:
+        resp = _client.get(url)
+        resp.raise_for_status()
+    except httpx.HTTPError as exc:
+        # Some docs hosts intermittently deny certain TLS/client fingerprints.
+        # Fall back to stdlib urllib to avoid false negatives in live integration.
+        logger.debug("httpx fetch failed for %s, attempting urllib fallback", url, exc_info=exc)
+        request = Request(  # noqa: S310
+            url,
+            headers={
+                "User-Agent": "aigverse-mcp-server/1.0 (+https://github.com/marcelwa/aigverse)",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            },
+        )
+        try:
+            with urlopen(request, timeout=30) as response:  # noqa: S310
+                encoding = response.headers.get_content_charset() or "utf-8"
+                return response.read().decode(encoding, errors="replace")
+        except (HTTPError, URLError) as urllib_exc:
+            raise exc from urllib_exc
+    else:
+        return resp.text
 
 
 def _extract_article(html: str) -> str:
@@ -136,11 +167,11 @@ def _extract_symbol_section(html: str, symbol: str) -> str | None:
     # Walk up to the enclosing <dl> (Sphinx uses description lists for API items)
     node: Tag | None = anchor
     while node and node.name != "dl":
-        node = node.parent  # type: ignore[assignment]
+        node = node.parent
 
     if node is None:
         # Fallback: grab the anchor's parent section
-        node = anchor.parent  # type: ignore[assignment]
+        node = anchor.parent
 
     return markdownify.markdownify(str(node), heading_style="ATX", strip=["script", "style"])
 
