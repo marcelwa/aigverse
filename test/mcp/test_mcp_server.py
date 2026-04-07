@@ -211,13 +211,13 @@ class TestLiveDocumentationIntegration:
     def installation_html(self) -> str:
         from aigverse.mcp.server import _fetch_page
 
-        return _fetch_page("https://aigverse.readthedocs.io/en/latest/installation.html")
+        return _fetch_page("https://aigverse.readthedocs.io/en/stable/installation.html")
 
     @pytest.fixture(scope="class")
     def networks_api_html(self) -> str:
         from aigverse.mcp.server import _fetch_page
 
-        return _fetch_page("https://aigverse.readthedocs.io/en/latest/api/aigverse/networks/index.html")
+        return _fetch_page("https://aigverse.readthedocs.io/en/stable/api/aigverse/networks/index.html")
 
     def test_extract_article_from_live_installation_page(self, installation_html) -> None:
         """``_extract_article`` should parse real documentation content."""

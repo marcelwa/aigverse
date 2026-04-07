@@ -104,8 +104,8 @@ The server exposes the following capabilities:
 
 ## How It Works
 
-The server fetches documentation pages live from [aigverse.readthedocs.io](https://aigverse.readthedocs.io/en/latest/)
-at request time, so the content is always in sync with the latest published documentation. For each request, the
+The server fetches documentation pages live from [aigverse.readthedocs.io](https://aigverse.readthedocs.io/en/stable/)
+at request time, so the content is always in sync with the latest stable documentation version. For each request, the
 server:
 
 1. Fetches the HTML page from ReadTheDocs

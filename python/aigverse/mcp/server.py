@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-_RTD_BASE = "https://aigverse.readthedocs.io/en/latest"
+_RTD_BASE = "https://aigverse.readthedocs.io/en/stable"
 
 _GUIDE_PAGES: dict[str, str] = {
     "installation": "Installation",
