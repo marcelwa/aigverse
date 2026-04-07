@@ -67,6 +67,75 @@ In Cursor Settings → MCP, add a new server with:
 
 :::
 
+:::{tab-item} GitHub Copilot (VS Code)
+
+Use the MCP server registration flow in VS Code and configure a `command`/`stdio` server:
+
+1. Open Command Palette.
+2. Run the MCP server add command exposed by your Copilot/VS Code installation.
+3. Add server name `aigverse`.
+4. Set command to:
+
+```bash
+aigverse-mcp-server
+```
+
+If your environment does not expose `aigverse-mcp-server` on `PATH`, use:
+
+```bash
+uvx --from "aigverse[mcp]" aigverse-mcp-server
+```
+
+:::
+
+:::{tab-item} GitHub Copilot CLI
+
+In Copilot CLI, register an MCP `stdio` server named `aigverse` and point it to:
+
+```bash
+aigverse-mcp-server
+```
+
+If needed, use the `uvx` form:
+
+```bash
+uvx --from "aigverse[mcp]" aigverse-mcp-server
+```
+
+:::
+
+:::{tab-item} Codex CLI
+
+In Codex CLI MCP settings, add a `stdio` server named `aigverse` with command:
+
+```bash
+aigverse-mcp-server
+```
+
+Or use:
+
+```bash
+uvx --from "aigverse[mcp]" aigverse-mcp-server
+```
+
+:::
+
+:::{tab-item} Gemini CLI
+
+In Gemini CLI MCP settings, add a `stdio` server named `aigverse` with command:
+
+```bash
+aigverse-mcp-server
+```
+
+Or use:
+
+```bash
+uvx --from "aigverse[mcp]" aigverse-mcp-server
+```
+
+:::
+
 :::{tab-item} Generic (stdio)
 
 Any MCP client that supports the `stdio` transport can launch the server directly:
@@ -82,6 +151,11 @@ aigverse-mcp-server
 If you installed `aigverse` inside a virtual environment or via `uv`, make sure the `aigverse-mcp-server` script is
 on your `PATH`, or use the full path to the script in the client configuration. With `uv`, you can also use
 `uvx --from "aigverse[mcp]" aigverse-mcp-server` to run the server without a persistent install.
+```
+
+```{note}
+Exact setting names and config file locations differ across client versions. The integration contract is the same:
+register a `stdio` MCP server named `aigverse` that launches the command shown above.
 ```
 
 ## Available Tools and Resources
