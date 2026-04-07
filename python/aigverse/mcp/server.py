@@ -6,11 +6,15 @@ Python API reference hosted on ReadTheDocs.
 
 Run via the installed entry-point::
 
-    aigverse - mcp - server
+.. code-block:: console
+
+    $ aigverse-mcp-server
 
 Or directly::
 
-    python -m aigverse.mcp
+.. code-block:: console
+
+    $ python -m aigverse.mcp
 """
 
 from __future__ import annotations
