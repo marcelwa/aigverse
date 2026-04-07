@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from aigverse.mcp.server import main, mcp
+from aigverse.mcp.cli import main
 
-__all__ = ["main", "mcp"]
+__all__ = ["main"]

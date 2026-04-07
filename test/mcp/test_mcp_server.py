@@ -46,14 +46,13 @@ class TestModuleImports:
         import aigverse.mcp
 
         assert hasattr(aigverse.mcp, "main")
-        assert hasattr(aigverse.mcp, "mcp")
 
     def test_server_module_importable(self) -> None:
         """``import aigverse.mcp.server`` should succeed."""
-        import aigverse.mcp.server
+        from aigverse.mcp import server
 
-        assert hasattr(aigverse.mcp.server, "main")
-        assert hasattr(aigverse.mcp.server, "mcp")
+        assert hasattr(server, "main")
+        assert hasattr(server, "mcp")
 
     def test_main_is_callable(self) -> None:
         """``main`` must be callable (the CLI entry point target)."""

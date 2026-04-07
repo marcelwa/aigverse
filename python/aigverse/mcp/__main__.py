@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from aigverse.mcp.server import main
+from aigverse.mcp import main
 
 main()

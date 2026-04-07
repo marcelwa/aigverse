@@ -161,7 +161,7 @@ def _extract_symbol_section(html: str, symbol: str) -> str | None:
     soup = BeautifulSoup(html, "html.parser")
 
     # Try exact id match first (e.g. "aigverse.networks.Aig")
-    anchor = soup.find(id=re.compile(re.escape(symbol), re.IGNORECASE))
+    anchor = soup.find(id=re.compile(rf"^{re.escape(symbol)}$", re.IGNORECASE))
     if anchor is None:
         # Try matching just the short name at the end of the id
         anchor = soup.find(id=re.compile(rf"\.{re.escape(symbol)}$", re.IGNORECASE))
@@ -240,10 +240,11 @@ def get_documentation(slug: str) -> str:
 
     try:
         html = _fetch_page(url)
-    except httpx.HTTPStatusError as exc:
+    except httpx.HTTPError as exc:
+        detail = str(exc.response.status_code) if isinstance(exc, httpx.HTTPStatusError) else str(exc)
         return (
-            f"Error: could not fetch page '{slug}' ({exc.response.status_code}). "
-            f"Use the aigverse://pages resource to see available pages."
+            f"Error: could not fetch page '{slug}' ({detail}). "
+            "Use the aigverse://pages resource to see available pages."
         )
 
     return _extract_article(html)
@@ -284,7 +285,7 @@ def lookup_api_symbol(symbol: str) -> str:
 
         try:
             html = _fetch_page(url)
-        except httpx.HTTPStatusError:
+        except httpx.HTTPError:
             continue
 
         result = _extract_symbol_section(html, symbol)
@@ -327,8 +328,10 @@ def search_documentation(query: str, max_results: int = 5) -> str:
     try:
         resp = _client.get(search_url, params=params)
         resp.raise_for_status()
-    except httpx.HTTPStatusError as exc:
-        return f"Search failed: {exc.response.status_code}"
+    except httpx.HTTPError as exc:
+        if isinstance(exc, httpx.HTTPStatusError):
+            return f"Search failed: {exc.response.status_code}"
+        return f"Search failed: {exc}"
 
     data = resp.json()
     results = []
