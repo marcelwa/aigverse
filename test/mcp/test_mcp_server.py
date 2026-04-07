@@ -57,9 +57,9 @@ class TestModuleImports:
 
     def test_main_is_callable(self) -> None:
         """``main`` must be callable (the CLI entry point target)."""
-        from aigverse.mcp import main
+        import aigverse.mcp
 
-        assert callable(main)
+        assert callable(aigverse.mcp.main)
 
 
 # ---------------------------------------------------------------------------
