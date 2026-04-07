@@ -32,6 +32,8 @@ import markdownify
 from bs4 import BeautifulSoup
 from fastmcp import FastMCP
 
+from aigverse import __version__
+
 if TYPE_CHECKING:
     from bs4 import Tag
 
@@ -42,6 +44,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _RTD_BASE = "https://aigverse.readthedocs.io/en/stable"
+_USER_AGENT = f"aigverse-mcp-server/{__version__} (+https://github.com/marcelwa/aigverse)"
 
 _GUIDE_PAGES: dict[str, str] = {
     "installation": "Installation",
@@ -62,6 +65,7 @@ _API_SUBMODULES: list[str] = [
     "aigverse.algorithms",
     "aigverse.generators",
     "aigverse.io",
+    "aigverse.mcp",
     "aigverse.networks",
     "aigverse.utils",
 ]
@@ -74,6 +78,7 @@ _SUBMODULE_SLUGS: dict[str, str] = {
     "algorithms": "algorithms",
     "generators": "generators",
     "io": "io",
+    "mcp": "mcp",
     "networks": "networks",
     "utils": "utils",
     # Allow fully-qualified names too
@@ -81,6 +86,7 @@ _SUBMODULE_SLUGS: dict[str, str] = {
     "aigverse.algorithms": "algorithms",
     "aigverse.generators": "generators",
     "aigverse.io": "io",
+    "aigverse.mcp": "mcp",
     "aigverse.networks": "networks",
     "aigverse.utils": "utils",
 }
@@ -117,7 +123,7 @@ def _fetch_page(url: str) -> str:
         request = Request(  # noqa: S310
             url,
             headers={
-                "User-Agent": "aigverse-mcp-server/1.0 (+https://github.com/marcelwa/aigverse)",
+                "User-Agent": _USER_AGENT,
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             },
         )
@@ -273,9 +279,9 @@ def lookup_api_symbol(symbol: str) -> str:
     if len(parts) >= 3 and parts[0] == "aigverse":
         # e.g. "aigverse.networks.Aig" → submodule "networks", symbol_name "Aig"
         submodule = parts[1]
-        submodule_slugs = [submodule] if submodule in _SUBMODULE_SLUGS else list(_SUBMODULE_SLUGS.values())
+        submodule_slugs = [submodule, "."] if submodule in _SUBMODULE_SLUGS else list(_SUBMODULE_SLUGS.values())
     elif len(parts) == 2 and parts[0] in _SUBMODULE_SLUGS:
-        submodule_slugs = [_SUBMODULE_SLUGS[parts[0]]]
+        submodule_slugs = [_SUBMODULE_SLUGS[parts[0]], "."]
     else:
         # Short name — search across all submodule pages
         submodule_slugs = list(dict.fromkeys(_SUBMODULE_SLUGS.values()))

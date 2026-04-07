@@ -216,7 +216,7 @@ class TestLiveDocumentationIntegration:
     def networks_api_html(self) -> str:
         from aigverse.mcp.server import _fetch_page
 
-        return _fetch_page("https://aigverse.readthedocs.io/en/stable/api/aigverse/networks/index.html")
+        return _fetch_page("https://aigverse.readthedocs.io/en/stable/api/aigverse/index.html")
 
     def test_extract_article_from_live_installation_page(self, installation_html) -> None:
         """``_extract_article`` should parse real documentation content."""
@@ -230,7 +230,7 @@ class TestLiveDocumentationIntegration:
         """``_extract_symbol_section`` should locate a real API symbol."""
         from aigverse.mcp.server import _extract_symbol_section
 
-        section = _extract_symbol_section(networks_api_html, "aigverse.networks.Aig")
+        section = _extract_symbol_section(networks_api_html, "aigverse.Aig")
         assert section is not None
         assert "Aig" in section
 
