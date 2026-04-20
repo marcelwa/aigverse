@@ -7,8 +7,6 @@ the ``mcp_integration`` marker and ``--run-mcp-integration``.
 
 from __future__ import annotations
 
-import json
-
 import pytest
 
 # ---------------------------------------------------------------------------
@@ -95,9 +93,9 @@ class TestPageListing:
 
     @pytest.fixture
     def pages_json(self):
-        from aigverse.mcp.server import list_pages
+        from aigverse.mcp.server import get_pages_listing
 
-        return json.loads(list_pages())
+        return get_pages_listing()
 
     def test_returns_valid_json(self, pages_json) -> None:
         """``list_pages()`` must return parseable JSON."""

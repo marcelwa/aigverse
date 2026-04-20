@@ -204,12 +204,11 @@ mcp = FastMCP(
 # ---- Resource: page listing ------------------------------------------------
 
 
-@mcp.resource("aigverse://pages")
-def list_pages() -> str:
-    """Return a JSON listing of all available documentation pages.
+def get_pages_listing() -> dict[str, list[dict[str, str]]]:
+    """Build the documentation page index payload.
 
-    Each entry contains the page slug (to pass to ``get_documentation``),
-    a human-readable title, and the full URL on ReadTheDocs.
+    Returns:
+        A mapping with ``guide_pages`` and ``api_pages`` entries.
     """
     pages = [{"slug": slug, "title": title, "url": f"{_RTD_BASE}/{slug}.html"} for slug, title in _GUIDE_PAGES.items()]
     api_pages = [
@@ -220,7 +219,17 @@ def list_pages() -> str:
         }
         for mod in _API_SUBMODULES
     ]
-    return json.dumps({"guide_pages": pages, "api_pages": api_pages}, indent=2)
+    return {"guide_pages": pages, "api_pages": api_pages}
+
+
+@mcp.resource("aigverse://pages")
+def list_pages() -> str:
+    """Return a JSON listing of all available documentation pages.
+
+    Each entry contains the page slug (to pass to ``get_documentation``),
+    a human-readable title, and the full URL on ReadTheDocs.
+    """
+    return json.dumps(get_pages_listing(), indent=2)
 
 
 # ---- Tool: get documentation page ------------------------------------------
