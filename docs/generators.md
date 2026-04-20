@@ -30,7 +30,8 @@ print(single.num_pis, single.num_gates)
 
 ## Python-Side Batching
 
-Batching is intentionally kept on the Python side for flexibility. For fixed-size datasets, call
+Batching is intentionally kept on the Python side to keep experiment orchestration reproducible and easy to compose
+with downstream data science and ML code. For fixed-size datasets, call
 {py:func}`~aigverse.generators.random_aig` repeatedly with fixed `num_pis` and `num_gates`.
 
 :::{note}

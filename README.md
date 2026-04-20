@@ -1,8 +1,9 @@
 # aigverse: A Python Library for Logic Networks, Synthesis, and Optimization
 
-[![CI](https://img.shields.io/github/actions/workflow/status/marcelwa/aigverse/aigverse-pypi-deployment.yml?label=CI&logo=github&style=flat-square)](https://github.com/marcelwa/aigverse/actions/workflows/aigverse-pypi-deployment.yml)
-[![Documentation Status](https://img.shields.io/readthedocs/aigverse?label=Docs&logo=readthedocs&style=flat-square)](https://aigverse.readthedocs.io/)
+[![CI](https://img.shields.io/github/actions/workflow/status/marcelwa/aigverse/aigverse-python-tests.yml?label=CI&logo=github&style=flat-square)](https://github.com/marcelwa/aigverse/actions/workflows/aigverse-python-tests.yml)
+[![Documentation](https://img.shields.io/readthedocs/aigverse?label=Docs&logo=readthedocs&style=flat-square)](https://aigverse.readthedocs.io/)
 [![PyPI](https://img.shields.io/static/v1?label=PyPI&message=aigverse&logo=pypi&color=informational&style=flat-square)](https://pypi.org/project/aigverse/)
+[![Python](https://img.shields.io/static/v1?label=Python&message=3.10%2B&logo=python&color=3776AB&style=flat-square)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/marcelwa/aigverse?label=License&style=flat-square)](https://github.com/marcelwa/aigverse/blob/main/LICENSE)
 [![Release](https://img.shields.io/github/v/release/marcelwa/aigverse?label=aigverse&style=flat-square)](https://github.com/marcelwa/aigverse/releases)
 
@@ -19,13 +20,14 @@
   </a>
 </p>
 
-`aigverse` is a Python infrastructure framework designed to bridge the gap between logic synthesis and AI/ML
-applications. It allows you to represent and manipulate logic circuits efficiently, making it easier to integrate logic
-synthesis and optimization tasks into machine learning pipelines. `aigverse` is built directly upon the
-powerful [EPFL Logic Synthesis Libraries](https://arxiv.org/abs/1805.05121), particularly
-[mockturtle](https://github.com/lsils/mockturtle), providing a high-level Python interface to state-of-the-art
-algorithms for And-Inverter Graph (AIG) manipulation and logic synthesis, widely used in formal verification, hardware
-design, and optimization tasks.
+`aigverse` is an open-source infrastructure project that brings mature logic synthesis capabilities into
+Python-first workflows. Rather than reimplementing synthesis algorithms in Python, it wraps high-performance C/C++
+backends with an idiomatic Python interface. `aigverse` is built directly upon the
+[EPFL Logic Synthesis Libraries](https://arxiv.org/abs/1805.05121), particularly
+[mockturtle](https://github.com/lsils/mockturtle), [kitty](https://github.com/lsils/kitty), and
+[lorina](https://github.com/hriener/lorina), providing reusable support for And-Inverter Graph (AIG) construction,
+manipulation, optimization and equivalence-checking flows, dataset generation, and export to graph and array
+representations for downstream data science and ML pipelines.
 
 <p align="center">
   <a href="https://aigverse.readthedocs.io/">
@@ -41,23 +43,25 @@ design, and optimization tasks.
 - **C++ Backend**: Leverage the performance of the EPFL Logic Synthesis Libraries for fast logic synthesis and
   optimization.
 - **High-Level API**: Simplify logic synthesis tasks with a Pythonic interface for AIG manipulation and optimization.
-- **Integration with Machine Learning**: Convenient integration with popular data science libraries.
+- **ML/Data Science Interoperability**: Optional adapters for graph and array representations used in Python data
+  science and machine learning workflows.
 
 ## 🤔 Motivation
 
-As AI and machine learning (ML) increasingly impact hardware design automation, there's a growing need for tools that
-integrate logic synthesis with ML workflows. `aigverse` provides a Python-friendly interface for logic synthesis, making
-it easier to develop applications that blend both AI/ML and traditional circuit synthesis techniques. By building upon
-the robust foundation of the EPFL Logic Synthesis Libraries, `aigverse` delivers powerful logic manipulation
-capabilities while maintaining accessibility through its Python interface. With `aigverse`, you can parse, manipulate,
-and optimize logic circuits directly from Python. We aim to provide seamless integration with popular ML
-libraries, enabling the development of novel AI-driven synthesis and optimization tools.
+Logic synthesis algorithms are predominantly implemented in highly optimized C/C++ toolchains, while modern ML
+experimentation is often Python-first. Without reusable infrastructure, projects frequently end up reimplementing
+synthesis functionality in Python or maintaining brittle wrapper and file-conversion pipelines around external tools.
+`aigverse` addresses this recurring engineering gap by exposing mature synthesis capabilities through a streamlined
+Python API. This enables circuit construction and manipulation, optimization and equivalence-checking flows, and export
+to ML-ready graph or numeric representations in one reusable library. `aigverse` wraps the EPFL Logic Synthesis
+Libraries with [nanobind](https://github.com/wjakob/nanobind) to provide a Pythonic interface to high-performance C/C++
+synthesis backends.
 
 ## 📦 Installation
 
-`aigverse` is built using the EPFL Logic Synthesis Libraries with [nanobind](https://github.com/wjakob/nanobind).
-It is available via PyPI for all major operating systems and supports Python 3.10 to 3.14 (with
-optional [free-threading](https://docs.python.org/3/howto/free-threading-python.html) for 3.13 and 3.14).
+`aigverse` is available via PyPI for all major operating systems and supports all active Python versions,
+with [Stable ABI](https://docs.python.org/3/c-api/stable.html) for 3.12+ and
+[free-threading](https://docs.python.org/3/howto/free-threading-python.html) support for 3.14+.
 
 ```bash
 pip install aigverse
@@ -65,9 +69,9 @@ pip install aigverse
 
 ### 🔌 Adapters
 
-To keep the core library lightweight, machine learning integration adapters are not installed by default. These adapters
-enable seamless conversion of AIGs to graph and array formats for use with ML and data science libraries (such as
-[NetworkX](https://networkx.org/), [NumPy](https://numpy.org/), etc.). To install `aigverse` with the adapters extra,
+To keep the core library lightweight, ML and data science adapters are optional and not installed by default. They
+provide reusable conversion paths from AIGs to graph and array formats for Python workflows (such as
+[NetworkX](https://networkx.org/) and [NumPy](https://numpy.org/)). To install `aigverse` with the adapters extra,
 use:
 
 ```bash
@@ -79,7 +83,7 @@ This will install additional dependencies required for ML workflows. See the
 
 ## 🚀 Usage
 
-The following gives a shallow overview on `aigverse`. Detailed documentation and examples are available at
+The following demonstrates core workflows in `aigverse`. Detailed documentation and examples are available at
 [ReadTheDocs](https://aigverse.readthedocs.io/).
 
 ### 🏗️ Basic Example: Creating an AIG
@@ -463,8 +467,8 @@ For a deeper dive into the vision and technical details behind `aigverse`, check
 **"aigverse: Toward machine learning-driven logic synthesis"**
 📄 [Slides available on the FSiC wiki](https://wiki.f-si.org/index.php?title=Aigverse:_Toward_machine_learning-driven_logic_synthesis)
 
-This talk covers the motivation, architecture, and future directions of `aigverse` as an infrastructure project for
-bringing machine learning to logic synthesis.
+This talk presents the same core infrastructure thesis: closing the software gap between high-performance synthesis
+tooling and Python-first ML workflows.
 
 ## 🙌 Contributing
 
