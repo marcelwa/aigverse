@@ -34,6 +34,14 @@ function(add_aigverse_python_binding target_name)
     ${target_name} PRIVATE aigverse::mockturtle aigverse::aigverse_options
                            aigverse::aigverse_warnings)
 
+  # Explicitly link Python on platforms where modules require the import library
+  # at link time (Windows on ARM).
+  if(TARGET Python::SABIModule)
+    target_link_libraries(${target_name} PRIVATE Python::SABIModule)
+  elseif(TARGET Python::Module)
+    target_link_libraries(${target_name} PRIVATE Python::Module)
+  endif()
+
   target_include_directories(${target_name} PRIVATE "${PROJECT_SOURCE_DIR}/src")
 
   if(MSVC)
