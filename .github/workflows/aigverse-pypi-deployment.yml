@@ -99,7 +99,10 @@ jobs:
           fetch-depth: 0
 
       - name: Set up MSVC development environment (Windows only)
+        if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          arch: ${{ matrix.runs-on == 'windows-11-arm' && 'amd64_arm64' || 'x64' }}
 
       - if: runner.os == 'Linux'
         name: Setup mold
