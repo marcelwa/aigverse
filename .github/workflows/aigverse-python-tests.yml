@@ -10,6 +10,7 @@ on:
       - "src/aigverse/**"
       - "test/**"
       - "**/*.py"
+      - "**/*.pyi"
       - "**/*.hpp"
       - "**/*.cpp"
       - "**/*.cmake"
@@ -24,6 +25,7 @@ on:
       - "src/aigverse/**"
       - "test/**"
       - "**/*.py"
+      - "**/*.pyi"
       - "**/*.hpp"
       - "**/*.cpp"
       - "**/*.cmake"
@@ -54,6 +56,15 @@ jobs:
 
       - name: Run ty
         run: uvx prek run -a ty-check
+
+      - name: Check if stub files are up to date
+        run: |
+          uvx nox -s stubs
+          if [[ -n "$(git status --porcelain python)" ]]; then
+            echo "Stub files are not up to date. Please run 'nox -s stubs' and commit the changes."
+            git --no-pager diff python
+            exit 1
+          fi
 
       - name: Run check-sdist
         run: uvx check-sdist --inject-junk

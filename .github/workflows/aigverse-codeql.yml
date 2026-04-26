@@ -9,6 +9,7 @@ on:
       - "**/*.cmake"
       - "**/CMakeLists.txt"
       - "**/*.py"
+      - "**/*.pyi"
       - "libs/**"
       - ".github/workflows/aigverse-codeql.yml"
   pull_request:
@@ -19,6 +20,7 @@ on:
       - "**/*.cmake"
       - "**/CMakeLists.txt"
       - "**/*.py"
+      - "**/*.pyi"
       - "libs/**"
       - ".github/workflows/aigverse-codeql.yml"
   merge_group:

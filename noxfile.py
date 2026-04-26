@@ -238,6 +238,7 @@ def stubs(session: nox.Session) -> None:
     success_codes = [0, 1]
     session.run("prek", "run", "ruff-format", "--files", *pyi_files, external=True, success_codes=success_codes)
     session.run("prek", "run", "ruff-check", "--files", *pyi_files, external=True, success_codes=success_codes)
+    session.run("prek", "run", "ruff-format", "--files", *pyi_files, external=True, success_codes=success_codes)
 
     # Run ruff-check again to ensure everything is clean
     session.run("prek", "run", "ruff-check", "--files", *pyi_files, external=True)
