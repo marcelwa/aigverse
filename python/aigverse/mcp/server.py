@@ -24,7 +24,7 @@ import logging
 import re
 from typing import TYPE_CHECKING
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
 
 import httpx
@@ -353,14 +353,18 @@ def search_documentation(query: str, max_results: int = 5) -> str:
     for hit in data.get("results", []):
         # Each result has 'title', 'domain', 'path', 'highlights'
         path = hit.get("path", "")
+        parsed = urlparse(_RTD_BASE)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+        highlights: list[str] = []
+        for block in hit.get("blocks", []):
+            block_highlights = block.get("highlights", {}).get("content", [])
+            if isinstance(block_highlights, list):
+                highlights.extend([text for text in block_highlights if isinstance(text, str) and text])
+
         results.append({
             "title": hit.get("title", ""),
-            "url": f"{_RTD_BASE}/{path}" if not path.startswith("http") else path,
-            "highlights": [
-                block.get("content", {}).get("highlighted", "")
-                for block in hit.get("blocks", [])
-                if block.get("content", {}).get("highlighted")
-            ],
+            "url": urljoin(base_url, path) if not path.startswith("http") else path,
+            "highlights": highlights,
         })
 
     if not results:
