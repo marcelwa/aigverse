@@ -43,11 +43,15 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 adapters = ["networkx>=3.0.0", "numpy>=1.23.0"]
+mcp = ["fastmcp>=2.0.0", "httpx>=0.28.0", "beautifulsoup4>=4.12.0", "markdownify>=0.14.1"]
+
+[project.scripts]
+aigverse-mcp-server = "aigverse.mcp:main"
 
 [project.urls]
 Source = "https://github.com/marcelwa/aigverse"
 Tracker = "https://github.com/marcelwa/aigverse/issues"
-Documentation = "https://aigverse.readthedocs.io/en/latest/"
+Documentation = "https://aigverse.readthedocs.io/en/stable/"
 
 [tool.scikit-build]
 # Protect the configuration against future changes in scikit-build-core
@@ -103,6 +107,9 @@ markers = [
     "generators: Tests for network generators",
     "adapters: Tests for optional adapter integrations",
     "tts: Tests for truth table utilities",
+    "mcp: Tests for the MCP server",
+    "mcp_integration: MCP tests that hit live ReadTheDocs pages",
+    "script_launch_mode(mode): pytest-console-scripts launch mode (inprocess/subprocess)",
 ]
 addopts = [
     "-ra",
@@ -195,7 +202,7 @@ isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "python/aigverse/__init__.py" = ["RUF067"]
-"test/**" = ["T20", "ANN", "D", "INP001", "S301", "S403"]
+"test/**" = ["T20", "ANN", "D", "INP001", "S301", "S403", "PLR6301", "PLC2701"]
 "docs/**" = ["T20", "ERA001", "INP001"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]
 "tools/*.py" = ["S603", "S607"]
@@ -233,6 +240,7 @@ adapters = [
 ]
 docs = [
     { include-group = "adapters" },
+    { include-group = "mcp" },
     "furo>=2024.8.6",
     "myst-nb>=1.1.2",
     "setuptools-scm>=8.1",
@@ -248,13 +256,21 @@ docs = [
 ]
 test = [
     { include-group = "adapters" },
+    { include-group = "mcp" },
     "pytest>=9.0.1",
     "pytest-sugar>=1.1.1",
     "pytest-xdist>=3.8.0",
+    "pytest-console-scripts>=1.4.1",
 ]
 lint = [
     "ty==0.0.24",
     "nox>=2025.10.16",
+]
+mcp = [
+    "fastmcp>=2.0.0",
+    "httpx>=0.28.0",
+    "beautifulsoup4>=4.12.0",
+    "markdownify>=0.14.1",
 ]
 dev = [
     { include-group = "build" },
@@ -262,4 +278,5 @@ dev = [
     { include-group = "docs" },
     { include-group = "test" },
     { include-group = "lint" },
+    { include-group = "mcp" },
 ]

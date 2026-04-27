@@ -1,7 +1,7 @@
 # aigverse: A Python Library for Logic Networks, Synthesis, and Optimization
 
 [![CI](https://img.shields.io/github/actions/workflow/status/marcelwa/aigverse/aigverse-python-tests.yml?label=CI&logo=github&style=flat-square)](https://github.com/marcelwa/aigverse/actions/workflows/aigverse-python-tests.yml)
-[![Documentation](https://img.shields.io/readthedocs/aigverse?label=Docs&logo=readthedocs&style=flat-square)](https://aigverse.readthedocs.io/)
+[![Documentation](https://img.shields.io/readthedocs/aigverse?label=Docs&logo=readthedocs&style=flat-square)](https://aigverse.readthedocs.io/en/stable/)
 [![PyPI](https://img.shields.io/static/v1?label=PyPI&message=aigverse&logo=pypi&color=informational&style=flat-square)](https://pypi.org/project/aigverse/)
 [![Python](https://img.shields.io/static/v1?label=Python&message=3.10%2B&logo=python&color=3776AB&style=flat-square)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/marcelwa/aigverse?label=License&style=flat-square)](https://github.com/marcelwa/aigverse/blob/main/LICENSE)
@@ -30,7 +30,7 @@ manipulation, optimization and equivalence-checking flows, dataset generation, a
 representations for downstream data science and ML pipelines.
 
 <p align="center">
-  <a href="https://aigverse.readthedocs.io/">
+    <a href="https://aigverse.readthedocs.io/en/stable/">
   <img width=30% src="https://img.shields.io/badge/documentation-blue?style=for-the-badge&logo=read%20the%20docs" alt="Documentation" />
   </a>
 </p>
@@ -79,12 +79,38 @@ pip install "aigverse[adapters]"
 ```
 
 This will install additional dependencies required for ML workflows. See the
-[documentation](https://aigverse.readthedocs.io/en/latest/installation.html#machine-learning-adapters) for more details.
+[documentation](https://aigverse.readthedocs.io/en/stable/installation.html#machine-learning-adapters) for more details.
+
+### 🤖 MCP Server
+
+`aigverse` ships an optional [MCP](https://modelcontextprotocol.io/) server that gives LLM-based coding agents
+on-demand access to the documentation and API reference. Install the `mcp` extra:
+
+```bash
+pip install "aigverse[mcp]"
+```
+
+Then configure your MCP client (e.g., Claude Desktop, Cursor, Windsurf) to launch the server:
+
+```json
+{
+  "mcpServers": {
+    "aigverse": {
+      "command": "aigverse-mcp-server"
+    }
+  }
+}
+```
+
+The server exposes three tools: `get_documentation` to fetch guide pages, `lookup_api_symbol` for per-symbol API
+reference lookups, and `search_documentation` for keyword search. It uses the stable documentation by default, and
+supports `version="latest"` when you are working with unreleased `aigverse` versions. See the
+[documentation](https://aigverse.readthedocs.io/en/stable/mcp.html) for the full guide.
 
 ## 🚀 Usage
 
 The following demonstrates core workflows in `aigverse`. Detailed documentation and examples are available at
-[ReadTheDocs](https://aigverse.readthedocs.io/).
+[ReadTheDocs](https://aigverse.readthedocs.io/en/stable/).
 
 ### 🏗️ Basic Example: Creating an AIG
 
@@ -372,7 +398,7 @@ Graph, node, and edge attributes provide logic, level, fanout, and function info
 visualization tasks.
 
 For more details and examples, see the
-[machine learning integration documentation](https://aigverse.readthedocs.io/en/latest/machine_learning.html).
+[machine learning integration documentation](https://aigverse.readthedocs.io/en/stable/machine_learning.html).
 
 ### 🔢 Truth Tables
 
@@ -473,7 +499,7 @@ tooling and Python-first ML workflows.
 ## 🙌 Contributing
 
 Contributions are welcome! If you'd like to contribute to `aigverse`, please see the
-[contribution guide](https://aigverse.readthedocs.io/en/latest/contributing.html). I appreciate feedback and suggestions
+[contribution guide](https://aigverse.readthedocs.io/en/stable/contributing.html). I appreciate feedback and suggestions
 for improving the library.
 
 ## 💼 Support and Consulting
@@ -484,7 +510,7 @@ This is a great way to get the features you need while also supporting the ongoi
 library.
 
 For inquiries, please reach out to [@marcelwa](https://github.com/marcelwa/). More information can be found in the
-[documentation](https://aigverse.readthedocs.io/en/latest/support.html).
+[documentation](https://aigverse.readthedocs.io/en/stable/support.html).
 
 ## 📜 License
 

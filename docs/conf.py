@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import os
 import warnings
 from importlib import metadata
 from pathlib import Path
@@ -38,7 +39,10 @@ release = version.split("+")[0]
 project = "aigverse"
 author = "Marcel Walter, Technical University of Munich"
 language = "en"
-project_copyright = "2025, Marcel Walter, Technical University of Munich"
+project_copyright = "2024--2026, Marcel Walter, Technical University of Munich"
+
+# Use RTD-provided canonical URL when available and fall back to the stable docs URL.
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "https://aigverse.readthedocs.io/en/stable/")
 
 master_doc = "index"
 

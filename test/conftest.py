@@ -7,7 +7,17 @@ import pytest
 from aigverse.networks import Aig
 
 
-def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Register test-suite command line options."""
+    parser.addoption(
+        "--run-mcp-integration",
+        action="store_true",
+        default=False,
+        help="Run MCP integration tests that fetch live documentation pages.",
+    )
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     """Apply suite markers based on test paths for consistent categorization.
 
     Args:
@@ -28,6 +38,18 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             item.add_marker(pytest.mark.adapters)
         elif "/test/truth_tables/" in test_path:
             item.add_marker(pytest.mark.tts)
+        elif "/test/mcp/" in test_path:
+            item.add_marker(pytest.mark.mcp)
+
+    if config.getoption("--run-mcp-integration"):
+        return
+
+    skip_mcp_integration = pytest.mark.skip(
+        reason="Need --run-mcp-integration option to run live MCP integration tests"
+    )
+    for item in items:
+        if "mcp_integration" in item.keywords:
+            item.add_marker(skip_mcp_integration)
 
 
 @pytest.fixture
