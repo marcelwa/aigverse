@@ -103,7 +103,8 @@ Then configure your MCP client (e.g., Claude Desktop, Cursor, Windsurf) to launc
 ```
 
 The server exposes three tools: `get_documentation` to fetch guide pages, `lookup_api_symbol` for per-symbol API
-reference lookups, and `search_documentation` for keyword search. See the
+reference lookups, and `search_documentation` for keyword search. It uses the stable documentation by default, and
+supports `version="latest"` when you are working with unreleased `aigverse` versions. See the
 [documentation](https://aigverse.readthedocs.io/en/stable/mcp.html) for the full guide.
 
 ## 🚀 Usage

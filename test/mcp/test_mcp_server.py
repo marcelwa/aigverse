@@ -7,6 +7,8 @@ the ``mcp_integration`` marker and ``--run-mcp-integration``.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 # ---------------------------------------------------------------------------
@@ -97,6 +99,12 @@ class TestPageListing:
 
         return get_pages_listing()
 
+    @pytest.fixture
+    def latest_pages_json(self):
+        from aigverse.mcp.server import get_pages_listing
+
+        return get_pages_listing("latest")
+
     def test_returns_valid_json(self, pages_json) -> None:
         """``list_pages()`` must return parseable JSON."""
         assert isinstance(pages_json, dict)
@@ -124,6 +132,7 @@ class TestPageListing:
             assert "title" in page
             assert "url" in page
             assert page["url"].startswith("https://")
+            assert "/en/stable/" in page["url"]
 
     def test_api_page_structure(self, pages_json) -> None:
         """Each API page entry must have ``slug``, ``title``, ``url``."""
@@ -132,6 +141,94 @@ class TestPageListing:
             assert "title" in page
             assert "url" in page
             assert page["url"].startswith("https://")
+            assert "/en/stable/" in page["url"]
+
+    def test_latest_page_listing_uses_latest_urls(self, latest_pages_json) -> None:
+        """Latest page listing should rewrite all URLs to the latest docs."""
+        for page in latest_pages_json["guide_pages"] + latest_pages_json["api_pages"]:
+            assert "/en/latest/" in page["url"]
+
+
+class TestDocsVersionSelection:
+    """Test docs-version helpers and stable/latest selection behavior."""
+
+    def test_normalize_supported_docs_version(self) -> None:
+        """Supported docs versions should normalize cleanly."""
+        from aigverse.mcp.server import _normalize_docs_version
+
+        assert _normalize_docs_version(" Stable ") == "stable"
+        assert _normalize_docs_version("LATEST") == "latest"
+
+    def test_normalize_invalid_docs_version(self) -> None:
+        """Unsupported docs versions should be rejected."""
+        from aigverse.mcp.server import _normalize_docs_version
+
+        assert _normalize_docs_version("preview") is None
+
+    def test_get_documentation_uses_latest_url(self, monkeypatch) -> None:
+        """Tool should fetch from latest when explicitly requested."""
+        from aigverse.mcp import server
+
+        seen: dict[str, str] = {}
+
+        def fake_fetch(url: str) -> str:
+            seen["url"] = url
+            return "<html><body><article role='main'><h1>Latest install</h1></article></body></html>"
+
+        monkeypatch.setattr(server, "_fetch_page", fake_fetch)
+
+        result = server.get_documentation("installation", version="latest")
+
+        assert "Latest install" in result
+        assert seen["url"] == "https://aigverse.readthedocs.io/en/latest/installation.html"
+
+    def test_invalid_docs_version_returns_helpful_error(self) -> None:
+        """Tool should return a user-facing error for unsupported docs versions."""
+        from aigverse.mcp.server import get_documentation
+
+        result = get_documentation("installation", version="preview")
+
+        assert "Invalid documentation version 'preview'" in result
+        assert "latest" in result
+
+
+class TestSearchDocumentation:
+    """Test search result rewriting and highlight extraction."""
+
+    def test_search_uses_requested_version_and_highlights(self, monkeypatch) -> None:
+        """Search results should rewrite URLs and aggregate content highlights."""
+        from aigverse.mcp import server
+
+        class FakeResponse:
+            def raise_for_status(self) -> None:
+                return None
+
+            def json(self) -> dict[str, object]:
+                return {
+                    "results": [
+                        {
+                            "title": "Installation",
+                            "path": "/en/stable/installation.html",
+                            "blocks": [
+                                {"highlights": {"content": ["alpha", "beta"]}},
+                                {"highlights": {"content": ["gamma"]}},
+                            ],
+                        }
+                    ]
+                }
+
+        class FakeClient:
+            def get(self, _url: str, params: dict[str, str | int]) -> FakeResponse:
+                assert params["q"] == "project:aigverse install"
+                assert params["page_size"] == 5
+                return FakeResponse()
+
+        monkeypatch.setattr(server, "_client", FakeClient())
+
+        result = json.loads(server.search_documentation("install", version="latest"))
+
+        assert result[0]["url"] == "https://aigverse.readthedocs.io/en/latest/installation.html"
+        assert result[0]["highlights"] == ["alpha", "beta", "gamma"]
 
 
 # ---------------------------------------------------------------------------
@@ -237,6 +334,13 @@ class TestLiveDocumentationIntegration:
         from aigverse.mcp.server import get_documentation
 
         doc = get_documentation("installation")
+        assert "installation" in doc.lower()
+
+    def test_get_documentation_live_page_latest(self) -> None:
+        """Public tool should support explicit latest documentation queries."""
+        from aigverse.mcp.server import get_documentation
+
+        doc = get_documentation("installation", version="latest")
         assert "installation" in doc.lower()
 
     def test_lookup_api_symbol_live(self, networks_api_html) -> None:  # noqa: ARG002
