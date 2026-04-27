@@ -47,6 +47,7 @@ For AI agents, the intended usage pattern is:
 
 - Use `version="stable"` by default.
 - Use `version="latest"` when working on `main`, a feature branch, or an unreleased local build.
+- Use `aigverse://pages/stable` to discover the stable guide and API pages before calling the tools.
 - Use `aigverse://pages/latest` to discover the latest guide and API pages before calling the tools.
 
 Example prompts for agent workflows:
@@ -184,10 +185,10 @@ The server exposes the following capabilities:
 
 ### Resource
 
-| URI                       | Description                                                                                                           |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `aigverse://pages`        | JSON listing of all available documentation pages (guide pages and API submodule pages) with slugs, titles, and URLs. |
-| `aigverse://pages/latest` | JSON listing of the latest documentation pages for `aigverse` development and unreleased changes.                     |
+| URI                       | Description                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `aigverse://pages/stable` | JSON listing of all stable documentation pages (guide pages and API submodule pages) with slugs, titles, and URLs. |
+| `aigverse://pages/latest` | JSON listing of the latest documentation pages for `aigverse` development and unreleased changes.                  |
 
 ### Tools
 
@@ -216,7 +217,7 @@ returns only that section, rather than the entire (often very long) API page.
 - Start with `search_documentation` when you don't know the exact page or symbol name.
 - Use `lookup_api_symbol` for quick, focused API lookups — it returns far less text than fetching an entire API page.
 - Use `get_documentation` when you need the full context of a guide or tutorial page.
-- The `aigverse://pages` resource gives the stable index; use `aigverse://pages/latest` when you want the unreleased one.
+- The `aigverse://pages/stable` resource gives the stable index; use `aigverse://pages/latest` when you want the unreleased one.
 - If you are using `aigverse` installed from PyPI, stay on the stable docs.
 - If you are working on `aigverse` itself or validating an unreleased change, pass `version="latest"` explicitly.
 

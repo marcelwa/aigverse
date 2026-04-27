@@ -277,7 +277,7 @@ mcp = FastMCP(
         "This server provides access to the aigverse Python library documentation "
         "and API reference. Use stable documentation by default for released-package usage. "
         "If you are developing aigverse itself, working from source, or need unreleased APIs/docs, "
-        "switch to version='latest' or use the 'aigverse://pages/latest' resource. Use "
+        "switch to version='latest' or use the 'aigverse://pages/stable' and 'aigverse://pages/latest' resources. Use "
         "'get_documentation' to read guide pages, 'lookup_api_symbol' to get docs for a specific "
         "class or function, and 'search_documentation' for keyword search."
     ),
@@ -312,7 +312,7 @@ def get_pages_listing(version: str = _DEFAULT_DOCS_VERSION) -> dict[str, list[di
     return {"guide_pages": pages, "api_pages": api_pages}
 
 
-@mcp.resource("aigverse://pages")
+@mcp.resource("aigverse://pages/stable")
 def list_pages() -> str:
     """Return a JSON listing of stable documentation pages.
 
@@ -340,7 +340,7 @@ def list_pages_latest() -> str:
 def get_documentation(slug: str, version: str = _DEFAULT_DOCS_VERSION) -> str:
     """Fetch a documentation page by slug and return its content as Markdown.
 
-    Use the ``aigverse://pages`` resource for stable docs or
+    Use the ``aigverse://pages/stable`` resource for stable docs or
     ``aigverse://pages/latest`` when working with unreleased documentation.
 
     Args:
@@ -367,7 +367,7 @@ def get_documentation(slug: str, version: str = _DEFAULT_DOCS_VERSION) -> str:
         detail = str(exc.response.status_code) if isinstance(exc, httpx.HTTPStatusError) else str(exc)
         return (
             f"Error: could not fetch page '{slug}' from the {normalized_version} docs ({detail}). "
-            "Use the aigverse://pages or aigverse://pages/latest resource to see available pages."
+            "Use the aigverse://pages/stable or aigverse://pages/latest resource to see available pages."
         )
 
     return _extract_article(html)
