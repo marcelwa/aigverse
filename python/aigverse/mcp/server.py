@@ -27,6 +27,7 @@ import json
 import logging
 import re
 from contextlib import asynccontextmanager
+from functools import lru_cache
 from typing import TYPE_CHECKING
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
@@ -105,6 +106,19 @@ _SUBMODULE_SLUGS: dict[str, str] = {
 # ---------------------------------------------------------------------------
 
 _client = httpx.Client(follow_redirects=True, timeout=30.0)
+
+
+@lru_cache(maxsize=64)
+def _fetch_page_cached(url: str) -> str:
+    """Fetch and cache a documentation page for the lifetime of the process.
+
+    Only use this for stable-docs URLs, which are immutable for a given
+    release.  Latest-docs pages may change and must not be cached.
+
+    Returns:
+        The raw HTML string of the fetched page (cached after first fetch).
+    """
+    return _fetch_page(url)
 
 
 def _normalize_docs_version(version: str) -> str | None:
@@ -441,8 +455,12 @@ def lookup_api_symbol(symbol: str, version: str = _DEFAULT_DOCS_VERSION) -> str:
     for slug in submodule_slugs:
         url = _build_api_page_url(slug, normalized_version)
 
+        # Use cached fetches for stable docs (immutable per release) to avoid
+        # redundant HTTP requests when scanning multiple submodule pages.
+        fetch = _fetch_page_cached if normalized_version == _DEFAULT_DOCS_VERSION else _fetch_page
+
         try:
-            html = _fetch_page(url)
+            html = fetch(url)
         except httpx.HTTPError:
             continue
 
