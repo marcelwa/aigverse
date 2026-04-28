@@ -201,7 +201,7 @@ def _fetch_page(url: str) -> str:
         # Some docs hosts intermittently deny certain TLS/client fingerprints.
         # Fall back to stdlib urllib to avoid false negatives in live integration.
         logger.debug("httpx fetch failed for %s, attempting urllib fallback", url, exc_info=exc)
-        request = Request(  # noqa: S310
+        request = Request(  # noqa: S310 — URL is validated to HTTPS-only above before reaching this branch.
             url,
             headers={
                 "User-Agent": _USER_AGENT,
@@ -209,7 +209,7 @@ def _fetch_page(url: str) -> str:
             },
         )
         try:
-            with urlopen(request, timeout=30) as response:  # noqa: S310
+            with urlopen(request, timeout=30) as response:  # noqa: S310 — same validation as above; HTTPS enforced by caller.
                 encoding = response.headers.get_content_charset() or "utf-8"
                 return response.read().decode(encoding, errors="replace")
         except (HTTPError, URLError) as urllib_exc:
