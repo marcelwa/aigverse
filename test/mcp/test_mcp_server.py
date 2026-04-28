@@ -328,11 +328,14 @@ class TestExtractArticle:
 
     def test_extracts_article_role_main(self, extract) -> None:
         """Content inside ``<article role='main'>`` is extracted."""
-        html = "<html><body><nav>nav</nav><article role='main'><h1>Title</h1><p>Body</p></article></body></html>"
+        html = (
+            "<html><body><nav>NAVIGATION_SENTINEL</nav>"
+            "<article role='main'><h1>Title</h1><p>Body</p></article></body></html>"
+        )
         md = extract(html)
         assert "Title" in md
         assert "Body" in md
-        assert "nav" not in md.split("Title")[0]  # nav should not precede title
+        assert "NAVIGATION_SENTINEL" not in md
 
     def test_fallback_to_body(self, extract) -> None:
         """When no ``<article>`` exists, fall back to ``<body>``."""
