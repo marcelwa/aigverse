@@ -22,9 +22,11 @@ Or directly::
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
@@ -38,6 +40,8 @@ from fastmcp import FastMCP
 from aigverse import __version__
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
     from bs4 import Tag
 
 logger = logging.getLogger(__name__)
@@ -271,6 +275,20 @@ def _extract_symbol_section(html: str, symbol: str) -> str | None:
 # MCP Server
 # ---------------------------------------------------------------------------
 
+
+@asynccontextmanager
+async def _server_lifespan(server: FastMCP) -> AsyncIterator[None]:  # noqa: ARG001
+    """Manage the lifecycle of the shared httpx client.
+
+    Ensures the connection pool is properly closed when the MCP server shuts
+    down, preventing resource leaks in long-running processes.
+    """
+    try:
+        yield
+    finally:
+        await asyncio.to_thread(_client.close)
+
+
 mcp = FastMCP(
     "aigverse",
     instructions=(
@@ -281,6 +299,7 @@ mcp = FastMCP(
         "'get_documentation' to read guide pages, 'lookup_api_symbol' to get docs for a specific "
         "class or function, and 'search_documentation' for keyword search."
     ),
+    lifespan=_server_lifespan,
 )
 
 
