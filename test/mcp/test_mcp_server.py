@@ -177,7 +177,7 @@ class TestDocsVersionSelection:
 
         monkeypatch.setattr(server, "_fetch_page", fake_fetch)
 
-        result = server.get_documentation("installation", version="latest")
+        result = server.get_documentation("installation", version="latest")  # ty: ignore[call-non-callable]
 
         assert "Latest install" in result
         assert seen["url"] == "https://aigverse.readthedocs.io/en/latest/installation.html"
@@ -186,7 +186,7 @@ class TestDocsVersionSelection:
         """Tool should return a user-facing error for unsupported docs versions."""
         from aigverse.mcp.server import get_documentation
 
-        result = get_documentation("installation", version="preview")
+        result = get_documentation("installation", version="preview")  # ty: ignore[call-non-callable]
 
         assert "Invalid documentation version 'preview'" in result
         assert "latest" in result
@@ -225,7 +225,7 @@ class TestSearchDocumentation:
 
         monkeypatch.setattr(server, "_client", FakeClient())
 
-        result = json.loads(server.search_documentation("install", version="latest"))
+        result = json.loads(server.search_documentation("install", version="latest"))  # ty: ignore[call-non-callable]
 
         assert result[0]["url"] == "https://aigverse.readthedocs.io/en/latest/installation.html"
         assert result[0]["highlights"] == ["alpha", "beta", "gamma"]
@@ -333,20 +333,20 @@ class TestLiveDocumentationIntegration:
         """Public tool should return parsed Markdown from live docs."""
         from aigverse.mcp.server import get_documentation
 
-        doc = get_documentation("installation")
+        doc = get_documentation("installation")  # ty: ignore[call-non-callable]
         assert "installation" in doc.lower()
 
     def test_get_documentation_live_page_latest(self) -> None:
         """Public tool should support explicit latest documentation queries."""
         from aigverse.mcp.server import get_documentation
 
-        doc = get_documentation("installation", version="latest")
+        doc = get_documentation("installation", version="latest")  # ty: ignore[call-non-callable]
         assert "installation" in doc.lower()
 
     def test_lookup_api_symbol_live(self, networks_api_html) -> None:  # noqa: ARG002
         """Public symbol lookup should find a known live API symbol."""
         from aigverse.mcp.server import lookup_api_symbol
 
-        section = lookup_api_symbol("aigverse.networks.Aig")
+        section = lookup_api_symbol("aigverse.networks.Aig")  # ty: ignore[call-non-callable]
         assert "not found" not in section.lower()
         assert "Aig" in section
