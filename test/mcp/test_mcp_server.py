@@ -289,6 +289,28 @@ class TestSearchDocumentation:
         assert result[0]["url"] == "https://aigverse.readthedocs.io/en/latest/installation.html"
         assert result[0]["highlights"] == ["alpha", "beta", "gamma"]
 
+    def test_search_returns_message_on_no_results(self, monkeypatch) -> None:
+        """Empty result list should return a JSON envelope with a message key."""
+        from aigverse.mcp import server
+
+        class FakeEmptyResponse:
+            def raise_for_status(self) -> None:
+                return None
+
+            def json(self) -> dict[str, object]:
+                return {"results": []}
+
+        class FakeEmptyClient:
+            def get(self, _url: str, _params: dict[str, str | int]) -> FakeEmptyResponse:
+                return FakeEmptyResponse()
+
+        monkeypatch.setattr(server, "_client", FakeEmptyClient())
+
+        data = json.loads(server.search_documentation.fn("xyzzy"))
+
+        assert data.get("results") == []
+        assert "No results found" in data.get("message", "")
+
 
 # ---------------------------------------------------------------------------
 # HTML extraction helpers (no network, synthetic HTML)
