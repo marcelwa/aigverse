@@ -113,7 +113,7 @@ def _fetch_page_cached(url: str) -> str:
     """Fetch and cache a documentation page for the lifetime of the process.
 
     Only use this for stable-docs URLs, which are immutable for a given
-    release.  Latest-docs pages may change and must not be cached.
+    release. Latest-docs pages may change and must not be cached.
 
     Returns:
         The raw HTML string of the fetched page (cached after first fetch).
@@ -427,7 +427,7 @@ def lookup_api_symbol(symbol: str, version: str = _DEFAULT_DOCS_VERSION) -> str:
     the context compact.
 
     Args:
-        symbol: The symbol name to look up.  Can be a short name like
+        symbol: The symbol name to look up. Can be a short name like
                 ``"Aig"`` or ``"aig_resubstitution"``, or fully qualified
                 like ``"aigverse.networks.Aig"``.
         version: Documentation version to query. Use ``"stable"`` by default
@@ -500,9 +500,9 @@ def search_documentation(query: str, max_results: int = 5, version: str = _DEFAU
                  and ``"latest"`` when working with unreleased docs.
 
     Returns:
-        A JSON string.  On success, a JSON array of result objects each with
-        ``title``, ``url``, and ``highlights`` keys.  On empty results, a JSON
-        object with ``results`` (empty array) and ``message`` keys.  On error,
+        A JSON string. On success, a JSON array of result objects each with
+        ``title``, ``url``, and ``highlights`` keys. On empty results, a JSON
+        object with ``results`` (empty array) and ``message`` keys. On error,
         a JSON object with an ``error`` key.
     """
     normalized_version = _normalize_docs_version(version)
