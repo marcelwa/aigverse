@@ -359,6 +359,16 @@ def get_documentation(slug: str, version: str = _DEFAULT_DOCS_VERSION) -> str:
     # Normalise: strip leading/trailing slashes
     slug = slug.strip("/")
 
+    # Allowlist check — only permit known guide slugs or api/aigverse/* paths.
+    # This prevents an adversarial agent from using the tool to fetch arbitrary
+    # pages on ReadTheDocs by supplying a path-traversal slug.
+    if slug not in _GUIDE_PAGES and not slug.startswith("api/aigverse/"):
+        return (
+            f"Unknown page slug '{slug}'. "
+            "Use the aigverse://pages/stable or aigverse://pages/latest resource "
+            "to list all available page slugs."
+        )
+
     url = _build_docs_page_url(slug, normalized_version)
 
     try:
