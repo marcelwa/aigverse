@@ -192,11 +192,11 @@ The server exposes the following capabilities:
 
 ### Tools
 
-| Name                   | Description                                                                                                                                                                                                                                                                                          |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `get_documentation`    | Fetch a full documentation page by slug and return it as Markdown. Accepts a `version` parameter with `"stable"` as the default and `"latest"` for unreleased or source-build workflows.                                                                                                             |
-| `lookup_api_symbol`    | Look up the documentation for a single API symbol (class, function, constant) by name. Accepts short names like `"Aig"` or fully qualified names like `"aigverse.networks.Aig"`, plus a `version` parameter that defaults to `"stable"`. Returns only the matching section, keeping context compact. |
-| `search_documentation` | Search the documentation by keyword using the ReadTheDocs search API. Accepts a `version` parameter that defaults to `"stable"`, rewrites result URLs to the requested docs version, and returns highlighted snippets.                                                                               |
+| Name                   | Description                                                                                                                                                                                                                                                                                                       |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `get_documentation`    | Fetch a full documentation page by slug and return it as Markdown. Accepts a `version` parameter with `"stable"` as the default and `"latest"` for unreleased or source-build workflows.                                                                                                                          |
+| `lookup_api_symbol`    | Look up the documentation for a single API symbol (class, function, constant) by name. Accepts short names like `"Aig"` or fully qualified names like `"aigverse.networks.Aig"`, plus a `version` parameter that defaults to `"stable"`. Returns only the matching section, keeping context compact.              |
+| `search_documentation` | Search the documentation by keyword using the ReadTheDocs search API. Accepts a `version` parameter that defaults to `"stable"`, rewrites result URLs to the requested docs version, and returns highlighted snippets. Accepts a `max_results` parameter (default `5`) to control the number of returned results. |
 
 ## How It Works
 
