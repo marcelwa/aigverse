@@ -499,7 +499,10 @@ def search_documentation(query: str, max_results: int = 5, version: str = _DEFAU
                  and ``"latest"`` when working with unreleased docs.
 
     Returns:
-        A JSON array of search results, each with title, URL, and a text snippet.
+        A JSON string.  On success, a JSON array of result objects each with
+        ``title``, ``url``, and ``highlights`` keys.  On empty results, a JSON
+        object with ``results`` (empty array) and ``message`` keys.  On error,
+        a JSON object with an ``error`` key.
     """
     normalized_version = _normalize_docs_version(version)
     if normalized_version is None:
@@ -513,8 +516,8 @@ def search_documentation(query: str, max_results: int = 5, version: str = _DEFAU
         resp.raise_for_status()
     except httpx.HTTPError as exc:
         if isinstance(exc, httpx.HTTPStatusError):
-            return f"Search failed: {exc.response.status_code}"
-        return f"Search failed: {exc}"
+            return json.dumps({"error": f"Search failed: HTTP {exc.response.status_code}"})
+        return json.dumps({"error": f"Search failed: {exc}"})
 
     data = resp.json()
     results: list[dict[str, str | list[str]]] = []
@@ -539,7 +542,7 @@ def search_documentation(query: str, max_results: int = 5, version: str = _DEFAU
         })
 
     if not results:
-        return f"No results found for '{query}'."
+        return json.dumps({"results": [], "message": f"No results found for '{query}'."})
 
     return json.dumps(results, indent=2)
 
