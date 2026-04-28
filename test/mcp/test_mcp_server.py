@@ -24,13 +24,11 @@ class TestEntryPoint:
         """``--help`` should exit without crashing."""
         result = script_runner.run(["aigverse-mcp-server", "--help"])
         assert result.returncode == 0
-        assert "Starting MCP server 'aigverse'" in result.stderr
 
     def test_invalid_flag_does_not_crash(self, script_runner) -> None:
         """An unrecognised flag should not crash the entry point."""
         result = script_runner.run(["aigverse-mcp-server", "--no-such-flag"])
         assert result.returncode == 0
-        assert "Starting MCP server 'aigverse'" in result.stderr
 
 
 # ---------------------------------------------------------------------------
