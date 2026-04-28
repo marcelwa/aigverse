@@ -8,8 +8,12 @@ the ``mcp_integration`` marker and ``--run-mcp-integration``.
 from __future__ import annotations
 
 import json
+from typing import TYPE_CHECKING
 
 import pytest
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 # ---------------------------------------------------------------------------
 # Entry-point smoke tests (pytest-console-scripts)
@@ -381,6 +385,21 @@ class TestExtractSymbolSection:
 # ---------------------------------------------------------------------------
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _teardown_mcp_http_resources() -> Generator[None, None, None]:
+    """Register teardown of the module-level httpx client and page cache.
+
+    The MCP server's ``_server_lifespan`` context manager normally handles this
+    when ``mcp.run()`` is called, but tests invoke tool functions directly and
+    never start the server process.
+    """
+    yield
+    from aigverse.mcp.server import _client, _fetch_page_cached
+
+    _client.close()
+    _fetch_page_cached.cache_clear()
+
+
 @pytest.mark.mcp_integration
 class TestLiveDocumentationIntegration:
     """Integration tests against real ReadTheDocs HTML pages."""
@@ -393,9 +412,11 @@ class TestLiveDocumentationIntegration:
 
     @pytest.fixture(scope="class")
     def networks_api_html(self) -> str:
-        from aigverse.mcp.server import _fetch_page
+        # Use the cached variant so test_lookup_api_symbol_live hits the lru_cache
+        # instead of re-downloading the 297 KB API index a second time.
+        from aigverse.mcp.server import _fetch_page_cached
 
-        return _fetch_page("https://aigverse.readthedocs.io/en/stable/api/aigverse/index.html")
+        return _fetch_page_cached("https://aigverse.readthedocs.io/en/stable/api/aigverse/index.html")
 
     def test_extract_article_from_live_installation_page(self, installation_html) -> None:
         """``_extract_article`` should parse real documentation content."""
