@@ -43,7 +43,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 adapters = ["networkx>=3.0.0", "numpy>=1.23.0"]
-mcp = ["fastmcp>=2.0.0, <3.0.0", "httpx>=0.28.0", "beautifulsoup4>=4.12.0", "markdownify>=0.14.1"]
+mcp = ["fastmcp>=3.0.0", "httpx>=0.28.0", "beautifulsoup4>=4.12.0", "markdownify>=0.14.1"]
 
 [project.scripts]
 aigverse-mcp-server = "aigverse.mcp:main"
@@ -267,7 +267,7 @@ lint = [
     "nox>=2025.10.16",
 ]
 mcp = [
-    "fastmcp>=2.0.0",
+    "fastmcp>=3.0.0",
     "httpx>=0.28.0",
     "beautifulsoup4>=4.12.0",
     "markdownify>=0.14.1",
