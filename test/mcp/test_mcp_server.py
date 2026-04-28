@@ -276,7 +276,8 @@ class TestSearchDocumentation:
                 }
 
         class FakeClient:
-            def get(self, _url: str, params: dict[str, str | int]) -> FakeResponse:
+            def get(self, url: str, params: dict[str, str | int]) -> FakeResponse:
+                assert url == "https://readthedocs.org/api/v3/search/"
                 assert params["q"] == "project:aigverse install"
                 assert params["page_size"] == 5
                 return FakeResponse()
