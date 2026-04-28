@@ -64,13 +64,29 @@ Configure your MCP-compatible client to start the server over `stdio`.
 
 :::{tab-item} Claude Desktop
 
-Add the following to your `claude_desktop_config.json`:
+Add the following to your `claude_desktop_config.json`.
+
+If `aigverse-mcp-server` is on your `PATH` (e.g. after `pip install "aigverse[mcp]"`):
 
 ```json
 {
   "mcpServers": {
     "aigverse": {
       "command": "aigverse-mcp-server"
+    }
+  }
+}
+```
+
+If you prefer to run without a persistent install, or the script is not on your `PATH`, use `uvx`
+(note that `command` and `args` must be specified separately in JSON):
+
+```json
+{
+  "mcpServers": {
+    "aigverse": {
+      "command": "uvx",
+      "args": ["--from", "aigverse[mcp]", "aigverse-mcp-server"]
     }
   }
 }
@@ -165,13 +181,25 @@ Any MCP client that supports the `stdio` transport can launch the server directl
 aigverse-mcp-server
 ```
 
+For clients that accept a JSON `command`/`args` configuration (e.g. Claude Desktop format), the `uvx` invocation
+must be split into separate fields:
+
+```json
+{
+  "command": "uvx",
+  "args": ["--from", "aigverse[mcp]", "aigverse-mcp-server"]
+}
+```
+
 :::
 ::::
 
 ```{tip}
 If you installed `aigverse` inside a virtual environment or via `uv`, make sure the `aigverse-mcp-server` script is
 on your `PATH`, or use the full path to the script in the client configuration. With `uv`, you can also use
-`uvx --from "aigverse[mcp]" aigverse-mcp-server` to run the server without a persistent install.
+`uvx --from "aigverse[mcp]" aigverse-mcp-server` to run the server without a persistent install. When your client
+expects a JSON `command`/`args` configuration, decompose the `uvx` invocation as
+`"command": "uvx", "args": ["--from", "aigverse[mcp]", "aigverse-mcp-server"]`.
 ```
 
 ```{note}
