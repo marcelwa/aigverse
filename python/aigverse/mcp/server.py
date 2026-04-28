@@ -449,7 +449,8 @@ def lookup_api_symbol(symbol: str, version: str = _DEFAULT_DOCS_VERSION) -> str:
     elif len(parts) == 2 and parts[0] in _SUBMODULE_SLUGS:
         submodule_slugs = [_SUBMODULE_SLUGS[parts[0]], "."]
     else:
-        # Short name — search across all submodule pages
+        # Short name — search across all submodule pages.
+        # dict.fromkeys preserves insertion order while deduplicating (Python 3.7+).
         submodule_slugs = list(dict.fromkeys(_SUBMODULE_SLUGS.values()))
 
     for slug in submodule_slugs:
