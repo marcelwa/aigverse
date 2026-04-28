@@ -62,6 +62,53 @@ Configure your MCP-compatible client to start the server over `stdio`.
 
 ::::{tab-set}
 
+:::{tab-item} Claude Code
+
+Register the server with the `claude mcp add` command (local scope by default):
+
+```bash
+claude mcp add aigverse -- aigverse-mcp-server
+```
+
+If `aigverse-mcp-server` is not on your `PATH`, use `uvx`:
+
+```bash
+claude mcp add aigverse -- uvx --from "aigverse[mcp]" aigverse-mcp-server
+```
+
+To share the configuration with your whole team, use project scope — this writes to `.mcp.json` at the project root, which you can commit to version control:
+
+```bash
+claude mcp add --scope project aigverse -- aigverse-mcp-server
+```
+
+The resulting `.mcp.json` entry looks like:
+
+```json
+{
+  "mcpServers": {
+    "aigverse": {
+      "command": "aigverse-mcp-server"
+    }
+  }
+}
+```
+
+Or with `uvx`:
+
+```json
+{
+  "mcpServers": {
+    "aigverse": {
+      "command": "uvx",
+      "args": ["--from", "aigverse[mcp]", "aigverse-mcp-server"]
+    }
+  }
+}
+```
+
+:::
+
 :::{tab-item} Claude Desktop
 
 Add the following to your `claude_desktop_config.json`.
