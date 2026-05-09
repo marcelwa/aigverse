@@ -7,14 +7,15 @@ function(aigverse_enable_cache)
   set_property(CACHE CACHE_OPTION PROPERTY STRINGS ${CACHE_OPTION_VALUES})
   list(FIND CACHE_OPTION_VALUES ${CACHE_OPTION} CACHE_OPTION_INDEX)
 
-  if(${CACHE_OPTION_INDEX} EQUAL -1)
+  if(CACHE_OPTION_INDEX EQUAL -1)
     message(
-      STATUS
-        "Using custom compiler cache system: '${CACHE_OPTION}', explicitly supported entries are ${CACHE_OPTION_VALUES}"
+      FATAL_ERROR
+        "Unsupported compiler cache '${CACHE_OPTION}'. Supported entries are ${CACHE_OPTION_VALUES}"
     )
   endif()
 
-  find_program(CACHE_BINARY NAMES ${CACHE_OPTION_VALUES})
+  unset(CACHE_BINARY CACHE)
+  find_program(CACHE_BINARY NAMES ${CACHE_OPTION})
   if(CACHE_BINARY)
     message(STATUS "${CACHE_BINARY} found and enabled")
     set(CMAKE_CXX_COMPILER_LAUNCHER
@@ -24,6 +25,8 @@ function(aigverse_enable_cache)
         ${CACHE_BINARY}
         CACHE FILEPATH "C compiler cache used")
   else()
+    unset(CMAKE_CXX_COMPILER_LAUNCHER CACHE)
+    unset(CMAKE_C_COMPILER_LAUNCHER CACHE)
     message(
       WARNING "${CACHE_OPTION} is enabled but was not found. Not using it")
   endif()
