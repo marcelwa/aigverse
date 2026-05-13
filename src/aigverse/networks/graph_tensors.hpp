@@ -189,11 +189,12 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
                               });
         });
 
+    int64_t po_target = static_cast<int64_t>(ntk.size());
     ntk.foreach_po(
         [&](const auto& po)
         {
             const auto source = static_cast<int64_t>(ntk.node_to_index(ntk.get_node(po)));
-            const auto target = static_cast<int64_t>(ntk.size() + ntk.po_index(po));
+            const auto target = po_target++;
             append_edge(source, target, ntk.is_complemented(po));
         });
 
