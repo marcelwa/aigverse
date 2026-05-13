@@ -125,6 +125,29 @@ def test_to_graph_tensors_truth_table_feature_dim(sample_aig: Aig) -> None:
     assert node_attr.shape[1] == 4 + 1 + tt_dim
 
 
+def test_to_graph_tensors_complemented_po_truth_table_bits() -> None:
+    """Checks complemented POs export the inverted driver truth table."""
+    aig = Aig()
+    a = aig.create_pi()
+    aig.create_po(~a)
+
+    tensors = aig.to_graph_tensors(
+        node_encoding=NodeTensorEncoding.INTEGER,
+        edge_encoding=EdgeTensorEncoding.BINARY,
+        levels=False,
+        fanouts=False,
+        node_tts=True,
+    )
+
+    node_attr = np.from_dlpack(tensors["node_attr"])
+    driver_row = node_attr[aig.get_node(a)]
+    po_row = node_attr[aig.size]
+
+    assert driver_row[0] == pytest.approx(1.0)
+    assert po_row[0] == pytest.approx(3.0)
+    assert np.allclose(po_row[1:], 1.0 - driver_row[1:])
+
+
 def test_to_graph_tensors_torch_from_dlpack(sample_aig: Aig) -> None:
     """Ensures PyTorch can consume all exported tensors via DLPack."""
     tensors = sample_aig.to_graph_tensors(
@@ -273,3 +296,39 @@ def test_to_graph_tensors_po_levels_follow_driver_depth() -> None:
     assert po_rows.shape[0] == 2
     assert po_rows[0, 1] == pytest.approx(1.0)
     assert po_rows[1, 1] == pytest.approx(2.0)
+
+
+def test_to_graph_tensors_fanout_feature_values() -> None:
+    """Checks fanout features reflect the network fanout counts."""
+    aig = Aig()
+    a = aig.create_pi()
+    b = aig.create_pi()
+    shared = aig.create_and(a, b)
+    left = aig.create_and(shared, a)
+    right = aig.create_and(shared, b)
+    aig.create_po(left)
+    aig.create_po(right)
+
+    tensors = aig.to_graph_tensors(
+        node_encoding=NodeTensorEncoding.INTEGER,
+        edge_encoding=EdgeTensorEncoding.BINARY,
+        levels=False,
+        fanouts=True,
+        node_tts=False,
+    )
+
+    node_attr = np.from_dlpack(tensors["node_attr"])
+    po_rows = node_attr[aig.size :, :]
+
+    a_node = aig.get_node(a)
+    b_node = aig.get_node(b)
+    shared_node = aig.get_node(shared)
+    left_node = aig.get_node(left)
+    right_node = aig.get_node(right)
+
+    assert node_attr[a_node, 1] == pytest.approx(2.0)
+    assert node_attr[b_node, 1] == pytest.approx(2.0)
+    assert node_attr[shared_node, 1] == pytest.approx(2.0)
+    assert node_attr[left_node, 1] == pytest.approx(1.0)
+    assert node_attr[right_node, 1] == pytest.approx(1.0)
+    assert np.allclose(po_rows[:, 1], 0.0)

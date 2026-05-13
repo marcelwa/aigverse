@@ -2,7 +2,6 @@
 
 #include "aigverse/types.hpp"
 
-#include <kitty/bit_operations.hpp>
 #include <mockturtle/algorithms/simulation.hpp>  // NOLINT(misc-include-cleaner)
 #include <mockturtle/utils/node_map.hpp>         // NOLINT(misc-include-cleaner)
 #include <mockturtle/views/depth_view.hpp>
@@ -116,6 +115,37 @@ nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::unique_ptr<T[]>&& 
                       });
 
     return nb::ndarray<nb::numpy, T>(raw_storage, shape, owner);
+}
+
+/**
+ * @brief Expands one dynamic truth table into a contiguous float feature slice.
+ *
+ * ``kitty::dynamic_truth_table`` stores bits in 64-bit blocks. Iterating those
+ * blocks directly avoids paying the helper-call and index-arithmetic overhead of
+ * ``kitty::get_bit`` for every output feature.
+ *
+ * @param destination Start of the destination feature slice.
+ * @param tt Source truth table.
+ * @param invert Whether to invert each exported bit.
+ */
+inline void write_truth_table_bits(float* destination, const aigverse::truth_table& tt, const bool invert = false)
+{
+    std::size_t bit_offset = 0;
+    const auto  tt_dim     = static_cast<std::size_t>(tt.num_bits());
+
+    for (const auto block : tt)
+    {
+        const auto remaining_bits = tt_dim - bit_offset;
+        const auto block_bits     = remaining_bits < 64 ? remaining_bits : 64;
+        const auto bits           = invert ? ~block : block;
+
+        for (std::size_t bit = 0; bit < block_bits; ++bit)
+        {
+            destination[bit_offset + bit] = static_cast<float>((bits >> bit) & 0x1ULL);
+        }
+
+        bit_offset += block_bits;
+    }
 }
 
 /**
@@ -289,7 +319,6 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     // Truth-table simulation is optional because it is by far the most
     // expensive feature family when enabled.
     std::optional<mockturtle::node_map<aigverse::truth_table, Ntk>> node_truth_tables{};
-    std::vector<aigverse::truth_table>                              output_truth_tables{};
     if (node_tts)
     {
         if (ntk.num_pis() > 16)
@@ -298,8 +327,6 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
         }
 
         node_truth_tables = mockturtle::simulate_nodes<aigverse::truth_table>(
-            ntk, mockturtle::default_simulator<aigverse::truth_table>{static_cast<unsigned>(ntk.num_pis())});
-        output_truth_tables = mockturtle::simulate<aigverse::truth_table>(
             ntk, mockturtle::default_simulator<aigverse::truth_table>{static_cast<unsigned>(ntk.num_pis())});
 
         if (ntk.size() > 0)
@@ -323,6 +350,8 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
         // Construct the depth view only when level features are requested.
         depth_ntk.emplace(ntk);
     }
+
+    const auto* simulated_nodes = node_tts ? &node_truth_tables.value() : nullptr;
 
     const auto fill_base = [&](const std::size_t row, const int64_t type_index) -> float*
     {
@@ -373,11 +402,7 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
             }
             if (node_tts)
             {
-                const auto& tt = node_truth_tables.value()[n];
-                for (std::size_t i = 0; i < tt_dim; ++i)
-                {
-                    feature_offset[i] = kitty::get_bit(tt, static_cast<uint64_t>(i)) ? 1.0f : 0.0f;
-                }
+                write_truth_table_bits(feature_offset, (*simulated_nodes)[n]);
             }
         });
 
@@ -389,12 +414,13 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
             // same order used for PO edges.
             const auto po_idx = po_row++;
             const auto row    = static_cast<std::size_t>(ntk.size()) + po_idx;
+            const auto driver = ntk.get_node(po);
 
             auto* feature_offset = fill_base(row, type_po);
 
             if (levels)
             {
-                *feature_offset++ = static_cast<float>(depth_ntk->level(ntk.get_node(po)) + 1);
+                *feature_offset++ = static_cast<float>(depth_ntk->level(driver) + 1);
             }
             if (fanouts)
             {
@@ -402,11 +428,7 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
             }
             if (node_tts)
             {
-                const auto& tt = output_truth_tables[po_idx];
-                for (std::size_t i = 0; i < tt_dim; ++i)
-                {
-                    feature_offset[i] = kitty::get_bit(tt, i) ? 1.0f : 0.0f;
-                }
+                write_truth_table_bits(feature_offset, (*simulated_nodes)[driver], ntk.is_complemented(po));
             }
         });
 
