@@ -176,10 +176,11 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
         ++edge_cursor;
     };
 
+    int64_t edge_target = 0;
     ntk.foreach_node(
         [&](const auto& n)
         {
-            const auto target = static_cast<int64_t>(ntk.node_to_index(n));
+            const auto target = edge_target++;
             ntk.foreach_fanin(n,
                               [&](const auto& f)
                               {
@@ -259,10 +260,11 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
         return offset + node_type_one_hot_dim;
     };
 
+    std::size_t node_row = 0;
     ntk.foreach_node(
         [&](const auto& n)
         {
-            const auto row        = static_cast<std::size_t>(ntk.node_to_index(n));
+            const auto row        = node_row++;
             int64_t    type_index = type_gate;
             if (ntk.is_constant(n))
             {
@@ -293,10 +295,11 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
             }
         });
 
+    std::size_t po_row = 0;
     ntk.foreach_po(
         [&](const auto& po)
         {
-            const auto po_idx = static_cast<std::size_t>(ntk.po_index(po));
+            const auto po_idx = po_row++;
             const auto row    = static_cast<std::size_t>(ntk.size()) + po_idx;
 
             auto feature_offset = fill_base(row, type_po);
