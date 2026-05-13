@@ -24,11 +24,14 @@ namespace aigverse
 /**
  * @brief Node encoding mode for exported graph tensors.
  *
- * This enum controls how categorical node type features are represented
- * in the exported tensors. The types will be `float32` for all modes, but the encoding scheme differs:
- * - `INTEGER`: Node types are represented as integer class labels.
- * - `ONE_HOT`: Node types are represented as one-hot encoded vectors, where the dimension corresponds to the number
- *              of node categories in the order `[constant, pi, gate, po]`.
+ * This enum controls how the categorical node-type prefix is laid out inside
+ * ``node_attr``. All exported node features use ``float32`` storage so the
+ * result can be consumed directly by NumPy/DLPack users without dtype juggling.
+ *
+ * The node-type categories always appear in the canonical order
+ * ``[constant, pi, gate, po]``:
+ * - `INTEGER`: Store that category as a single scalar label.
+ * - `ONE_HOT`: Store that category as a one-hot prefix of length four.
  */
 enum class node_tensor_encoding : uint8_t
 {
@@ -41,11 +44,14 @@ enum class node_tensor_encoding : uint8_t
 /**
  * @brief Edge encoding mode for exported graph tensors.
  *
- * This enum controls how categorical edge type features are represented
- * in the exported tensors. The types will be `float32` for all modes, but the encoding scheme differs:
- * - `BINARY`: Edge polarity is represented as binary indicators (0.0 or 1.0).
- * - `SIGNED`: Edge polarity is represented as +1.0 for regular and -1.0 for inverted.
- * - `ONE_HOT`: Edge polarity is represented as one-hot encoded vectors in the order `[regular, inverted]`.
+ * This enum controls how edge polarity is laid out inside ``edge_attr``.
+ * As with node features, all edge features use ``float32`` storage.
+ *
+ * The polarity categories always appear in the canonical order
+ * ``[regular, inverted]``:
+ * - `BINARY`: Store polarity as ``0.0`` or ``1.0``.
+ * - `SIGNED`: Store polarity as ``+1.0`` or ``-1.0``.
+ * - `ONE_HOT`: Store polarity as a length-two one-hot vector.
  */
 enum class edge_tensor_encoding : uint8_t
 {
@@ -65,6 +71,8 @@ namespace detail
  *
  * The returned array keeps data alive via capsule-managed ownership of a heap
  * vector, making it safe to consume through DLPack in downstream frameworks.
+ * This overload is convenient when the exporter naturally materializes a
+ * ``std::vector`` first.
  *
  * @tparam T Element type.
  * @param data Moved data buffer.
@@ -109,6 +117,7 @@ nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::unique_ptr<T[]>&& 
 
     return nb::ndarray<nb::numpy, T>(raw_storage, shape, owner);
 }
+
 /**
  * @brief Exports an AIG-style network to sparse COO-like graph tensors.
  *
@@ -117,8 +126,21 @@ nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::unique_ptr<T[]>&& 
  * - ``edge_attr`` with shape ``(E, D_edge)``
  * - ``node_attr`` with shape ``(N, D_node)``
  *
+ * Export order is stable and intentionally simple:
+ * - rows ``[0, ntk.size())`` in ``node_attr`` correspond to ``foreach_node``
+ *   order
+ * - rows ``[ntk.size(), ntk.size() + ntk.num_pos())`` correspond to synthetic
+ *   PO rows in ``foreach_po`` order
+ * - columns in ``edge_index`` are emitted in the same order as the exporter
+ *   traverses fanins, then POs, then optional register inputs
+ *
  * All returned tensors are NumPy-backed ndarrays and can be consumed by DLPack
- * consumers (e.g., PyTorch via ``torch.from_dlpack``).
+ * consumers such as PyTorch via ``torch.from_dlpack``.
+ *
+ * The implementation is written around the export hot path: it precomputes the
+ * exact output sizes, fills the buffers linearly, avoids repeated PO index
+ * lookups by using row counters, and uses raw arrays for buffers that are fully
+ * overwritten to avoid paying an unnecessary zero-fill cost.
  *
  * @tparam Ntk Network type.
  * @param ntk Input network.
@@ -131,6 +153,19 @@ nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::unique_ptr<T[]>&& 
  */
 template <typename Ntk>
 nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_encoding,
+
+                                /**
+                                 * @brief Creates an owning NumPy-backed nanobind ndarray from a raw array.
+                                 *
+                                 * This overload exists for the hot export path, where the tensor storage is
+                                 * fully overwritten and a raw array avoids the default zero-initialization that
+                                 * ``std::vector(count, value)`` would perform.
+                                 *
+                                 * @tparam T Element type.
+                                 * @param data Moved raw array buffer.
+                                 * @param shape Target tensor shape.
+                                 * @return NumPy-backed ndarray that owns the provided data.
+                                 */
                                 const edge_tensor_encoding edge_encoding, const bool levels = false,
                                 const bool fanouts = false, const bool node_tts = false)
 {
@@ -146,8 +181,10 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     constexpr int64_t type_gate     = 2;
     constexpr int64_t type_po       = 3;
 
-    // Calculate the number of edges in the network to preallocate the output buffer
-    // NOTE: this will break for mixed-fanin nodes but is perfectly fine for AIGs
+    // Precompute the exact number of emitted edges so the export loops can fill
+    // the destination buffers linearly without growth checks or reallocations.
+    // This formula relies on AIG-style fixed fanin counts; the shared exporter
+    // is intentionally optimized for that dominant case.
     std::size_t edge_count =
         (static_cast<std::size_t>(Ntk::max_fanin_size) * static_cast<std::size_t>(ntk.num_gates())) +
         static_cast<std::size_t>(ntk.num_pos());
@@ -156,8 +193,9 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
         edge_count += static_cast<std::size_t>(ntk.num_registers());
     }
 
-    // edge_index and edge_attr are fully overwritten during export, so avoid
-    // paying for zero-initialization up front.
+    // edge_index and edge_attr are fully overwritten during export, so raw
+    // storage avoids paying for a zero-initialization pass that would be thrown
+    // away immediately.
     std::unique_ptr<int64_t[]> edge_index{new int64_t[2 * edge_count]};
 
     const std::size_t edge_dim = edge_encoding == edge_tensor_encoding::ONE_HOT ? 2 : 1;
@@ -171,9 +209,14 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     std::size_t edge_cursor = 0;
     const auto  append_edge = [&](const int64_t source, const int64_t target, const bool inverted)
     {
+        // edge_index is stored in the conventional COO layout with one row for
+        // sources and one row for targets.
         edge_sources[edge_cursor] = source;
         edge_targets[edge_cursor] = target;
 
+        // The encoding branch remains here because it is shared by all export
+        // modes, but each branch writes directly into the final contiguous edge
+        // buffer without temporary objects.
         switch (edge_encoding)
         {
             case edge_tensor_encoding::BINARY:
@@ -201,6 +244,8 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     ntk.foreach_node(
         [&](const auto& n)
         {
+            // Node rows are emitted in foreach_node order, so a monotonic
+            // counter is enough and avoids repeated index remapping work.
             const auto target = edge_target++;
             ntk.foreach_fanin(n,
                               [&](const auto& f)
@@ -214,6 +259,10 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     ntk.foreach_po(
         [&](const auto& po)
         {
+            // Synthetic PO rows are appended after the real network nodes.
+            // Using a running target counter avoids the old repeated PO index
+            // lookup, which was expensive on mockturtle AIGs because it scanned
+            // the outputs linearly.
             const auto source = static_cast<int64_t>(ntk.node_to_index(ntk.get_node(po)));
             const auto target = po_target++;
             append_edge(source, target, ntk.is_complemented(po));
@@ -237,6 +286,8 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 
     std::size_t tt_dim = 0;
 
+    // Truth-table simulation is optional because it is by far the most
+    // expensive feature family when enabled.
     std::optional<mockturtle::node_map<aigverse::truth_table, Ntk>> node_truth_tables{};
     std::vector<aigverse::truth_table>                              output_truth_tables{};
     if (node_tts)
@@ -261,12 +312,15 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     const std::size_t node_dim   = base_dim + (levels ? 1 : 0) + (fanouts ? 1 : 0) + (node_tts ? tt_dim : 0);
     const std::size_t node_count = ntk.size() + ntk.num_pos();
 
+    // node_attr is also fully overwritten row-by-row, so it gets the same raw
+    // storage treatment as the edge buffers.
     std::unique_ptr<float[]> node_attr{new float[node_count * node_dim]};
     auto*                    node_values = node_attr.get();
 
     std::optional<mockturtle::depth_view<Ntk>> depth_ntk{};
     if (levels)
     {
+        // Construct the depth view only when level features are requested.
         depth_ntk.emplace(ntk);
     }
 
@@ -279,6 +333,9 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
             return row_data + 1;
         }
 
+        // Only the one-hot prefix needs clearing here. The trailing optional
+        // features are written unconditionally by the code paths that enabled
+        // them, so clearing the full row would just add extra memory traffic.
         row_data[0]                                    = 0.0f;
         row_data[1]                                    = 0.0f;
         row_data[2]                                    = 0.0f;
@@ -291,6 +348,8 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     ntk.foreach_node(
         [&](const auto& n)
         {
+            // Node rows follow foreach_node order, so a linear cursor is enough
+            // and matches the row numbers used by the edge exporter above.
             const auto row        = node_row++;
             int64_t    type_index = type_gate;
             if (ntk.is_constant(n))
@@ -326,6 +385,8 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     ntk.foreach_po(
         [&](const auto& po)
         {
+            // Synthetic PO feature rows are appended after real nodes in the
+            // same order used for PO edges.
             const auto po_idx = po_row++;
             const auto row    = static_cast<std::size_t>(ntk.size()) + po_idx;
 
@@ -351,6 +412,8 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 
     auto result = nb::dict();
 
+    // Hand off ownership to nanobind capsules so downstream DLPack consumers
+    // can borrow the buffers without an extra copy.
     result["edge_index"] = make_owned_ndarray(std::move(edge_index), {2, edge_count});
     result["edge_attr"]  = make_owned_ndarray(std::move(edge_attr), {edge_count, edge_dim});
     result["node_attr"]  = make_owned_ndarray(std::move(node_attr), {node_count, node_dim});
