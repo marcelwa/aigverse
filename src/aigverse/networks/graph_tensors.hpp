@@ -93,6 +93,22 @@ nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::vector<T>&&       
 
     return nb::ndarray<nb::numpy, T>(raw_storage->data(), shape, owner);
 }
+
+template <typename T>
+nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::unique_ptr<T[]>&&                    data,
+                                                         const std::initializer_list<std::size_t>& shape)
+{
+    namespace nb = nanobind;
+
+    auto*       raw_storage = data.release();
+    nb::capsule owner(raw_storage,
+                      [](void* ptr) noexcept
+                      {
+                          delete[] static_cast<T*>(ptr);  // NOLINT(cppcoreguidelines-owning-memory)
+                      });
+
+    return nb::ndarray<nb::numpy, T>(raw_storage, shape, owner);
+}
 /**
  * @brief Exports an AIG-style network to sparse COO-like graph tensors.
  *
@@ -140,35 +156,40 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
         edge_count += static_cast<std::size_t>(ntk.num_registers());
     }
 
-    // Preallocate the 2×E edge_index tensor in column-major (source/target) form.
-    std::vector<int64_t> edge_index(2 * edge_count, 0);
+    // edge_index and edge_attr are fully overwritten during export, so avoid
+    // paying for zero-initialization up front.
+    std::unique_ptr<int64_t[]> edge_index{new int64_t[2 * edge_count]};
 
     const std::size_t edge_dim = edge_encoding == edge_tensor_encoding::ONE_HOT ? 2 : 1;
 
-    std::vector<float> edge_attr(edge_count * edge_dim, 0.0f);
+    std::unique_ptr<float[]> edge_attr{new float[edge_count * edge_dim]};
+
+    auto* edge_sources = edge_index.get();
+    auto* edge_targets = edge_sources + edge_count;
+    auto* edge_values  = edge_attr.get();
 
     std::size_t edge_cursor = 0;
     const auto  append_edge = [&](const int64_t source, const int64_t target, const bool inverted)
     {
-        edge_index[edge_cursor]              = source;
-        edge_index[edge_count + edge_cursor] = target;
+        edge_sources[edge_cursor] = source;
+        edge_targets[edge_cursor] = target;
 
         switch (edge_encoding)
         {
             case edge_tensor_encoding::BINARY:
             {
-                edge_attr[edge_cursor] = inverted ? 1.0f : 0.0f;
+                edge_values[edge_cursor] = inverted ? 1.0f : 0.0f;
                 break;
             }
             case edge_tensor_encoding::SIGNED:
             {
-                edge_attr[edge_cursor] = inverted ? -1.0f : 1.0f;
+                edge_values[edge_cursor] = inverted ? -1.0f : 1.0f;
                 break;
             }
             case edge_tensor_encoding::ONE_HOT:
             {
-                edge_attr[edge_cursor * 2]       = inverted ? 0.0f : 1.0f;
-                edge_attr[(edge_cursor * 2) + 1] = inverted ? 1.0f : 0.0f;
+                edge_values[edge_cursor * 2]       = inverted ? 0.0f : 1.0f;
+                edge_values[(edge_cursor * 2) + 1] = inverted ? 1.0f : 0.0f;
                 break;
             }
         }
@@ -240,7 +261,8 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     const std::size_t node_dim   = base_dim + (levels ? 1 : 0) + (fanouts ? 1 : 0) + (node_tts ? tt_dim : 0);
     const std::size_t node_count = ntk.size() + ntk.num_pos();
 
-    std::vector<float> node_attr(node_count * node_dim, 0.0f);
+    std::unique_ptr<float[]> node_attr{new float[node_count * node_dim]};
+    auto*                    node_values = node_attr.get();
 
     std::optional<mockturtle::depth_view<Ntk>> depth_ntk{};
     if (levels)
@@ -248,17 +270,21 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
         depth_ntk.emplace(ntk);
     }
 
-    const auto fill_base = [&](const std::size_t row, const int64_t type_index) -> std::size_t
+    const auto fill_base = [&](const std::size_t row, const int64_t type_index) -> float*
     {
-        const std::size_t offset = row * node_dim;
+        auto* row_data = node_values + (row * node_dim);
         if (node_encoding == node_tensor_encoding::INTEGER)
         {
-            node_attr[offset] = static_cast<float>(type_index);
-            return offset + 1;
+            row_data[0] = static_cast<float>(type_index);
+            return row_data + 1;
         }
 
-        node_attr[offset + static_cast<std::size_t>(type_index)] = 1.0f;
-        return offset + node_type_one_hot_dim;
+        row_data[0]                                    = 0.0f;
+        row_data[1]                                    = 0.0f;
+        row_data[2]                                    = 0.0f;
+        row_data[3]                                    = 0.0f;
+        row_data[static_cast<std::size_t>(type_index)] = 1.0f;
+        return row_data + node_type_one_hot_dim;
     };
 
     std::size_t node_row = 0;
@@ -276,22 +302,22 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
                 type_index = type_pi;
             }
 
-            auto feature_offset = fill_base(row, type_index);
+            auto* feature_offset = fill_base(row, type_index);
 
             if (levels)
             {
-                node_attr[feature_offset++] = static_cast<float>(depth_ntk->level(n));
+                *feature_offset++ = static_cast<float>(depth_ntk->level(n));
             }
             if (fanouts)
             {
-                node_attr[feature_offset++] = static_cast<float>(ntk.fanout_size(n));
+                *feature_offset++ = static_cast<float>(ntk.fanout_size(n));
             }
             if (node_tts)
             {
                 const auto& tt = node_truth_tables.value()[n];
                 for (std::size_t i = 0; i < tt_dim; ++i)
                 {
-                    node_attr[feature_offset + i] = kitty::get_bit(tt, static_cast<uint64_t>(i)) ? 1.0f : 0.0f;
+                    feature_offset[i] = kitty::get_bit(tt, static_cast<uint64_t>(i)) ? 1.0f : 0.0f;
                 }
             }
         });
@@ -303,22 +329,22 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
             const auto po_idx = po_row++;
             const auto row    = static_cast<std::size_t>(ntk.size()) + po_idx;
 
-            auto feature_offset = fill_base(row, type_po);
+            auto* feature_offset = fill_base(row, type_po);
 
             if (levels)
             {
-                node_attr[feature_offset++] = static_cast<float>(depth_ntk->level(ntk.get_node(po)) + 1);
+                *feature_offset++ = static_cast<float>(depth_ntk->level(ntk.get_node(po)) + 1);
             }
             if (fanouts)
             {
-                node_attr[feature_offset++] = 0.0f;
+                *feature_offset++ = 0.0f;
             }
             if (node_tts)
             {
                 const auto& tt = output_truth_tables[po_idx];
                 for (std::size_t i = 0; i < tt_dim; ++i)
                 {
-                    node_attr[feature_offset + i] = kitty::get_bit(tt, i) ? 1.0f : 0.0f;
+                    feature_offset[i] = kitty::get_bit(tt, i) ? 1.0f : 0.0f;
                 }
             }
         });
