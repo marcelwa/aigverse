@@ -310,41 +310,6 @@ class Aig:
             The corresponding index-list representation.
         """
 
-    def to_graph_tensors(
-        self,
-        node_encoding: NodeTensorEncoding = ...,
-        edge_encoding: EdgeTensorEncoding = ...,
-        *,
-        levels: bool = True,
-        fanouts: bool = False,
-        node_tts: bool = False,
-    ) -> dict:
-        """Exports graph tensors for machine-learning workflows.
-
-        Returns sparse graph topology and features as DLPack-compatible arrays.
-
-        Edge encoding mapping:
-            - ``BINARY``: regular=0.0, inverted=1.0
-            - ``SIGNED``: regular=+1.0, inverted=-1.0
-            - ``ONE_HOT``: regular=[1.0, 0.0], inverted=[0.0, 1.0]
-
-        Node encoding mapping:
-            - ``INTEGER``: constant=0, pi=1, gate=2, po=3
-            - ``ONE_HOT``: [constant, pi, gate, po]
-
-        Args:
-            node_encoding: Node encoding mode as :class:`~aigverse.networks.NodeTensorEncoding`.
-            edge_encoding: Edge encoding mode as :class:`~aigverse.networks.EdgeTensorEncoding`.
-            levels: Appends logic level as a node feature.
-            fanouts: Appends fanout size as a node feature.
-            node_tts: Appends simulated node/output truth-table bits.
-
-        Returns:
-            A dictionary with ``edge_index`` (shape ``(2, E)``, dtype ``int64``),
-            ``edge_attr`` (shape ``(E, D_edge)``, dtype ``float32``), and ``node_attr``
-            (shape ``(N, D_node)``, dtype ``float32``).
-        """
-
     if TYPE_CHECKING:
         def to_networkx(
             self,
@@ -412,6 +377,41 @@ class Aig:
                 - name (str, optional): Signal name or primary output name for edges to synthetic
                     PO nodes (only for :class:`~aigverse.NamedAig`).
             """
+
+    def to_graph_tensors(
+        self,
+        node_encoding: NodeTensorEncoding = ...,
+        edge_encoding: EdgeTensorEncoding = ...,
+        *,
+        levels: bool = True,
+        fanouts: bool = False,
+        node_tts: bool = False,
+    ) -> dict:
+        """Exports graph tensors for machine-learning workflows.
+
+        Returns sparse graph topology and features as DLPack-compatible arrays.
+
+        Edge encoding mapping:
+            - ``BINARY``: regular=0.0, inverted=1.0
+            - ``SIGNED``: regular=+1.0, inverted=-1.0
+            - ``ONE_HOT``: regular=[1.0, 0.0], inverted=[0.0, 1.0]
+
+        Node encoding mapping:
+            - ``INTEGER``: constant=0, pi=1, gate=2, po=3
+            - ``ONE_HOT``: [constant, pi, gate, po]
+
+        Args:
+            node_encoding: Node encoding mode as :class:`~aigverse.networks.NodeTensorEncoding`.
+            edge_encoding: Edge encoding mode as :class:`~aigverse.networks.EdgeTensorEncoding`.
+            levels: Appends logic level as a node feature.
+            fanouts: Appends fanout size as a node feature.
+            node_tts: Appends simulated node/output truth-table bits.
+
+        Returns:
+            A dictionary with ``edge_index`` (shape ``(2, E)``, dtype ``int64``),
+            ``edge_attr`` (shape ``(E, D_edge)``, dtype ``float32``), and ``node_attr``
+            (shape ``(N, D_node)``, dtype ``float32``).
+        """
 
     def __len__(self) -> int:
         """Returns the number of nodes."""
@@ -714,7 +714,7 @@ class SequentialAig(Aig):
         levels: bool = True,
         fanouts: bool = False,
         node_tts: bool = False,
-    ) -> NoReturn:
+    ) -> dict:
         """Sequential networks cannot be exported as combinational graph tensors."""
 
     def __getstate__(self) -> NoReturn:
