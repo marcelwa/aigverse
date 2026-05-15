@@ -102,12 +102,16 @@ nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::vector<T>&&       
 }
 
 template <typename T>
+// Raw contiguous storage is intentional here because the export hot path
+// fully overwrites the buffer before handing it off to nanobind.
+// NOLINTNEXTLINE(*-avoid-c-arrays)
 nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::unique_ptr<T[]>&&                    data,
                                                          const std::initializer_list<std::size_t>& shape)
 {
     namespace nb = nanobind;
 
-    auto*       raw_storage = data.release();
+    auto        storage     = std::move(data);
+    auto*       raw_storage = storage.release();
     nb::capsule owner(raw_storage,
                       [](void* ptr) noexcept
                       {
@@ -128,6 +132,8 @@ nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::unique_ptr<T[]>&& 
  * @param tt Source truth table.
  * @param invert Whether to invert each exported bit.
  */
+// Direct writes into the caller-provided slice are a performance optimization.
+// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 inline void write_truth_table_bits(float* destination, const aigverse::truth_table& tt, const bool invert = false)
 {
     std::size_t bit_offset = 0;
@@ -147,6 +153,7 @@ inline void write_truth_table_bits(float* destination, const aigverse::truth_tab
         bit_offset += block_bits;
     }
 }
+// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
 /**
  * @brief Exports an AIG-style network to sparse COO-like graph tensors.
@@ -226,12 +233,17 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     // edge_index and edge_attr are fully overwritten during export, so raw
     // storage avoids paying for a zero-initialization pass that would be thrown
     // away immediately.
+    // NOLINTBEGIN(*-avoid-c-arrays)
     std::unique_ptr<int64_t[]> edge_index{new int64_t[2 * edge_count]};
 
     const std::size_t edge_dim = edge_encoding == edge_tensor_encoding::ONE_HOT ? 2 : 1;
 
     std::unique_ptr<float[]> edge_attr{new float[edge_count * edge_dim]};
+    // NOLINTEND(*-avoid-c-arrays)
 
+    // Direct pointer-based writes benchmarked better than zero-filled vector
+    // materialization for this exporter.
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     auto* edge_sources = edge_index.get();
     auto* edge_targets = edge_sources + edge_count;
     auto* edge_values  = edge_attr.get();
@@ -269,6 +281,7 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 
         ++edge_cursor;
     };
+    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
     int64_t edge_target = 0;
     ntk.foreach_node(
@@ -285,7 +298,7 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
                               });
         });
 
-    int64_t po_target = static_cast<int64_t>(ntk.size());
+    auto po_target = static_cast<int64_t>(ntk.size());
     ntk.foreach_po(
         [&](const auto& po)
         {
@@ -341,6 +354,7 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 
     // node_attr is also fully overwritten row-by-row, so it gets the same raw
     // storage treatment as the edge buffers.
+    // NOLINTNEXTLINE(*-avoid-c-arrays)
     std::unique_ptr<float[]> node_attr{new float[node_count * node_dim]};
     auto*                    node_values = node_attr.get();
 
@@ -353,6 +367,8 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 
     const auto* simulated_nodes = node_tts ? &node_truth_tables.value() : nullptr;
 
+    // Direct feature-slice writes are intentional runtime optimizations.
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     const auto fill_base = [&](const std::size_t row, const int64_t type_index) -> float*
     {
         auto* row_data = node_values + (row * node_dim);
@@ -431,14 +447,17 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
                 write_truth_table_bits(feature_offset, (*simulated_nodes)[driver], ntk.is_complemented(po));
             }
         });
+    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
     auto result = nb::dict();
 
     // Hand off ownership to nanobind capsules so downstream DLPack consumers
     // can borrow the buffers without an extra copy.
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
     result["edge_index"] = make_owned_ndarray(std::move(edge_index), {2, edge_count});
     result["edge_attr"]  = make_owned_ndarray(std::move(edge_attr), {edge_count, edge_dim});
     result["node_attr"]  = make_owned_ndarray(std::move(node_attr), {node_count, node_dim});
+    // NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
 
     return result;
 }

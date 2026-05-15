@@ -8,6 +8,7 @@
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner)
 #include <mockturtle/traits.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <tuple>
 #include <vector>
