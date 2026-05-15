@@ -369,9 +369,10 @@ class Aig:
                 self: The AIG object to convert.
                 levels: If True, computes and adds level information for each node
                     and the total number of levels to the graph, as attributes
-                    ``levels`` and ``level``, respectively. Defaults to False.
-                fanouts: If True, adds fanout size information for each node
-                    as a ``fanouts`` attribute. Defaults to False.
+                    ``level`` and ``levels``, respectively. Defaults to False.
+                fanouts: If True, adds the fanout count for each node as an integer
+                    ``fanouts`` attribute (``0`` for synthetic PO nodes).
+                    Defaults to False.
                 node_tts: If True, computes and adds a truth table for each node
                     as a ``function`` attribute. Defaults to False.
                 graph_tts: If True, computes and adds the graph's overall truth
@@ -397,6 +398,8 @@ class Aig:
             Node Attributes:
                 - index (int): The node's identifier.
                 - level (int, optional): The level of the node in the AIG.
+                - fanouts (int, optional): Fanout count of the node.
+                    Included when ``fanouts=True``.
                 - function (:class:`~numpy.ndarray`, optional): The node's truth table.
                 - type (:class:`~numpy.ndarray`): A one-hot encoded vector representing
                     the node type (``[const, pi, gate, po]``). The data type is determined
