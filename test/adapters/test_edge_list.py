@@ -148,6 +148,18 @@ def test_constant_node_aig_to_edge_list(two_pi_and_two_po_aig: Aig) -> None:
     assert AigEdge(3, 5, 7) in edge_list  # AND gate to PO
 
 
+def test_duplicate_constant_outputs_aig_to_edge_list() -> None:
+    aig = Aig()
+    const0 = aig.get_constant(False)
+    aig.create_po(const0)
+    aig.create_po(const0)
+
+    edge_list = aig.to_edge_list()
+
+    assert len(edge_list) == 2
+    assert [(edge.source, edge.target, edge.weight) for edge in edge_list] == [(0, 1, 0), (0, 2, 0)]
+
+
 def test_medium_aig_to_edge_list(medium_structured_aig: Aig) -> None:
     aig = medium_structured_aig
 
