@@ -170,7 +170,7 @@ Current limitations of `to_graph_tensors`:
 - The export targets **combinational** networks. Sequential networks are not supported.
 - Exported tensors are backed by **CPU host memory** (NumPy-backed DLPack producer).
 - `torch.from_dlpack(...)` is zero-copy on CPU, but moving tensors to CUDA still allocates GPU memory and performs a host-to-device copy.
-- When `include_truth_table=True`, the export is restricted to at most 16 primary inputs due to the exponential growth of truth table size. This is a practical limit for ML applications, but it is not a fundamental limitation of the API.
+- When `node_tts=True`, the export is restricted to at most 16 primary inputs due to the exponential growth of truth table size. This is a practical limit for ML applications, but it is not a fundamental limitation of the API.
   :::
 
 ```{code-cell} ipython3
@@ -187,9 +187,9 @@ aig.create_po(g)
 dlpack_data = aig.to_graph_tensors(
   node_encoding=NodeTensorEncoding.INTEGER,
   edge_encoding=EdgeTensorEncoding.BINARY,
-    include_level=True,
-    include_fanout=True,
-    include_truth_table=False,
+    levels=True,
+    fanouts=True,
+    node_tts=False,
 )
 
 edge_index = torch.from_dlpack(dlpack_data["edge_index"])
