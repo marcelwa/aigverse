@@ -2,9 +2,8 @@
 // Created by marcel on 03.09.25.
 //
 
+#include "aigverse/algorithms/transform_helpers.hpp"
 #include "aigverse/types.hpp"
-
-#include "transform_helpers.hpp"
 
 #include <fmt/format.h>
 #include <mockturtle/algorithms/node_resynthesis/sop_factoring.hpp>
