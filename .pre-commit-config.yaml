@@ -60,7 +60,7 @@ repos:
 
   # Check for spelling
   - repo: https://github.com/crate-ci/typos
-    rev: v1.46.1
+    rev: v1.47.0
     hooks:
       - id: typos
         priority: 0
