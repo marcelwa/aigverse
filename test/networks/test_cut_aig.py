@@ -184,41 +184,32 @@ def test_cut_aig_immutability() -> None:
     f1 = aig.create_and(x1, x2)
     aig.create_po(f1)
     cut_aig = CutAig(aig, [x1, x2], f1)
-    with pytest.raises(RuntimeError, match="create_pi is not available on immutable view"):
-        cut_aig.create_pi()
-    with pytest.raises(RuntimeError, match="create_po is not available on immutable view"):
-        cut_aig.create_po(f1)
-    with pytest.raises(RuntimeError, match="create_and is not available on immutable view"):
-        cut_aig.create_and(x1, x2)
-    with pytest.raises(RuntimeError, match="create_or is not available on immutable view"):
-        cut_aig.create_or(x1, x2)
-    with pytest.raises(RuntimeError, match="create_xor is not available on immutable view"):
-        cut_aig.create_xor(x1, x2)
-    with pytest.raises(RuntimeError, match="create_not is not available on immutable view"):
-        cut_aig.create_not(x1)
-    with pytest.raises(RuntimeError, match="create_nand is not available on immutable view"):
-        cut_aig.create_nand(x1, x2)
-    with pytest.raises(RuntimeError, match="create_nor is not available on immutable view"):
-        cut_aig.create_nor(x1, x2)
-    with pytest.raises(RuntimeError, match="create_xnor is not available on immutable view"):
-        cut_aig.create_xnor(x1, x2)
-    with pytest.raises(RuntimeError, match="create_buf is not available on immutable view"):
-        cut_aig.create_buf(x1)
-    with pytest.raises(RuntimeError, match="create_maj is not available on immutable view"):
-        cut_aig.create_maj(x1, x2, f1)
-    with pytest.raises(RuntimeError, match="create_ite is not available on immutable view"):
-        cut_aig.create_ite(x1, x2, f1)
-    with pytest.raises(RuntimeError, match="create_xor3 is not available on immutable view"):
-        cut_aig.create_xor3(x1, x2, f1)
-    with pytest.raises(RuntimeError, match="create_lt is not available on immutable view"):
-        cut_aig.create_lt(x1, x2)
-    with pytest.raises(RuntimeError, match="create_le is not available on immutable view"):
-        cut_aig.create_le(x1, x2)
-    with pytest.raises(RuntimeError, match="create_nary_and is not available on immutable view"):
-        cut_aig.create_nary_and([x1, x2])
-    with pytest.raises(RuntimeError, match="create_nary_or is not available on immutable view"):
-        cut_aig.create_nary_or([x1, x2])
-    with pytest.raises(RuntimeError, match="create_nary_xor is not available on immutable view"):
-        cut_aig.create_nary_xor([x1, x2])
-    with pytest.raises(RuntimeError, match="clone_node is not available on immutable view"):
-        cut_aig.clone_node(aig, aig.get_node(x1), [x1])
+
+    cases = [
+        ("create_pi", ()),
+        ("create_po", (f1,)),
+        ("create_and", (x1, x2)),
+        ("create_or", (x1, x2)),
+        ("create_xor", (x1, x2)),
+        ("create_not", (x1,)),
+        ("create_nand", (x1, x2)),
+        ("create_nor", (x1, x2)),
+        ("create_xnor", (x1, x2)),
+        ("create_buf", (x1,)),
+        ("create_maj", (x1, x2, f1)),
+        ("create_ite", (x1, x2, f1)),
+        ("create_xor3", (x1, x2, f1)),
+        ("create_lt", (x1, x2)),
+        ("create_le", (x1, x2)),
+        ("create_nary_and", ([x1, x2],)),
+        ("create_nary_or", ([x1, x2],)),
+        ("create_nary_xor", ([x1, x2],)),
+        ("clone_node", (aig, aig.get_node(x1), [x1])),
+    ]
+
+    for method_name, args in cases:
+        with pytest.raises(
+            RuntimeError,
+            match=rf"{method_name} is not available on immutable view",
+        ):
+            getattr(cut_aig, method_name)(*args)

@@ -23,9 +23,11 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <cstdint>
 #include <exception>
 #include <functional>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -647,9 +649,9 @@ Args:
             [](CutNtk&) -> Signal { throw std::runtime_error("create_pi is not available on immutable view"); },
             R"pb(Not available on immutable view.)pb")
         .def(
-            "create_po",
-            [](CutNtk&, const Signal&) { throw std::runtime_error("create_po is not available on immutable view"); },
-            nb::arg("f"), R"pb(Not available on immutable view.)pb")
+            "create_po", [](CutNtk&, const Signal&) -> int
+            { throw std::runtime_error("create_po is not available on immutable view"); }, nb::arg("f"),
+            R"pb(Not available on immutable view.)pb")
         .def(
             "create_buf", [](CutNtk&, const Signal&) -> Signal
             { throw std::runtime_error("create_buf is not available on immutable view"); }, nb::arg("a"),

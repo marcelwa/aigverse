@@ -580,7 +580,7 @@ class CutAig(Aig):
     def create_pi(self) -> AigSignal:
         """Not available on immutable view."""
 
-    def create_po(self, f: AigSignal) -> None:
+    def create_po(self, f: AigSignal) -> int:
         """Not available on immutable view."""
 
     def create_buf(self, a: AigSignal) -> AigSignal:
