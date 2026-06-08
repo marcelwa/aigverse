@@ -577,61 +577,61 @@ class CutAig(Aig):
     def index_to_node(self, index: int) -> int:
         """Returns the node for an index."""
 
-    def create_pi(self) -> AigSignal:
+    def create_pi(self) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_po(self, f: AigSignal) -> int:
+    def create_po(self, f: AigSignal) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_buf(self, a: AigSignal) -> AigSignal:
+    def create_buf(self, a: AigSignal) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_not(self, a: AigSignal) -> AigSignal:
+    def create_not(self, a: AigSignal) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_and(self, a: AigSignal, b: AigSignal) -> AigSignal:
+    def create_and(self, a: AigSignal, b: AigSignal) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_nand(self, a: AigSignal, b: AigSignal) -> AigSignal:
+    def create_nand(self, a: AigSignal, b: AigSignal) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_or(self, a: AigSignal, b: AigSignal) -> AigSignal:
+    def create_or(self, a: AigSignal, b: AigSignal) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_nor(self, a: AigSignal, b: AigSignal) -> AigSignal:
+    def create_nor(self, a: AigSignal, b: AigSignal) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_xor(self, a: AigSignal, b: AigSignal) -> AigSignal:
+    def create_xor(self, a: AigSignal, b: AigSignal) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_xnor(self, a: AigSignal, b: AigSignal) -> AigSignal:
+    def create_xnor(self, a: AigSignal, b: AigSignal) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_lt(self, a: AigSignal, b: AigSignal) -> AigSignal:
+    def create_lt(self, a: AigSignal, b: AigSignal) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_le(self, a: AigSignal, b: AigSignal) -> AigSignal:
+    def create_le(self, a: AigSignal, b: AigSignal) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_maj(self, a: AigSignal, b: AigSignal, c: AigSignal) -> AigSignal:
+    def create_maj(self, a: AigSignal, b: AigSignal, c: AigSignal) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_ite(self, cond: AigSignal, f_then: AigSignal, f_else: AigSignal) -> AigSignal:
+    def create_ite(self, cond: AigSignal, f_then: AigSignal, f_else: AigSignal) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_xor3(self, a: AigSignal, b: AigSignal, c: AigSignal) -> AigSignal:
+    def create_xor3(self, a: AigSignal, b: AigSignal, c: AigSignal) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_nary_and(self, fs: Sequence[AigSignal]) -> AigSignal:
+    def create_nary_and(self, fs: Sequence[AigSignal]) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_nary_or(self, fs: Sequence[AigSignal]) -> AigSignal:
+    def create_nary_or(self, fs: Sequence[AigSignal]) -> NoReturn:
         """Not available on immutable view."""
 
-    def create_nary_xor(self, fs: Sequence[AigSignal]) -> AigSignal:
+    def create_nary_xor(self, fs: Sequence[AigSignal]) -> NoReturn:
         """Not available on immutable view."""
 
-    def clone_node(self, other: Aig, source: int, children: Sequence[AigSignal]) -> AigSignal:
+    def clone_node(self, other: Aig, source: int, children: Sequence[AigSignal]) -> NoReturn:
         """Not available on immutable view."""
 
 class AigRegister:

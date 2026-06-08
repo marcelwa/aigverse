@@ -647,79 +647,94 @@ Args:
         .def(
             "create_pi",
             [](CutNtk&) -> Signal { throw std::runtime_error("create_pi is not available on immutable view"); },
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb", nb::sig("def create_pi(self) -> NoReturn"))
         .def(
             "create_po", [](CutNtk&, const Signal&) -> int
             { throw std::runtime_error("create_po is not available on immutable view"); }, nb::arg("f"),
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb", nb::sig("def create_po(self, f: AigSignal) -> NoReturn"))
         .def(
             "create_buf", [](CutNtk&, const Signal&) -> Signal
             { throw std::runtime_error("create_buf is not available on immutable view"); }, nb::arg("a"),
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb", nb::sig("def create_buf(self, a: AigSignal) -> NoReturn"))
         .def(
             "create_not", [](CutNtk&, const Signal&) -> Signal
             { throw std::runtime_error("create_not is not available on immutable view"); }, nb::arg("a"),
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb", nb::sig("def create_not(self, a: AigSignal) -> NoReturn"))
         .def(
             "create_and", [](CutNtk&, const Signal&, const Signal&) -> Signal
             { throw std::runtime_error("create_and is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb",
+            nb::sig("def create_and(self, a: AigSignal, b: AigSignal) -> NoReturn"))
         .def(
             "create_nand", [](CutNtk&, const Signal&, const Signal&) -> Signal
             { throw std::runtime_error("create_nand is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb",
+            nb::sig("def create_nand(self, a: AigSignal, b: AigSignal) -> NoReturn"))
         .def(
             "create_or", [](CutNtk&, const Signal&, const Signal&) -> Signal
             { throw std::runtime_error("create_or is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb",
+            nb::sig("def create_or(self, a: AigSignal, b: AigSignal) -> NoReturn"))
         .def(
             "create_nor", [](CutNtk&, const Signal&, const Signal&) -> Signal
             { throw std::runtime_error("create_nor is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb",
+            nb::sig("def create_nor(self, a: AigSignal, b: AigSignal) -> NoReturn"))
         .def(
             "create_xor", [](CutNtk&, const Signal&, const Signal&) -> Signal
             { throw std::runtime_error("create_xor is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb",
+            nb::sig("def create_xor(self, a: AigSignal, b: AigSignal) -> NoReturn"))
         .def(
             "create_xnor", [](CutNtk&, const Signal&, const Signal&) -> Signal
             { throw std::runtime_error("create_xnor is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb",
+            nb::sig("def create_xnor(self, a: AigSignal, b: AigSignal) -> NoReturn"))
         .def(
             "create_lt", [](CutNtk&, const Signal&, const Signal&) -> Signal
             { throw std::runtime_error("create_lt is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb",
+            nb::sig("def create_lt(self, a: AigSignal, b: AigSignal) -> NoReturn"))
         .def(
             "create_le", [](CutNtk&, const Signal&, const Signal&) -> Signal
             { throw std::runtime_error("create_le is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb",
+            nb::sig("def create_le(self, a: AigSignal, b: AigSignal) -> NoReturn"))
         .def(
             "create_maj", [](CutNtk&, const Signal&, const Signal&, const Signal&) -> Signal
             { throw std::runtime_error("create_maj is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
-            nb::arg("c"), R"pb(Not available on immutable view.)pb")
+            nb::arg("c"), R"pb(Not available on immutable view.)pb",
+            nb::sig("def create_maj(self, a: AigSignal, b: AigSignal, c: AigSignal) -> NoReturn"))
         .def(
             "create_ite", [](CutNtk&, const Signal&, const Signal&, const Signal&) -> Signal
             { throw std::runtime_error("create_ite is not available on immutable view"); }, nb::arg("cond"),
-            nb::arg("f_then"), nb::arg("f_else"), R"pb(Not available on immutable view.)pb")
+            nb::arg("f_then"), nb::arg("f_else"), R"pb(Not available on immutable view.)pb",
+            nb::sig("def create_ite(self, cond: AigSignal, f_then: AigSignal, f_else: AigSignal) -> NoReturn"))
         .def(
             "create_xor3", [](CutNtk&, const Signal&, const Signal&, const Signal&) -> Signal
             { throw std::runtime_error("create_xor3 is not available on immutable view"); }, nb::arg("a"), nb::arg("b"),
-            nb::arg("c"), R"pb(Not available on immutable view.)pb")
+            nb::arg("c"), R"pb(Not available on immutable view.)pb",
+            nb::sig("def create_xor3(self, a: AigSignal, b: AigSignal, c: AigSignal) -> NoReturn"))
         .def(
             "create_nary_and", [](CutNtk&, const std::vector<Signal>&) -> Signal
             { throw std::runtime_error("create_nary_and is not available on immutable view"); }, nb::arg("fs"),
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb",
+            nb::sig("def create_nary_and(self, fs: Sequence[AigSignal]) -> NoReturn"))
         .def(
             "create_nary_or", [](CutNtk&, const std::vector<Signal>&) -> Signal
             { throw std::runtime_error("create_nary_or is not available on immutable view"); }, nb::arg("fs"),
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb",
+            nb::sig("def create_nary_or(self, fs: Sequence[AigSignal]) -> NoReturn"))
         .def(
             "create_nary_xor", [](CutNtk&, const std::vector<Signal>&) -> Signal
             { throw std::runtime_error("create_nary_xor is not available on immutable view"); }, nb::arg("fs"),
-            R"pb(Not available on immutable view.)pb")
+            R"pb(Not available on immutable view.)pb",
+            nb::sig("def create_nary_xor(self, fs: Sequence[AigSignal]) -> NoReturn"))
         .def(
             "clone_node", [](CutNtk&, const Ntk&, const Node&, const std::vector<Signal>&) -> Signal
             { throw std::runtime_error("clone_node is not available on immutable view"); }, nb::arg("other"),
-            nb::arg("source"), nb::arg("children"), R"pb(Not available on immutable view.)pb");
+            nb::arg("source"), nb::arg("children"), R"pb(Not available on immutable view.)pb",
+            nb::sig("def clone_node(self, other: Aig, source: int, children: Sequence[AigSignal]) -> NoReturn"));
 
     using Register = mockturtle::register_t;  // NOLINT(readability-identifier-naming)
     nb::class_<Register>(m, fmt::format("{}Register", network_name).c_str(),
