@@ -498,6 +498,142 @@ class FanoutAig(Aig):
     def fanouts(self, n: int) -> list[int]:
         """Returns fanout nodes of node ``n``."""
 
+class CutAig(Aig):
+    """Implements an isolated view on a single cut in a network.
+
+    This view creates a network from a single cut with a single output `root`
+    and a set of `leaves`. This is an immutable view; network-modifying methods
+    are not available.
+
+    Note:
+        This view clears all nodes' visited flags before construction to ensure
+        the cut is constructed correctly. The view guarantees that all nodes in
+        the view will have a 0 visited flag after construction.
+    """
+
+    @overload
+    def __init__(self, ntk: Aig, leaves: Sequence[int], root: AigSignal) -> None:
+        """Creates a cut view from a network, leaf nodes, and root signal.
+
+        Args:
+            ntk: The base network.
+            leaves: Vector of leaf nodes (boundary of the cut).
+            root: The root signal (output) of the cut.
+        """
+
+    @overload
+    def __init__(self, ntk: Aig, leaves: Sequence[AigSignal], root: AigSignal) -> None:
+        """Creates a cut view from a network, leaf signals, and root signal.
+
+        Args:
+            ntk: The base network.
+            leaves: Vector of leaf signals (boundary of the cut).
+            root: The root signal (output) of the cut.
+        """
+
+    def clone(self) -> CutAig:
+        """Creates a structural copy of the cut view."""
+
+    def __copy__(self) -> CutAig:
+        """Returns a shallow copy of the cut view."""
+
+    def __deepcopy__(self, memo: dict) -> CutAig:
+        """Returns a deep copy of the cut view."""
+
+    def nodes(self) -> list[int]:
+        """Returns a list of all nodes in the cut view."""
+
+    def gates(self) -> list[int]:
+        """Returns a list of all gate nodes in the cut view."""
+
+    def pis(self) -> list[int]:
+        """Returns a list of all primary input (leaf) nodes in the cut view."""
+
+    def pos(self) -> list[AigSignal]:
+        """Returns a list containing the root signal of the cut view."""
+
+    def is_pi(self, n: int) -> bool:
+        """Returns whether ``n`` is a primary input (leaf) in the cut view."""
+
+    @property
+    def size(self) -> int:
+        """Number of nodes in the cut view."""
+
+    @property
+    def num_pis(self) -> int:
+        """Number of primary inputs (leaves) in the cut view."""
+
+    @property
+    def num_pos(self) -> int:
+        """Number of primary outputs (always 1 for cut view)."""
+
+    @property
+    def num_gates(self) -> int:
+        """Number of logic gates in the cut view."""
+
+    def node_to_index(self, n: int) -> int:
+        """Returns the integer index of a node."""
+
+    def index_to_node(self, index: int) -> int:
+        """Returns the node for an index."""
+
+    def create_pi(self) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_po(self, f: AigSignal) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_buf(self, a: AigSignal) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_not(self, a: AigSignal) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_and(self, a: AigSignal, b: AigSignal) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_nand(self, a: AigSignal, b: AigSignal) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_or(self, a: AigSignal, b: AigSignal) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_nor(self, a: AigSignal, b: AigSignal) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_xor(self, a: AigSignal, b: AigSignal) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_xnor(self, a: AigSignal, b: AigSignal) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_lt(self, a: AigSignal, b: AigSignal) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_le(self, a: AigSignal, b: AigSignal) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_maj(self, a: AigSignal, b: AigSignal, c: AigSignal) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_ite(self, cond: AigSignal, f_then: AigSignal, f_else: AigSignal) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_xor3(self, a: AigSignal, b: AigSignal, c: AigSignal) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_nary_and(self, fs: Sequence[AigSignal]) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_nary_or(self, fs: Sequence[AigSignal]) -> NoReturn:
+        """Not available on immutable view."""
+
+    def create_nary_xor(self, fs: Sequence[AigSignal]) -> NoReturn:
+        """Not available on immutable view."""
+
+    def clone_node(self, other: Aig, source: int, children: Sequence[AigSignal]) -> NoReturn:
+        """Not available on immutable view."""
+
 class AigRegister:
     """Represents metadata for one sequential register."""
 
