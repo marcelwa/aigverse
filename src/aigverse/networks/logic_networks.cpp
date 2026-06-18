@@ -636,6 +636,22 @@ Args:
             "index_to_node", [](const CutNtk& ntk, const uint32_t index) { return ntk.index_to_node(index); },
             nb::arg("index"), R"pb(Returns the node for an index.)pb")
         .def(
+            "to_index_list",
+            [](const CutNtk& ntk)
+            {
+                aigverse::aig_index_list il{};
+                mockturtle::encode(il, ntk);
+                return il;
+            },
+            R"pb(Converts the cut view to an index-list encoding.
+
+Only the cut's restricted node set is encoded. The resulting index list
+can be decoded into a standalone Aig via ``AigIndexList.to_aig()``.
+
+Returns:
+    The corresponding index-list representation.)pb",
+            nb::rv_policy::move)
+        .def(
             "__repr__", [](const CutNtk& ntk)
             { return fmt::format("Cut(leaves={}, gates={}, size={})", ntk.num_pis(), ntk.num_gates(), ntk.size()); },
             R"pb(Returns a developer-friendly string representation.)pb");

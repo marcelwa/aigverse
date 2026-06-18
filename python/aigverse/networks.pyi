@@ -578,6 +578,16 @@ class Cut:
     def index_to_node(self, index: int) -> int:
         """Returns the node for an index."""
 
+    def to_index_list(self) -> AigIndexList:
+        """Converts the cut view to an index-list encoding.
+
+        Only the cut's restricted node set is encoded. The resulting index list
+        can be decoded into a standalone Aig via ``AigIndexList.to_aig()``.
+
+        Returns:
+            The corresponding index-list representation.
+        """
+
 class AigRegister:
     """Represents metadata for one sequential register."""
 

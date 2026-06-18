@@ -172,3 +172,38 @@ def test_cut_with_nodes() -> None:
     assert cut.num_pos == 1
     assert cut.num_gates == 1
     assert cut.size == 4
+
+
+def test_cut_to_index_list() -> None:
+    """Test that to_index_list() encodes only the cut, not the whole network."""
+    aig = Aig()
+    x1 = aig.create_pi()
+    x2 = aig.create_pi()
+    x3 = aig.create_pi()
+    x4 = aig.create_pi()
+
+    f1 = aig.create_and(x1, x2)
+    f2 = aig.create_and(x3, x4)
+    f3 = aig.create_and(f1, f2)
+    aig.create_po(f3)
+
+    # Create a cut covering only f1 (1 gate, 2 leaves)
+    cut = Cut(aig, [x1, x2], f1)
+    assert cut.num_gates == 1
+    assert cut.num_pis == 2
+
+    # to_index_list() should encode only the cut's nodes
+    il = cut.to_index_list()
+    assert il.num_gates == 1
+    assert il.num_pis == 2
+    assert il.num_pos == 1
+
+    # The full network has 3 gates and 4 PIs — verify we didn't get those
+    assert il.num_gates != aig.num_gates
+    assert il.num_pis != aig.num_pis
+
+    # Decode back to a standalone Aig
+    standalone_aig = il.to_aig()
+    assert standalone_aig.num_gates == 1
+    assert standalone_aig.num_pis == 2
+    assert standalone_aig.num_pos == 1
