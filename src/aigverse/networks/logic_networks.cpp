@@ -531,11 +531,11 @@ Preserves only combinational structure and does not capture augmented view metad
             },
             nb::arg("n"), R"pb(Returns fanout nodes of node ``n``.)pb");
 
-    using CutNtk = mockturtle::cut_view<Ntk>;
+    using NtkCut = mockturtle::cut_view<Ntk>;
 
     auto clear_visited = [](const Ntk& ntk) { ntk.foreach_node([&ntk](const auto& n) { ntk.set_visited(n, 0); }); };
 
-    nb::class_<CutNtk>(m, "Cut",
+    nb::class_<NtkCut>(m, fmt::format("{}Cut", network_name).c_str(),
                        R"pb(Implements an isolated view on a single cut in a network.
 
 This view creates a network from a single cut with a single output `root`
@@ -549,10 +549,10 @@ Note:
     the view will have a 0 visited flag after construction.)pb")
         .def(
             "__init__",
-            [clear_visited](CutNtk* self, const Ntk& ntk, const std::vector<Node>& leaves, const Signal& root)
+            [clear_visited](NtkCut* self, const Ntk& ntk, const std::vector<Node>& leaves, const Signal& root)
             {
                 clear_visited(ntk);
-                new (self) CutNtk(ntk, leaves, root);
+                new (self) NtkCut(ntk, leaves, root);
             },
             nb::arg("ntk"), nb::arg("leaves"), nb::arg("root"),
             R"pb(Creates a cut view from a network, leaf nodes, and root signal.
@@ -563,10 +563,10 @@ Args:
     root: The root signal (output) of the cut.)pb")
         .def(
             "__init__",
-            [clear_visited](CutNtk* self, const Ntk& ntk, const std::vector<Signal>& leaves, const Signal& root)
+            [clear_visited](NtkCut* self, const Ntk& ntk, const std::vector<Signal>& leaves, const Signal& root)
             {
                 clear_visited(ntk);
-                new (self) CutNtk(ntk, leaves, root);
+                new (self) NtkCut(ntk, leaves, root);
             },
             nb::arg("ntk"), nb::arg("leaves"), nb::arg("root"),
             R"pb(Creates a cut view from a network, leaf signals, and root signal.
@@ -576,68 +576,68 @@ Args:
     leaves: Vector of leaf signals (boundary of the cut).
     root: The root signal (output) of the cut.)pb")
         .def(
-            "clone", [](const CutNtk& ntk) { return CutNtk{ntk}; }, R"pb(Creates a structural copy of the cut view.)pb")
+            "clone", [](const NtkCut& ntk) { return NtkCut{ntk}; }, R"pb(Creates a structural copy of the cut view.)pb")
         .def(
-            "__copy__", [](const CutNtk& ntk) { return CutNtk{ntk}; }, R"pb(Returns a shallow copy of the cut view.)pb")
+            "__copy__", [](const NtkCut& ntk) { return NtkCut{ntk}; }, R"pb(Returns a shallow copy of the cut view.)pb")
         .def(
-            "__deepcopy__", [](const CutNtk& ntk, const nb::dict&) { return CutNtk{ntk}; }, nb::arg("memo"),
+            "__deepcopy__", [](const NtkCut& ntk, const nb::dict&) { return NtkCut{ntk}; }, nb::arg("memo"),
             R"pb(Returns a deep copy of the cut view.)pb")
         .def(
-            "nodes", [](const CutNtk& ntk) { return collect_nodes(ntk); },
+            "nodes", [](const NtkCut& ntk) { return collect_nodes(ntk); },
             R"pb(Returns a list of all nodes in the cut view.)pb")
         .def(
             "gates",
-            [](const CutNtk& ntk)
+            [](const NtkCut& ntk)
             {
                 std::vector<Node> gates{};
-                gates.reserve(static_cast<size_t>(ntk.num_gates()));
+                gates.reserve(static_cast<std::size_t>(ntk.num_gates()));
                 ntk.foreach_gate([&gates](const auto& g) { gates.push_back(g); });
                 return gates;
             },
             R"pb(Returns a list of all gate nodes in the cut view.)pb")
         .def(
             "pis",
-            [](const CutNtk& ntk)
+            [](const NtkCut& ntk)
             {
                 std::vector<Node> pis{};
-                pis.reserve(static_cast<size_t>(ntk.num_pis()));
+                pis.reserve(static_cast<std::size_t>(ntk.num_pis()));
                 ntk.foreach_pi([&pis](const auto& pi) { pis.push_back(pi); });
                 return pis;
             },
             R"pb(Returns a list of all primary input (leaf) nodes in the cut view.)pb")
         .def(
             "pos",
-            [](const CutNtk& ntk)
+            [](const NtkCut& ntk)
             {
                 std::vector<Signal> pos{};
-                pos.reserve(static_cast<size_t>(ntk.num_pos()));
+                pos.reserve(static_cast<std::size_t>(ntk.num_pos()));
                 ntk.foreach_po([&pos](const auto& po) { pos.push_back(po); });
                 return pos;
             },
             R"pb(Returns a list containing the root signal of the cut view.)pb")
         .def(
-            "is_pi", [](const CutNtk& ntk, const Node& n) { return ntk.is_pi(n); }, nb::arg("n"),
+            "is_pi", [](const NtkCut& ntk, const Node& n) { return ntk.is_pi(n); }, nb::arg("n"),
             R"pb(Returns whether ``n`` is a primary input (leaf) in the cut view.)pb")
         .def_prop_ro(
-            "size", [](const CutNtk& ntk) { return ntk.size(); }, R"pb(Number of nodes in the cut view.)pb")
+            "size", [](const NtkCut& ntk) { return ntk.size(); }, R"pb(Number of nodes in the cut view.)pb")
         .def_prop_ro(
-            "num_pis", [](const CutNtk& ntk) { return ntk.num_pis(); },
+            "num_pis", [](const NtkCut& ntk) { return ntk.num_pis(); },
             R"pb(Number of primary inputs (leaves) in the cut view.)pb")
         .def_prop_ro(
-            "num_pos", [](const CutNtk& ntk) { return ntk.num_pos(); },
+            "num_pos", [](const NtkCut& ntk) { return ntk.num_pos(); },
             R"pb(Number of primary outputs (always 1 for cut view).)pb")
         .def_prop_ro(
-            "num_gates", [](const CutNtk& ntk) { return ntk.num_gates(); },
+            "num_gates", [](const NtkCut& ntk) { return ntk.num_gates(); },
             R"pb(Number of logic gates in the cut view.)pb")
         .def(
-            "node_to_index", [](const CutNtk& ntk, const Node& n) { return ntk.node_to_index(n); }, nb::arg("n"),
+            "node_to_index", [](const NtkCut& ntk, const Node& n) { return ntk.node_to_index(n); }, nb::arg("n"),
             R"pb(Returns the integer index of a node.)pb")
         .def(
-            "index_to_node", [](const CutNtk& ntk, const uint32_t index) { return ntk.index_to_node(index); },
+            "index_to_node", [](const NtkCut& ntk, const uint32_t index) { return ntk.index_to_node(index); },
             nb::arg("index"), R"pb(Returns the node for an index.)pb")
         .def(
             "to_index_list",
-            [](const CutNtk& ntk)
+            [](const NtkCut& ntk)
             {
                 aigverse::aig_index_list il{};
                 mockturtle::encode(il, ntk);
@@ -652,8 +652,12 @@ Returns:
     The corresponding index-list representation.)pb",
             nb::rv_policy::move)
         .def(
-            "__repr__", [](const CutNtk& ntk)
-            { return fmt::format("Cut(leaves={}, gates={}, size={})", ntk.num_pis(), ntk.num_gates(), ntk.size()); },
+            "__repr__",
+            [network_name](const NtkCut& ntk)
+            {
+                return fmt::format("{}Cut(leaves={}, gates={}, size={})", network_name, ntk.num_pis(), ntk.num_gates(),
+                                   ntk.size());
+            },
             R"pb(Returns a developer-friendly string representation.)pb");
 
     using Register = mockturtle::register_t;  // NOLINT(readability-identifier-naming)

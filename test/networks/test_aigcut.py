@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import copy
 
-from aigverse.networks import Aig, Cut
+from aigverse.networks import Aig, AigCut
 
 
-def test_cut() -> None:
-    """Test Cut creation and basic properties."""
+def test_aigcut() -> None:
+    """Test AigCut creation and basic properties."""
     aig = Aig()
     x1 = aig.create_pi()
     x2 = aig.create_pi()
@@ -17,7 +17,7 @@ def test_cut() -> None:
     # Create a cut view
     leaves = [x1, x2]
     root = f1
-    cut = Cut(aig, leaves, root)
+    cut = AigCut(aig, leaves, root)
 
     # Check basic properties
     assert hasattr(cut, "size")
@@ -31,8 +31,8 @@ def test_cut() -> None:
     assert cut.num_gates == 1
 
 
-def test_cut_with_signals() -> None:
-    """Test Cut creation using signals."""
+def test_aigcut_with_signals() -> None:
+    """Test AigCut creation using signals."""
     aig = Aig()
     a = aig.create_pi()
     b = aig.create_pi()
@@ -47,15 +47,15 @@ def test_cut_with_signals() -> None:
     # Create a cut view with all PIs as leaves
     leaves = [a, b, c, d]
     root = f3
-    cut = Cut(aig, leaves, root)
+    cut = AigCut(aig, leaves, root)
 
     # Should contain all 4 PIs as leaves
     assert cut.num_pis == 4
     assert cut.num_gates == 5
 
 
-def test_cut_iteration() -> None:
-    """Test iteration over nodes in Cut."""
+def test_aigcut_iteration() -> None:
+    """Test iteration over nodes in AigCut."""
     aig = Aig()
     x1 = aig.create_pi()
     x2 = aig.create_pi()
@@ -66,7 +66,7 @@ def test_cut_iteration() -> None:
     # Create cut for the output
     leaves = [x1, x2]
     root = f1
-    cut = Cut(aig, leaves, root)
+    cut = AigCut(aig, leaves, root)
 
     # Iterate over all nodes
     nodes = cut.nodes()
@@ -86,8 +86,8 @@ def test_cut_iteration() -> None:
     assert len(pos) == 1
 
 
-def test_cut_index_mapping() -> None:
-    """Test node to index and index to node mapping in Cut."""
+def test_aigcut_index_mapping() -> None:
+    """Test node to index and index to node mapping in AigCut."""
     aig = Aig()
     x1 = aig.create_pi()
     x2 = aig.create_pi()
@@ -95,7 +95,7 @@ def test_cut_index_mapping() -> None:
     f1 = aig.create_and(x1, x2)
     aig.create_po(f1)
 
-    cut = Cut(aig, [x1, x2], f1)
+    cut = AigCut(aig, [x1, x2], f1)
 
     # Test node_to_index and index_to_node
     for node in cut.nodes():
@@ -104,15 +104,15 @@ def test_cut_index_mapping() -> None:
         assert recovered_node == node
 
 
-def test_cut_is_pi() -> None:
-    """Test is_pi method in Cut."""
+def test_aigcut_is_pi() -> None:
+    """Test is_pi method in AigCut."""
     aig = Aig()
     x1 = aig.create_pi()
     x2 = aig.create_pi()
     f1 = aig.create_and(x1, x2)
     aig.create_po(f1)
 
-    cut = Cut(aig, [x1, x2], f1)
+    cut = AigCut(aig, [x1, x2], f1)
 
     # Check that leaf nodes are PIs in the cut
     assert cut.is_pi(aig.get_node(x1))
@@ -122,43 +122,43 @@ def test_cut_is_pi() -> None:
     assert not cut.is_pi(aig.get_node(f1))
 
 
-def test_cut_repr() -> None:
-    """Test __repr__ method in Cut."""
+def test_aigcut_repr() -> None:
+    """Test __repr__ method in AigCut."""
     aig = Aig()
     x1 = aig.create_pi()
     x2 = aig.create_pi()
     f1 = aig.create_and(x1, x2)
     aig.create_po(f1)
 
-    cut = Cut(aig, [x1, x2], f1)
+    cut = AigCut(aig, [x1, x2], f1)
     repr_str = repr(cut)
-    assert "Cut" in repr_str
+    assert "AigCut" in repr_str
     assert "leaves=2" in repr_str
     assert "gates=1" in repr_str
 
 
-def test_cut_clone_and_copy() -> None:
-    """Test clone, __copy__, and __deepcopy__ in Cut."""
+def test_aigcut_clone_and_copy() -> None:
+    """Test clone, __copy__, and __deepcopy__ in AigCut."""
     aig = Aig()
     x1 = aig.create_pi()
     x2 = aig.create_pi()
     f1 = aig.create_and(x1, x2)
     aig.create_po(f1)
 
-    cut = Cut(aig, [x1, x2], f1)
+    cut = AigCut(aig, [x1, x2], f1)
 
     cloned = cut.clone()
     shallow = copy.copy(cut)
     deep = copy.deepcopy(cut)
     for candidate in (cloned, shallow, deep):
-        assert isinstance(candidate, Cut)
+        assert isinstance(candidate, AigCut)
         assert candidate.num_pis == 2
         assert candidate.num_pos == 1
         assert candidate.num_gates == 1
 
 
-def test_cut_with_nodes() -> None:
-    """Test Cut creation using nodes instead of signals."""
+def test_aigcut_with_nodes() -> None:
+    """Test AigCut creation using nodes instead of signals."""
     aig = Aig()
     x1 = aig.create_pi()
     x2 = aig.create_pi()
@@ -167,14 +167,14 @@ def test_cut_with_nodes() -> None:
 
     leaves = [aig.get_node(x1), aig.get_node(x2)]
     root = f1
-    cut = Cut(aig, leaves, root)
+    cut = AigCut(aig, leaves, root)
     assert cut.num_pis == 2
     assert cut.num_pos == 1
     assert cut.num_gates == 1
     assert cut.size == 4
 
 
-def test_cut_to_index_list() -> None:
+def test_aigcut_to_index_list() -> None:
     """Test that to_index_list() encodes only the cut, not the whole network."""
     aig = Aig()
     x1 = aig.create_pi()
@@ -188,7 +188,7 @@ def test_cut_to_index_list() -> None:
     aig.create_po(f3)
 
     # Create a cut covering only f1 (1 gate, 2 leaves)
-    cut = Cut(aig, [x1, x2], f1)
+    cut = AigCut(aig, [x1, x2], f1)
     assert cut.num_gates == 1
     assert cut.num_pis == 2
 

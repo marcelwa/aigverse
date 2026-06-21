@@ -498,7 +498,7 @@ class FanoutAig(Aig):
     def fanouts(self, n: int) -> list[int]:
         """Returns fanout nodes of node ``n``."""
 
-class Cut:
+class AigCut:
     """Implements an isolated view on a single cut in a network.
 
     This view creates a network from a single cut with a single output `root`
@@ -532,13 +532,13 @@ class Cut:
             root: The root signal (output) of the cut.
         """
 
-    def clone(self) -> Cut:
+    def clone(self) -> AigCut:
         """Creates a structural copy of the cut view."""
 
-    def __copy__(self) -> Cut:
+    def __copy__(self) -> AigCut:
         """Returns a shallow copy of the cut view."""
 
-    def __deepcopy__(self, memo: dict) -> Cut:
+    def __deepcopy__(self, memo: dict) -> AigCut:
         """Returns a deep copy of the cut view."""
 
     def nodes(self) -> list[int]:

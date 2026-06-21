@@ -276,12 +276,12 @@ for node in fanout_aig.fanouts(aig.get_node(n4)):
     print(f"  Node {node}")
 ```
 
-### Cut Views
+### Cuts
 
-The {py:class}`~aigverse.networks.Cut` class provides an isolated view on a single cut in a network. A cut has a single output (root) and a set of leaves (inputs). This is useful for analyzing subgraphs or extracting portions of a larger network.
+The {py:class}`~aigverse.networks.AigCut` class provides an isolated view on a single cut in a network. A cut has a single output (root) and a set of leaves (inputs). This is useful for analyzing subgraphs or extracting portions of a larger network.
 
 ```{code-cell} ipython3
-from aigverse.networks import Aig, Cut
+from aigverse.networks import Aig, AigCut
 
 # Create a sample AIG
 aig = Aig()
@@ -296,7 +296,7 @@ aig.create_po(f2)
 
 # Create a small cut view with x1, x2 as leaves and f1 as root
 # This is valid because f1 only depends on x1 and x2
-cut = Cut(aig, [x1, x2], f1)
+cut = AigCut(aig, [x1, x2], f1)
 
 print(f"Small cut has {cut.num_pis} PIs (leaves)")
 print(f"Small cut has {cut.num_pos} POs (roots)")
@@ -314,7 +314,7 @@ for gate in cut.gates():
 
 # Create a larger cut with all PIs as leaves and f2 as root
 # This cut includes both f1 and f2 gates
-cut2 = Cut(aig, [x1, x2, x3], f2)
+cut2 = AigCut(aig, [x1, x2, x3], f2)
 
 print(f"\nLarger cut has {cut2.num_pis} PIs (leaves)")
 print(f"Larger cut has {cut2.num_pos} POs (roots)")
