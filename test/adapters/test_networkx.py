@@ -239,6 +239,27 @@ class TestNetworkxAdapter:
         assert "output_and" in output_names_list
 
     @staticmethod
+    def test_to_networkx_duplicate_constant_outputs() -> None:
+        """Test that duplicate constant outputs receive distinct synthetic PO nodes."""
+        from aigverse.networks import NamedAig
+
+        aig = NamedAig()
+        const0 = aig.get_constant(False)
+        aig.create_po(const0, "po0")
+        aig.create_po(const0, "po1")
+
+        g = aig.to_networkx(levels=True, fanouts=True)
+
+        po_nodes = sorted(node for node, data in g.nodes(data=True) if tuple(data["type"].tolist()) == (0, 0, 0, 1))
+
+        assert po_nodes == [aig.size, aig.size + 1]
+        assert g.number_of_edges() == 2
+        assert [list(g.predecessors(node)) for node in po_nodes] == [[0], [0]]
+        assert [node for node in po_nodes if g.degree[node] == 0] == []
+        assert g.edges[0, aig.size]["output_name"] == "po0"
+        assert g.edges[0, aig.size + 1]["output_name"] == "po1"
+
+    @staticmethod
     def test_to_networkx_without_names(simple_aig: Aig) -> None:
         """Test that regular Aig objects don't have name attributes."""
         g = simple_aig.to_networkx()

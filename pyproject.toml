@@ -115,9 +115,8 @@ testpaths = ["test/"]
 [tool.cibuildwheel]
 build = "cp3*"
 skip = ["*-musllinux_*", "cp313t-*"]
-enable = ["cpython-freethreading"]
 archs = "auto64"
-build-frontend = "build[uv]"
+build-frontend = "uv"
 test-groups = ["test"]
 test-sources = ["test/"]
 test-command = "pytest test/"
@@ -247,7 +246,7 @@ test = [
     "pytest-xdist>=3.8.0",
 ]
 lint = [
-    "ty==0.0.37",
+    "ty==0.0.53",
     "nox>=2025.10.16",
 ]
 dev = [
