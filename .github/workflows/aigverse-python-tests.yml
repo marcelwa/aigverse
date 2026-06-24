@@ -55,7 +55,7 @@ jobs:
           save-cache: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Run ty
-        run: uvx prek run -a ty-check
+        run: uvx prek run -a ty
 
       - name: Check if stub files are up to date
         run: |
