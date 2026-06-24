@@ -461,7 +461,7 @@ def test_pickle_list() -> None:
     pickled_list = pickle.dumps(tts_original)
 
     # Unpickle the list
-    tts_unpickled = pickle.loads(pickled_list)
+    tts_unpickled: list[TruthTable] = pickle.loads(pickled_list)
 
     # Check for equivalence
     assert isinstance(tts_unpickled, list)

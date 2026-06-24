@@ -21,6 +21,6 @@ else:
     from ..networks import Aig
     from .networkx import to_networkx
 
-    Aig.to_networkx = to_networkx  # type: ignore[method-assign]
+    Aig.to_networkx = to_networkx  # type: ignore[method-assign]  # ty: ignore
 
     del to_networkx

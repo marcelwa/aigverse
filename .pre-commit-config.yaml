@@ -12,7 +12,7 @@ ci:
   autoupdate_commit_msg: "⬆️ Bump pre-commit hooks"
   autofix_commit_msg: "🎨 Incorporated pre-commit fixes"
   autoupdate_schedule: quarterly
-  skip: [ty-check]
+  skip: [ty]
 
 exclude: "^(docs/examples/|.*/_deps/)"
 
@@ -60,7 +60,7 @@ repos:
 
   # Check for spelling
   - repo: https://github.com/crate-ci/typos
-    rev: v1.47.0
+    rev: v1.47.2
     hooks:
       - id: typos
         priority: 0
@@ -94,14 +94,14 @@ repos:
 
   # Ensure uv lock file is up-to-date
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.11
+    rev: 0.11.24
     hooks:
       - id: uv-lock
         priority: 0
 
   # Python linting using ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.12
+    rev: v0.15.19
     hooks:
       - id: ruff-format
         priority: 1
@@ -109,17 +109,12 @@ repos:
         require_serial: true
         priority: 2
 
-  # Check static types with ty
-  - repo: local
+  # Check Python types with ty
+  - repo: https://github.com/astral-sh/ty-pre-commit
+    rev: v0.0.49
     hooks:
-      - id: ty-check
-        name: ty check
-        entry: uvx python -c "import subprocess; import sys; r = subprocess.run(['uv', 'sync', '--no-install-project', '--inexact', '--only-group', 'test', '--only-group', 'adapters', '--only-group', 'lint']); sys.exit(r.returncode or subprocess.run(['uv', 'run', '--no-sync', 'ty', 'check']).returncode)"
-        language: unsupported
-        require_serial: true
-        types_or: [python, pyi, jupyter]
-        exclude: ^(docs/)
-        pass_filenames: false
+      - id: ty
+        args: [--only-dev]
         priority: 3
 
   # Clean jupyter notebooks
@@ -144,7 +139,7 @@ repos:
 
   # Format configuration files with prettier
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.8.3
+    rev: v3.8.4
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -152,7 +147,7 @@ repos:
 
   # Check JSON schemata
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.2
+    rev: 0.37.3
     hooks:
       - id: check-github-workflows
         priority: 0
@@ -164,7 +159,7 @@ repos:
 
   # Check the pyproject.toml file
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2026.06.12
+    rev: 2026.06.23
     hooks:
       - id: validate-pyproject
         priority: 0
