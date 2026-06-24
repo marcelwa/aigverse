@@ -2,7 +2,7 @@
 requires = [
     "scikit-build-core>=0.11.6",
     "setuptools-scm>=8.1",
-    "nanobind~=2.12.0",
+    "nanobind~=2.13.0",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -218,7 +218,7 @@ ignore = [
 build = [
     "scikit-build-core>=0.11.6",
     "setuptools-scm>=8.1",
-    "nanobind~=2.12.0",
+    "nanobind~=2.13.0",
 ]
 adapters = [
     "networkx>=3.0.0",
