@@ -248,7 +248,6 @@ test = [
 dev = [
     { include-group = "build" },
     { include-group = "adapters" },
-    { include-group = "docs" },
     { include-group = "test" },
     "nox>=2025.10.16",
 ]
