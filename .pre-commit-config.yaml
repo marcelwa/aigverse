@@ -94,14 +94,14 @@ repos:
 
   # Ensure uv lock file is up-to-date
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.24
+    rev: 0.11.25
     hooks:
       - id: uv-lock
         priority: 0
 
   # Python linting using ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.19
+    rev: v0.15.20
     hooks:
       - id: ruff-format
         priority: 1
@@ -111,7 +111,7 @@ repos:
 
   # Check Python types with ty
   - repo: https://github.com/astral-sh/ty-pre-commit
-    rev: v0.0.53
+    rev: v0.0.55
     hooks:
       - id: ty
         args: [--only-dev]
@@ -159,7 +159,7 @@ repos:
 
   # Check the pyproject.toml file
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2026.06.23
+    rev: 2026.06.26
     hooks:
       - id: validate-pyproject
         priority: 0
