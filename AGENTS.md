@@ -65,16 +65,16 @@ uvx nox -s docs -- -b linkcheck    # check links instead of building HTML
 each with matching directories on both sides:
 
 | C++ (`src/aigverse/<module>/`) | Python stub (`python/aigverse/<module>.pyi`) | Tests (`test/<module>/`) |
-|---|---|---|
-| `networks/` | `networks.pyi` | `test/networks/` |
-| `algorithms/` | `algorithms.pyi` | `test/algorithms/` |
-| `io/` | `io.pyi` | `test/inout/` |
-| `generators/` | `generators.pyi` | `test/generators/` |
-| `utils/` | `utils.pyi` | `test/truth_tables/` |
+| ------------------------------ | -------------------------------------------- | ------------------------ |
+| `networks/`                    | `networks.pyi`                               | `test/networks/`         |
+| `algorithms/`                  | `algorithms.pyi`                             | `test/algorithms/`       |
+| `io/`                          | `io.pyi`                                     | `test/inout/`            |
+| `generators/`                  | `generators.pyi`                             | `test/generators/`       |
+| `utils/`                       | `utils.pyi`                                  | `test/truth_tables/`     |
 
 Each module directory has its own `CMakeLists.txt` calling `add_aigverse_python_binding(...)` (defined in
 `cmake/AddAigversePythonBinding.cmake`) and a `bindings.cpp` that registers the nanobind module. Adding or changing
-a bound function means editing the `.cpp` implementation *and* its registration in `bindings.cpp`, then running
+a bound function means editing the `.cpp` implementation _and_ its registration in `bindings.cpp`, then running
 `nox -s stubs` to regenerate the corresponding `.pyi` — never hand-edit `.pyi` files, they are fully generated.
 
 **Dependency vendoring.** mockturtle, kitty, and lorina are pulled in via CMake `FetchContent`

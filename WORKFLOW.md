@@ -22,6 +22,7 @@ Don't freelance straight against `main`; follow this loop instead:
    All work happens on that branch — never directly on `main`. Name the sibling
    dir and branch after the task, e.g. `../aigverse-issue357` /
    `fix-issue-357-dup-po-targets`.
+
 3. **Plan.** Hand the task off to a subagent whose only job is to draft an
    implementation plan — reading the relevant code, not writing any of it yet.
 4. **Adversarially verify the plan.** Hand the plan to a second, fresh subagent
