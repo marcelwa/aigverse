@@ -140,7 +140,10 @@ at the repo root.
 
 - **Always:** run `uvx nox -s lint` and `uvx nox -s tests-3.12` before considering a change complete; regenerate
   stubs (`uvx nox -s stubs`) after touching any `bindings.cpp`; add/update tests under `test/` for behavior changes;
-  update `CHANGELOG.md`/`UPGRADING.md` for user-facing or breaking changes.
+  update `CHANGELOG.md` for user-facing changes. Only touch `UPGRADING.md` for **breaking** changes — i.e. ones that
+  require users to change their own code to keep working (renamed/removed APIs, changed defaults, moved modules).
+  A user-facing but non-breaking addition (a new function, an added optional parameter) belongs in `CHANGELOG.md`
+  only, not `UPGRADING.md`.
 - **Ask first:** before adding new dependencies to `pyproject.toml`; before major architectural changes to the C++
   core; before modifying CI workflows in `.github/workflows/`.
 - **Never:** hand-edit `.pyi` stub files or `python/aigverse/_version.py` (both generated); remove failing tests
