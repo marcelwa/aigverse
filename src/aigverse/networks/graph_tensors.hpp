@@ -111,12 +111,13 @@ nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::unique_ptr<T[]>&& 
     namespace nb = nanobind;
 
     auto        storage     = std::move(data);
-    auto*       raw_storage = storage.release();
+    auto*       raw_storage = storage.get();
     nb::capsule owner(raw_storage,
                       [](void* ptr) noexcept
                       {
                           delete[] static_cast<T*>(ptr);  // NOLINT(cppcoreguidelines-owning-memory)
                       });
+    storage.release();
 
     return nb::ndarray<nb::numpy, T>(raw_storage, shape, owner);
 }
@@ -190,19 +191,6 @@ inline void write_truth_table_bits(float* destination, const aigverse::truth_tab
  */
 template <typename Ntk>
 nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_encoding,
-
-                                /**
-                                 * @brief Creates an owning NumPy-backed nanobind ndarray from a raw array.
-                                 *
-                                 * This overload exists for the hot export path, where the tensor storage is
-                                 * fully overwritten and a raw array avoids the default zero-initialization that
-                                 * ``std::vector(count, value)`` would perform.
-                                 *
-                                 * @tparam T Element type.
-                                 * @param data Moved raw array buffer.
-                                 * @param shape Target tensor shape.
-                                 * @return NumPy-backed ndarray that owns the provided data.
-                                 */
                                 const edge_tensor_encoding edge_encoding, const bool levels = false,
                                 const bool fanouts = false, const bool node_tts = false)
 {
@@ -225,10 +213,6 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     std::size_t edge_count =
         (static_cast<std::size_t>(Ntk::max_fanin_size) * static_cast<std::size_t>(ntk.num_gates())) +
         static_cast<std::size_t>(ntk.num_pos());
-    if constexpr (mockturtle::has_foreach_ri_v<Ntk> && mockturtle::has_ri_to_ro_v<Ntk>)
-    {
-        edge_count += static_cast<std::size_t>(ntk.num_registers());
-    }
 
     // edge_index and edge_attr are fully overwritten during export, so raw
     // storage avoids paying for a zero-initialization pass that would be thrown
@@ -310,17 +294,6 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
             const auto target = po_target++;
             append_edge(source, target, ntk.is_complemented(po));
         });
-
-    if constexpr (mockturtle::has_foreach_ri_v<Ntk> && mockturtle::has_ri_to_ro_v<Ntk>)
-    {
-        ntk.foreach_ri(
-            [&](const auto& ri)
-            {
-                const auto source = static_cast<int64_t>(ntk.node_to_index(ntk.get_node(ri)));
-                const auto target = static_cast<int64_t>(ntk.node_to_index(ntk.ri_to_ro(ri)));
-                append_edge(source, target, ntk.is_complemented(ri));
-            });
-    }
 
     if (edge_cursor != edge_count)
     {
