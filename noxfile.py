@@ -225,6 +225,12 @@ def stubs(session: nox.Session) -> None:
         "aigverse.utils",
     )
 
+    # nanobind mirrors the compiled extension's filename, which carries a `.abi3` tag
+    # when built against the stable ABI (see `wheel.py-api` in pyproject.toml). Normalize
+    # back to the plain module name so stubs are independent of the build's ABI tag.
+    for abi3_stub in package_root.glob("*.abi3.pyi"):
+        abi3_stub.replace(package_root / abi3_stub.name.replace(".abi3.pyi", ".pyi"))
+
     pyi_files = list(package_root.glob("**/*.pyi"))
 
     if not pyi_files:

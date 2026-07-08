@@ -170,10 +170,11 @@ template <typename Ntk>
         });
 
     // primary outputs
+    auto po_target = ntk.size();
     ntk.foreach_po(
-        [&ntk, regular_weight, inverted_weight, &el](const auto& po)
+        [&ntk, regular_weight, inverted_weight, &el, &po_target](const auto& po)
         {
-            el.edges.emplace_back(ntk.node_to_index(ntk.get_node(po)), ntk.size() + ntk.po_index(po),
+            el.edges.emplace_back(ntk.node_to_index(ntk.get_node(po)), po_target++,
                                   ntk.is_complemented(po) ? inverted_weight : regular_weight);
         });
 

@@ -276,6 +276,60 @@ for node in fanout_aig.fanouts(aig.get_node(n4)):
     print(f"  Node {node}")
 ```
 
+### Cuts
+
+The {py:class}`~aigverse.networks.AigCut` class provides an isolated view on a single cut in a network. A cut has a single output (root) and a set of leaves (inputs). This is useful for analyzing subgraphs or extracting portions of a larger network.
+
+```{code-cell} ipython3
+from aigverse.networks import Aig, AigCut
+
+# Create a sample AIG
+aig = Aig()
+x1 = aig.create_pi()
+x2 = aig.create_pi()
+x3 = aig.create_pi()
+
+# Create logic
+f1 = aig.create_and(x1, x2)
+f2 = aig.create_and(f1, x3)
+aig.create_po(f2)
+
+# Create a small cut view with x1, x2 as leaves and f1 as root
+# This is valid because f1 only depends on x1 and x2
+cut = AigCut(aig, [x1, x2], f1)
+
+print(f"Small cut has {cut.num_pis} PIs (leaves)")
+print(f"Small cut has {cut.num_pos} POs (roots)")
+print(f"Small cut has {cut.num_gates} gates")
+
+# Iterate over leaves (PIs in the cut)
+print("\nLeaf nodes in small cut:")
+for leaf in cut.pis():
+    print(f"  Leaf: {leaf}")
+
+# Iterate over gates in the cut
+print("\nGates in small cut:")
+for gate in cut.gates():
+    print(f"  Gate: {gate}")
+
+# Create a larger cut with all PIs as leaves and f2 as root
+# This cut includes both f1 and f2 gates
+cut2 = AigCut(aig, [x1, x2, x3], f2)
+
+print(f"\nLarger cut has {cut2.num_pis} PIs (leaves)")
+print(f"Larger cut has {cut2.num_pos} POs (roots)")
+print(f"Larger cut has {cut2.num_gates} gates")
+
+# The gates include both f1 and f2
+print("\nGates in larger cut:")
+for gate in cut2.gates():
+    print(f"  Gate: {gate}")
+```
+
+:::{note}
+A cut is only valid if all dependencies of the root node are either included in the leaves or can be reached through nodes within the cut. The cut view clears all nodes' visited flags before construction to ensure the cut is constructed correctly.
+:::
+
 ### Sequential AIGs
 
 {py:class}`~aigverse.networks.SequentialAig`s extend standard AIGs to include registers, which allow modeling sequential circuits
