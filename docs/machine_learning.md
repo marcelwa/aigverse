@@ -171,7 +171,7 @@ Current limitations of `to_graph_tensors`:
 - Exported tensors are backed by **CPU host memory** (NumPy-backed DLPack producer).
 - `torch.from_dlpack(...)` is zero-copy on CPU, but moving tensors to CUDA still allocates GPU memory and performs a host-to-device copy.
 - When `node_tts=True`, the export is restricted to at most 16 primary inputs due to the exponential growth of truth table size. This is a practical limit for ML applications, but it is not a fundamental limitation of the API.
-:::
+  :::
 
 ```{code-cell} ipython3
 import torch
