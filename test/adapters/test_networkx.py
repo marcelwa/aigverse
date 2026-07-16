@@ -6,7 +6,7 @@ from unittest import mock
 import pytest
 
 try:
-    import networkx as nx  # noqa: F401
+    import networkx as nx  # ruff:ignore[unused-import]
     import numpy as np
 except ImportError:
     pytest.skip(
@@ -31,7 +31,7 @@ def test_missing_dependencies(dependency: str, monkeypatch: pytest.MonkeyPatch) 
     with mock.patch.dict(sys.modules, {dependency: None}):
         # Check that the expected warning is raised when the module is imported
         with pytest.warns(UserWarning, match="Key libraries could not be imported"):
-            import aigverse.adapters  # noqa: F401
+            import aigverse.adapters  # ruff:ignore[unused-import]
 
         # The monkey-patch should not have been applied
         assert not hasattr(Aig, "to_networkx")
@@ -52,7 +52,7 @@ def test_import(monkeypatch: pytest.MonkeyPatch) -> None:
     assert not hasattr(Aig, "to_networkx")
 
     # This import will execute the module's top-level code
-    import aigverse.adapters  # noqa: F401
+    import aigverse.adapters  # ruff:ignore[unused-import]
 
     assert hasattr(Aig, "to_networkx")
     assert hasattr(DepthAig, "to_networkx")

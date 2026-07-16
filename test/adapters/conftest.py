@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 @pytest.fixture
 def _import_adapters() -> None:
     """Ensure adapter monkey patches are applied before adapter tests run."""
-    import aigverse.adapters  # noqa: F401
+    import aigverse.adapters  # ruff:ignore[unused-import]
 
 
 @pytest.fixture

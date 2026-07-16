@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-try:  # noqa: RUF067
-    import networkx as nx  # noqa: F401
-    import numpy as np  # noqa: F401
+try:  # ruff:ignore[non-empty-init-module]
+    import networkx as nx  # ruff:ignore[unused-import]
+    import numpy as np  # ruff:ignore[unused-import]
 
 except ImportError:
     import warnings
