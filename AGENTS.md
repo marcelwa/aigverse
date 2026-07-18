@@ -136,6 +136,40 @@ private:
 Use `#pragma once` and prefer STL features. `clang-tidy`/`clang-format` config lives in `.clang-tidy`/`.clang-format`
 at the repo root.
 
+## Commit & PR Conventions
+
+Prefix every commit subject and PR title with a [gitmoji](https://gitmoji.dev) **shortcode** — the `:shortcode:`
+text form (e.g. `:sparkles:`), not a raw emoji character. GitHub renders the shortcode as an emoji in its UI, but
+the text form stays readable and greppable in `git log`, terminals, and diffs. The one exception is Renovate's
+automated commits, which use rendered compound emoji (`⬆️🪝`, `⬆️🐍`, `⬆️👨‍💻`) to encode dependency-update
+subcategories — don't imitate that pattern for manual or agent-authored commits; use the plain shortcodes below
+instead.
+
+Pick the one shortcode that best matches the primary nature of the change:
+
+| Shortcode               | Emoji | Use for                                                |
+| ----------------------- | ----- | ------------------------------------------------------ |
+| `:sparkles:`            | ✨    | A new feature                                          |
+| `:bug:`                 | 🐛    | A bug fix                                              |
+| `:memo:`                | 📝    | Documentation only (`docs/`, docstrings, README)       |
+| `:recycle:`             | ♻️    | Refactor with no behavior change                       |
+| `:art:`                 | 🎨    | Code style/structure cleanup, no behavior change       |
+| `:white_check_mark:`    | ✅    | Adding or updating tests                               |
+| `:arrow_up:`            | ⬆️    | Manually bumping a dependency version                  |
+| `:pushpin:`             | 📌    | Pinning a dependency to an exact version               |
+| `:wrench:`              | 🔧    | Config files (`pyproject.toml`, `.clang-format`, etc.) |
+| `:construction_worker:` | 👷    | CI/build system changes (`.github/workflows/`)         |
+| `:green_heart:`         | 💚    | Fixing a broken CI build                               |
+| `:fire:`                | 🔥    | Removing code or files                                 |
+| `:truck:`               | 🚚    | Moving or renaming files                               |
+| `:construction:`        | 🚧    | Work in progress, not yet complete                     |
+| `:rewind:`              | ⏪    | Reverting a prior change                               |
+| `:lock:`                | 🔒️    | Fixing a security issue                                |
+| `:boom:`                | 💥    | A breaking change                                      |
+
+For anything that doesn't fit this table, pick the closest match from the full [gitmoji.dev](https://gitmoji.dev)
+list rather than skipping the prefix. Use exactly one gitmoji per commit/title, placed first.
+
 ## Boundaries
 
 - **Always:** run `uvx nox -s lint` and `uvx nox -s tests-3.12` before considering a change complete; regenerate
@@ -143,7 +177,8 @@ at the repo root.
   update `CHANGELOG.md` for user-facing changes. Only touch `UPGRADING.md` for **breaking** changes — i.e. ones that
   require users to change their own code to keep working (renamed/removed APIs, changed defaults, moved modules).
   A user-facing but non-breaking addition (a new function, an added optional parameter) belongs in `CHANGELOG.md`
-  only, not `UPGRADING.md`.
+  only, not `UPGRADING.md`. Prefix commit messages and PR titles with a gitmoji shortcode (see
+  [Commit & PR Conventions](#commit--pr-conventions)).
 - **Ask first:** before adding new dependencies to `pyproject.toml`; before major architectural changes to the C++
   core; before modifying CI workflows in `.github/workflows/`.
 - **Never:** hand-edit `.pyi` stub files or `python/aigverse/_version.py` (both generated); remove failing tests
