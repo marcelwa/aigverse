@@ -180,13 +180,13 @@ class owned_buffer
  * blocks directly avoids paying the helper-call and index-arithmetic overhead of
  * ``kitty::get_bit`` for every output feature.
  *
- * @param destination Start of the destination feature slice.
+ * @param destination Buffer holding the destination feature slice.
+ * @param base_offset Index of the first destination element within @p destination.
  * @param tt Source truth table.
  * @param invert Whether to invert each exported bit.
  */
-// Direct writes into the caller-provided slice are a performance optimization.
-// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-inline void write_truth_table_bits(float* destination, const aigverse::truth_table& tt, const bool invert = false)
+inline void write_truth_table_bits(owned_buffer<float>& destination, const std::size_t base_offset,
+                                   const aigverse::truth_table& tt, const bool invert = false)
 {
     std::size_t bit_offset = 0;
     const auto  tt_dim     = static_cast<std::size_t>(tt.num_bits());
@@ -199,13 +199,12 @@ inline void write_truth_table_bits(float* destination, const aigverse::truth_tab
 
         for (std::size_t bit = 0; bit < block_bits; ++bit)
         {
-            destination[bit_offset + bit] = static_cast<float>((bits >> bit) & 0x1ULL);
+            destination[base_offset + bit_offset + bit] = static_cast<float>((bits >> bit) & 0x1ULL);
         }
 
         bit_offset += block_bits;
     }
 }
-// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
 /**
  * @brief Exports an AIG-style network to sparse COO-like graph tensors.
@@ -405,8 +404,10 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
         return node_attr.data() + base + node_type_one_hot_dim;
     };
 
-    // The levels/fanouts increments below and write_truth_table_bits still walk
-    // a raw float* cursor (write_truth_table_bits is migrated in a follow-up step).
+    // The levels/fanouts increments below still walk a raw float* cursor
+    // returned by fill_base; write_truth_table_bits itself now takes an
+    // unchecked buffer index (computed via pointer difference from that same
+    // cursor) instead of a raw destination pointer.
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     std::size_t node_row = 0;
     ntk.foreach_node(
@@ -437,7 +438,8 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
             }
             if (node_tts)
             {
-                write_truth_table_bits(feature_offset, (*simulated_nodes)[n]);
+                const auto base_offset = static_cast<std::size_t>(feature_offset - node_attr.data());
+                write_truth_table_bits(node_attr, base_offset, (*simulated_nodes)[n]);
             }
         });
 
@@ -463,7 +465,8 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
             }
             if (node_tts)
             {
-                write_truth_table_bits(feature_offset, (*simulated_nodes)[driver], ntk.is_complemented(po));
+                const auto base_offset = static_cast<std::size_t>(feature_offset - node_attr.data());
+                write_truth_table_bits(node_attr, base_offset, (*simulated_nodes)[driver], ntk.is_complemented(po));
             }
         });
     // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
