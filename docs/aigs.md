@@ -458,6 +458,37 @@ indices of the list refer to the PO signals. It must be ensured that they match 
 For more information on the index list format, see
 [`mockturtle`'s documentation](https://mockturtle.readthedocs.io/en/latest/utils/util_data_structures.html#index-list).
 
+## Edge Lists
+
+Edge lists provide a graph-based representation of an AIG's structure as a flat collection of `(source, target,
+weight)` triples, one per structural connection. This is useful for feeding AIG structure directly into custom graph
+algorithms, GNN frameworks, or other tooling that expects an edge-list-style graph, as a lighter-weight alternative to
+the richer graph object produced by the [NetworkX adapter](machine_learning.md#networkx).
+
+```{code-cell} ipython3
+from aigverse.networks import AigEdgeList
+
+# Create a sample AIG
+aig = Aig()
+a = aig.create_pi()
+b = aig.create_pi()
+f = aig.create_and(a, ~b)
+aig.create_po(f)
+
+# Convert the AIG to an edge list, using custom weights to mark regular/inverted connections
+edges = aig.to_edge_list(regular_weight=0, inverted_weight=1)
+
+for edge in edges:
+    print(edge)
+```
+
+Each `AigEdge` connects a `source` node to a `target` node, both identified by their integer node index, and carries a
+`weight` set to `regular_weight` or `inverted_weight` depending on whether the connection is inverted. Constants,
+primary inputs, and gates are numbered as usual; primary outputs are assigned synthetic target indices starting right
+after the last node (i.e., at `aig.size`), so their edges point one index beyond the network's regular nodes. For
+sequential AIGs, additional edges connect each register input to its corresponding register output to represent the
+feedback loop.
+
 ## `pickle` Support
 
 AIGs support Python's [`pickle`](https://docs.python.org/3/library/pickle.html) protocol, allowing you to serialize and
