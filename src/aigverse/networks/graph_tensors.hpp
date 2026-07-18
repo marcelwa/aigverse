@@ -14,8 +14,6 @@
 #include <memory>
 #include <optional>
 #include <stdexcept>
-#include <utility>
-#include <vector>
 
 namespace aigverse
 {
@@ -66,61 +64,100 @@ namespace detail
 {
 
 /**
- * @brief Creates an owning NumPy-backed nanobind ndarray from a moved vector.
+ * @brief A minimal RAII owner for a heap array that hands off ownership to nanobind.
  *
- * The returned array keeps data alive via capsule-managed ownership of a heap
- * vector, making it safe to consume through DLPack in downstream frameworks.
- * This overload is convenient when the exporter naturally materializes a
- * ``std::vector`` first.
+ * ``owned_buffer`` exists to give exporters a non-zero-filled heap array through a
+ * single, encapsulated ``new[]`` call instead of three duplicated raw-pointer call
+ * sites. C++17 offers no standard factory that produces an unzeroed heap array
+ * through a smart pointer (``std::make_unique<T[]>`` and ``std::vector<T>(n)`` both
+ * value-initialize; ``std::make_unique_for_overwrite`` is C++20-only), so the bare
+ * ``new[]`` is intentional and lives only here.
+ *
+ * Access is unchecked (mirrors ``std::vector::operator[]`` in release builds) so
+ * hot export loops keep raw-pointer-equivalent codegen without repeating the
+ * pointer-arithmetic NOLINT suppressions at every call site.
  *
  * @tparam T Element type.
- * @param data Moved data buffer.
- * @param shape Target tensor shape.
- * @return NumPy-backed ndarray that owns the provided data.
  */
 template <typename T>
-nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::vector<T>&&                          data,
-                                                         const std::initializer_list<std::size_t>& shape)
+class owned_buffer
 {
-    namespace nb = nanobind;
+  public:
+    /**
+     * @brief Allocates an array of @p n default-initialized elements.
+     *
+     * For trivial ``T`` this leaves the contents indeterminate (no zero-fill),
+     * matching the performance property the exporter relies on.
+     *
+     * @param n Number of elements to allocate.
+     */
+    explicit owned_buffer(const std::size_t n) :
+            // Bare new[] is the only way to get non-value-initialized storage in
+            // C++17; encapsulated once here instead of duplicated across call sites.
+            // NOLINTNEXTLINE(*-avoid-c-arrays)
+            ptr_{new T[n]}
+    {}
 
-    // Use unique_ptr as an exception-safe staging owner while creating the capsule.
-    // Once the capsule is constructed, ownership is intentionally transferred to
-    // the capsule deleter via release().
-    auto  storage     = std::make_unique<std::vector<T>>(std::move(data));
-    auto* raw_storage = storage.get();
-    // nanobind::capsule stores a raw pointer plus a C-style destructor callback.
-    // The callback is the final owner and performs the matching delete.
-    nb::capsule owner(raw_storage,
-                      [](void* ptr) noexcept
-                      {
-                          delete static_cast<std::vector<T>*>(ptr);  // NOLINT(cppcoreguidelines-owning-memory)
-                      });
-    storage.release();
+    owned_buffer(const owned_buffer&)                = delete;
+    owned_buffer& operator=(const owned_buffer&)     = delete;
+    owned_buffer(owned_buffer&&) noexcept            = default;
+    owned_buffer& operator=(owned_buffer&&) noexcept = default;
+    ~owned_buffer()                                  = default;
 
-    return nb::ndarray<nb::numpy, T>(raw_storage->data(), shape, owner);
-}
+    /// @return Raw pointer to the start of the buffer.
+    [[nodiscard]] T* data() noexcept
+    {
+        return ptr_.get();
+    }
+    /// @return Raw pointer to the start of the buffer.
+    [[nodiscard]] const T* data() const noexcept
+    {
+        return ptr_.get();
+    }
 
-template <typename T>
-// Raw contiguous storage is intentional here because the export hot path
-// fully overwrites the buffer before handing it off to nanobind.
-// NOLINTNEXTLINE(*-avoid-c-arrays)
-nanobind::ndarray<nanobind::numpy, T> make_owned_ndarray(std::unique_ptr<T[]>&&                    data,
-                                                         const std::initializer_list<std::size_t>& shape)
-{
-    namespace nb = nanobind;
+    /// @return Unchecked reference to the element at @p index (no bounds check).
+    [[nodiscard]] T& operator[](const std::size_t index) noexcept
+    {
+        return ptr_[index];
+    }
+    /// @return Unchecked reference to the element at @p index (no bounds check).
+    [[nodiscard]] const T& operator[](const std::size_t index) const noexcept
+    {
+        return ptr_[index];
+    }
 
-    auto        storage     = std::move(data);
-    auto*       raw_storage = storage.get();
-    nb::capsule owner(raw_storage,
-                      [](void* ptr) noexcept
-                      {
-                          delete[] static_cast<T*>(ptr);  // NOLINT(cppcoreguidelines-owning-memory)
-                      });
-    storage.release();
+    /**
+     * @brief Transfers ownership of the buffer into a NumPy-backed nanobind ndarray.
+     *
+     * Builds a capsule with a matching ``delete[]`` deleter first, then releases the
+     * internal ``unique_ptr`` so the capsule becomes the sole owner. Constructing the
+     * capsule before releasing keeps this exception-safe: if capsule construction
+     * throws, the buffer is still freed by ``ptr_``'s destructor.
+     *
+     * @param shape Target tensor shape.
+     * @return NumPy-backed ndarray that owns the buffer.
+     */
+    nanobind::ndarray<nanobind::numpy, T> release_into_ndarray(const std::initializer_list<std::size_t>& shape)
+    {
+        namespace nb = nanobind;
 
-    return nb::ndarray<nb::numpy, T>(raw_storage, shape, owner);
-}
+        auto* raw = ptr_.get();
+        // nanobind::capsule stores a raw pointer plus a C-style destructor callback.
+        // The callback is the final owner and performs the matching delete[].
+        nb::capsule owner(raw,
+                          [](void* p) noexcept
+                          {
+                              delete[] static_cast<T*>(p);  // NOLINT(cppcoreguidelines-owning-memory)
+                          });
+        ptr_.release();
+
+        return nb::ndarray<nb::numpy, T>(raw, shape, owner);
+    }
+
+  private:
+    // NOLINTNEXTLINE(*-avoid-c-arrays)
+    std::unique_ptr<T[]> ptr_;
+};
 
 /**
  * @brief Expands one dynamic truth table into a contiguous float feature slice.
@@ -214,23 +251,21 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
         (static_cast<std::size_t>(Ntk::max_fanin_size) * static_cast<std::size_t>(ntk.num_gates())) +
         static_cast<std::size_t>(ntk.num_pos());
 
-    // edge_index and edge_attr are fully overwritten during export, so raw
-    // storage avoids paying for a zero-initialization pass that would be thrown
+    // edge_index and edge_attr are fully overwritten during export, so owned_buffer's
+    // raw storage avoids paying for a zero-initialization pass that would be thrown
     // away immediately.
-    // NOLINTBEGIN(*-avoid-c-arrays)
-    std::unique_ptr<int64_t[]> edge_index{new int64_t[2 * edge_count]};
+    owned_buffer<int64_t> edge_index{2 * edge_count};
 
     const std::size_t edge_dim = edge_encoding == edge_tensor_encoding::ONE_HOT ? 2 : 1;
 
-    std::unique_ptr<float[]> edge_attr{new float[edge_count * edge_dim]};
-    // NOLINTEND(*-avoid-c-arrays)
+    owned_buffer<float> edge_attr{edge_count * edge_dim};
 
     // Direct pointer-based writes benchmarked better than zero-filled vector
     // materialization for this exporter.
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    auto* edge_sources = edge_index.get();
+    auto* edge_sources = edge_index.data();
     auto* edge_targets = edge_sources + edge_count;
-    auto* edge_values  = edge_attr.get();
+    auto* edge_values  = edge_attr.data();
 
     std::size_t edge_cursor = 0;
     const auto  append_edge = [&](const int64_t source, const int64_t target, const bool inverted)
@@ -327,9 +362,8 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 
     // node_attr is also fully overwritten row-by-row, so it gets the same raw
     // storage treatment as the edge buffers.
-    // NOLINTNEXTLINE(*-avoid-c-arrays)
-    std::unique_ptr<float[]> node_attr{new float[node_count * node_dim]};
-    auto*                    node_values = node_attr.get();
+    owned_buffer<float> node_attr{node_count * node_dim};
+    auto*               node_values = node_attr.data();
 
     std::optional<mockturtle::depth_view<Ntk>> depth_ntk{};
     if (levels)
@@ -427,9 +461,9 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     // Hand off ownership to nanobind capsules so downstream DLPack consumers
     // can borrow the buffers without an extra copy.
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
-    result["edge_index"] = make_owned_ndarray(std::move(edge_index), {2, edge_count});
-    result["edge_attr"]  = make_owned_ndarray(std::move(edge_attr), {edge_count, edge_dim});
-    result["node_attr"]  = make_owned_ndarray(std::move(node_attr), {node_count, node_dim});
+    result["edge_index"] = edge_index.release_into_ndarray({2, edge_count});
+    result["edge_attr"]  = edge_attr.release_into_ndarray({edge_count, edge_dim});
+    result["node_attr"]  = node_attr.release_into_ndarray({node_count, node_dim});
     // NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
 
     return result;
