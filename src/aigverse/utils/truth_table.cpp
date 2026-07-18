@@ -444,7 +444,9 @@ Raises:
             "create_majority", [](aigverse::truth_table& self) { kitty::create_majority(self); },
             R"pb(Fills the truth table with the majority function.)pb")
         .def("clear", &kitty::clear<aigverse::truth_table>, R"pb(Clears all bits to ``0``.)pb")
-        .def("count_ones", &kitty::count_ones<aigverse::truth_table>, R"pb(Returns the number of set bits.)pb")
+        .def(
+            "count_ones", [](const aigverse::truth_table& self) { return kitty::count_ones(self); },
+            R"pb(Returns the number of set bits.)pb")
         .def("count_zeroes", &kitty::count_zeros<aigverse::truth_table>, R"pb(Returns the number of cleared bits.)pb")
         .def(
             "is_const0", [](const aigverse::truth_table& self) { return kitty::is_const0(self); },
