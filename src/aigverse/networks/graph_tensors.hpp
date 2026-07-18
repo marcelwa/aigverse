@@ -372,7 +372,6 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     // node_attr is also fully overwritten row-by-row, so it gets the same raw
     // storage treatment as the edge buffers.
     owned_buffer<float> node_attr{node_count * node_dim};
-    auto*               node_values = node_attr.data();
 
     std::optional<mockturtle::depth_view<Ntk>> depth_ntk{};
     if (levels)
@@ -383,28 +382,32 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 
     const auto* simulated_nodes = node_tts ? &node_truth_tables.value() : nullptr;
 
-    // Direct feature-slice writes are intentional runtime optimizations.
-    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    // Direct feature-slice writes are intentional runtime optimizations. Indices
+    // into node_attr are unchecked (owned_buffer::operator[] mirrors
+    // std::vector::operator[] in release builds), so this needs no NOLINT.
     const auto fill_base = [&](const std::size_t row, const int64_t type_index) -> float*
     {
-        auto* row_data = node_values + (row * node_dim);
+        const std::size_t base = row * node_dim;
         if (node_encoding == node_tensor_encoding::INTEGER)
         {
-            row_data[0] = static_cast<float>(type_index);
-            return row_data + 1;
+            node_attr[base] = static_cast<float>(type_index);
+            return node_attr.data() + base + 1;
         }
 
         // Only the one-hot prefix needs clearing here. The trailing optional
         // features are written unconditionally by the code paths that enabled
         // them, so clearing the full row would just add extra memory traffic.
-        row_data[0]                                    = 0.0f;
-        row_data[1]                                    = 0.0f;
-        row_data[2]                                    = 0.0f;
-        row_data[3]                                    = 0.0f;
-        row_data[static_cast<std::size_t>(type_index)] = 1.0f;
-        return row_data + node_type_one_hot_dim;
+        node_attr[base]                                        = 0.0f;
+        node_attr[base + 1]                                    = 0.0f;
+        node_attr[base + 2]                                    = 0.0f;
+        node_attr[base + 3]                                    = 0.0f;
+        node_attr[base + static_cast<std::size_t>(type_index)] = 1.0f;
+        return node_attr.data() + base + node_type_one_hot_dim;
     };
 
+    // The levels/fanouts increments below and write_truth_table_bits still walk
+    // a raw float* cursor (write_truth_table_bits is migrated in a follow-up step).
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     std::size_t node_row = 0;
     ntk.foreach_node(
         [&](const auto& n)
