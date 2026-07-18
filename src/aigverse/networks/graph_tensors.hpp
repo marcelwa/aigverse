@@ -109,7 +109,7 @@ class owned_buffer
             // Bare new[] is the only way to get non-value-initialized storage in
             // C++17; encapsulated once here instead of duplicated across call sites.
             // NOLINTNEXTLINE(*-avoid-c-arrays)
-            ptr_{new T[n]}
+            ptr{new T[n]}
     {}
 
     owned_buffer(const owned_buffer&)                = delete;
@@ -121,23 +121,28 @@ class owned_buffer
     /// @return Raw pointer to the start of the buffer.
     [[nodiscard]] AIGVERSE_ALWAYS_INLINE T* data() noexcept
     {
-        return ptr_.get();
+        return ptr.get();
     }
     /// @return Raw pointer to the start of the buffer.
     [[nodiscard]] AIGVERSE_ALWAYS_INLINE const T* data() const noexcept
     {
-        return ptr_.get();
+        return ptr.get();
     }
 
     /// @return Unchecked reference to the element at @p index (no bounds check).
+    // This is the buffer's documented contract (see class docs): unchecked,
+    // std::vector-like access, so the underlying unique_ptr<T[]>::operator[] use
+    // below is intentional rather than a missed .at().
     [[nodiscard]] AIGVERSE_ALWAYS_INLINE T& operator[](const std::size_t index) noexcept
     {
-        return ptr_[index];
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+        return ptr[index];
     }
     /// @return Unchecked reference to the element at @p index (no bounds check).
     [[nodiscard]] AIGVERSE_ALWAYS_INLINE const T& operator[](const std::size_t index) const noexcept
     {
-        return ptr_[index];
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+        return ptr[index];
     }
 
     /**
@@ -146,7 +151,7 @@ class owned_buffer
      * Builds a capsule with a matching ``delete[]`` deleter first, then releases the
      * internal ``unique_ptr`` so the capsule becomes the sole owner. Constructing the
      * capsule before releasing keeps this exception-safe: if capsule construction
-     * throws, the buffer is still freed by ``ptr_``'s destructor.
+     * throws, the buffer is still freed by ``ptr``'s destructor.
      *
      * @param shape Target tensor shape.
      * @return NumPy-backed ndarray that owns the buffer.
@@ -155,7 +160,7 @@ class owned_buffer
     {
         namespace nb = nanobind;
 
-        auto* raw = ptr_.get();
+        auto* raw = ptr.get();
         // nanobind::capsule stores a raw pointer plus a C-style destructor callback.
         // The callback is the final owner and performs the matching delete[].
         nb::capsule owner(raw,
@@ -163,14 +168,14 @@ class owned_buffer
                           {
                               delete[] static_cast<T*>(p);  // NOLINT(cppcoreguidelines-owning-memory)
                           });
-        ptr_.release();
+        ptr.release();
 
         return nb::ndarray<nb::numpy, T>(raw, shape, owner);
     }
 
   private:
     // NOLINTNEXTLINE(*-avoid-c-arrays)
-    std::unique_ptr<T[]> ptr_;
+    std::unique_ptr<T[]> ptr;
 };
 
 /**
@@ -199,6 +204,7 @@ inline void write_truth_table_bits(owned_buffer<float>& destination, const std::
 
         for (std::size_t bit = 0; bit < block_bits; ++bit)
         {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
             destination[base_offset + bit_offset + bit] = static_cast<float>((bits >> bit) & 0x1ULL);
         }
 
@@ -276,6 +282,10 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     // edge_index holds two logical rows in one allocation: sources occupy
     // [0, edge_count) and targets occupy [edge_count, 2 * edge_count). This layout
     // is what lets the final handoff hand off a single [2, E] ndarray.
+    // edge_index/edge_attr indexing below is unchecked by design (owned_buffer's
+    // documented contract); this is the buffer's own container-access check tripping
+    // on every subscript, not a bounds-safety gap.
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
     std::size_t edge_cursor = 0;
     const auto  append_edge = [&](const int64_t source, const int64_t target, const bool inverted)
     {
@@ -309,6 +319,7 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 
         ++edge_cursor;
     };
+    // NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
 
     int64_t edge_target = 0;
     ntk.foreach_node(
@@ -381,9 +392,11 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 
     const auto* simulated_nodes = node_tts ? &node_truth_tables.value() : nullptr;
 
-    // Direct feature-slice writes are intentional runtime optimizations. Indices
-    // into node_attr are unchecked (owned_buffer::operator[] mirrors
-    // std::vector::operator[] in release builds), so this needs no NOLINT.
+    // Direct feature-slice writes are intentional runtime optimizations. node_attr
+    // indexing is unchecked by design (owned_buffer's documented contract), and the
+    // returned pointer is a deliberate raw cursor for the still-unmigrated
+    // levels/fanouts writes below.
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,cppcoreguidelines-pro-bounds-pointer-arithmetic)
     const auto fill_base = [&](const std::size_t row, const int64_t type_index) -> float*
     {
         const std::size_t base = row * node_dim;
@@ -403,6 +416,7 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
         node_attr[base + static_cast<std::size_t>(type_index)] = 1.0f;
         return node_attr.data() + base + node_type_one_hot_dim;
     };
+    // NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
     // The levels/fanouts increments below still walk a raw float* cursor
     // returned by fill_base; write_truth_table_bits itself now takes an
