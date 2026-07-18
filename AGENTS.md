@@ -138,37 +138,9 @@ at the repo root.
 
 ## Commit & PR Conventions
 
-Prefix every commit subject and PR title with a [gitmoji](https://gitmoji.dev) **shortcode** — the `:shortcode:`
-text form (e.g. `:sparkles:`), not a raw emoji character. GitHub renders the shortcode as an emoji in its UI, but
-the text form stays readable and greppable in `git log`, terminals, and diffs. The one exception is Renovate's
-automated commits, which use rendered compound emoji (`⬆️🪝`, `⬆️🐍`, `⬆️👨‍💻`) to encode dependency-update
-subcategories — don't imitate that pattern for manual or agent-authored commits; use the plain shortcodes below
-instead.
-
-Pick the one shortcode that best matches the primary nature of the change:
-
-| Shortcode               | Emoji | Use for                                                |
-| ----------------------- | ----- | ------------------------------------------------------ |
-| `:sparkles:`            | ✨    | A new feature                                          |
-| `:bug:`                 | 🐛    | A bug fix                                              |
-| `:memo:`                | 📝    | Documentation only (`docs/`, docstrings, README)       |
-| `:recycle:`             | ♻️    | Refactor with no behavior change                       |
-| `:art:`                 | 🎨    | Code style/structure cleanup, no behavior change       |
-| `:white_check_mark:`    | ✅    | Adding or updating tests                               |
-| `:arrow_up:`            | ⬆️    | Manually bumping a dependency version                  |
-| `:pushpin:`             | 📌    | Pinning a dependency to an exact version               |
-| `:wrench:`              | 🔧    | Config files (`pyproject.toml`, `.clang-format`, etc.) |
-| `:construction_worker:` | 👷    | CI/build system changes (`.github/workflows/`)         |
-| `:green_heart:`         | 💚    | Fixing a broken CI build                               |
-| `:fire:`                | 🔥    | Removing code or files                                 |
-| `:truck:`               | 🚚    | Moving or renaming files                               |
-| `:construction:`        | 🚧    | Work in progress, not yet complete                     |
-| `:rewind:`              | ⏪    | Reverting a prior change                               |
-| `:lock:`                | 🔒️    | Fixing a security issue                                |
-| `:boom:`                | 💥    | A breaking change                                      |
-
-For anything that doesn't fit this table, pick the closest match from the full [gitmoji.dev](https://gitmoji.dev)
-list rather than skipping the prefix. Use exactly one gitmoji per commit/title, placed first.
+Prefix every commit subject and PR title with a plain [gitmoji](https://gitmoji.dev) emoji character (e.g. `✨`,
+`🐛`, `📝`) — not the `:shortcode:` text form. See [gitmoji.dev](https://gitmoji.dev) for the full list; a few
+common ones: `✨` new feature, `🐛` bug fix, `📝` docs, `♻️` refactor, `⬆️` dependency bump.
 
 ## Boundaries
 
