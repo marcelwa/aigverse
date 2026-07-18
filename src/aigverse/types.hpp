@@ -7,7 +7,7 @@
 #include <kitty/dynamic_truth_table.hpp>
 #include <mockturtle/networks/aig.hpp>
 #include <mockturtle/networks/sequential.hpp>
-#include <mockturtle/utils/index_list.hpp>
+#include <mockturtle/utils/index_list/index_list.hpp>
 #include <mockturtle/views/depth_view.hpp>
 #include <mockturtle/views/fanout_view.hpp>
 #include <mockturtle/views/names_view.hpp>

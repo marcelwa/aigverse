@@ -8,7 +8,7 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner)
-#include <mockturtle/utils/index_list.hpp>
+#include <mockturtle/utils/index_list/index_list.hpp>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>  // NOLINT(misc-include-cleaner)
 #include <nanobind/stl/tuple.h>   // NOLINT(misc-include-cleaner)

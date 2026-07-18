@@ -42,20 +42,20 @@ find_package(nanobind CONFIG REQUIRED PATHS "${nanobind_ROOT}" NO_DEFAULT_PATH)
 
 # Fetch mockturtle library
 set(MOCKTURTLE_REV
-    "1a91a7495560ae2e510316a32ca15651756dfebc"
+    "d7d833f96deccb4b73f04acb7d31af95a072956d"
     CACHE STRING "mockturtle identifier (tag, branch or commit hash)")
 set(MOCKTURTLE_REPO_OWNER
     "marcelwa"
     CACHE STRING "mockturtle repository owner (change when using a fork)")
 
 # Configure mockturtle options before fetching
-set(MOCKTURTLE_EXAMPLES
+set(MOCKTURTLE_BUILD_EXAMPLES
     OFF
     CACHE BOOL "" FORCE)
-set(MOCKTURTLE_EXPERIMENTS
+set(MOCKTURTLE_BUILD_EXPERIMENTS
     OFF
     CACHE BOOL "" FORCE)
-set(MOCKTURTLE_TEST
+set(MOCKTURTLE_BUILD_TESTS
     OFF
     CACHE BOOL "" FORCE)
 # Ensure all static libraries built by mockturtle are position-independent This
