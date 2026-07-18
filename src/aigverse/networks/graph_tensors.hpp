@@ -15,6 +15,20 @@
 #include <optional>
 #include <stdexcept>
 
+// This translation unit is compiled as part of a nanobind binding module built
+// with LTO, which nanobind deliberately builds with a size-optimized codegen
+// level to keep binding-heavy translation units small. That is the right
+// trade-off for binding glue code, but it makes the compiler's inliner more
+// conservative than a plain -O3 build for the small accessor methods below,
+// which are called once per edge/node in the exporter's hot loops. Force
+// inlining them keeps codegen equivalent to the raw-pointer arithmetic they
+// replace, regardless of the enclosing translation unit's optimization level.
+#if defined(__GNUC__) || defined(__clang__)
+#define AIGVERSE_ALWAYS_INLINE [[gnu::always_inline]] inline
+#else
+#define AIGVERSE_ALWAYS_INLINE inline
+#endif
+
 namespace aigverse
 {
 
@@ -105,23 +119,23 @@ class owned_buffer
     ~owned_buffer()                                  = default;
 
     /// @return Raw pointer to the start of the buffer.
-    [[nodiscard]] T* data() noexcept
+    [[nodiscard]] AIGVERSE_ALWAYS_INLINE T* data() noexcept
     {
         return ptr_.get();
     }
     /// @return Raw pointer to the start of the buffer.
-    [[nodiscard]] const T* data() const noexcept
+    [[nodiscard]] AIGVERSE_ALWAYS_INLINE const T* data() const noexcept
     {
         return ptr_.get();
     }
 
     /// @return Unchecked reference to the element at @p index (no bounds check).
-    [[nodiscard]] T& operator[](const std::size_t index) noexcept
+    [[nodiscard]] AIGVERSE_ALWAYS_INLINE T& operator[](const std::size_t index) noexcept
     {
         return ptr_[index];
     }
     /// @return Unchecked reference to the element at @p index (no bounds check).
-    [[nodiscard]] const T& operator[](const std::size_t index) const noexcept
+    [[nodiscard]] AIGVERSE_ALWAYS_INLINE const T& operator[](const std::size_t index) const noexcept
     {
         return ptr_[index];
     }
@@ -260,20 +274,16 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 
     owned_buffer<float> edge_attr{edge_count * edge_dim};
 
-    // Direct pointer-based writes benchmarked better than zero-filled vector
-    // materialization for this exporter.
-    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    auto* edge_sources = edge_index.data();
-    auto* edge_targets = edge_sources + edge_count;
-    auto* edge_values  = edge_attr.data();
-
+    // edge_index holds two logical rows in one allocation: sources occupy
+    // [0, edge_count) and targets occupy [edge_count, 2 * edge_count). This layout
+    // is what lets the final handoff hand off a single [2, E] ndarray.
     std::size_t edge_cursor = 0;
     const auto  append_edge = [&](const int64_t source, const int64_t target, const bool inverted)
     {
         // edge_index is stored in the conventional COO layout with one row for
         // sources and one row for targets.
-        edge_sources[edge_cursor] = source;
-        edge_targets[edge_cursor] = target;
+        edge_index[edge_cursor]              = source;
+        edge_index[edge_count + edge_cursor] = target;
 
         // The encoding branch remains here because it is shared by all export
         // modes, but each branch writes directly into the final contiguous edge
@@ -282,25 +292,24 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
         {
             case edge_tensor_encoding::BINARY:
             {
-                edge_values[edge_cursor] = inverted ? 1.0f : 0.0f;
+                edge_attr[edge_cursor] = inverted ? 1.0f : 0.0f;
                 break;
             }
             case edge_tensor_encoding::SIGNED:
             {
-                edge_values[edge_cursor] = inverted ? -1.0f : 1.0f;
+                edge_attr[edge_cursor] = inverted ? -1.0f : 1.0f;
                 break;
             }
             case edge_tensor_encoding::ONE_HOT:
             {
-                edge_values[edge_cursor * 2]       = inverted ? 0.0f : 1.0f;
-                edge_values[(edge_cursor * 2) + 1] = inverted ? 1.0f : 0.0f;
+                edge_attr[edge_cursor * 2]       = inverted ? 0.0f : 1.0f;
+                edge_attr[(edge_cursor * 2) + 1] = inverted ? 1.0f : 0.0f;
                 break;
             }
         }
 
         ++edge_cursor;
     };
-    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
     int64_t edge_target = 0;
     ntk.foreach_node(
@@ -472,3 +481,5 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
 }  // namespace detail
 
 }  // namespace aigverse
+
+#undef AIGVERSE_ALWAYS_INLINE
