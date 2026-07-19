@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import torch
 
 from aigverse.networks import Aig, EdgeTensorEncoding, NodeTensorEncoding
 
@@ -148,8 +147,10 @@ def test_to_graph_tensors_complemented_po_truth_table_bits() -> None:
     assert np.allclose(po_row[1:], 1.0 - driver_row[1:])
 
 
+@pytest.mark.torch
 def test_to_graph_tensors_torch_from_dlpack(sample_aig: Aig) -> None:
     """Ensures PyTorch can consume all exported tensors via DLPack."""
+    torch = pytest.importorskip("torch")
     tensors = sample_aig.to_graph_tensors(
         node_encoding=NodeTensorEncoding.ONE_HOT,
         edge_encoding=EdgeTensorEncoding.BINARY,
@@ -186,8 +187,10 @@ def test_to_graph_tensors_numpy_from_dlpack(sample_aig: Aig) -> None:
     assert node_attr.dtype == np.float32
 
 
+@pytest.mark.torch
 def test_to_graph_tensors_dlpack_pointer_aliasing(sample_aig: Aig) -> None:
     """Checks Torch and NumPy views share the same backing storage pointer."""
+    torch = pytest.importorskip("torch")
     tensors = sample_aig.to_graph_tensors(
         node_encoding=NodeTensorEncoding.INTEGER,
         edge_encoding=EdgeTensorEncoding.BINARY,
@@ -199,8 +202,10 @@ def test_to_graph_tensors_dlpack_pointer_aliasing(sample_aig: Aig) -> None:
     assert edge_attr_torch.data_ptr() == edge_attr_np.__array_interface__["data"][0]
 
 
+@pytest.mark.torch
 def test_to_graph_tensors_dlpack_mutation_propagation(sample_aig: Aig) -> None:
     """Checks mutations in Torch are visible in NumPy for the same DLPack export."""
+    torch = pytest.importorskip("torch")
     tensors = sample_aig.to_graph_tensors(
         node_encoding=NodeTensorEncoding.INTEGER,
         edge_encoding=EdgeTensorEncoding.BINARY,
