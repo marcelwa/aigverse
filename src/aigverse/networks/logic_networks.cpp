@@ -367,6 +367,10 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
             nb::arg("inverted_weight") = 1,
             R"pb(Converts the network to an edge list.
 
+Emits one edge per structural fanin connection, plus one edge per primary output pointing to a synthetic
+target index beyond the last node. Useful for feeding the network's structure into graph algorithms, GNN
+frameworks, or other tooling that consumes edge-list-style graphs.
+
 Args:
     regular_weight: Weight assigned to non-inverted edges.
     inverted_weight: Weight assigned to inverted edges.
@@ -836,7 +840,18 @@ Returns:
             "to_edge_list",
             [](const SequentialNtk& ntk, const int64_t regular_weight = 0, const int64_t inverted_weight = 1)
             { return aigverse::to_edge_list(ntk, regular_weight, inverted_weight); }, nb::arg("regular_weight") = 0,
-            nb::arg("inverted_weight") = 1, R"pb(Converts the sequential network to an edge list.)pb",
+            nb::arg("inverted_weight") = 1,
+            R"pb(Converts the sequential network to an edge list.
+
+In addition to the fanin and primary-output edges emitted for combinational networks, one feedback edge per
+register is added, connecting a register input to its register output.
+
+Args:
+    regular_weight: Weight assigned to non-inverted edges.
+    inverted_weight: Weight assigned to inverted edges.
+
+Returns:
+    The corresponding edge-list representation.)pb",
             nb::rv_policy::move)
         .def(
             "pis",

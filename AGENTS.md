@@ -136,6 +136,12 @@ private:
 Use `#pragma once` and prefer STL features. `clang-tidy`/`clang-format` config lives in `.clang-tidy`/`.clang-format`
 at the repo root.
 
+## Commit & PR Conventions
+
+Prefix every commit subject and PR title with a plain [gitmoji](https://gitmoji.dev) emoji character (e.g. `✨`,
+`🐛`, `📝`) — not the `:shortcode:` text form. See [gitmoji.dev](https://gitmoji.dev) for the full list; a few
+common ones: `✨` new feature, `🐛` bug fix, `📝` docs, `♻️` refactor, `⬆️` dependency bump.
+
 ## Boundaries
 
 - **Always:** run `uvx nox -s lint` and `uvx nox -s tests-3.12` before considering a change complete; regenerate
@@ -143,7 +149,8 @@ at the repo root.
   update `CHANGELOG.md` for user-facing changes. Only touch `UPGRADING.md` for **breaking** changes — i.e. ones that
   require users to change their own code to keep working (renamed/removed APIs, changed defaults, moved modules).
   A user-facing but non-breaking addition (a new function, an added optional parameter) belongs in `CHANGELOG.md`
-  only, not `UPGRADING.md`.
+  only, not `UPGRADING.md`. Prefix commit messages and PR titles with a gitmoji shortcode (see
+  [Commit & PR Conventions](#commit--pr-conventions)).
 - **Ask first:** before adding new dependencies to `pyproject.toml`; before major architectural changes to the C++
   core; before modifying CI workflows in `.github/workflows/`.
 - **Never:** hand-edit `.pyi` stub files or `python/aigverse/_version.py` (both generated); remove failing tests
