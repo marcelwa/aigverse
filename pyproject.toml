@@ -103,10 +103,12 @@ markers = [
     "generators: Tests for network generators",
     "adapters: Tests for optional adapter integrations",
     "tts: Tests for truth table utilities",
+    "torch: Tests that require the optional PyTorch dependency (skipped by default)",
 ]
 addopts = [
     "-ra",
     "--numprocesses=auto", # Automatically use all available CPU cores for parallel testing
+    "-m", "not torch", # Skip torch-marked tests by default; override with -m "torch or not torch"
 ]
 log_level = "INFO"
 testpaths = ["test/"]
@@ -117,9 +119,9 @@ build = "cp3*"
 skip = ["*-musllinux_*", "cp313t-*"]
 archs = "auto64"
 build-frontend = "build[uv]"
-test-groups = ["test"]
+test-groups = ["test", "torch"]
 test-sources = ["test/"]
-test-command = "pytest test/"
+test-command = 'pytest test/ -m "torch or not torch"'
 
 
 [tool.cibuildwheel.macos]
@@ -224,8 +226,12 @@ adapters = [
     "networkx>=3.0.0",
     "numpy>=1.23.0",
 ]
+torch = [
+    "torch>=2.2.0",
+]
 docs = [
     { include-group = "adapters" },
+    { include-group = "torch" },
     "furo>=2024.8.6",
     "myst-nb>=1.1.2",
     "setuptools-scm>=8.1",
