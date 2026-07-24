@@ -35,6 +35,8 @@ on:
       - "uv.lock"
       - ".github/workflows/aigverse-python-tests.yml"
 
+permissions: {}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -44,9 +46,13 @@ jobs:
     name: 🚨 Lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read # required to check out the repository
     steps:
       - name: Clone repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
@@ -72,6 +78,8 @@ jobs:
   python-tests:
     name: 🐍 ${{ matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}
+    permissions:
+      contents: read # required to check out the repository
     strategy:
       fail-fast: false
       matrix:
@@ -79,6 +87,8 @@ jobs:
     steps:
       - name: Clone Repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
@@ -89,7 +99,7 @@ jobs:
 
       - if: runner.os == 'Linux'
         name: Setup mold
-        uses: rui314/setup-mold@v1
+        uses: rui314/setup-mold@9c9c13bf4c3f1adef0cc596abc155580bcb04444 # v1
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
