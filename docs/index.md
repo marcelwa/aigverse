@@ -25,9 +25,9 @@ Key features include:
 
 `aigverse` is designed as reusable bridge infrastructure rather than as a full end-to-end EDA toolchain.
 
-This documentation provides a comprehensive guide to the `aigverse` library, including {doc}
-`installation instructions <installation>`, a {doc}`quickstart guide <aigs>`, and detailed {doc}
-`API documentation <api/aigverse/index>`.
+This documentation provides a comprehensive guide to the `aigverse` library, including
+{doc}`installation instructions <installation>`, a {doc}`quickstart guide <aigs>`, and detailed
+{doc}`API documentation <api/aigverse/index>`.
 The source code of `aigverse` is publicly available on GitHub
 at [marcelwa/aigverse](https://github.com/marcelwa/aigverse), while pre-built binaries are available
 via [PyPI](https://pypi.org/project/aigverse/) for all major operating systems and all modern Python versions.

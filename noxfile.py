@@ -73,14 +73,17 @@ def _run_tests(
 
     # install build and test dependencies on top of the existing environment
     python_flag = f"--python={session.python}"
+    only_group_args: list[str] = ["--only-group", "build", "--only-group", "test"]
+    if os.environ.get("CI"):
+        # CI keeps full coverage: also install the torch group and re-include
+        # torch-marked tests that are deselected by default locally.
+        only_group_args += ["--only-group", "torch"]
+        pytest_run_args = [*pytest_run_args, "-m", "torch or not torch"]
     session.run(
         "uv",
         "sync",
         "--inexact",
-        "--only-group",
-        "build",
-        "--only-group",
-        "test",
+        *only_group_args,
         python_flag,
         *install_args,
         env=env,

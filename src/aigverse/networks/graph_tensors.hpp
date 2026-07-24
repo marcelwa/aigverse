@@ -1,0 +1,505 @@
+#pragma once
+
+#include "aigverse/types.hpp"
+
+#include <mockturtle/algorithms/simulation.hpp>  // NOLINT(misc-include-cleaner)
+#include <mockturtle/utils/node_map.hpp>         // NOLINT(misc-include-cleaner)
+#include <mockturtle/views/depth_view.hpp>
+#include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <initializer_list>
+#include <memory>
+#include <optional>
+#include <stdexcept>
+
+// This translation unit is compiled as part of a nanobind binding module built
+// with LTO, which nanobind deliberately builds with a size-optimized codegen
+// level to keep binding-heavy translation units small. That is the right
+// trade-off for binding glue code, but it makes the compiler's inliner more
+// conservative than a plain -O3 build for the small accessor methods below,
+// which are called once per edge/node in the exporter's hot loops. Force
+// inlining them keeps codegen equivalent to the raw-pointer arithmetic they
+// replace, regardless of the enclosing translation unit's optimization level.
+#if defined(__GNUC__) || defined(__clang__)
+#define AIGVERSE_ALWAYS_INLINE [[gnu::always_inline]] inline
+#else
+#define AIGVERSE_ALWAYS_INLINE inline
+#endif
+
+namespace aigverse
+{
+
+/**
+ * @brief Node encoding mode for exported graph tensors.
+ *
+ * This enum controls how the categorical node-type prefix is laid out inside
+ * ``node_attr``. All exported node features use ``float32`` storage so the
+ * result can be consumed directly by NumPy/DLPack users without dtype juggling.
+ *
+ * The node-type categories always appear in the canonical order
+ * ``[constant, pi, gate, po]``:
+ * - `INTEGER`: Store that category as a single scalar label.
+ * - `ONE_HOT`: Store that category as a one-hot prefix of length four.
+ */
+enum class node_tensor_encoding : uint8_t
+{
+    /// Labels are encoded as 0.0 (constant), 1.0 (PI), 2.0 (gate), and 3.0 (PO).
+    INTEGER,
+    /// Labels are encoded as one-hot vectors in the order [constant, pi, gate, po].
+    ONE_HOT,
+};
+
+/**
+ * @brief Edge encoding mode for exported graph tensors.
+ *
+ * This enum controls how edge polarity is laid out inside ``edge_attr``.
+ * As with node features, all edge features use ``float32`` storage.
+ *
+ * The polarity categories always appear in the canonical order
+ * ``[regular, inverted]``:
+ * - `BINARY`: Store polarity as ``0.0`` or ``1.0``.
+ * - `SIGNED`: Store polarity as ``+1.0`` or ``-1.0``.
+ * - `ONE_HOT`: Store polarity as a length-two one-hot vector.
+ */
+enum class edge_tensor_encoding : uint8_t
+{
+    /// Labels are encoded as 0.0 (regular) and 1.0 (inverted).
+    BINARY,
+    /// Labels are encoded as +1.0 (regular) and -1.0 (inverted).
+    SIGNED,
+    /// Labels are encoded as one-hot vectors in the order [regular, inverted].
+    ONE_HOT,
+};
+
+namespace detail
+{
+
+/**
+ * @brief A minimal RAII owner for a heap array that hands off ownership to nanobind.
+ *
+ * ``owned_buffer`` exists to give exporters a non-zero-filled heap array through a
+ * single, encapsulated ``new[]`` call instead of three duplicated raw-pointer call
+ * sites. C++17 offers no standard factory that produces an unzeroed heap array
+ * through a smart pointer (``std::make_unique<T[]>`` and ``std::vector<T>(n)`` both
+ * value-initialize; ``std::make_unique_for_overwrite`` is C++20-only), so the bare
+ * ``new[]`` is intentional and lives only here.
+ *
+ * Access is unchecked (mirrors ``std::vector::operator[]`` in release builds) so
+ * hot export loops keep raw-pointer-equivalent codegen without repeating the
+ * pointer-arithmetic NOLINT suppressions at every call site.
+ *
+ * @tparam T Element type.
+ */
+template <typename T>
+class owned_buffer
+{
+  public:
+    /**
+     * @brief Allocates an array of @p n default-initialized elements.
+     *
+     * For trivial ``T`` this leaves the contents indeterminate (no zero-fill),
+     * matching the performance property the exporter relies on.
+     *
+     * @param n Number of elements to allocate.
+     */
+    explicit owned_buffer(const std::size_t n) :
+            // Bare new[] is the only way to get non-value-initialized storage in
+            // C++17; encapsulated once here instead of duplicated across call sites.
+            // NOLINTNEXTLINE(*-avoid-c-arrays)
+            ptr{new T[n]}
+    {}
+
+    owned_buffer(const owned_buffer&)                = delete;
+    owned_buffer& operator=(const owned_buffer&)     = delete;
+    owned_buffer(owned_buffer&&) noexcept            = default;
+    owned_buffer& operator=(owned_buffer&&) noexcept = default;
+    ~owned_buffer()                                  = default;
+
+    /// @return Raw pointer to the start of the buffer.
+    [[nodiscard]] AIGVERSE_ALWAYS_INLINE T* data() noexcept
+    {
+        return ptr.get();
+    }
+    /// @return Raw pointer to the start of the buffer.
+    [[nodiscard]] AIGVERSE_ALWAYS_INLINE const T* data() const noexcept
+    {
+        return ptr.get();
+    }
+
+    /// @return Unchecked reference to the element at @p index (no bounds check).
+    // This is the buffer's documented contract (see class docs): unchecked,
+    // std::vector-like access, so the underlying unique_ptr<T[]>::operator[] use
+    // below is intentional rather than a missed .at().
+    [[nodiscard]] AIGVERSE_ALWAYS_INLINE T& operator[](const std::size_t index) noexcept
+    {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+        return ptr[index];
+    }
+    /// @return Unchecked reference to the element at @p index (no bounds check).
+    [[nodiscard]] AIGVERSE_ALWAYS_INLINE const T& operator[](const std::size_t index) const noexcept
+    {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+        return ptr[index];
+    }
+
+    /**
+     * @brief Transfers ownership of the buffer into a NumPy-backed nanobind ndarray.
+     *
+     * Builds a capsule with a matching ``delete[]`` deleter first, then releases the
+     * internal ``unique_ptr`` so the capsule becomes the sole owner. Constructing the
+     * capsule before releasing keeps this exception-safe: if capsule construction
+     * throws, the buffer is still freed by ``ptr``'s destructor.
+     *
+     * @param shape Target tensor shape.
+     * @return NumPy-backed ndarray that owns the buffer.
+     */
+    nanobind::ndarray<nanobind::numpy, T> release_into_ndarray(const std::initializer_list<std::size_t>& shape)
+    {
+        namespace nb = nanobind;
+
+        auto* raw = ptr.get();
+        // nanobind::capsule stores a raw pointer plus a C-style destructor callback.
+        // The callback is the final owner and performs the matching delete[].
+        nb::capsule owner(raw,
+                          [](void* p) noexcept
+                          {
+                              delete[] static_cast<T*>(p);  // NOLINT(cppcoreguidelines-owning-memory)
+                          });
+        ptr.release();
+
+        return nb::ndarray<nb::numpy, T>(raw, shape, owner);
+    }
+
+  private:
+    // NOLINTNEXTLINE(*-avoid-c-arrays)
+    std::unique_ptr<T[]> ptr;
+};
+
+/**
+ * @brief Expands one dynamic truth table into a contiguous float feature slice.
+ *
+ * ``kitty::dynamic_truth_table`` stores bits in 64-bit blocks. Iterating those
+ * blocks directly avoids paying the helper-call and index-arithmetic overhead of
+ * ``kitty::get_bit`` for every output feature.
+ *
+ * @param destination Buffer holding the destination feature slice.
+ * @param base_offset Index of the first destination element within @p destination.
+ * @param tt Source truth table.
+ * @param invert Whether to invert each exported bit.
+ */
+inline void write_truth_table_bits(owned_buffer<float>& destination, const std::size_t base_offset,
+                                   const aigverse::truth_table& tt, const bool invert = false)
+{
+    std::size_t bit_offset = 0;
+    const auto  tt_dim     = static_cast<std::size_t>(tt.num_bits());
+
+    for (const auto block : tt)
+    {
+        const auto remaining_bits = tt_dim - bit_offset;
+        const auto block_bits     = remaining_bits < 64 ? remaining_bits : 64;
+        const auto bits           = invert ? ~block : block;
+
+        for (std::size_t bit = 0; bit < block_bits; ++bit)
+        {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+            destination[base_offset + bit_offset + bit] = static_cast<float>((bits >> bit) & 0x1ULL);
+        }
+
+        bit_offset += block_bits;
+    }
+}
+
+/**
+ * @brief Exports an AIG-style network to sparse COO-like graph tensors.
+ *
+ * The result dictionary contains:
+ * - ``edge_index`` with shape ``(2, E)``
+ * - ``edge_attr`` with shape ``(E, D_edge)``
+ * - ``node_attr`` with shape ``(N, D_node)``
+ *
+ * Export order is stable and intentionally simple:
+ * - rows ``[0, ntk.size())`` in ``node_attr`` correspond to ``foreach_node``
+ *   order
+ * - rows ``[ntk.size(), ntk.size() + ntk.num_pos())`` correspond to synthetic
+ *   PO rows in ``foreach_po`` order
+ * - columns in ``edge_index`` are emitted in the same order as the exporter
+ *   traverses fanins, then POs, then optional register inputs
+ *
+ * All returned tensors are NumPy-backed ndarrays and can be consumed by DLPack
+ * consumers such as PyTorch via ``torch.from_dlpack``.
+ *
+ * The implementation is written around the export hot path: it precomputes the
+ * exact output sizes, fills the buffers linearly, avoids repeated PO index
+ * lookups by using row counters, and uses raw arrays for buffers that are fully
+ * overwritten to avoid paying an unnecessary zero-fill cost.
+ *
+ * @tparam Ntk Network type.
+ * @param ntk Input network.
+ * @param node_encoding Node-type encoding mode.
+ * @param edge_encoding Edge-type encoding mode.
+ * @param levels Whether to append depth-based level features.
+ * @param fanouts Whether to append fanout-size features.
+ * @param node_tts Whether to append node truth-table bits.
+ * @return Dictionary of exported tensors.
+ */
+template <typename Ntk>
+nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_encoding,
+                                const edge_tensor_encoding edge_encoding, const bool levels = false,
+                                const bool fanouts = false, const bool node_tts = false)
+{
+    namespace nb = nanobind;
+
+    // Number of node-type categories used for one-hot encodings:
+    // [constant, primary input, internal gate, primary output].
+    constexpr std::size_t node_type_one_hot_dim = 4;
+
+    // Canonical integer labels for node types; shared across all node encodings.
+    constexpr int64_t type_constant = 0;
+    constexpr int64_t type_pi       = 1;
+    constexpr int64_t type_gate     = 2;
+    constexpr int64_t type_po       = 3;
+
+    // Precompute the exact number of emitted edges so the export loops can fill
+    // the destination buffers linearly without growth checks or reallocations.
+    // This formula relies on AIG-style fixed fanin counts; the shared exporter
+    // is intentionally optimized for that dominant case.
+    std::size_t edge_count =
+        (static_cast<std::size_t>(Ntk::max_fanin_size) * static_cast<std::size_t>(ntk.num_gates())) +
+        static_cast<std::size_t>(ntk.num_pos());
+
+    // edge_index and edge_attr are fully overwritten during export, so owned_buffer's
+    // raw storage avoids paying for a zero-initialization pass that would be thrown
+    // away immediately.
+    owned_buffer<int64_t> edge_index{2 * edge_count};
+
+    const std::size_t edge_dim = edge_encoding == edge_tensor_encoding::ONE_HOT ? 2 : 1;
+
+    owned_buffer<float> edge_attr{edge_count * edge_dim};
+
+    // edge_index holds two logical rows in one allocation: sources occupy
+    // [0, edge_count) and targets occupy [edge_count, 2 * edge_count). This layout
+    // is what lets the final handoff hand off a single [2, E] ndarray.
+    // edge_index/edge_attr indexing below is unchecked by design (owned_buffer's
+    // documented contract); this is the buffer's own container-access check tripping
+    // on every subscript, not a bounds-safety gap.
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+    std::size_t edge_cursor = 0;
+    const auto  append_edge = [&](const int64_t source, const int64_t target, const bool inverted)
+    {
+        // edge_index is stored in the conventional COO layout with one row for
+        // sources and one row for targets.
+        edge_index[edge_cursor]              = source;
+        edge_index[edge_count + edge_cursor] = target;
+
+        // The encoding branch remains here because it is shared by all export
+        // modes, but each branch writes directly into the final contiguous edge
+        // buffer without temporary objects.
+        switch (edge_encoding)
+        {
+            case edge_tensor_encoding::BINARY:
+            {
+                edge_attr[edge_cursor] = inverted ? 1.0f : 0.0f;
+                break;
+            }
+            case edge_tensor_encoding::SIGNED:
+            {
+                edge_attr[edge_cursor] = inverted ? -1.0f : 1.0f;
+                break;
+            }
+            case edge_tensor_encoding::ONE_HOT:
+            {
+                edge_attr[edge_cursor * 2]       = inverted ? 0.0f : 1.0f;
+                edge_attr[(edge_cursor * 2) + 1] = inverted ? 1.0f : 0.0f;
+                break;
+            }
+        }
+
+        ++edge_cursor;
+    };
+    // NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+
+    int64_t edge_target = 0;
+    ntk.foreach_node(
+        [&](const auto& n)
+        {
+            // Node rows are emitted in foreach_node order, so a monotonic
+            // counter is enough and avoids repeated index remapping work.
+            const auto target = edge_target++;
+            ntk.foreach_fanin(n,
+                              [&](const auto& f)
+                              {
+                                  const auto source = static_cast<int64_t>(ntk.node_to_index(ntk.get_node(f)));
+                                  append_edge(source, target, ntk.is_complemented(f));
+                              });
+        });
+
+    auto po_target = static_cast<int64_t>(ntk.size());
+    ntk.foreach_po(
+        [&](const auto& po)
+        {
+            // Synthetic PO rows are appended after the real network nodes.
+            // Using a running target counter avoids the old repeated PO index
+            // lookup, which was expensive on mockturtle AIGs because it scanned
+            // the outputs linearly.
+            const auto source = static_cast<int64_t>(ntk.node_to_index(ntk.get_node(po)));
+            const auto target = po_target++;
+            append_edge(source, target, ntk.is_complemented(po));
+        });
+
+    if (edge_cursor != edge_count)
+    {
+        throw std::runtime_error("inconsistent edge count during graph tensor export");
+    }
+
+    std::size_t tt_dim = 0;
+
+    // Truth-table simulation is optional because it is by far the most
+    // expensive feature family when enabled.
+    std::optional<mockturtle::node_map<aigverse::truth_table, Ntk>> node_truth_tables{};
+    if (node_tts)
+    {
+        if (ntk.num_pis() > 16)
+        {
+            throw std::invalid_argument("truth-table export is only supported up to 16 primary inputs");
+        }
+
+        node_truth_tables = mockturtle::simulate_nodes<aigverse::truth_table>(
+            ntk, mockturtle::default_simulator<aigverse::truth_table>{static_cast<unsigned>(ntk.num_pis())});
+
+        if (ntk.size() > 0)
+        {
+            tt_dim = node_truth_tables.value()[ntk.get_constant(false)].num_bits();
+        }
+    }
+
+    const std::size_t base_dim   = node_encoding == node_tensor_encoding::ONE_HOT ? node_type_one_hot_dim : 1;
+    const std::size_t node_dim   = base_dim + (levels ? 1 : 0) + (fanouts ? 1 : 0) + (node_tts ? tt_dim : 0);
+    const std::size_t node_count = ntk.size() + ntk.num_pos();
+
+    // node_attr is also fully overwritten row-by-row, so it gets the same raw
+    // storage treatment as the edge buffers.
+    owned_buffer<float> node_attr{node_count * node_dim};
+
+    std::optional<mockturtle::depth_view<Ntk>> depth_ntk{};
+    if (levels)
+    {
+        // Construct the depth view only when level features are requested.
+        depth_ntk.emplace(ntk);
+    }
+
+    const auto* simulated_nodes = node_tts ? &node_truth_tables.value() : nullptr;
+
+    // Direct feature-slice writes are intentional runtime optimizations. node_attr
+    // indexing is unchecked by design (owned_buffer's documented contract), and the
+    // returned pointer is a deliberate raw cursor for the still-unmigrated
+    // levels/fanouts writes below.
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    const auto fill_base = [&](const std::size_t row, const int64_t type_index) -> float*
+    {
+        const std::size_t base = row * node_dim;
+        if (node_encoding == node_tensor_encoding::INTEGER)
+        {
+            node_attr[base] = static_cast<float>(type_index);
+            return node_attr.data() + base + 1;
+        }
+
+        // Only the one-hot prefix needs clearing here. The trailing optional
+        // features are written unconditionally by the code paths that enabled
+        // them, so clearing the full row would just add extra memory traffic.
+        node_attr[base]                                        = 0.0f;
+        node_attr[base + 1]                                    = 0.0f;
+        node_attr[base + 2]                                    = 0.0f;
+        node_attr[base + 3]                                    = 0.0f;
+        node_attr[base + static_cast<std::size_t>(type_index)] = 1.0f;
+        return node_attr.data() + base + node_type_one_hot_dim;
+    };
+    // NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,cppcoreguidelines-pro-bounds-pointer-arithmetic)
+
+    // The levels/fanouts increments below still walk a raw float* cursor
+    // returned by fill_base; write_truth_table_bits itself now takes an
+    // unchecked buffer index (computed via pointer difference from that same
+    // cursor) instead of a raw destination pointer.
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    std::size_t node_row = 0;
+    ntk.foreach_node(
+        [&](const auto& n)
+        {
+            // Node rows follow foreach_node order, so a linear cursor is enough
+            // and matches the row numbers used by the edge exporter above.
+            const auto row        = node_row++;
+            int64_t    type_index = type_gate;
+            if (ntk.is_constant(n))
+            {
+                type_index = type_constant;
+            }
+            else if (ntk.is_pi(n))
+            {
+                type_index = type_pi;
+            }
+
+            auto* feature_offset = fill_base(row, type_index);
+
+            if (levels)
+            {
+                *feature_offset++ = static_cast<float>(depth_ntk->level(n));
+            }
+            if (fanouts)
+            {
+                *feature_offset++ = static_cast<float>(ntk.fanout_size(n));
+            }
+            if (node_tts)
+            {
+                const auto base_offset = static_cast<std::size_t>(feature_offset - node_attr.data());
+                write_truth_table_bits(node_attr, base_offset, (*simulated_nodes)[n]);
+            }
+        });
+
+    std::size_t po_row = 0;
+    ntk.foreach_po(
+        [&](const auto& po)
+        {
+            // Synthetic PO feature rows are appended after real nodes in the
+            // same order used for PO edges.
+            const auto po_idx = po_row++;
+            const auto row    = static_cast<std::size_t>(ntk.size()) + po_idx;
+            const auto driver = ntk.get_node(po);
+
+            auto* feature_offset = fill_base(row, type_po);
+
+            if (levels)
+            {
+                *feature_offset++ = static_cast<float>(depth_ntk->level(driver) + 1);
+            }
+            if (fanouts)
+            {
+                *feature_offset++ = 0.0f;
+            }
+            if (node_tts)
+            {
+                const auto base_offset = static_cast<std::size_t>(feature_offset - node_attr.data());
+                write_truth_table_bits(node_attr, base_offset, (*simulated_nodes)[driver], ntk.is_complemented(po));
+            }
+        });
+    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+
+    auto result = nb::dict();
+
+    // Hand off ownership to nanobind capsules so downstream DLPack consumers
+    // can borrow the buffers without an extra copy.
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+    result["edge_index"] = edge_index.release_into_ndarray({2, edge_count});
+    result["edge_attr"]  = edge_attr.release_into_ndarray({edge_count, edge_dim});
+    result["node_attr"]  = node_attr.release_into_ndarray({node_count, node_dim});
+    // NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+
+    return result;
+}
+
+}  // namespace detail
+
+}  // namespace aigverse
+
+#undef AIGVERSE_ALWAYS_INLINE
