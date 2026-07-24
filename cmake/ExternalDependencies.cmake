@@ -42,7 +42,7 @@ find_package(nanobind CONFIG REQUIRED PATHS "${nanobind_ROOT}" NO_DEFAULT_PATH)
 
 # Fetch mockturtle library
 set(MOCKTURTLE_REV
-    "d7d833f96deccb4b73f04acb7d31af95a072956d"
+    "8f0322e370933fe3260127873c3fd74a551786ef"
     CACHE STRING "mockturtle identifier (tag, branch or commit hash)")
 set(MOCKTURTLE_REPO_OWNER
     "marcelwa"

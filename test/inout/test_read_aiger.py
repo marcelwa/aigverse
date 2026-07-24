@@ -161,3 +161,19 @@ def test_read_sequential_aiger():
     assert saig.ro_at(0) == ro_node
     assert saig.ri_at(0) == ri_signal
     assert saig.ri_to_ro(ri_signal) == ro_node
+
+
+def test_read_ascii_aiger_constant_outputs(tmp_path: Path):
+    """Test reading ASCII AIGER files with constant outputs (literal 0 or 1)."""
+    aag_file = tmp_path / "const_out.aag"
+    aag_file.write_text("aag 0 0 0 2 0\n0\n1\n")
+
+    aig = read_ascii_aiger_into_aig(aag_file)
+    assert aig.num_pis == 0
+    assert aig.num_pos == 2
+    assert aig.num_gates == 0
+
+    saig = read_ascii_aiger_into_sequential_aig(aag_file)
+    assert saig.num_pis == 0
+    assert saig.num_pos == 2
+    assert saig.num_gates == 0
