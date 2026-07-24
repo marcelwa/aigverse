@@ -131,9 +131,9 @@ $ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
 This tells CMake to
 
-- search the current directory {code}`.` (passed via {code}`-S`) for a {code}`CMakeLists.txt` file.
-- process it into a directory {code}`build` (passed via {code}`-B`).
-- the flag {code}`-DCMAKE_BUILD_TYPE=Release` tells CMake to configure a _Release_ build (as opposed to, e.g., a _Debug_ build).
+- search the current directory `.` (passed via `-S`) for a `CMakeLists.txt` file.
+- process it into a directory `build` (passed via `-B`).
+- the flag `-DCMAKE_BUILD_TYPE=Release` tells CMake to configure a _Release_ build (as opposed to, e.g., a _Debug_ build).
 
 After configuring with CMake, the project can be built by calling
 
@@ -141,8 +141,8 @@ After configuring with CMake, the project can be built by calling
 $ cmake --build build --config Release
 ```
 
-This tries to build the project in the {code}`build` directory (passed via {code}`--build`).
-Some operating systems and development environments explicitly require a configuration to be set, which is why the {code}`--config` flag is also passed to the build command. The flag {code}`--parallel <NUMBER_OF_THREADS>` may be added to trigger a parallel build.
+This tries to build the project in the `build` directory (passed via `--build`).
+Some operating systems and development environments explicitly require a configuration to be set, which is why the `--config` flag is also passed to the build command. The flag `--parallel <NUMBER_OF_THREADS>` may be added to trigger a parallel build.
 
 ### C++ Code Formatting and Linting
 
@@ -153,7 +153,7 @@ To ensure the quality of the code and certain formatting guidelines, we use
 
 Common IDEs like [CLion](https://www.jetbrains.com/clion/) or [Visual Studio Code](https://code.visualstudio.com/) have plugins that can automatically run clang-tidy on the code and automatically format it with clang-format.
 
-- If you are using CLion, you can configure the project to use the {code}`.clang-tidy` and {code}`.clang-format` files in the project root directory.
+- If you are using CLion, you can configure the project to use the `.clang-tidy` and `.clang-format` files in the project root directory.
 - If you are using Visual Studio Code, you can install the [clangd extension](https://marketplace.visualstudio.com/items?itemName=llvm-vs-code-extensions.vscode-clangd).
 
 They will automatically execute clang-tidy on your code and highlight any issues.
@@ -167,7 +167,7 @@ After configuring CMake, you can also run clang-tidy explicitly on a file by cal
 $ clang-tidy <FILE> -- -I <PATH_TO_INCLUDE_DIRECTORY>
 ```
 
-where {code}`<FILE>` is the file you want to analyze and {code}`<PATH_TO_INCLUDE_DIRECTORY>` is the path to the {code}`include` directory of the project.
+where `<FILE>` is the file you want to analyze and `<PATH_TO_INCLUDE_DIRECTORY>` is the path to the `include` directory of the project.
 :::
 
 Our hook configuration also includes clang-format.
@@ -188,7 +188,7 @@ on the workflow summary page, or in the "Files changed" tab of the pull request.
 
 We use [nanobind](https://nanobind.readthedocs.io/en/latest/) to expose large parts of the C++ library mockturtle to Python.
 This allows to keep the performance-critical parts of the code in C++ while providing a convenient interface for Python users.
-All source files related to C++-Python bindings are contained in the {code}`src/aigverse` directory.
+All source files related to C++-Python bindings are contained in the `src/aigverse` directory.
 
 ::::::{tab-set}
 :sync-group: installer
@@ -345,25 +345,25 @@ These are explained in more detail in the following sections.
 ### Running Python Tests
 
 The Python part of the code base is tested via unit tests using the [pytest](https://docs.pytest.org/en/latest/) framework.
-The corresponding test files can be found in the {code}`test/` directory.
-A {code}`nox` session is provided to conveniently run the Python tests.
+The corresponding test files can be found in the `test/` directory.
+A `nox` session is provided to conveniently run the Python tests.
 
 ```console
 $ nox -s tests
 ```
 
 The above command will automatically build the project and run the tests on all supported Python versions.
-For each Python version, it will create a virtual environment (in the {code}`.nox` directory) and install the project into it.
+For each Python version, it will create a virtual environment (in the `.nox` directory) and install the project into it.
 We take extra care to install the project without build isolation so that rebuilds are typically very fast.
 
-If you only want to run the tests on a specific Python version, you can pass the desired Python version to the {code}`nox` command.
+If you only want to run the tests on a specific Python version, you can pass the desired Python version to the `nox` command.
 
 ```console
 $ nox -s tests-3.12
 ```
 
 :::{note}
-If you don't want to use {code}`nox`, you can also run the tests directly using {code}`pytest`.
+If you don't want to use `nox`, you can also run the tests directly using `pytest`.
 
 ```console
 (.venv) $ pytest test/
@@ -372,7 +372,7 @@ If you don't want to use {code}`nox`, you can also run the tests directly using 
 This requires that you have the project installed in the virtual environment and the test dependency group installed.
 :::
 
-We provide an additional nox session {code}`minimums` that makes use of `uv`'s `--resolution=lowest-direct` flag to
+We provide an additional nox session `minimums` that makes use of `uv`'s `--resolution=lowest-direct` flag to
 install the lowest possible versions of the direct dependencies.
 This ensures that the project can still be built and the tests pass with the minimum required versions of the dependencies.
 
@@ -382,24 +382,24 @@ $ nox -s minimums
 
 ### Test Fixtures and Markers
 
-The test suite uses layered {code}`pytest` fixtures to keep test setup reusable and localized:
+The test suite uses layered `pytest` fixtures to keep test setup reusable and localized:
 
-- {code}`test/conftest.py` for cross-suite fixtures and global test behavior.
-- Domain-level fixture files like {code}`test/networks/conftest.py`, {code}`test/algorithms/conftest.py`,
-  {code}`test/adapters/conftest.py`, and {code}`test/generators/conftest.py`.
+- `test/conftest.py` for cross-suite fixtures and global test behavior.
+- Domain-level fixture files like `test/networks/conftest.py`, `test/algorithms/conftest.py`,
+  `test/adapters/conftest.py`, and `test/generators/conftest.py`.
 
 When adding tests, prefer reusing an existing fixture over recreating the same network setup inline.
-If a setup pattern is reused in multiple files, move it into the closest shared {code}`conftest.py`.
+If a setup pattern is reused in multiple files, move it into the closest shared `conftest.py`.
 
 Pytest markers are also configured to support targeted runs.
 Useful marker filters include:
 
-- {code}`networks`
-- {code}`algorithms`
-- {code}`io`
-- {code}`generators`
-- {code}`adapters`
-- {code}`tts`
+- `networks`
+- `algorithms`
+- `io`
+- `generators`
+- `adapters`
+- `tts`
 
 Run a marker subset on a specific Python version with:
 
@@ -430,17 +430,17 @@ There are two ways of using these hooks:
   ```
 
   in the project root directory.
-  This will install the hooks in the {code}`.git/hooks` directory of the repository.
+  This will install the hooks in the `.git/hooks` directory of the repository.
   The hooks will then be executed automatically when committing changes.
 
-- You can use the {code}`nox` session {code}`lint` to run the hooks manually.
+- You can use the `nox` session `lint` to run the hooks manually.
 
   ```console
   $ nox -s lint
   ```
 
   :::{note}
-  If you don't want to use {code}`nox`, you can also run the hooks directly using {code}`prek`.
+  If you don't want to use `nox`, you can also run the hooks directly using `prek`.
 
   ```console
   $ prek run --all-files
@@ -455,10 +455,10 @@ Every public function, class, and module should have a docstring that explains w
 Ruff will check for missing docstrings and will explicitly warn you if you forget to add one.
 
 We heavily rely on [type hints](https://docs.python.org/3/library/typing.html) to document the expected types of function arguments and return values.
-For the compiled parts of the code base, we provide type hints in the form of {code}`.pyi` stub files in the {code}`python/aigverse` directory.
+For the compiled parts of the code base, we provide type hints in the form of `.pyi` stub files in the `python/aigverse` directory.
 These stubs are generated from the nanobind-based extension modules.
 
-You can regenerate the stubs using the dedicated {code}`nox` session:
+You can regenerate the stubs using the dedicated `nox` session:
 
 ```console
 $ nox -s stubs
@@ -470,7 +470,7 @@ The Python API documentation is integrated into the overall documentation that w
 ## Working on the Documentation
 
 The documentation is written in [MyST](https://myst-parser.readthedocs.io/en/latest/index.html) (a flavour of Markdown) and built using [Sphinx](https://www.sphinx-doc.org/en/master/).
-The documentation source files can be found in the {code}`docs/` directory.
+The documentation source files can be found in the `docs/` directory.
 
 On top of the API documentation, we provide a set of tutorials and examples that demonstrate how to use the library.
 These are written in Markdown using [myst-nb](https://myst-nb.readthedocs.io/en/latest/), which allows to execute Python code blocks in the documentation.
@@ -517,7 +517,7 @@ $ choco install graphviz
 
 :::::
 
-You can build the documentation using the {code}`nox` session {code}`docs`.
+You can build the documentation using the `nox` session `docs`.
 
 ```console
 $ nox -s docs
@@ -527,11 +527,11 @@ This will install all dependencies for building the documentation in an isolated
 Finally, it will host the documentation on a local web server for you to view.
 
 :::{note}
-If you don't want to use {code}`nox`, you can also build the documentation directly using {code}`sphinx-build`.
+If you don't want to use `nox`, you can also build the documentation directly using `sphinx-build`.
 
 ```console
 (.venv) $ sphinx-build -b html docs/ docs/_build
 ```
 
-The docs can then be found in the {code}`docs/_build` directory.
+The docs can then be found in the `docs/_build` directory.
 :::

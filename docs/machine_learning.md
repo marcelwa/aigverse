@@ -208,6 +208,7 @@ sparse_adj = torch.sparse_coo_tensor(
     indices=edge_index,
     values=edge_attr,
     size=(num_nodes, num_nodes, edge_attr.shape[1]),
+    is_coalesced=True,
 )
 
 print(sparse_adj.shape)
