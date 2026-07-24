@@ -93,10 +93,14 @@ jobs:
 
       - name: Configure CMake
         if: matrix.language == 'cpp'
+        # kept absolute (not simplified to a relative path) because CMake caches this value and
+        # nanobind's build-time custom commands may invoke it from other working directories
+        env:
+          WORKSPACE: ${{ github.workspace }}
         run: >
           cmake -S . -B build
           -DCMAKE_BUILD_TYPE=Debug
-          -DPython_EXECUTABLE=.venv/bin/python
+          -DPython_EXECUTABLE="$WORKSPACE/.venv/bin/python"
 
       - name: Build
         if: matrix.language == 'cpp'

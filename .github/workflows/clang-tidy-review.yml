@@ -48,10 +48,14 @@ jobs:
         run: uv sync --only-group build --no-install-project
 
       - name: Generate compilation database
+        # kept absolute (not simplified to a relative path) because CMake caches this value and
+        # nanobind's build-time custom commands may invoke it from other working directories
+        env:
+          WORKSPACE: ${{ github.workspace }}
         run: >
           cmake -B build -S .
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-          -DPython_EXECUTABLE=.venv/bin/python
+          -DPython_EXECUTABLE="$WORKSPACE/.venv/bin/python"
 
       - name: Run clang-tidy
         id: linter
