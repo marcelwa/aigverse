@@ -163,8 +163,15 @@ def test_read_sequential_aiger():
     assert saig.ri_to_ro(ri_signal) == ro_node
 
 
-def test_read_ascii_aiger_constant_outputs(tmp_path: Path):
-    """Test reading ASCII AIGER files with constant outputs (literal 0 or 1)."""
+def test_read_ascii_aiger_constant_outputs(tmp_path: Path) -> None:
+    """Test reading ASCII AIGER files with constant outputs (literal 0 or 1).
+
+    Args:
+        tmp_path: Pytest temporary path fixture.
+
+    Returns:
+        None
+    """
     aag_file = tmp_path / "const_out.aag"
     aag_file.write_text("aag 0 0 0 2 0\n0\n1\n")
 
