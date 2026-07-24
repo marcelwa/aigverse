@@ -23,8 +23,8 @@ effectively generating truth tables for the network's outputs and internal nodes
 
 ### Functional Simulation
 
-For simulating AIGs with truth tables, the {py:func}`~aigverse.algorithms.simulate` and {py:func}
-`~aigverse.algorithms.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes of an
+For simulating AIGs with truth tables, the {py:func}`~aigverse.algorithms.simulate` and
+{py:func}`~aigverse.algorithms.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes of an
 AIG.
 
 ```{code-cell} ipython3

@@ -13,7 +13,7 @@ mystnb:
 
 # Generators
 
-The {py::mod}`~aigverse.generators` module provides generation helpers for reproducible random dataset creation and
+The {py:mod}`~aigverse.generators` module provides generation helpers for reproducible random dataset creation and
 structured arithmetic/control benchmarks.
 
 ## Random AIG Generation

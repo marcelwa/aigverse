@@ -13,7 +13,7 @@ mystnb:
 
 # Truth Tables
 
-The aigverse library provides support for working with truth tables, which are a fundamental representation of Boolean functions. The {py:class}`~aigverse.TruthTable` class offers efficient manipulation and analysis of Boolean functions.
+The aigverse library provides support for working with truth tables, which are a fundamental representation of Boolean functions. The {py:class}`~aigverse.utils.TruthTable` class offers efficient manipulation and analysis of Boolean functions.
 
 :::{note}
 Truth tables provide a complete specification of a Boolean function by listing all possible input combinations and their corresponding outputs. They are particularly useful for small functions where exhaustive enumeration is feasible.
