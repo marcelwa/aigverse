@@ -804,7 +804,7 @@ class SequentialAig(Aig):
         levels: bool = True,
         fanouts: bool = False,
         node_tts: bool = False,
-    ) -> dict:
+    ) -> NoReturn:
         """Sequential networks cannot be exported as combinational graph tensors."""
 
     def __getstate__(self) -> NoReturn:

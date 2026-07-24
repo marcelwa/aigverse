@@ -804,7 +804,10 @@ Returns:
             nb::arg("node_encoding") = aigverse::node_tensor_encoding::INTEGER,
             nb::arg("edge_encoding") = aigverse::edge_tensor_encoding::BINARY, nb::kw_only(), nb::arg("levels") = true,
             nb::arg("fanouts") = false, nb::arg("node_tts") = false,
-            R"pb(Sequential networks cannot be exported as combinational graph tensors.)pb")
+            R"pb(Sequential networks cannot be exported as combinational graph tensors.)pb",
+            nb::sig("def to_graph_tensors(self, node_encoding: NodeTensorEncoding = ..., edge_encoding: "
+                    "EdgeTensorEncoding = ..., *, levels: bool = True, fanouts: bool = False, node_tts: bool = "
+                    "False) -> NoReturn"))
         .def(
             "__getstate__",
             [network_name](const SequentialNtk&) -> nb::tuple
