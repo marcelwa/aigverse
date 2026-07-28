@@ -44,10 +44,11 @@
       customType: "regex",
       description: "Update the ABC revision the integration tests build",
       managerFilePatterns: [
-        ".github/workflows/aigverse-abc-tests.yml"
+        ".github/workflows/aigverse-abc-tests.yml",
+        ".readthedocs.yaml"
       ],
       matchStrings: [
-        "ABC_REV:\\s+(?<currentDigest>[0-9a-f]{40})"
+        "ABC_REV[:=]\\s*(?<currentDigest>[0-9a-f]{40})"
       ],
       depNameTemplate: "berkeley-abc/abc",
       packageNameTemplate: "https://github.com/berkeley-abc/abc",

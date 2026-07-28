@@ -1,3 +1,9 @@
+---
+file_format: mystnb
+kernelspec:
+  name: python3
+---
+
 # ABC Integration
 
 Beyond the built-in optimization algorithms, `aigverse` can hand a network to the
@@ -7,22 +13,24 @@ from [berkeley-abc/abc](https://github.com/berkeley-abc/abc), a distribution pac
 one shipped with [Yosys](https://github.com/YosysHQ/yosys) or oss-cad-suite. See
 [Installation](installation.md#abc-integration) for how to provide it.
 
-:::{note}
-The snippets in this section are not executed when the documentation is built, because
-they require a local ABC installation.
-:::
-
-```python
+```{code-cell} ipython3
 from aigverse import abc
-from aigverse.generators import ripple_carry_multiplier
+from aigverse.generators import carry_lookahead_adder
 from aigverse.algorithms import equivalence_checking
 
-aig = ripple_carry_multiplier(8)
+aig = carry_lookahead_adder(16)
+optimized = abc.resyn2(aig)
 
-if abc.is_available():
-    optimized = abc.resyn2(aig)
-    print(f"{aig.num_gates} -> {optimized.num_gates} AND gates")
-    assert equivalence_checking(aig, optimized)
+print(f"{aig.num_gates} -> {optimized.num_gates} AND gates")
+print(f"Equivalent: {equivalence_checking(aig, optimized)}")
+```
+
+Every script is available the same way; they differ in how hard they try:
+
+```{code-cell} ipython3
+for script in ("resyn", "resyn2", "resyn2rs", "compress2rs", "dc2"):
+    result = getattr(abc, script)(aig)
+    print(f"{script:12s} {aig.num_gates} -> {result.num_gates} AND gates")
 ```
 
 ## Named scripts
@@ -42,8 +50,9 @@ installation. The exact expansion of each script is available in
 Any ABC command string can be run directly. Commands must be ABC builtins, and the
 `read_aiger`/`write_aiger` steps are added automatically:
 
-```python
+```{code-cell} ipython3
 result = abc.run_script(aig, "balance; rewrite -z; refactor", timeout=60)
+print(f"{aig.num_gates} -> {result.num_gates} AND gates")
 ```
 
 Set `use_init_file=True` to let ABC load your own `abc.rc`, which makes your personal
@@ -86,6 +95,10 @@ from aigverse import abc
 abc.set_abc_rc("/path/to/abc.rc")
 result = abc.run_script(aig, "resyn2")  # now resolves as an alias
 ```
+
+:::{note}
+That snippet is not executed here, since it needs a resource file to point at.
+:::
 
 Set `AIGVERSE_ABC_RC` to configure the same thing from the environment, or pass `None` to
 clear it.

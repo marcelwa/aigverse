@@ -148,6 +148,17 @@ def docs(session: nox.Session) -> None:
             "  - Windows: `winget install graphviz` or `choco install graphviz`\n"
         )
 
+    # The ABC documentation page executes its examples, so it needs a real ABC.
+    if not (os.environ.get("AIGVERSE_ABC") or shutil.which("abc") or shutil.which("berkeley-abc")):
+        session.error(
+            "ABC is required for building the documentation, because the examples on the "
+            "ABC page are executed. Install it and put it on PATH, or point AIGVERSE_ABC at "
+            "it. For example:\n"
+            "  - from source: `git clone https://github.com/berkeley-abc/abc && make -C abc`\n"
+            "  - Ubuntu 22.04: `sudo apt install berkeley-abc`\n"
+            "  - bundled: any `abc` from Yosys or oss-cad-suite\n"
+        )
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-b", dest="builder", default="html", help="Build target (default: html)")
     args, posargs = parser.parse_known_args(session.posargs)
