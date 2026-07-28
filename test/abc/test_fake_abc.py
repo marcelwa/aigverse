@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from aigverse.abc import AbcExecutionError, AbcTimeoutError, run_script
+from aigverse.abc import AbcExecutionError, AbcTimeoutError, abc_version, run_script, set_abc_binary
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -99,3 +99,30 @@ def test_non_zero_exit_is_reported(and_aig: Aig, fake_abc: Callable[[str], Path]
     shim = fake_abc("sys.exit(139)")
     with pytest.raises(AbcExecutionError, match="exit code 139"):
         run_script(and_aig, "balance", binary=shim)
+
+
+@requires_posix
+def test_version_rejects_a_non_abc_executable(fake_abc: Callable[[str], Path]) -> None:
+    """Discovery does not start a process, so `abc_version` is where a wrong
+    binary gets caught -- it must not report an empty version instead.
+    """
+    set_abc_binary(fake_abc("sys.exit(1)"))
+    with pytest.raises(AbcExecutionError, match="does not look like ABC"):
+        abc_version()
+
+
+@requires_posix
+def test_gia_flag_switches_the_transfer_commands(and_aig: Aig, fake_abc: Callable[[str], Path]) -> None:
+    """`gia=True` must load into ABC's GIA store, not the classic one.
+
+    The two stores are invisible to each other's commands, so picking the wrong
+    transfer pair would leave a `&` script operating on nothing.
+    """
+    shim = fake_abc('print("** cmd error: stop")')
+
+    with pytest.raises(AbcExecutionError) as excinfo:
+        run_script(and_aig, "&syn2", gia=True, binary=shim)
+
+    assert "&read in.aig" in excinfo.value.command
+    assert "&write out.aig" in excinfo.value.command
+    assert "read_aiger" not in excinfo.value.command

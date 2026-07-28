@@ -107,6 +107,10 @@ def test_expansion_matches_abc_rc(name: str) -> None:
     """
     rc = _locate_abc_rc()
     if rc is None:
+        # This check is the only thing standing between an upstream alias change
+        # and silently wrong results, so where ABC is mandatory it must not skip.
+        if os.environ.get("AIGVERSE_REQUIRE_ABC"):
+            pytest.fail("AIGVERSE_REQUIRE_ABC is set, but no abc.rc was found next to the binary")
         pytest.skip("no abc.rc found; set AIGVERSE_ABC_RC to enable this check")
 
     aliases = _parse_aliases(rc)

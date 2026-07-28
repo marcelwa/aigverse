@@ -44,6 +44,82 @@ def test_scripts_preserve_equivalence(script: str) -> None:
     assert equivalence_checking(aig, result)
 
 
+@pytest.mark.parametrize("command", ["balance", "rewrite", "refactor", "resub"])
+def test_individual_commands_preserve_equivalence(command: str) -> None:
+    """Each command wrapper must optimize without changing the function."""
+    aig = ripple_carry_multiplier(4)
+    result = getattr(abc, command)(aig)
+
+    assert result.num_pis == aig.num_pis
+    assert result.num_pos == aig.num_pos
+    assert equivalence_checking(aig, result)
+
+
+def test_command_options_reach_abc() -> None:
+    """Options must actually be handed to ABC rather than silently dropped.
+
+    Zero-cost rewriting restructures where plain rewriting stops, so the two
+    differ on a network with enough structure to work on.
+    """
+    aig = ripple_carry_multiplier(4)
+    plain = abc.rewrite(aig)
+    zero_cost = abc.rewrite(aig, zero_cost=True)
+
+    assert equivalence_checking(aig, plain)
+    assert equivalence_checking(aig, zero_cost)
+    assert zero_cost.num_gates <= plain.num_gates
+
+
+def test_gia_space_round_trips() -> None:
+    """A `&` script needs the network in the GIA store to see anything at all."""
+    aig = ripple_carry_multiplier(4)
+    result = abc.run_script(aig, "&dc2", gia=True)
+
+    assert result.num_pis == aig.num_pis
+    assert result.num_pos == aig.num_pos
+    assert equivalence_checking(aig, result)
+
+
+def test_gia_scripts_fail_without_the_flag(and_aig: AigType) -> None:
+    """Without `gia=True` the GIA store is empty, which must be reported.
+
+    This is the failure the flag exists to prevent, so it is worth pinning down:
+    a silent pass-through would look like a `&` script that did nothing.
+    """
+    with pytest.raises(abc.AbcExecutionError):
+        abc.run_script(and_aig, "&dc2")
+
+
+def test_gia_transfer_keeps_names() -> None:
+    """`&read`/`&write` carry the symbol table, unlike the `&get`/`&put` bridge."""
+    ntk = NamedAig()
+    x0 = ntk.create_pi()
+    x1 = ntk.create_pi()
+    ntk.set_name(x0, "alpha")
+    ntk.set_name(x1, "beta")
+    ntk.create_po(ntk.create_and(x0, x1))
+    ntk.set_output_name(0, "result")
+
+    result = abc.run_script(ntk, "&dc2", gia=True)
+
+    assert type(result) is NamedAig
+    names = {result.get_name(result.make_signal(result.pi_at(i))) for i in range(result.num_pis)}
+    assert names == {"alpha", "beta"}
+    assert result.get_output_name(0) == "result"
+
+
+def test_mapping_is_rejected_rather_than_silently_unmapped() -> None:
+    """A mapped netlist cannot be written as AIGER, and must not pass silently.
+
+    Technology and LUT mapping are out of scope until `aigverse` has cell and
+    k-LUT network types; the important part is that the attempt raises instead of
+    handing back a network that quietly lost the mapping.
+    """
+    aig = ripple_carry_multiplier(4)
+    with pytest.raises(abc.AbcExecutionError):
+        abc.run_script(aig, "if -K 6")
+
+
 def test_plain_aig_stays_a_plain_aig(and_aig: AigType) -> None:
     """A plain Aig comes back as a plain Aig."""
     result = abc.resyn2(and_aig)

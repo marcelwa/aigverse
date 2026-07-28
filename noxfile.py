@@ -115,6 +115,25 @@ def _run_tests(
     )
 
 
+def _find_abc() -> str | None:
+    """Locate a usable ABC executable the same way the `aigverse.abc` bridge does.
+
+    Kept in sync with `python/aigverse/abc/_binary.py` by hand, since the noxfile
+    runs before `aigverse` is installed and cannot import the bridge.
+
+    Returns:
+        Path to an executable ABC, or None if none was found.
+    """
+    configured = os.environ.get("AIGVERSE_ABC")
+    if configured:
+        # Accepting the variable unvalidated would let the docs build start and
+        # then fail much later, when an example actually invokes ABC.
+        path = Path(configured).expanduser()
+        return str(path) if path.is_file() and os.access(path, os.X_OK) else None
+
+    return shutil.which("abc") or shutil.which("berkeley-abc")
+
+
 @nox.session(reuse_venv=True, python=PYTHON_ALL_VERSIONS, default=True)
 def tests(session: nox.Session) -> None:
     """Run the test suite."""
@@ -149,7 +168,7 @@ def docs(session: nox.Session) -> None:
         )
 
     # The ABC documentation page executes its examples, so it needs a real ABC.
-    if not (os.environ.get("AIGVERSE_ABC") or shutil.which("abc") or shutil.which("berkeley-abc")):
+    if _find_abc() is None:
         session.error(
             "ABC is required for building the documentation, because the examples on the "
             "ABC page are executed. Install it and put it on PATH, or point AIGVERSE_ABC at "

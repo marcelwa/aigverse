@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from ._errors import AbcNotFoundError, AbcTimeoutError
+from ._errors import AbcExecutionError, AbcNotFoundError, AbcTimeoutError
 
 __all__ = [
     "ABC_ENV_VAR",
@@ -175,6 +175,8 @@ def abc_version(*, timeout: float | None = 10.0) -> str:
     Raises:
         AbcNotFoundError: If no ABC executable could be located.
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
+        AbcExecutionError: If the executable did not accept the ``version``
+            command, which means whatever was discovered is not ABC.
     """
     binary = abc_binary()
     # ABC drops an `abc.history` file into its working directory on every run,
@@ -194,6 +196,12 @@ def abc_version(*, timeout: float | None = 10.0) -> str:
     except subprocess.TimeoutExpired as exc:
         msg = f"ABC did not report its version within {timeout} seconds"
         raise AbcTimeoutError(msg, binary=str(binary), command="version", output="") from exc
+
+    # ABC itself exits 0 even for unknown commands, so a non-zero status here
+    # means the configured executable is not ABC at all (or died outright).
+    if completed.returncode != 0:
+        msg = f"'{binary}' exited with code {completed.returncode} on `version`; it does not look like ABC"
+        raise AbcExecutionError(msg, binary=str(binary), command="version", output=completed.stdout or "")
 
     return completed.stdout.strip()
 

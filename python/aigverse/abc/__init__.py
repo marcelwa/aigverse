@@ -30,6 +30,7 @@ from ._binary import (
     set_abc_binary,
     set_abc_rc,
 )
+from ._commands import balance, refactor, resub, rewrite
 from ._errors import AbcError, AbcExecutionError, AbcNotFoundError, AbcTimeoutError
 from ._runner import run_commands, run_script
 from ._scripts import SCRIPTS, expand_script
@@ -55,6 +56,7 @@ __all__ = [
     "abc_binary",
     "abc_rc",
     "abc_version",
+    "balance",
     "compress",
     "compress2",
     "compress2rs",
@@ -62,10 +64,13 @@ __all__ = [
     "expand_script",
     "find_abc_binary",
     "is_available",
+    "refactor",
+    "resub",
     "resyn",
     "resyn2",
     "resyn2rs",
     "resyn3",
+    "rewrite",
     "run_commands",
     "run_script",
     "set_abc_binary",

@@ -112,7 +112,8 @@ def compress(
 ) -> AigT:
     """Runs ABC's ``compress`` script on a network.
 
-    Like ``resyn``, but every command runs in level-preserving mode.
+    Like ``resyn``, but every command is given ``-l``, which turns ABC's default
+    level preservation *off* and lets it trade depth for size.
 
     The script is expanded into builtin ABC commands, so it does not depend on
     an ``abc.rc`` being present. See :data:`SCRIPTS` for the exact expansion.
@@ -139,7 +140,8 @@ def compress2(
 ) -> AigT:
     """Runs ABC's ``compress2`` script on a network.
 
-    Like ``resyn2``, but every command runs in level-preserving mode.
+    Like ``resyn2``, but every command is given ``-l``, which turns ABC's default
+    level preservation *off* and lets it trade depth for size.
 
     The script is expanded into builtin ABC commands, so it does not depend on
     an ``abc.rc`` being present. See :data:`SCRIPTS` for the exact expansion.
@@ -193,7 +195,8 @@ def compress2rs(
 ) -> AigT:
     """Runs ABC's ``compress2rs`` script on a network.
 
-    ``resyn2rs`` in level-preserving mode; the strongest of these scripts.
+    ``resyn2rs`` with level preservation turned off; the strongest of these
+    scripts, and the slowest.
 
     The script is expanded into builtin ABC commands, so it does not depend on
     an ``abc.rc`` being present. See :data:`SCRIPTS` for the exact expansion.

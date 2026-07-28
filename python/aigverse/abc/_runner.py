@@ -35,8 +35,12 @@ _ERROR_MARKERS = (
     "cannot write",
     "wrong number of arguments",
     "there is no current network",
+    "there is no aig",
     "empty network",
     "syntax error",
+    # emitted when the script left a mapped netlist or a LUT network behind,
+    # which ABC refuses to write as AIGER
+    "only possible for structurally hashed",
 )
 
 
@@ -117,7 +121,7 @@ def run_commands(
     """Runs raw ABC commands and returns their combined output.
 
     No network is transferred; this is the escape hatch for commands such as
-    ``version`` or ``print_stats`` on files the caller manages itself.
+    ``version`` or ``print_stats`` on files the caller manages themselves.
 
     Args:
         commands: A single ``;``-separated command string, or a sequence of
@@ -208,21 +212,32 @@ def run_script(
     *,
     timeout: float | None = None,
     use_init_file: bool = False,
+    gia: bool = False,
     verbose: bool = False,
     binary: str | os.PathLike[str] | None = None,
 ) -> AigT:
     """Optimizes a network by piping it through an external ABC process.
 
     The network is written to a temporary binary AIGER file, ABC is invoked with
-    ``read_aiger``, the given commands, and ``write_aiger``, and the result is
+    a read command, the given commands, and a write command, and the result is
     read back. The returned network has the same type as ``ntk``: an ``Aig``
     yields an ``Aig``, a ``NamedAig`` yields a ``NamedAig`` with its input and
     output names preserved.
 
-    ``commands`` must not contain the ``read_aiger``/``write_aiger`` steps; they
-    are added automatically. Only commands the resolved ABC binary knows are
-    valid -- ``resyn2`` and friends are ``abc.rc`` aliases rather than builtins,
-    so use the wrappers in this module or :data:`~aigverse.abc.SCRIPTS`.
+    ABC keeps two independent network stores, and a command only ever sees the
+    one it belongs to. By default the network is loaded with ``read_aiger`` into
+    the classic store, where the commands without a ``&`` prefix operate
+    (``balance``, ``rewrite``, ``refactor``, ``resub``, and hence every script in
+    :data:`~aigverse.abc.SCRIPTS`). The ``&``-prefixed commands of ABC9 operate
+    on a separate store, the GIA, which stays empty in that mode -- a script such
+    as ``"&syn2"`` fails with *there is no AIG* unless it starts with ``&get``.
+    Set ``gia=True`` to load the network straight into the GIA with ``&read``
+    instead, which is the cheaper and lossless way to run a ``&`` script.
+
+    ``commands`` must not contain the read and write steps; they are added
+    automatically. Only commands the resolved ABC binary knows are valid --
+    ``resyn2`` and friends are ``abc.rc`` aliases rather than builtins, so use
+    the wrappers in this module or :data:`~aigverse.abc.SCRIPTS`.
 
     Args:
         ntk: The combinational network to optimize.
@@ -233,6 +248,11 @@ def run_script(
             no ``abc.rc`` is read and results do not depend on the local install.
             A resource file registered with :func:`~aigverse.abc.set_abc_rc` is
             loaded regardless, making its aliases available.
+        gia: If ``True``, transfer the network through ``&read``/``&write`` so it
+            lands in ABC9's GIA store and ``&``-prefixed commands can be used
+            directly. The classic commands then see nothing instead. Mixing the
+            two within one script is possible with ``&get``/``&put``, but those
+            do not carry I/O names across, whereas ``&read``/``&write`` do.
         verbose: If ``True``, print everything ABC wrote.
         binary: Overrides the resolved ABC executable for this call only.
 
@@ -257,10 +277,14 @@ def run_script(
         directory = Path(tmpdir)
         write_aiger(ntk, directory / _INPUT_FILE)
 
+        # `write_aiger` drops the symbol table unless -s is given, while `&write`
+        # always keeps it.
+        read_cmd, write_cmd = ("&read", "&write") if gia else ("read_aiger", "write_aiger -s")
+
         # ABC tokenizes the command string itself, so a temporary directory
         # containing a space would break the file names. Running with cwd set to
         # the temporary directory keeps them bare and relative.
-        script = f"read_aiger {_INPUT_FILE}; {command}; write_aiger -s {_OUTPUT_FILE}"
+        script = f"{read_cmd} {_INPUT_FILE}; {command}; {write_cmd} {_OUTPUT_FILE}"
         output = run_commands(
             script,
             timeout=timeout,

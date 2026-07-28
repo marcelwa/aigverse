@@ -153,9 +153,11 @@ Obtain ABC in whichever way suits your platform:
 - **Distribution package** — Debian and Ubuntu ship it as `berkeley-abc`
   (`sudo apt install berkeley-abc`); it is also in conda-forge and Homebrew.
 - **Bundled toolchains** — [Yosys](https://github.com/YosysHQ/yosys) ships an ABC build,
-  as does [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-build); either
-  `abc` binary works. Note that these are YosysHQ's ABC fork rather than
-  `berkeley-abc/abc`, so a script may occasionally behave differently.
+  as does the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build), which is
+  the quickest route to a working binary if you want no build step at all: download a
+  release archive and use the `abc` in its `bin/` directory. Note that both carry
+  YosysHQ's ABC fork rather than `berkeley-abc/abc`, so a script may occasionally behave
+  differently.
 
 `aigverse` locates the executable in this order:
 
