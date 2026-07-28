@@ -103,8 +103,9 @@ def test_gia_transfer_keeps_names() -> None:
     result = abc.run_script(ntk, "&dc2", gia=True)
 
     assert type(result) is NamedAig
-    names = {result.get_name(result.make_signal(result.pi_at(i))) for i in range(result.num_pis)}
-    assert names == {"alpha", "beta"}
+    # ordered, not a set: a set would still pass if ABC swapped the two names
+    names = [result.get_name(result.make_signal(result.pi_at(i))) for i in range(result.num_pis)]
+    assert names == ["alpha", "beta"]
     assert result.get_output_name(0) == "result"
 
 
@@ -139,8 +140,9 @@ def test_named_aig_keeps_its_type_and_names() -> None:
     result = abc.resyn2(ntk)
 
     assert type(result) is NamedAig
-    names = {result.get_name(result.make_signal(result.pi_at(i))) for i in range(result.num_pis)}
-    assert names == {"alpha", "beta"}
+    # ordered, not a set: a set would still pass if ABC swapped the two names
+    names = [result.get_name(result.make_signal(result.pi_at(i))) for i in range(result.num_pis)]
+    assert names == ["alpha", "beta"]
     assert result.get_output_name(0) == "result"
 
 

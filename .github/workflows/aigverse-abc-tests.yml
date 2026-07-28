@@ -14,6 +14,9 @@ on:
       - "src/aigverse/io/write_aiger.cpp"
       - "src/aigverse/io/read_aiger.cpp"
       - "src/aigverse/networks/logic_networks.cpp"
+      - "test/conftest.py"
+      - "noxfile.py"
+      - "pyproject.toml"
       - ".github/workflows/aigverse-abc-tests.yml"
   pull_request:
     branches: ["main"]
@@ -24,6 +27,9 @@ on:
       - "src/aigverse/io/write_aiger.cpp"
       - "src/aigverse/io/read_aiger.cpp"
       - "src/aigverse/networks/logic_networks.cpp"
+      - "test/conftest.py"
+      - "noxfile.py"
+      - "pyproject.toml"
       - ".github/workflows/aigverse-abc-tests.yml"
 
 permissions: {}
