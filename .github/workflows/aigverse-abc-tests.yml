@@ -1,0 +1,91 @@
+name: 🅰️ • ABC
+
+# The ABC bridge drives an external ABC executable, which is deliberately not a
+# dependency of aigverse. Its integration tests are therefore skipped everywhere
+# else, and this workflow is the only place they actually run.
+
+on:
+  merge_group:
+  push:
+    branches: ["main"]
+    paths:
+      - "python/aigverse/abc/**"
+      - "test/abc/**"
+      - "src/aigverse/io/write_aiger.cpp"
+      - "src/aigverse/io/read_aiger.cpp"
+      - ".github/workflows/aigverse-abc-tests.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "python/aigverse/abc/**"
+      - "test/abc/**"
+      - "src/aigverse/io/write_aiger.cpp"
+      - "src/aigverse/io/read_aiger.cpp"
+      - ".github/workflows/aigverse-abc-tests.yml"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  # Pinned revision of https://github.com/berkeley-abc/abc that the integration
+  # tests run against. Tracking a moving `main` would make a red run ambiguous
+  # between our change and an upstream one, so this is bumped deliberately.
+  ABC_REV: e76768b9d34f9dc67cb6608efecd55db271ff849
+
+jobs:
+  abc-tests:
+    name: 🅰️ ABC integration
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read # required to check out the repository
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Keyed on the pinned revision, so ABC is compiled only when the pin moves.
+      - name: Restore the ABC build
+        id: abc-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/abc-bin
+          key: abc-${{ runner.os }}-${{ env.ABC_REV }}
+
+      - if: steps.abc-cache.outputs.cache-hit != 'true'
+        name: Build ABC
+        run: |
+          git clone https://github.com/berkeley-abc/abc.git "${RUNNER_TEMP}/abc"
+          git -C "${RUNNER_TEMP}/abc" checkout --detach "${ABC_REV}"
+          make -C "${RUNNER_TEMP}/abc" -j"$(nproc)" ABC_USE_NO_READLINE=1
+          mkdir -p ~/abc-bin
+          cp "${RUNNER_TEMP}/abc/abc" ~/abc-bin/abc
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
+        with:
+          key: "ubuntu-24.04-aigverse"
+          save: ${{ github.ref == 'refs/heads/main' }}
+          max-size: 10G
+
+      - name: Setup mold
+        uses: rui314/setup-mold@9c9c13bf4c3f1adef0cc596abc155580bcb04444 # v1
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          enable-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+
+      # AIGVERSE_REQUIRE_ABC turns the suite's skips into failures, so this job
+      # cannot go green if the binary is missing or unusable.
+      - name: 🅰️ Test against ABC
+        env:
+          AIGVERSE_ABC: /home/runner/abc-bin/abc
+          AIGVERSE_REQUIRE_ABC: "1"
+        run: |
+          "${AIGVERSE_ABC}" -s -q "version"
+          uvx nox -s tests-3.12 -- -m abc
