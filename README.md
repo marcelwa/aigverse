@@ -45,6 +45,8 @@ representations for downstream data science and ML pipelines.
 - **High-Level API**: Simplify logic synthesis tasks with a Pythonic interface for AIG manipulation and optimization.
 - **ML/Data Science Interoperability**: Optional adapters for graph and array representations used in Python data
   science and machine learning workflows.
+- **ABC Integration**: Optionally run [ABC](https://github.com/berkeley-abc/abc) optimization scripts such as `resyn2`
+  or `compress2rs` on your networks, driving an ABC executable you already have installed. No ABC is bundled.
 
 ## 🤔 Motivation
 

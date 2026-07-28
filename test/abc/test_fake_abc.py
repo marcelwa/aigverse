@@ -34,6 +34,7 @@ cwd = pathlib.Path.cwd()
 
 @requires_posix
 def test_happy_path_round_trips(and_aig: Aig, fake_abc: Callable[[str], Path]) -> None:
+    """A well-behaved ABC yields the network back unchanged."""
     result = run_script(and_aig, "balance", binary=fake_abc(_HAPPY))
     assert result.num_pis == and_aig.num_pis
     assert result.num_pos == and_aig.num_pos
@@ -58,6 +59,7 @@ def test_missing_output_is_detected(and_aig: Aig, fake_abc: Callable[[str], Path
 
 @requires_posix
 def test_empty_output_is_detected(and_aig: Aig, fake_abc: Callable[[str], Path]) -> None:
+    """An empty output file is detected."""
     shim = fake_abc('(pathlib.Path.cwd() / "out.aig").write_bytes(b"")')
     with pytest.raises(AbcExecutionError, match="no output network"):
         run_script(and_aig, "balance", binary=shim)
@@ -73,6 +75,7 @@ def test_garbage_output_is_reported(and_aig: Aig, fake_abc: Callable[[str], Path
 
 @requires_posix
 def test_timeout_is_reported(and_aig: Aig, fake_abc: Callable[[str], Path]) -> None:
+    """A hanging ABC is terminated and reported."""
     shim = fake_abc("time.sleep(30)")
     with pytest.raises(AbcTimeoutError, match="did not terminate"):
         run_script(and_aig, "balance", timeout=0.5, binary=shim)

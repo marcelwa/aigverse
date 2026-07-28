@@ -37,10 +37,11 @@ def abc_available() -> None:
 
 @pytest.fixture(autouse=True)
 def _clear_abc_override() -> None:
-    """Clears any explicit binary override left behind by a previous test."""
-    from aigverse.abc import set_abc_binary
+    """Clears any explicit binary or resource-file override left by a previous test."""
+    from aigverse.abc import set_abc_binary, set_abc_rc
 
     set_abc_binary(None)
+    set_abc_rc(None)
 
 
 @pytest.fixture
@@ -73,6 +74,14 @@ def fake_abc(tmp_path: Path) -> Callable[[str], Path]:
     """
 
     def _make(body: str) -> Path:
+        """Writes an executable shim with the given body.
+
+        Args:
+            body: Python source run as the shim's body.
+
+        Returns:
+            Path to the executable shim.
+        """
         script = tmp_path / "fake-abc"
         script.write_text(f"#!{sys.executable}\nimport sys, pathlib, time\n{body}\n")
         script.chmod(script.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)

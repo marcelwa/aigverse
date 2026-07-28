@@ -91,6 +91,12 @@ myst_substitutions = {
 }
 myst_heading_anchors = 3
 nitpicky = True
+nitpick_ignore = [
+    # a TypeVar and the Ellipsis in variadic tuple annotations are not documentable targets
+    ("py:class", "AigT"),
+    ("py:class", "aigverse.abc._runner.AigT"),
+    ("py:class", "Ellipsis"),
+]
 
 # -- Options for {MyST}NB ----------------------------------------------------
 

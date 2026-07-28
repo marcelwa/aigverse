@@ -40,12 +40,8 @@ class AbcExecutionError(AbcError):
 
     ABC exits with status 0 even for unknown commands and unreadable files, and
     writes everything to standard output, so the captured output is the only
-    diagnostic available and is attached here.
-
-    Attributes:
-        binary: The ABC executable that was invoked.
-        command: The command string that was passed to ABC.
-        output: The output captured from ABC, truncated if very long.
+    diagnostic available. It is attached to the exception as ``output``, next to
+    the ``binary`` that was invoked and the ``command`` it was given.
     """
 
     def __init__(self, message: str, *, binary: str, command: str, output: str) -> None:

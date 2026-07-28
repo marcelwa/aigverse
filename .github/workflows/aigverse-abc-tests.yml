@@ -63,6 +63,9 @@ jobs:
           make -C "${RUNNER_TEMP}/abc" -j"$(nproc)" ABC_USE_NO_READLINE=1
           mkdir -p ~/abc-bin
           cp "${RUNNER_TEMP}/abc/abc" ~/abc-bin/abc
+          # abc.rc carries the alias definitions the shipped script expansions
+          # are checked against, so it travels with the binary
+          cp "${RUNNER_TEMP}/abc/abc.rc" ~/abc-bin/abc.rc
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
@@ -85,6 +88,7 @@ jobs:
       - name: 🅰️ Test against ABC
         env:
           AIGVERSE_ABC: /home/runner/abc-bin/abc
+          AIGVERSE_ABC_RC: /home/runner/abc-bin/abc.rc
           AIGVERSE_REQUIRE_ABC: "1"
         run: |
           "${AIGVERSE_ABC}" -s -q "version"

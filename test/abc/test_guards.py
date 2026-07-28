@@ -31,6 +31,7 @@ def test_sequential_aig_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_non_network_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A non-network argument is rejected before ABC is looked up."""
     monkeypatch.delenv("AIGVERSE_ABC", raising=False)
     monkeypatch.setenv("PATH", "")
     with pytest.raises(TypeError, match="expected an Aig"):
@@ -55,6 +56,7 @@ def test_named_aig_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_empty_commands_rejected_before_discovery(monkeypatch: pytest.MonkeyPatch) -> None:
+    """An empty command string is rejected before ABC is looked up."""
     monkeypatch.delenv("AIGVERSE_ABC", raising=False)
     monkeypatch.setenv("PATH", "")
 

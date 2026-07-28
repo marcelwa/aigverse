@@ -64,6 +64,7 @@ aigs
 truth_tables
 algorithms
 generators
+abc
 machine_learning
 ```
 

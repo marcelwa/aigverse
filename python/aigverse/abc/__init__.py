@@ -21,11 +21,14 @@ from __future__ import annotations
 
 from ._binary import (
     ABC_ENV_VAR,
+    ABC_RC_ENV_VAR,
     abc_binary,
+    abc_rc,
     abc_version,
     find_abc_binary,
     is_available,
     set_abc_binary,
+    set_abc_rc,
 )
 from ._errors import AbcError, AbcExecutionError, AbcNotFoundError, AbcTimeoutError
 from ._runner import run_commands, run_script
@@ -43,12 +46,14 @@ from ._wrappers import (
 
 __all__ = [
     "ABC_ENV_VAR",
+    "ABC_RC_ENV_VAR",
     "SCRIPTS",
     "AbcError",
     "AbcExecutionError",
     "AbcNotFoundError",
     "AbcTimeoutError",
     "abc_binary",
+    "abc_rc",
     "abc_version",
     "compress",
     "compress2",
@@ -64,4 +69,5 @@ __all__ = [
     "run_commands",
     "run_script",
     "set_abc_binary",
+    "set_abc_rc",
 ]

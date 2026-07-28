@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import shlex
 import subprocess
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, TypeVar, cast
 
 from ..networks import Aig, NamedAig, SequentialAig
-from ._binary import abc_binary
+from ._binary import abc_binary, abc_rc
 from ._errors import AbcExecutionError, AbcTimeoutError
 
 if TYPE_CHECKING:
@@ -124,7 +125,9 @@ def run_commands(
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         use_init_file: If ``False`` (default), ABC is invoked with ``-s`` so that
             no ``abc.rc`` is read and behaviour does not depend on the local
-            install. Set to ``True`` to make the user's own aliases available.
+            install. Set to ``True`` to let ABC pick up an ``abc.rc`` from the
+            working directory. Prefer :func:`~aigverse.abc.set_abc_rc`, which
+            loads one specific file and keeps the isolation.
         cwd: Working directory for the ABC process. Defaults to a fresh
             temporary directory, because ABC writes an ``abc.history`` file into
             wherever it runs. Pass a directory explicitly if the commands refer
@@ -152,6 +155,13 @@ def run_commands(
                 cwd=scratch,
                 binary=executable,
             )
+
+    # A resource file registered via set_abc_rc() is loaded explicitly rather than
+    # by dropping -s, so it stays the only one ABC reads and behaviour does not
+    # depend on whichever abc.rc happens to sit in the working directory.
+    resource_file = abc_rc()
+    if resource_file is not None:
+        command = f"source {shlex.quote(str(resource_file))}; {command}"
 
     argv = [str(executable)]
     if not use_init_file:
@@ -221,6 +231,8 @@ def run_script(
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         use_init_file: If ``False`` (default), ABC is invoked with ``-s`` so that
             no ``abc.rc`` is read and results do not depend on the local install.
+            A resource file registered with :func:`~aigverse.abc.set_abc_rc` is
+            loaded regardless, making its aliases available.
         verbose: If ``True``, print everything ABC wrote.
         binary: Overrides the resolved ABC executable for this call only.
 

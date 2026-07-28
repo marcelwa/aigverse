@@ -12,15 +12,21 @@ from ._errors import AbcNotFoundError, AbcTimeoutError
 
 __all__ = [
     "ABC_ENV_VAR",
+    "ABC_RC_ENV_VAR",
     "abc_binary",
+    "abc_rc",
     "abc_version",
     "find_abc_binary",
     "is_available",
     "set_abc_binary",
+    "set_abc_rc",
 ]
 
 # Name of the environment variable pointing at the ABC executable.
 ABC_ENV_VAR = "AIGVERSE_ABC"
+
+# Name of the environment variable pointing at an ABC resource file.
+ABC_RC_ENV_VAR = "AIGVERSE_ABC_RC"
 
 # Executable names searched on PATH, in order. Debian and Ubuntu install ABC as
 # `berkeley-abc` to avoid a name clash.
@@ -34,6 +40,7 @@ _HINT = (
 )
 
 _override: Path | None = None
+_rc_override: Path | None = None
 
 
 def _validate(path: Path, *, source: str) -> Path:
@@ -96,8 +103,13 @@ def find_abc_binary() -> Path | None:
     Returns:
         The resolved absolute path, or ``None`` if no candidate was found.
     """
+    # Revalidate: an override configured earlier may since have been deleted or
+    # lost its executable bit, and reporting it as available would surface an
+    # OSError from subprocess instead of the documented AbcNotFoundError.
     if _override is not None:
-        return _override
+        if _override.is_file() and os.access(_override, os.X_OK):
+            return _override
+        return None
 
     env_value = os.environ.get(ABC_ENV_VAR)
     if env_value:
@@ -184,3 +196,61 @@ def abc_version(*, timeout: float | None = 10.0) -> str:
         raise AbcTimeoutError(msg, binary=str(binary), command="version", output="") from exc
 
     return completed.stdout.strip()
+
+
+def set_abc_rc(path: str | os.PathLike[str] | None) -> Path | None:
+    """Sets or clears an ABC resource file to load before every command.
+
+    The bridge normally runs ABC with ``-s`` so that no ``abc.rc`` is read and
+    results do not depend on the local installation. Registering a resource file
+    here keeps that isolation -- the file given is the only one loaded -- while
+    making its aliases available to :func:`~aigverse.abc.run_script` and
+    :func:`~aigverse.abc.run_commands`.
+
+    It applies process-wide and is intended to be called once during setup; it is
+    not thread-safe.
+
+    Args:
+        path: Path to an ABC resource file, or ``None`` to clear a previously set
+            one and go back to running without any.
+
+    Returns:
+        The resolved absolute path, or ``None`` if the resource file was cleared.
+
+    Raises:
+        AbcNotFoundError: If ``path`` does not exist or is not a file.
+    """
+    global _rc_override  # ruff: ignore[global-statement]
+
+    if path is None:
+        _rc_override = None
+        return None
+
+    resolved = Path(path).expanduser()
+    if not resolved.is_file():
+        msg = f"set_abc_rc() points to '{path}', which is not an existing file."
+        raise AbcNotFoundError(msg)
+
+    _rc_override = resolved.resolve()
+    return _rc_override
+
+
+def abc_rc() -> Path | None:
+    """Resolves the ABC resource file loaded before every command.
+
+    Resolution order: an explicit path set via :func:`set_abc_rc`, then the
+    ``AIGVERSE_ABC_RC`` environment variable.
+
+    Returns:
+        The resolved absolute path, or ``None`` if no resource file is configured.
+    """
+    if _rc_override is not None:
+        return _rc_override if _rc_override.is_file() else None
+
+    env_value = os.environ.get(ABC_RC_ENV_VAR)
+    if env_value:
+        candidate = Path(env_value).expanduser()
+        if candidate.is_file():
+            return candidate.resolve()
+
+    return None

@@ -152,17 +152,19 @@ Obtain ABC in whichever way suits your platform:
   `make`, which produces an `abc` binary in the repository root.
 - **Distribution package** — Debian and Ubuntu ship it as `berkeley-abc`
   (`sudo apt install berkeley-abc`); it is also in conda-forge and Homebrew.
-- **Bundled toolchains** — [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-build)
-  includes an `abc` binary.
+- **Bundled toolchains** — [Yosys](https://github.com/YosysHQ/yosys) ships an ABC build,
+  as does [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-build); either
+  `abc` binary works. Note that these are YosysHQ's ABC fork rather than
+  `berkeley-abc/abc`, so a script may occasionally behave differently.
 
 `aigverse` locates the executable in this order:
 
 1. an explicit path set via {py:func}`~aigverse.abc.set_abc_binary`,
 2. the `AIGVERSE_ABC` environment variable,
-3. `abc` or `berkeley-abc` on `PATH`.
+3. `abc` or `berkeley-abc` on `PATH` (Debian and Ubuntu use the latter name).
 
 ```console
-$ export AIGVERSE_ABC=/path/to/abc
+export AIGVERSE_ABC=/path/to/abc
 ```
 
 ```python
