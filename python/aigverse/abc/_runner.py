@@ -161,7 +161,7 @@ def run_commands(
     argv += ["-q", command]
 
     try:
-        completed = subprocess.run(  # noqa: S603
+        completed = subprocess.run(
             argv,
             cwd=cwd,
             stdout=subprocess.PIPE,
@@ -177,9 +177,7 @@ def run_commands(
         if isinstance(output, bytes):
             output = output.decode("utf-8", errors="replace")
         msg = f"ABC did not terminate within {timeout} seconds"
-        raise AbcTimeoutError(
-            msg, binary=str(executable), command=command, output=output
-        ) from exc
+        raise AbcTimeoutError(msg, binary=str(executable), command=command, output=output) from exc
 
     output = completed.stdout or ""
 
@@ -243,7 +241,7 @@ def run_script(
     _check_supported(ntk)
     command = _join(commands)
 
-    from ..io import read_aiger_into_aig, write_aiger  # noqa: PLC0415
+    from ..io import read_aiger_into_aig, write_aiger
 
     with tempfile.TemporaryDirectory(prefix="aigverse-abc-") as tmpdir:
         directory = Path(tmpdir)
@@ -262,7 +260,7 @@ def run_script(
         )
 
         if verbose:
-            print(output)  # noqa: T201
+            print(output)  # ruff: ignore[print]
 
         executable = str(Path(binary) if binary is not None else abc_binary())
         result_path = directory / _OUTPUT_FILE
@@ -274,9 +272,7 @@ def run_script(
             result = read_aiger_into_aig(result_path)
         except RuntimeError as exc:
             msg = f"could not read the network ABC produced: {exc}"
-            raise AbcExecutionError(
-                msg, binary=executable, command=script, output=output
-            ) from exc
+            raise AbcExecutionError(msg, binary=executable, command=script, output=output) from exc
 
     # read_aiger_into_aig always yields a NamedAig; narrow it back to the input
     # type so the bridge is type-preserving.

@@ -35,7 +35,6 @@ from ._scripts import SCRIPTS, expand_script
 
 if TYPE_CHECKING:
     import os
-    from collections.abc import Sequence
 
 __all__ = [
     "ABC_ENV_VAR",
@@ -92,9 +91,7 @@ def resyn(
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or produced no usable output.
     """
-    return run_script(
-        ntk, expand_script("resyn"), timeout=timeout, verbose=verbose, binary=binary
-    )
+    return run_script(ntk, expand_script("resyn"), timeout=timeout, verbose=verbose, binary=binary)
 
 
 def resyn2(
@@ -126,9 +123,7 @@ def resyn2(
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or produced no usable output.
     """
-    return run_script(
-        ntk, expand_script("resyn2"), timeout=timeout, verbose=verbose, binary=binary
-    )
+    return run_script(ntk, expand_script("resyn2"), timeout=timeout, verbose=verbose, binary=binary)
 
 
 def resyn3(
@@ -160,9 +155,7 @@ def resyn3(
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or produced no usable output.
     """
-    return run_script(
-        ntk, expand_script("resyn3"), timeout=timeout, verbose=verbose, binary=binary
-    )
+    return run_script(ntk, expand_script("resyn3"), timeout=timeout, verbose=verbose, binary=binary)
 
 
 def compress(
@@ -194,9 +187,7 @@ def compress(
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or produced no usable output.
     """
-    return run_script(
-        ntk, expand_script("compress"), timeout=timeout, verbose=verbose, binary=binary
-    )
+    return run_script(ntk, expand_script("compress"), timeout=timeout, verbose=verbose, binary=binary)
 
 
 def compress2(
@@ -228,9 +219,7 @@ def compress2(
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or produced no usable output.
     """
-    return run_script(
-        ntk, expand_script("compress2"), timeout=timeout, verbose=verbose, binary=binary
-    )
+    return run_script(ntk, expand_script("compress2"), timeout=timeout, verbose=verbose, binary=binary)
 
 
 def resyn2rs(
@@ -262,9 +251,7 @@ def resyn2rs(
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or produced no usable output.
     """
-    return run_script(
-        ntk, expand_script("resyn2rs"), timeout=timeout, verbose=verbose, binary=binary
-    )
+    return run_script(ntk, expand_script("resyn2rs"), timeout=timeout, verbose=verbose, binary=binary)
 
 
 def compress2rs(
@@ -296,9 +283,7 @@ def compress2rs(
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or produced no usable output.
     """
-    return run_script(
-        ntk, expand_script("compress2rs"), timeout=timeout, verbose=verbose, binary=binary
-    )
+    return run_script(ntk, expand_script("compress2rs"), timeout=timeout, verbose=verbose, binary=binary)
 
 
 def dc2(
@@ -330,6 +315,4 @@ def dc2(
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or produced no usable output.
     """
-    return run_script(
-        ntk, expand_script("dc2"), timeout=timeout, verbose=verbose, binary=binary
-    )
+    return run_script(ntk, expand_script("dc2"), timeout=timeout, verbose=verbose, binary=binary)

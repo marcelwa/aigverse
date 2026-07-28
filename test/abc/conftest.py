@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 import stat
 import sys
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -15,6 +14,8 @@ from aigverse.networks import Aig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from pathlib import Path
+
 
 @pytest.fixture
 def abc_available() -> None:

@@ -78,7 +78,7 @@ def set_abc_binary(path: str | os.PathLike[str] | None) -> Path | None:
     Raises:
         AbcNotFoundError: If ``path`` does not exist or is not executable.
     """
-    global _override  # noqa: PLW0603
+    global _override  # ruff: ignore[global-statement]
 
     if path is None:
         _override = None
@@ -131,10 +131,7 @@ def abc_binary() -> Path:
 
     env_value = os.environ.get(ABC_ENV_VAR)
     if env_value:
-        msg = (
-            f"{ABC_ENV_VAR} is set to '{env_value}', but that is not an executable "
-            f"file.\n{_HINT}"
-        )
+        msg = f"{ABC_ENV_VAR} is set to '{env_value}', but that is not an executable file.\n{_HINT}"
     else:
         names = " or ".join(repr(name) for name in _CANDIDATE_NAMES)
         msg = f"No ABC executable found: neither {names} is on PATH.\n{_HINT}"
@@ -174,7 +171,7 @@ def abc_version(*, timeout: float | None = 10.0) -> str:
     # so keep it out of whatever directory the caller happens to be in.
     try:
         with tempfile.TemporaryDirectory(prefix="aigverse-abc-") as scratch:
-            completed = subprocess.run(  # noqa: S603
+            completed = subprocess.run(
                 [str(binary), "-s", "-q", "version"],
                 cwd=scratch,
                 capture_output=True,

@@ -21,9 +21,7 @@ if TYPE_CHECKING:
     from aigverse.networks import Aig
 
 # The fake-ABC shims rely on the executable bit, which does not carry over on Windows.
-requires_posix = pytest.mark.skipif(
-    sys.platform == "win32", reason="the fake ABC shims rely on POSIX executable bits"
-)
+requires_posix = pytest.mark.skipif(sys.platform == "win32", reason="the fake ABC shims rely on POSIX executable bits")
 
 pytestmark = requires_posix
 
@@ -45,7 +43,7 @@ def test_happy_path_round_trips(and_aig: Aig, fake_abc: Callable[[str], Path]) -
 @requires_posix
 def test_unknown_command_is_detected(and_aig: Aig, fake_abc: Callable[[str], Path]) -> None:
     """ABC prints an error and still exits 0."""
-    shim = fake_abc('print("** cmd error: unknown command \'nope\'")\nsys.exit(0)')
+    shim = fake_abc("print(\"** cmd error: unknown command 'nope'\")\nsys.exit(0)")
     with pytest.raises(AbcExecutionError, match="unknown command"):
         run_script(and_aig, "nope", binary=shim)
 
