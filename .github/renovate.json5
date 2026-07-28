@@ -16,6 +16,27 @@
     "github-actions",
     "pre-commit",
     "pep621",
+    "custom.regex",
+  ],
+  customManagers: [
+    {
+      // Renovate has no native manager for CMake FetchContent, so the pinned
+      // mockturtle revision is tracked via a regex manager instead. The pin is
+      // a full commit SHA that always points at the head of the `mnt` branch of
+      // our fork, hence git-refs + currentDigest against that branch.
+      customType: "regex",
+      description: "Update the mockturtle revision pinned for CMake FetchContent",
+      managerFilePatterns: [
+        "cmake/ExternalDependencies.cmake"
+      ],
+      matchStrings: [
+        "set\\(MOCKTURTLE_REV\\s+\"(?<currentDigest>[0-9a-f]{40})\""
+      ],
+      depNameTemplate: "marcelwa/mockturtle",
+      packageNameTemplate: "https://github.com/marcelwa/mockturtle",
+      currentValueTemplate: "mnt",
+      datasourceTemplate: "git-refs",
+    }
   ],
   lockFileMaintenance: {
     enabled: true,
@@ -53,6 +74,20 @@
         "python"
       ],
       commitMessagePrefix: "⬆\uFE0F\uD83D\uDC0D",
+    },
+    {
+      matchManagers: [
+        "custom.regex"
+      ],
+      addLabels: [
+        "dependencies",
+        "C++",
+        "build_system"
+      ],
+      commitMessagePrefix: "⬆\uFE0F\uD83D\uDC22",
+      // `:automergeDigest` (inherited from extends) would otherwise merge these
+      // unattended. A mockturtle bump changes the C++ core, so it gets reviewed.
+      automerge: false,
     },
     {
       description: "Group and automerge all patch updates",
