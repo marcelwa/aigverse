@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
 __all__ = ["SCRIPTS", "expand_script"]
 
+# Mapping from script name to its expansion into builtin ABC commands.
 SCRIPTS: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType({
     # alias resyn "b; rw; rwz; b; rwz; b"
     "resyn": (
@@ -127,7 +128,6 @@ SCRIPTS: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType({
     # dc2 is a builtin; listed for uniformity with the other named scripts
     "dc2": ("dc2",),
 })
-"""Mapping from script name to its expansion into builtin ABC commands."""
 
 
 def expand_script(name: str) -> tuple[str, ...]:

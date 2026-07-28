@@ -19,14 +19,12 @@ __all__ = [
     "set_abc_binary",
 ]
 
+# Name of the environment variable pointing at the ABC executable.
 ABC_ENV_VAR = "AIGVERSE_ABC"
-"""Name of the environment variable pointing at the ABC executable."""
 
+# Executable names searched on PATH, in order. Debian and Ubuntu install ABC as
+# `berkeley-abc` to avoid a name clash.
 _CANDIDATE_NAMES = ("abc", "berkeley-abc")
-"""Executable names searched on ``PATH``, in order.
-
-Debian and Ubuntu install ABC as ``berkeley-abc`` to avoid a name clash.
-"""
 
 _HINT = (
     f"aigverse does not ship ABC. Install it (e.g. from "

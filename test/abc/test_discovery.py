@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import stat
+import sys
 from typing import TYPE_CHECKING
 
 import pytest
@@ -22,7 +23,11 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def stub(tmp_path: Path) -> Path:
-    """Creates an executable stub file standing in for ABC."""
+    """Creates an executable stub file standing in for ABC.
+
+    Returns:
+        Path to the executable stub.
+    """
     path = tmp_path / "abc"
     path.write_text("#!/bin/sh\n")
     path.chmod(path.stat().st_mode | stat.S_IEXEC)
@@ -63,6 +68,10 @@ def test_override_rejects_missing_file(tmp_path: Path) -> None:
         set_abc_binary(tmp_path / "nope")
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Windows has no execute bit; os.access(..., X_OK) is true for any file",
+)
 def test_override_rejects_non_executable(tmp_path: Path) -> None:
     path = tmp_path / "not-exec"
     path.write_text("")
@@ -85,7 +94,9 @@ def test_error_message_is_actionable(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_path_lookup_finds_berkeley_abc(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Debian and Ubuntu install ABC as `berkeley-abc`."""
-    path = tmp_path / "berkeley-abc"
+    # shutil.which() resolves through PATHEXT on Windows, so the stub needs a suffix.
+    suffix = ".exe" if sys.platform == "win32" else ""
+    path = tmp_path / f"berkeley-abc{suffix}"
     path.write_text("#!/bin/sh\n")
     path.chmod(path.stat().st_mode | stat.S_IEXEC)
 

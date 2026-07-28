@@ -22,6 +22,10 @@ AigT = TypeVar("AigT", bound=Aig)
 _INPUT_FILE = "in.aig"
 _OUTPUT_FILE = "out.aig"
 
+# Substrings that mark a failure in ABC's output. ABC exits with status 0 even for
+# unknown commands and unreadable files, so its output is the only signal available.
+# Deliberately a whitelist rather than a bare search for "error", which would match
+# benign banner text.
 _ERROR_MARKERS = (
     "** cmd error",
     "unknown command",
@@ -33,12 +37,6 @@ _ERROR_MARKERS = (
     "empty network",
     "syntax error",
 )
-"""Substrings that mark a failure in ABC's output.
-
-ABC exits with status 0 even for unknown commands and unreadable files, so its
-output is the only signal available. This is deliberately a whitelist rather
-than a bare search for "error", which matches benign banner text.
-"""
 
 
 def _find_error(output: str) -> str | None:

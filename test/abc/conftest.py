@@ -25,9 +25,8 @@ def abc_available() -> None:
     import time, which would freeze the verdict before a test gets the chance to
     call ``set_abc_binary``.
 
-    Raises:
-        pytest.fail.Exception: If ``AIGVERSE_REQUIRE_ABC`` is set but no binary
-            was found, so a CI job cannot silently pass with ABC missing.
+    Setting ``AIGVERSE_REQUIRE_ABC`` turns the skip into a failure, so a CI job
+    cannot silently pass with ABC missing.
     """
     if is_available():
         return
