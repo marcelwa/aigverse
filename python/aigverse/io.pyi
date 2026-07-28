@@ -4,6 +4,7 @@ The module contains readers and writers for common file formats in the domain.
 """
 
 import os
+from typing import overload
 
 import aigverse.networks
 
@@ -59,6 +60,9 @@ def read_ascii_aiger_into_sequential_aig(filename: str | os.PathLike) -> aigvers
         RuntimeError: If parsing the ASCII AIGER file fails.
     """
 
+@overload
+def write_aiger(ntk: aigverse.networks.NamedAig, filename: str | os.PathLike) -> None: ...
+@overload
 def write_aiger(ntk: aigverse.networks.Aig, filename: str | os.PathLike) -> None:
     """Writes a logic network to a binary AIGER file.
 

@@ -245,6 +245,18 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
 
     nb::class_<Ntk>(m, network_name.c_str(), network_class_doc.c_str())
         .def(nb::init<>(), network_init_doc.c_str())
+        .def(
+            "__init__", [](Ntk* self, const Ntk& ntk) { new (self) Ntk(ntk.clone()); }, nb::arg("ntk"),
+            fmt::format(R"pb(Creates an independent copy of an existing {0} network.
+
+    Augmented views such as Named{1} or Depth{1} are accepted as well, in which case
+    their extra metadata (names, levels, ...) is discarded and a plain {1} is
+    returned. The copy is structural: it does not share storage with ``ntk``.
+
+    Args:
+        ntk: The network to copy.)pb",
+                        all_caps_network_name, network_name)
+                .c_str())
         .def("clone", &Ntk::clone, R"pb(Creates a structural copy of the network.)pb")
         .def_prop_ro("size", &Ntk::size, R"pb(Number of nodes in the network.)pb")
         .def_prop_ro("num_gates", &Ntk::num_gates, R"pb(Number of logic gates in the network.)pb")
