@@ -195,7 +195,7 @@ named_aig.create_po(carry, "carry_output")
 
 # Retrieve names
 print(f"Network name: {named_aig.get_network_name()}")
-print(f"PI names: {[named_aig.get_name(pi) for pi in named_aig.pis()]}")
+print(f"PI names: {[named_aig.get_name(named_aig.make_signal(pi)) for pi in named_aig.pis()]}")
 print(f"Signal name (sum): {named_aig.get_name(sum)}")
 print(f"Signal name (carry): {named_aig.get_name(carry)}")
 print(f"PO name at index 0: {named_aig.get_output_name(0)}")
