@@ -10,7 +10,7 @@ import pytest
 from aigverse import abc
 from aigverse.algorithms import equivalence_checking
 from aigverse.generators import ripple_carry_multiplier
-from aigverse.networks import Aig, DepthAig, NamedAig
+from aigverse.networks import Aig, AigRegister, DepthAig, NamedAig, SequentialAig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -397,3 +397,54 @@ def test_a_non_executable_binary_override_is_reported_as_not_found(and_aig: AigT
 
     with pytest.raises(abc.AbcNotFoundError, match="not executable"):
         abc.resyn2(and_aig, binary=not_executable)
+
+
+def test_sequential_aig_keeps_registers_and_type() -> None:
+    """Registers, their reset values, and the network type survive ABC."""
+    ntk = SequentialAig()
+    a = ntk.create_pi()
+    b = ntk.create_pi()
+    ro0 = ntk.create_ro()
+    ro1 = ntk.create_ro()
+
+    f1 = ntk.create_and(a, ro0)
+    f2 = ntk.create_and(b, ro1)
+    ntk.create_po(ntk.create_and(f1, f2))
+    ntk.create_ri(f1)
+    ntk.create_ri(f2)
+
+    zero = AigRegister()
+    zero.init = 0
+    ntk.set_register(0, zero)
+    one = AigRegister()
+    one.init = 1
+    ntk.set_register(1, one)
+
+    result = abc.resyn2(ntk)
+
+    assert type(result) is SequentialAig
+    assert result.num_pis == ntk.num_pis
+    assert result.num_pos == ntk.num_pos
+    assert result.num_registers == ntk.num_registers
+    assert result.register_at(0).init == 0
+    assert result.register_at(1).init == 1
+
+
+def test_sequential_aig_with_undefined_reset() -> None:
+    """A register left at its default reset must not come back as zero-initialized."""
+    ntk = SequentialAig()
+    a = ntk.create_pi()
+    ro = ntk.create_ro()
+    g = ntk.create_and(a, ro)
+    ntk.create_po(g)
+    ntk.create_ri(g)
+
+    assert ntk.register_at(0).init not in {0, 1}
+
+    result = abc.resyn2(ntk)
+
+    assert result.num_registers == 1
+    # "Undefined" is any reset value that is neither 0 nor 1. The exact sentinel
+    # differs by origin -- register_t defaults to 3, while aiger_reader reports a
+    # nondeterministic reset as 255 -- so compare on the property, not the value.
+    assert result.register_at(0).init not in {0, 1}

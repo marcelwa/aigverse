@@ -8,14 +8,15 @@ from aigverse.abc import run_script
 from aigverse.networks import Aig, NamedAig, SequentialAig
 
 
-def test_sequential_aig_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
-    """SequentialAig must be refused rather than silently flattened.
+def test_sequential_aig_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
+    """SequentialAig must reach ABC rather than being refused or flattened.
 
-    It is registered as a subclass of Aig on the C++ side, so without an explicit
-    guard nanobind up-casts it and the registers degrade into extra PI/PO pairs.
-    The check must also run before the binary is resolved, so the message is
-    accurate on a machine without ABC -- hence the emptied PATH.
+    It is registered as a subclass of Aig on the C++ side, so it has to be
+    dispatched explicitly; with no ABC present the call still fails, but on
+    discovery rather than on type.
     """
+    from aigverse.abc import AbcNotFoundError
+
     monkeypatch.delenv("AIGVERSE_ABC", raising=False)
     monkeypatch.setenv("PATH", "")
 
@@ -26,7 +27,7 @@ def test_sequential_aig_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     ntk.create_po(g)
     ntk.create_ri(g)
 
-    with pytest.raises(TypeError, match="SequentialAig is not supported"):
+    with pytest.raises(AbcNotFoundError):
         run_script(ntk, "balance")
 
 

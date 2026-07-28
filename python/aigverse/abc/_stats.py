@@ -168,7 +168,7 @@ def stats(
         What ABC reports about the network.
 
     Raises:
-        TypeError: If ``ntk`` is a ``SequentialAig`` or not an ``Aig`` at all.
+        TypeError: If ``ntk`` is not an ``Aig``.
         AbcNotFoundError: If no ABC executable could be located.
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or printed nothing usable.

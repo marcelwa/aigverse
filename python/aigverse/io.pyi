@@ -61,6 +61,8 @@ def read_ascii_aiger_into_sequential_aig(filename: str | os.PathLike) -> aigvers
     """
 
 @overload
+def write_aiger(ntk: aigverse.networks.SequentialAig, filename: str | os.PathLike) -> None: ...
+@overload
 def write_aiger(ntk: aigverse.networks.NamedAig, filename: str | os.PathLike) -> None: ...
 @overload
 def write_aiger(ntk: aigverse.networks.Aig, filename: str | os.PathLike) -> None:
