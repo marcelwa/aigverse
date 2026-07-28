@@ -139,3 +139,42 @@ $ uv pip install "aigverse[adapters]"
 ::::
 
 The same syntax applies to adding the `aigverse` package with adapters as a dependency to your own project.
+
+## ABC Integration
+
+`aigverse` does not ship [ABC](https://github.com/berkeley-abc/abc). The
+{py:mod}`aigverse.abc` bridge drives an ABC executable that is already installed on your
+machine, so the base installation stays lightweight and no ABC code is redistributed.
+
+Obtain ABC in whichever way suits your platform:
+
+- **From source** — clone [berkeley-abc/abc](https://github.com/berkeley-abc/abc) and run
+  `make`, which produces an `abc` binary in the repository root.
+- **Distribution package** — Debian and Ubuntu ship it as `berkeley-abc`
+  (`sudo apt install berkeley-abc`); it is also in conda-forge and Homebrew.
+- **Bundled toolchains** — [oss-cad-suite](https://github.com/YosysHQ/oss-cad-suite-build)
+  includes an `abc` binary.
+
+`aigverse` locates the executable in this order:
+
+1. an explicit path set via {py:func}`~aigverse.abc.set_abc_binary`,
+2. the `AIGVERSE_ABC` environment variable,
+3. `abc` or `berkeley-abc` on `PATH`.
+
+```console
+$ export AIGVERSE_ABC=/path/to/abc
+```
+
+```python
+from aigverse import abc
+
+abc.set_abc_binary("/path/to/abc")
+print(abc.is_available())
+print(abc.abc_version())
+```
+
+:::{note}
+Importing {py:mod}`aigverse.abc` always succeeds, whether or not ABC is installed. Use
+{py:func}`~aigverse.abc.is_available` to check, and expect
+{py:exc}`~aigverse.abc.AbcNotFoundError` from any call that needs the executable.
+:::

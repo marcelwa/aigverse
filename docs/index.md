@@ -22,6 +22,7 @@ Key features include:
 - High-performance C++ backend with a Pythonic interface
 - Optional adapters for graph and numeric interoperability in machine learning and data science workflows
 - Comprehensive tools for logic synthesis and optimization
+- An optional bridge to an externally installed [ABC](https://github.com/berkeley-abc/abc) for its optimization scripts
 
 `aigverse` is designed as reusable bridge infrastructure rather than as a full end-to-end EDA toolchain.
 
