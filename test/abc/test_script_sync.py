@@ -73,6 +73,9 @@ def _expand(body: str, aliases: dict[str, str], depth: int = 0) -> tuple[str, ..
 
     Returns:
         The commands with every alias resolved.
+
+    Raises:
+        RecursionError: If the aliases reference each other cyclically.
     """
     if depth > 10:
         msg = "alias expansion did not terminate"
