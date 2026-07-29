@@ -262,3 +262,58 @@ def test_no_history_file_is_left_behind(tmp_path: Path, monkeypatch: pytest.Monk
     abc.resyn2(aig)
 
     assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize(
+    ("command", "kwargs"),
+    [
+        ("orchestrate", {}),
+        ("gia_deepsyn", {"timeout_seconds": 3}),
+        ("gia_transduction", {"timeout": 300}),
+    ],
+    ids=["orchestrate", "gia_deepsyn", "gia_transduction"],
+)
+def test_high_effort_commands_preserve_equivalence(command: str, kwargs: dict[str, object]) -> None:
+    """The high-effort commands must optimize without changing the function.
+
+    `gia_transtoch` is deliberately absent: it is stochastic and slow enough that
+    pinning it here would make the suite flaky for no extra coverage.
+    """
+    aig = ripple_carry_multiplier(3)
+    result = getattr(abc, command)(aig, **kwargs)
+
+    assert result.num_pis == aig.num_pis
+    assert result.num_pos == aig.num_pos
+    assert equivalence_checking(aig, result)
+
+
+def test_gia_cec_agrees_with_aigverse() -> None:
+    """ABC's checker is a second opinion, so it must agree with the first one."""
+    aig = ripple_carry_multiplier(3)
+    optimized = abc.compress2rs(aig)
+
+    assert abc.gia_cec(aig, optimized)
+    assert equivalence_checking(aig, optimized)
+
+
+def test_gia_cec_detects_a_difference() -> None:
+    """A genuine difference must come back as False, not as an exception."""
+    left = Aig()
+    a, b = left.create_pi(), left.create_pi()
+    left.create_po(left.create_and(a, b))
+
+    right = Aig()
+    c, d = right.create_pi(), right.create_pi()
+    right.create_po(right.create_or(c, d))
+
+    assert abc.gia_cec(left, right) is False
+    assert not equivalence_checking(left, right)
+
+
+def test_gia_cec_rejects_mismatched_interfaces(and_aig: AigType) -> None:
+    """ABC matches inputs by position, so a shape mismatch is an error."""
+    wider = Aig()
+    wider.create_po(wider.create_and(wider.create_pi(), wider.create_and(wider.create_pi(), wider.create_pi())))
+
+    with pytest.raises(abc.AbcExecutionError):
+        abc.gia_cec(and_aig, wider)

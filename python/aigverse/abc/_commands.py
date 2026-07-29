@@ -23,7 +23,7 @@ from ._runner import AigT, run_script
 if TYPE_CHECKING:
     import os
 
-__all__ = ["balance", "refactor", "resub", "rewrite"]
+__all__ = ["balance", "orchestrate", "refactor", "resub", "rewrite"]
 
 
 def balance(
@@ -191,4 +191,75 @@ def resub(
         command += " -l"
     if zero_cost:
         command += " -z"
+    return run_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
+
+
+def orchestrate(
+    ntk: AigT,
+    *,
+    max_cut_size: int | None = None,
+    max_inserts: int | None = None,
+    odc_levels: int | None = None,
+    preserve_levels: bool = True,
+    zero_cost_rewrite: bool = True,
+    zero_cost_refactor: bool = True,
+    timeout: float | None = None,
+    verbose: bool = False,
+    binary: str | os.PathLike[str] | None = None,
+) -> AigT:
+    """Runs ABC's ``orchestrate`` command on a network.
+
+    Interleaves rewriting, refactoring and resubstitution rather than running
+    them one after another, choosing per node which of the three to apply. It is
+    a single command doing the job of a whole schedule.
+
+    Note that ABC enables zero-cost replacements here by default, unlike in the
+    standalone :func:`rewrite` and :func:`refactor` commands.
+
+    Args:
+        ntk: The combinational network to optimize.
+        max_cut_size: Resubstitution cut size (ABC's ``-K``, 4 to 16), or ``None``
+            for ABC's default of 8.
+        max_inserts: Nodes resubstitution may add (ABC's ``-N``, 0 to 3), or
+            ``None`` for ABC's default of 1.
+        odc_levels: Fanout levels used for don't-care computation (ABC's ``-F``),
+            or ``None`` for ABC's default of 0.
+        preserve_levels: If ``True`` (ABC's default), never increase the depth.
+        zero_cost_rewrite: If ``True`` (ABC's default here), let the rewriting
+            part apply replacements that do not reduce the size.
+        zero_cost_refactor: If ``True`` (ABC's default here), the same for the
+            refactoring part.
+        timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
+        verbose: If ``True``, print everything ABC wrote.
+        binary: Overrides the resolved ABC executable for this call only.
+
+    Returns:
+        The optimized network, of the same type as ``ntk``.
+
+    Raises:
+        ValueError: If an option is outside the range ABC accepts.
+    """
+    command = "orchestrate"
+    if max_cut_size is not None:
+        if not 4 <= max_cut_size <= 16:
+            msg = f"max_cut_size must be between 4 and 16, got {max_cut_size}"
+            raise ValueError(msg)
+        command += f" -K {max_cut_size}"
+    if max_inserts is not None:
+        if not 0 <= max_inserts <= 3:
+            msg = f"max_inserts must be between 0 and 3, got {max_inserts}"
+            raise ValueError(msg)
+        command += f" -N {max_inserts}"
+    if odc_levels is not None:
+        if odc_levels < 0:
+            msg = f"odc_levels must not be negative, got {odc_levels}"
+            raise ValueError(msg)
+        command += f" -F {odc_levels}"
+    # every one of these switches toggles a default of "on"
+    if not preserve_levels:
+        command += " -l"
+    if not zero_cost_rewrite:
+        command += " -z"
+    if not zero_cost_refactor:
+        command += " -Z"
     return run_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)

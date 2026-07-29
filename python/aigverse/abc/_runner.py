@@ -84,7 +84,22 @@ def _join(commands: str | Sequence[str]) -> str:
     return joined
 
 
-def _check_supported(ntk: Aig) -> None:
+def resolve_binary(binary: str | os.PathLike[str] | None) -> Path:
+    """Resolves the ABC executable a call should use.
+
+    Args:
+        binary: An explicit override, or ``None`` to use the configured one.
+
+    Returns:
+        Path to the ABC executable.
+
+    Raises:
+        AbcNotFoundError: If no ABC executable could be located.
+    """
+    return Path(binary) if binary is not None else abc_binary()
+
+
+def check_supported(ntk: Aig) -> None:
     """Rejects network types the bridge cannot round-trip.
 
     Args:
@@ -148,7 +163,7 @@ def run_commands(
         AbcExecutionError: If ABC reported an error.
     """
     command = _join(commands)
-    executable = Path(binary) if binary is not None else abc_binary()
+    executable = resolve_binary(binary)
 
     if cwd is None:
         with tempfile.TemporaryDirectory(prefix="aigverse-abc-") as scratch:
@@ -268,7 +283,7 @@ def run_script(
     """
     # Guard before resolving the binary, so an unsupported network type reports
     # that rather than "ABC not found" on a machine without ABC.
-    _check_supported(ntk)
+    check_supported(ntk)
     command = _join(commands)
 
     from ..io import read_aiger_into_aig, write_aiger
@@ -296,7 +311,7 @@ def run_script(
         if verbose:
             print(output)  # ruff: ignore[print]
 
-        executable = str(Path(binary) if binary is not None else abc_binary())
+        executable = str(resolve_binary(binary))
         result_path = directory / _OUTPUT_FILE
         if not result_path.is_file() or result_path.stat().st_size == 0:
             msg = "ABC produced no output network"

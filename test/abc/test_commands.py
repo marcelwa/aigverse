@@ -17,11 +17,15 @@ from aigverse.abc import (
     balance,
     gia_balance,
     gia_dc2,
+    gia_deepsyn,
     gia_fraig,
     gia_resub,
     gia_syn2,
     gia_syn3,
     gia_syn4,
+    gia_transduction,
+    gia_transtoch,
+    orchestrate,
     refactor,
     resub,
     rewrite,
@@ -233,6 +237,107 @@ def test_negative_gia_options_are_rejected(
 
     Args:
         call: Invokes the wrapper under test with a negative option.
+        message: Expected substring of the raised error.
+        and_aig: A minimal two-input AND network.
+        monkeypatch: Used to hide any installed ABC.
+    """
+    monkeypatch.delenv("AIGVERSE_ABC", raising=False)
+    monkeypatch.setenv("PATH", "")
+
+    with pytest.raises(ValueError, match=message):
+        call(and_aig)
+
+
+@pytest.mark.parametrize(
+    ("call", "expected"),
+    [
+        (lambda ntk, exe: orchestrate(ntk, binary=exe), "orchestrate"),
+        (lambda ntk, exe: orchestrate(ntk, max_cut_size=12, binary=exe), "orchestrate -K 12"),
+        # every one of these three toggles a default of "on" for orchestrate
+        (lambda ntk, exe: orchestrate(ntk, preserve_levels=False, binary=exe), "orchestrate -l"),
+        (lambda ntk, exe: orchestrate(ntk, zero_cost_rewrite=False, binary=exe), "orchestrate -z"),
+        (lambda ntk, exe: orchestrate(ntk, zero_cost_refactor=False, binary=exe), "orchestrate -Z"),
+        (lambda ntk, exe: gia_deepsyn(ntk, binary=exe), "&deepsyn"),
+        (lambda ntk, exe: gia_deepsyn(ntk, timeout_seconds=30, seed=7, binary=exe), "&deepsyn -T 30 -S 7"),
+        (lambda ntk, exe: gia_transduction(ntk, binary=exe), "&transduction -V 0"),
+        (lambda ntk, exe: gia_transduction(ntk, transduction_type=8, binary=exe), "&transduction -V 0 -T 8"),
+        (lambda ntk, exe: gia_transtoch(ntk, binary=exe), "&transtoch -V 0"),
+        (lambda ntk, exe: gia_transtoch(ntk, restarts=2, threads=4, binary=exe), "&transtoch -V 0 -N 2 -P 4"),
+    ],
+    ids=[
+        "orchestrate-default",
+        "orchestrate-cut-size",
+        "orchestrate-no-level-preservation",
+        "orchestrate-no-zero-cost-rewrite",
+        "orchestrate-no-zero-cost-refactor",
+        "deepsyn-default",
+        "deepsyn-budget-and-seed",
+        "transduction-default",
+        "transduction-type",
+        "transtoch-default",
+        "transtoch-restarts-and-threads",
+    ],
+)
+def test_high_effort_options_translate_to_abc_switches(
+    call: Callable[[Aig, Path], object],
+    expected: str,
+    and_aig: Aig,
+    fake_abc: Callable[[str], Path],
+) -> None:
+    """The high-effort wrappers must build exactly the commands they claim to.
+
+    Args:
+        call: Invokes the wrapper under test with a network and a binary.
+        expected: The ABC command the wrapper is expected to build.
+        and_aig: A minimal two-input AND network.
+        fake_abc: Factory for the stand-in ABC executable.
+    """
+    shim = fake_abc(_FAILING)
+    assert f"; {expected}; " in _command_for(lambda: call(and_aig, shim))
+
+
+def test_orchestrate_zero_cost_defaults_are_not_inverted(and_aig: Aig, fake_abc: Callable[[str], Path]) -> None:
+    """`orchestrate` enables zero-cost replacements by default, unlike `rewrite`.
+
+    Emitting `-z`/`-Z` for the default would turn them off, quietly making
+    `orchestrate` weaker than ABC intends. Worth its own test because the two
+    commands read the same switch in opposite directions.
+
+    Args:
+        and_aig: A minimal two-input AND network.
+        fake_abc: Factory for the stand-in ABC executable.
+    """
+    shim = fake_abc(_FAILING)
+    default = _command_for(lambda: orchestrate(and_aig, binary=shim))
+    assert " -z" not in default
+    assert " -Z" not in default
+
+    # ... whereas the standalone command has to be asked for it
+    assert " -z" in _command_for(lambda: rewrite(and_aig, zero_cost=True, binary=shim))
+
+
+@pytest.mark.parametrize(
+    ("call", "message"),
+    [
+        (lambda ntk: orchestrate(ntk, max_cut_size=3), "max_cut_size must be between 4 and 16"),
+        (lambda ntk: orchestrate(ntk, odc_levels=-1), "odc_levels must not be negative"),
+        (lambda ntk: gia_deepsyn(ntk, seed=101), "seed must be between 0 and 100"),
+        (lambda ntk: gia_deepsyn(ntk, timeout_seconds=-1), "-T value must be at least 0"),
+        (lambda ntk: gia_transduction(ntk, transduction_type=9), "transduction_type must be between 0 and 8"),
+        (lambda ntk: gia_transtoch(ntk, threads=0), "threads must be at least 1"),
+    ],
+    ids=["orch-cut", "orch-odc", "deepsyn-seed", "deepsyn-budget", "transduction-type", "transtoch-threads"],
+)
+def test_high_effort_out_of_range_options_are_rejected(
+    call: Callable[[Aig], object],
+    message: str,
+    and_aig: Aig,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Values ABC would reject are caught before a process is started.
+
+    Args:
+        call: Invokes the wrapper under test with an out-of-range option.
         message: Expected substring of the raised error.
         and_aig: A minimal two-input AND network.
         monkeypatch: Used to hide any installed ABC.

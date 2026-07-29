@@ -67,11 +67,20 @@ print(f"{aig.num_gates} -> {result.num_gates} AND gates")
 Their options are exposed as keyword arguments rather than as ABC switches:
 `abc.rewrite(aig, zero_cost=True)` or `abc.resub(aig, max_cut_size=12)`.
 
+{py:func}`~aigverse.abc.orchestrate` is a fifth: instead of running rewriting,
+refactoring and resubstitution one after another, it interleaves them and picks per node
+which to apply — a whole schedule in a single command.
+
 :::{note}
 ABC's `-l` switch _toggles_ a default of "preserve the number of levels", so passing it
 turns level preservation off. These wrappers therefore take `preserve_levels`, which
 says what it means. The `compress` scripts are the `-l` variants of the `resyn` ones,
 and hence the ones that trade depth for size.
+
+Watch out for `orchestrate`, where ABC flips the convention: it enables zero-cost
+replacements by _default_, unlike the standalone `rewrite` and `refactor`. The wrappers
+paper over that with `zero_cost_rewrite` / `zero_cost_refactor`, which mean what they say
+in both places.
 :::
 
 ## Arbitrary commands
@@ -108,8 +117,8 @@ those do not carry I/O names across, whereas `gia=True` does.
 ### `&`-space wrappers
 
 The `&` commands have wrappers of their own, which set `gia=True` for you:
-`gia_balance` (`&b`), `gia_resub`, `gia_dc2`, `gia_syn2`, `gia_syn3`, `gia_syn4`, and
-`gia_fraig`.
+`gia_balance` (`&b`), `gia_resub`, `gia_dc2`, `gia_syn2`, `gia_syn3`, `gia_syn4` and
+`gia_fraig`, plus the high-effort searches below.
 
 The `&`-space is not a mirror of the classic set — there is no `&rewrite` and no
 `&refactor`, with `&dc2` standing in for both. What it offers instead is a different
@@ -143,6 +152,60 @@ combinational SAT sweeping, which merges nodes that are functionally equivalent 
 structurally different. No amount of rewriting finds those, which makes it a useful pass
 _between_ two structural scripts that each introduced their own duplicates.
 
+### High-effort search
+
+Three more `&` commands are searches rather than passes, and are priced accordingly:
+
+- {py:func}`~aigverse.abc.gia_deepsyn` repeatedly restructures with randomized parameters
+  and keeps the smallest result. Give it a budget via `timeout_seconds`, which is ABC's
+  own limit and lets it stop cleanly with its best result so far — unlike `timeout`,
+  which kills the process and yields nothing. Different `seed` values give different
+  results, so it is worth running more than once.
+- {py:func}`~aigverse.abc.gia_transduction` reasons about permissible functions per node
+  and finds redundancy structural rewriting cannot. It is BDD-based, so its cost climbs
+  steeply with size.
+- {py:func}`~aigverse.abc.gia_transtoch` is stochastic transduction — transduction run
+  repeatedly with randomized parameters. It is the most expensive thing here by a wide
+  margin.
+
+:::{warning}
+The last two are realistically limited to small designs. Always pass a `timeout`.
+:::
+
+### Equivalence checking
+
+{py:func}`~aigverse.abc.gia_cec` returns a verdict rather than a network, wrapping ABC's
+`&cec`. It is a genuinely independent second opinion on
+{py:func}`~aigverse.algorithms.equivalence_checking`: two different implementations, so a
+disagreement means one of them has a bug worth finding.
+
+```{code-cell} ipython3
+optimized = abc.compress2rs(aig)
+print(f"ABC says:      {abc.gia_cec(aig, optimized)}")
+print(f"aigverse says: {equivalence_checking(aig, optimized)}")
+```
+
+ABC matches inputs by position rather than by name, so the two networks must have the
+same interface. Note that `&cec` is incomplete under a resource limit — an undecided
+answer is raised as an error rather than returned as `False`, since "not proven equal"
+and "proven different" are very different statements.
+
+## What ABC thinks of a network
+
+{py:func}`~aigverse.abc.stats` and {py:func}`~aigverse.abc.gia_stats` run ABC's
+`print_stats` and `&ps` and return an {py:class}`~aigverse.abc.AbcStats` instead of a line
+of text:
+
+```{code-cell} ipython3
+print(abc.stats(aig))
+print(abc.gia_stats(aig))
+```
+
+The two stores report slightly different things — `print_stats` has a latch count, `&ps`
+has an average level — and both keep the original line in `raw`. Their value is that they
+are an _independent_ measurement: if ABC's counts ever disagree with `aig.num_gates`, the
+AIGER transfer lost something.
+
 ## Type preservation and limitations
 
 The returned network has the same type as the input: an
@@ -168,15 +231,6 @@ which is available yet.
 Each call starts an ABC process and transfers the network through temporary AIGER files,
 which costs roughly 20 ms of overhead per call — negligible for batch work, but worth
 keeping in mind in a tight optimization loop.
-
-## A worked study
-
-[`examples/abc_recipe_study.py`](https://github.com/marcelwa/aigverse/blob/main/examples/abc_recipe_study.py)
-puts the bridge through a real experiment on the
-[EPFL benchmark suite](https://github.com/lsils/benchmarks): it runs all 24 orderings of
-the four atomic commands, compares the classic and `&`-space families on the area–depth
-plane, and plots the result. It is a standalone [PEP 723](https://peps.python.org/pep-0723/)
-script, so `uv run examples/abc_recipe_study.py` needs no setup beyond an ABC binary.
 
 ## Keeping the scripts in sync
 

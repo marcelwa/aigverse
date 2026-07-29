@@ -30,11 +30,24 @@ from ._binary import (
     set_abc_binary,
     set_abc_rc,
 )
-from ._commands import balance, refactor, resub, rewrite
+from ._commands import balance, orchestrate, refactor, resub, rewrite
 from ._errors import AbcError, AbcExecutionError, AbcNotFoundError, AbcTimeoutError
-from ._gia import gia_balance, gia_dc2, gia_fraig, gia_resub, gia_syn2, gia_syn3, gia_syn4
+from ._gia import (
+    gia_balance,
+    gia_cec,
+    gia_dc2,
+    gia_deepsyn,
+    gia_fraig,
+    gia_resub,
+    gia_syn2,
+    gia_syn3,
+    gia_syn4,
+    gia_transduction,
+    gia_transtoch,
+)
 from ._runner import run_commands, run_script
 from ._scripts import SCRIPTS, expand_script
+from ._stats import AbcStats, gia_stats, stats
 from ._wrappers import (
     compress,
     compress2,
@@ -53,6 +66,7 @@ __all__ = [
     "AbcError",
     "AbcExecutionError",
     "AbcNotFoundError",
+    "AbcStats",
     "AbcTimeoutError",
     "abc_binary",
     "abc_rc",
@@ -65,13 +79,19 @@ __all__ = [
     "expand_script",
     "find_abc_binary",
     "gia_balance",
+    "gia_cec",
     "gia_dc2",
+    "gia_deepsyn",
     "gia_fraig",
     "gia_resub",
+    "gia_stats",
     "gia_syn2",
     "gia_syn3",
     "gia_syn4",
+    "gia_transduction",
+    "gia_transtoch",
     "is_available",
+    "orchestrate",
     "refactor",
     "resub",
     "resyn",
@@ -83,4 +103,5 @@ __all__ = [
     "run_script",
     "set_abc_binary",
     "set_abc_rc",
+    "stats",
 ]
