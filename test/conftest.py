@@ -28,6 +28,8 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             item.add_marker(pytest.mark.adapters)
         elif "/test/truth_tables/" in test_path:
             item.add_marker(pytest.mark.tts)
+        elif "/test/benchmarks/" in test_path:
+            item.add_marker(pytest.mark.benchmarks)
 
 
 @pytest.fixture

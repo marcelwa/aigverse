@@ -63,6 +63,7 @@ aigs
 truth_tables
 algorithms
 generators
+benchmarks
 machine_learning
 ```
 

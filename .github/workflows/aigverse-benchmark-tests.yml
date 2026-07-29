@@ -1,0 +1,60 @@
+name: 📊 • Benchmarks
+
+# The benchmark loader downloads circuits from github.com/lsils/benchmarks. Those
+# tests are skipped everywhere else, so that a network hiccup cannot turn the
+# whole test matrix red; this workflow is the only place they actually run.
+
+on:
+  merge_group:
+  push:
+    branches: ["main"]
+    paths:
+      - "python/aigverse/benchmarks/**"
+      - "test/benchmarks/**"
+      - ".github/workflows/aigverse-benchmark-tests.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      # GitHub Actions does not support YAML anchors, so this repeats the list above
+      - "python/aigverse/benchmarks/**"
+      - "test/benchmarks/**"
+      - ".github/workflows/aigverse-benchmark-tests.yml"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark-tests:
+    name: 📊 Benchmark downloads
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read # required to check out the repository
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
+        with:
+          key: "ubuntu-24.04-aigverse"
+          save: ${{ github.ref == 'refs/heads/main' }}
+          max-size: 10G
+
+      - name: Setup mold
+        uses: rui314/setup-mold@9c9c13bf4c3f1adef0cc596abc155580bcb04444 # v1
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          enable-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+
+      # Exercising the real download path is the entire point of this job, so it
+      # deliberately does not pre-seed the benchmark cache.
+      - name: 📊 Test the benchmark loader
+        run: uvx nox -s tests-3.12 -- -m benchmarks
