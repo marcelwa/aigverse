@@ -9,7 +9,7 @@ import pytest
 from aigverse import abc
 from aigverse.algorithms import equivalence_checking
 from aigverse.generators import ripple_carry_multiplier
-from aigverse.networks import Aig, NamedAig
+from aigverse.networks import Aig, DepthAig, NamedAig
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -78,6 +78,39 @@ def test_gia_space_round_trips() -> None:
     assert result.num_pis == aig.num_pis
     assert result.num_pos == aig.num_pos
     assert equivalence_checking(aig, result)
+
+
+@pytest.mark.parametrize(
+    "command",
+    ["gia_balance", "gia_resub", "gia_dc2", "gia_syn2", "gia_syn3", "gia_syn4", "gia_fraig"],
+)
+def test_gia_commands_preserve_equivalence(command: str) -> None:
+    """Every `&`-space wrapper must optimize without changing the function.
+
+    Deliberately no gate-count assertion: the `&` scripts buy depth with area, so
+    demanding a smaller network would be asserting the opposite of their purpose.
+    """
+    aig = ripple_carry_multiplier(4)
+    result = getattr(abc, command)(aig)
+
+    assert result.num_pis == aig.num_pis
+    assert result.num_pos == aig.num_pos
+    assert equivalence_checking(aig, result)
+
+
+def test_gia_synthesis_reaches_depth_the_classic_scripts_cannot() -> None:
+    """On this design `&syn4` beats `resyn2` on depth, which the docs claim.
+
+    Deliberately scoped to one design rather than stated as a general property:
+    on a carry-lookahead adder the same command buys no depth at all. The point
+    is that the two families explore different parts of the space.
+    """
+    aig = ripple_carry_multiplier(4)
+    gia = abc.gia_syn4(aig)
+
+    assert DepthAig(gia).num_levels < DepthAig(aig).num_levels
+    assert DepthAig(gia).num_levels < DepthAig(abc.resyn2(aig)).num_levels
+    assert equivalence_checking(aig, gia)
 
 
 def test_gia_scripts_fail_without_the_flag(and_aig: AigType) -> None:

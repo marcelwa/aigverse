@@ -73,6 +73,7 @@ sdist.exclude = [
     "**/.github",
     "**/doc",
     "**/docs",
+    "**/examples",
     "**/test",
 ]
 
@@ -80,6 +81,7 @@ sdist.exclude = [
 sdist-only = ["python/aigverse/_version.py"]
 git-only = [
     "docs/*",
+    "examples/*",
     "test/*",
     ".idea/*",
 ]
@@ -158,6 +160,9 @@ error-on-warning = true
 [tool.ty.src]
 exclude = [
     "docs/**",
+    # standalone PEP 723 scripts: their dependencies are declared inline and
+    # are deliberately not installed in the project environment
+    "examples/**",
 ]
 
 
@@ -193,6 +198,8 @@ isort.required-imports = ["from __future__ import annotations"]
 "python/aigverse/__init__.py" = ["RUF067"]
 "test/**" = ["T20", "ANN", "D", "INP001", "S301", "S403"]
 "docs/**" = ["T20", "ERA001", "INP001"]
+# standalone PEP 723 scripts: they print their findings and are not a package
+"examples/*.py" = ["T20", "INP001"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]
 "tools/*.py" = ["S603", "S607"]
 # the ABC bridge shells out to a user-configured executable by design, and its

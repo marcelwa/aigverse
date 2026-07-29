@@ -32,6 +32,7 @@ from ._binary import (
 )
 from ._commands import balance, refactor, resub, rewrite
 from ._errors import AbcError, AbcExecutionError, AbcNotFoundError, AbcTimeoutError
+from ._gia import gia_balance, gia_dc2, gia_fraig, gia_resub, gia_syn2, gia_syn3, gia_syn4
 from ._runner import run_commands, run_script
 from ._scripts import SCRIPTS, expand_script
 from ._wrappers import (
@@ -63,6 +64,13 @@ __all__ = [
     "dc2",
     "expand_script",
     "find_abc_binary",
+    "gia_balance",
+    "gia_dc2",
+    "gia_fraig",
+    "gia_resub",
+    "gia_syn2",
+    "gia_syn3",
+    "gia_syn4",
     "is_available",
     "refactor",
     "resub",

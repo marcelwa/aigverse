@@ -105,6 +105,44 @@ print(f"{aig.num_gates} -> {result.num_gates} AND gates")
 The two stores can also be bridged inside a single script with `&get` and `&put`, but
 those do not carry I/O names across, whereas `gia=True` does.
 
+### `&`-space wrappers
+
+The `&` commands have wrappers of their own, which set `gia=True` for you:
+`gia_balance` (`&b`), `gia_resub`, `gia_dc2`, `gia_syn2`, `gia_syn3`, `gia_syn4`, and
+`gia_fraig`.
+
+The `&`-space is not a mirror of the classic set — there is no `&rewrite` and no
+`&refactor`, with `&dc2` standing in for both. What it offers instead is a different
+strategy: these commands map to LUTs internally and unmap again, restructuring far more
+aggressively than the classic commands, which only rewrite locally.
+
+Whether that pays off is strongly design-dependent, and it is worth seeing that rather
+than taking it on faith:
+
+```{code-cell} ipython3
+from aigverse.generators import ripple_carry_multiplier
+from aigverse.networks import DepthAig
+
+def report(label, ntk):
+    print(f"  {label:10s} {ntk.num_gates:4d} gates  {DepthAig(ntk).num_levels:3d} levels")
+
+for name, design in [("multiplier", ripple_carry_multiplier(4)), ("adder", aig)]:
+    print(name)
+    report("original", design)
+    report("resyn2", abc.resyn2(design))
+    report("gia_syn4", abc.gia_syn4(design))
+```
+
+On the multiplier, `gia_syn4` buys depth that `resyn2` cannot reach, and pays for it in
+area. On the adder it does neither — it adds gates and leaves the depth alone, while
+`resyn2` wins outright. Neither family dominates, so measure on your own designs instead
+of assuming.
+
+{py:func}`~aigverse.abc.gia_fraig` is the odd one out and worth knowing about: it is
+combinational SAT sweeping, which merges nodes that are functionally equivalent but
+structurally different. No amount of rewriting finds those, which makes it a useful pass
+_between_ two structural scripts that each introduced their own duplicates.
+
 ## Type preservation and limitations
 
 The returned network has the same type as the input: an
@@ -130,6 +168,15 @@ which is available yet.
 Each call starts an ABC process and transfers the network through temporary AIGER files,
 which costs roughly 20 ms of overhead per call — negligible for batch work, but worth
 keeping in mind in a tight optimization loop.
+
+## A worked study
+
+[`examples/abc_recipe_study.py`](https://github.com/marcelwa/aigverse/blob/main/examples/abc_recipe_study.py)
+puts the bridge through a real experiment on the
+[EPFL benchmark suite](https://github.com/lsils/benchmarks): it runs all 24 orderings of
+the four atomic commands, compares the classic and `&`-space families on the area–depth
+plane, and plots the result. It is a standalone [PEP 723](https://peps.python.org/pep-0723/)
+script, so `uv run examples/abc_recipe_study.py` needs no setup beyond an ABC binary.
 
 ## Keeping the scripts in sync
 

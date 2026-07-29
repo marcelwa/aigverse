@@ -12,7 +12,20 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from aigverse.abc import AbcExecutionError, balance, refactor, resub, rewrite
+from aigverse.abc import (
+    AbcExecutionError,
+    balance,
+    gia_balance,
+    gia_dc2,
+    gia_fraig,
+    gia_resub,
+    gia_syn2,
+    gia_syn3,
+    gia_syn4,
+    refactor,
+    resub,
+    rewrite,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -124,6 +137,102 @@ def test_out_of_range_options_are_rejected(
 
     Args:
         call: Invokes the wrapper under test with an out-of-range option.
+        message: Expected substring of the raised error.
+        and_aig: A minimal two-input AND network.
+        monkeypatch: Used to hide any installed ABC.
+    """
+    monkeypatch.delenv("AIGVERSE_ABC", raising=False)
+    monkeypatch.setenv("PATH", "")
+
+    with pytest.raises(ValueError, match=message):
+        call(and_aig)
+
+
+@pytest.mark.parametrize(
+    ("call", "expected"),
+    [
+        (lambda ntk, abc: gia_balance(ntk, binary=abc), "&b"),
+        (lambda ntk, abc: gia_balance(ntk, delay_only=True, and_only=True, binary=abc), "&b -d -a"),
+        (lambda ntk, abc: gia_resub(ntk, binary=abc), "&resub"),
+        (lambda ntk, abc: gia_resub(ntk, max_inserts=2, max_support=6, binary=abc), "&resub -N 2 -S 6"),
+        (lambda ntk, abc: gia_dc2(ntk, binary=abc), "&dc2"),
+        (lambda ntk, abc: gia_dc2(ntk, update_levels=False, binary=abc), "&dc2 -l"),
+        (lambda ntk, abc: gia_syn2(ntk, binary=abc), "&syn2"),
+        (lambda ntk, abc: gia_syn2(ntk, delay_relaxation=0, binary=abc), "&syn2 -R 0"),
+        (lambda ntk, abc: gia_syn3(ntk, binary=abc), "&syn3"),
+        (lambda ntk, abc: gia_syn4(ntk, binary=abc), "&syn4"),
+        (lambda ntk, abc: gia_fraig(ntk, conflict_limit=100, binary=abc), "&fraig -C 100"),
+    ],
+    ids=[
+        "gia-balance-default",
+        "gia-balance-delay-and-only",
+        "gia-resub-default",
+        "gia-resub-limits",
+        "gia-dc2-default",
+        "gia-dc2-no-level-update",
+        "gia-syn2-default",
+        "gia-syn2-relaxation-zero",
+        "gia-syn3",
+        "gia-syn4",
+        "gia-fraig-conflict-limit",
+    ],
+)
+def test_gia_options_translate_to_abc_switches(
+    call: Callable[[Aig, Path], object],
+    expected: str,
+    and_aig: Aig,
+    fake_abc: Callable[[str], Path],
+) -> None:
+    """The `&`-space wrappers must build their commands and take the GIA path.
+
+    Args:
+        call: Invokes the wrapper under test with a network and a binary.
+        expected: The ABC command the wrapper is expected to build.
+        and_aig: A minimal two-input AND network.
+        fake_abc: Factory for the stand-in ABC executable.
+    """
+    shim = fake_abc(_FAILING)
+    script = _command_for(lambda: call(and_aig, shim))
+
+    assert f"; {expected}; " in script
+    # a `&` command against the classic store would silently see nothing.
+    # Not anchored to the start: a resource file registered via AIGVERSE_ABC_RC
+    # prepends a `source` step to what ABC is actually asked to run.
+    assert "&read in.aig" in script
+    assert "read_aiger" not in script
+    assert script.endswith("&write out.aig")
+
+
+def test_delay_relaxation_of_zero_is_not_dropped(and_aig: Aig, fake_abc: Callable[[str], Path]) -> None:
+    """`0` is a meaningful relaxation ratio and must survive the `None` default.
+
+    Args:
+        and_aig: A minimal two-input AND network.
+        fake_abc: Factory for the stand-in ABC executable.
+    """
+    shim = fake_abc(_FAILING)
+    assert "-R 0" in _command_for(lambda: gia_syn2(and_aig, delay_relaxation=0, binary=shim))
+
+
+@pytest.mark.parametrize(
+    ("call", "message"),
+    [
+        (lambda ntk: gia_resub(ntk, max_inserts=-1), "-N limit must not be negative"),
+        (lambda ntk: gia_syn2(ntk, delay_relaxation=-1), "delay_relaxation must not be negative"),
+        (lambda ntk: gia_fraig(ntk, conflict_limit=-1), "conflict_limit must not be negative"),
+    ],
+    ids=["gia-resub-inserts", "gia-syn2-relaxation", "gia-fraig-conflicts"],
+)
+def test_negative_gia_options_are_rejected(
+    call: Callable[[Aig], object],
+    message: str,
+    and_aig: Aig,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Negative limits are caught here, before a process is started.
+
+    Args:
+        call: Invokes the wrapper under test with a negative option.
         message: Expected substring of the raised error.
         and_aig: A minimal two-input AND network.
         monkeypatch: Used to hide any installed ABC.
