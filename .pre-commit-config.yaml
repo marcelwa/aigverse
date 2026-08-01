@@ -101,7 +101,7 @@ repos:
 
   # Python linting using ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.0
+    rev: v0.16.1
     hooks:
       - id: ruff-format
         priority: 1
@@ -111,7 +111,7 @@ repos:
 
   # Check Python types with ty
   - repo: https://github.com/astral-sh/ty-pre-commit
-    rev: v0.0.63
+    rev: v0.0.65
     hooks:
       - id: ty
         args: [--only-dev]
