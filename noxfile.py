@@ -64,6 +64,16 @@ def _run_tests(
     extra_command: Sequence[str] = (),
     pytest_run_args: Sequence[str] = (),
 ) -> None:
+    """Install the project into the session and run pytest against it.
+
+    Args:
+        session: The nox session to install into and run in.
+        install_args: Extra arguments forwarded to every `uv` invocation, used to
+            pin resolution for the minimums session.
+        extra_command: A command to run after installing and before testing.
+        pytest_run_args: Extra arguments forwarded to pytest. Note that a `-m`
+            passed here replaces the one in `addopts` rather than adding to it.
+    """
     env = {"UV_PROJECT_ENVIRONMENT": session.virtualenv.location}
 
     if shutil.which("cmake") is None and shutil.which("cmake3") is None:

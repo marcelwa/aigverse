@@ -129,10 +129,15 @@ def _check_revision(revision: str) -> str:
         ValueError: If the revision is empty, absolute, contains a ``..``
             component, or holds characters a git ref cannot.
     """
-    if not _SAFE_REVISION.match(revision) or ".." in revision.split("/"):
+    # `.` and empty components are rejected alongside `..`: the filesystem
+    # collapses `a/./b`, `a//b` and `a/` onto the same directory as another
+    # revision, which would quietly serve one revision's circuits for another.
+    components = revision.split("/")
+    if not _SAFE_REVISION.match(revision) or any(part in {"", ".", ".."} for part in components):
         msg = (
             f"invalid revision {revision!r}: expected a git commit, tag or branch, "
-            f"which must not be absolute or contain a '..' component"
+            f"which must not be absolute, end in a slash, or contain an empty, "
+            f"'.' or '..' component"
         )
         raise ValueError(msg)
     return revision

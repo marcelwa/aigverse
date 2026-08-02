@@ -233,3 +233,36 @@ def test_a_legitimate_revision_is_accepted(revision: str, tmp_path: Path) -> Non
     cached.write_bytes(b"placeholder")
 
     assert epfl_path("adder", revision=revision, cache_dir=tmp_path) == cached
+
+
+@pytest.mark.parametrize(
+    "revision",
+    ["master/", "a//b", "a/./b", "a/.", "./a", "master//"],
+    ids=["trailing-slash", "empty-component", "dot-component", "trailing-dot", "leading-dot", "double-trailing"],
+)
+def test_cache_key_aliases_are_rejected(revision: str, tmp_path: Path) -> None:
+    """Revisions that collapse onto another revision's cache directory are refused.
+
+    The filesystem treats `master/`, `master//` and `master/.` as `master`, so
+    accepting them would serve one revision's circuits under another's name.
+
+    Args:
+        revision: The aliasing revision under test.
+        tmp_path: Cache directory for this test.
+    """
+    with pytest.raises(ValueError, match="invalid revision"):
+        epfl_path("adder", revision=revision, cache_dir=tmp_path)
+
+
+def test_an_alias_cannot_reach_another_revisions_cache(tmp_path: Path) -> None:
+    """Concretely: a trailing slash must not read the pinned revision's circuits.
+
+    Args:
+        tmp_path: Cache directory for this test.
+    """
+    seeded = tmp_path / DEFAULT_REVISION / "arithmetic" / "adder.aig"
+    seeded.parent.mkdir(parents=True)
+    seeded.write_bytes(b"placeholder")
+
+    with pytest.raises(ValueError, match="invalid revision"):
+        epfl_path("adder", revision=DEFAULT_REVISION + "/", cache_dir=tmp_path)

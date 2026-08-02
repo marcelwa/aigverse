@@ -123,7 +123,9 @@ archs = "auto64"
 build-frontend = "build[uv]"
 test-groups = ["test", "torch"]
 test-sources = ["test/"]
-test-command = 'pytest test/ -m "torch or not torch"'
+# the -m here replaces the one in [tool.pytest] addopts rather than adding to it,
+# so the network exclusion has to be repeated or wheel CI would download circuits
+test-command = 'pytest test/ -m "(torch or not torch) and not network"'
 
 
 [tool.cibuildwheel.macos]
