@@ -5,12 +5,17 @@ yardstick for logic synthesis. These helpers fetch its AIGER files on demand,
 cache them, and hand back networks, so a script can name a benchmark instead of
 carrying a downloader and a checked-in copy of the data.
 
+The 20 arithmetic and random/control circuits are supported. The suite's three
+MtM benchmarks are not: they live on Zenodo rather than in the git repository.
+
 Nothing is downloaded at import time, and nothing is bundled with `aigverse`.
 """
 
 from __future__ import annotations
 
+import re
 import urllib.error
+import urllib.parse
 import urllib.request
 from typing import TYPE_CHECKING
 
@@ -33,10 +38,19 @@ __all__ = [
 
 _URL = "https://raw.githubusercontent.com/lsils/benchmarks/{revision}/{category}/{name}.aig"
 
-# The suite is versioned by commit rather than by release. Pinning the default
-# keeps a benchmark meaning the same thing tomorrow as it does today; pass
-# `revision=` to follow the branch instead.
-DEFAULT_REVISION = "master"
+# The suite is versioned by commit rather than by release, and its circuits do
+# change. The default is therefore a pinned commit rather than `master`: two
+# people running the same code must get the same circuits, and a moving default
+# would not even be self-consistent, since whoever already has a warm cache would
+# keep the old file forever while a newcomer downloads the new one.
+#
+# Kept current by the `lsils/benchmarks` custom manager in renovate.json5.
+DEFAULT_REVISION = "0060e156826e733d69bf5b3322d1bdd0d03a1f9a"
+
+# A revision becomes a path component of the cache, so it has to be one: an
+# absolute value would discard the cache root entirely and `..` would climb out
+# of it. Git refs may contain slashes, so those are allowed and simply nest.
+_SAFE_REVISION = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 
 #: The ten arithmetic benchmarks.
 EPFL_ARITHMETIC: frozenset[str] = frozenset({
@@ -66,7 +80,12 @@ EPFL_RANDOM_CONTROL: frozenset[str] = frozenset({
     "voter",
 })
 
-#: Every benchmark in the suite.
+#: Every benchmark this loader supports.
+#:
+#: The suite as published has 23 circuits. The three MtM ("more than ten
+#: million gates") benchmarks are not among these: they are distributed via
+#: Zenodo rather than the git repository, and at several gigabytes apiece they
+#: want a different delivery story than an on-demand download.
 EPFL_BENCHMARKS: frozenset[str] = EPFL_ARITHMETIC | EPFL_RANDOM_CONTROL
 
 _CATEGORIES: dict[str, frozenset[str]] = {
@@ -95,6 +114,28 @@ def epfl_names(category: str | None = None) -> tuple[str, ...]:
         known = ", ".join(sorted(_CATEGORIES))
         msg = f"unknown category {category!r}; available categories: {known}"
         raise ValueError(msg) from None
+
+
+def _check_revision(revision: str) -> str:
+    """Rejects a revision that would not be safe as a cache path component.
+
+    Args:
+        revision: The revision to check.
+
+    Returns:
+        The revision, unchanged.
+
+    Raises:
+        ValueError: If the revision is empty, absolute, contains a ``..``
+            component, or holds characters a git ref cannot.
+    """
+    if not _SAFE_REVISION.match(revision) or ".." in revision.split("/"):
+        msg = (
+            f"invalid revision {revision!r}: expected a git commit, tag or branch, "
+            f"which must not be absolute or contain a '..' component"
+        )
+        raise ValueError(msg)
+    return revision
 
 
 def _category_of(name: str) -> str:
@@ -133,6 +174,8 @@ def epfl_path(
     Args:
         name: The benchmark name, e.g. ``"adder"``. See :func:`epfl_names`.
         revision: Git revision of the benchmark repository to fetch from.
+            Defaults to a pinned commit, so results are reproducible; pass
+            ``"master"`` to follow the branch instead.
         cache_dir: Directory to cache into, overriding the configured one.
         timeout: Seconds to wait for the download.
 
@@ -140,10 +183,12 @@ def epfl_path(
         Path to the local AIGER file.
 
     Raises:
-        ValueError: If ``name`` is not part of the suite.
+        ValueError: If ``name`` is not part of the suite, or ``revision`` is not
+            usable as a path component.
         OSError: If the benchmark could not be downloaded.
     """
     category = _category_of(name)
+    _check_revision(revision)
 
     from pathlib import Path as _Path
 
@@ -153,7 +198,9 @@ def epfl_path(
     if target.is_file() and target.stat().st_size > 0:
         return target
 
-    url = _URL.format(revision=revision, category=category, name=name)
+    # quote() keeps the slashes a ref may legitimately contain, and escapes
+    # anything else that would change the meaning of the URL
+    url = _URL.format(revision=urllib.parse.quote(revision, safe="/"), category=category, name=name)
     directory.mkdir(parents=True, exist_ok=True)
 
     # Download to a sibling first: an interrupted transfer must not leave a
@@ -188,6 +235,8 @@ def epfl(
     Args:
         name: The benchmark name, e.g. ``"adder"``. See :func:`epfl_names`.
         revision: Git revision of the benchmark repository to fetch from.
+            Defaults to a pinned commit, so results are reproducible; pass
+            ``"master"`` to follow the branch instead.
         cache_dir: Directory to cache into, overriding the configured one.
         timeout: Seconds to wait for the download.
 
@@ -195,7 +244,8 @@ def epfl(
         The benchmark network, with its I/O names.
 
     Raises:
-        ValueError: If ``name`` is not part of the suite.
+        ValueError: If ``name`` is not part of the suite, or ``revision`` is not
+            usable as a path component.
         OSError: If the benchmark could not be downloaded.
         RuntimeError: If the downloaded file could not be parsed.
     """

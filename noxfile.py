@@ -77,10 +77,11 @@ def _run_tests(
     if os.environ.get("CI"):
         # CI keeps full coverage: also install the torch group and re-include
         # torch-marked tests that are deselected by default locally. The
-        # benchmark tests stay out -- they download circuits, and a network
-        # hiccup must not turn the whole matrix red. They have their own job.
+        # network-marked tests stay out -- they download circuits, and a
+        # hiccup at github.com must not turn the whole matrix red. They have
+        # their own job.
         only_group_args += ["--only-group", "torch"]
-        pytest_run_args = [*pytest_run_args, "-m", "not benchmarks"]
+        pytest_run_args = [*pytest_run_args, "-m", "not network"]
     session.run(
         "uv",
         "sync",

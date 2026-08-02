@@ -36,6 +36,23 @@
       packageNameTemplate: "https://github.com/marcelwa/mockturtle",
       currentValueTemplate: "mnt",
       datasourceTemplate: "git-refs",
+    },
+    {
+      // The benchmark loader pins the revision of the EPFL suite it fetches, so
+      // that two people running the same code get the same circuits. Renovate
+      // proposes the bump; the circuits themselves do occasionally change.
+      customType: "regex",
+      description: "Update the pinned revision of the EPFL benchmark suite",
+      managerFilePatterns: [
+        "python/aigverse/benchmarks/_epfl.py"
+      ],
+      matchStrings: [
+        "DEFAULT_REVISION\\s*=\\s*\"(?<currentDigest>[0-9a-f]{40})\""
+      ],
+      depNameTemplate: "lsils/benchmarks",
+      packageNameTemplate: "https://github.com/lsils/benchmarks",
+      currentValueTemplate: "master",
+      datasourceTemplate: "git-refs",
     }
   ],
   lockFileMaintenance: {

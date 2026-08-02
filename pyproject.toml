@@ -102,14 +102,15 @@ markers = [
     "io: Tests for read/write and serialization",
     "generators: Tests for network generators",
     "adapters: Tests for optional adapter integrations",
-    "benchmarks: Tests that download benchmark circuits (skipped by default)",
+    "benchmarks: Tests for benchmark loading",
+    "network: Tests that require internet access (skipped by default)",
     "tts: Tests for truth table utilities",
     "torch: Tests that require the optional PyTorch dependency (skipped by default)",
 ]
 addopts = [
     "-ra",
     "--numprocesses=auto", # Automatically use all available CPU cores for parallel testing
-    "-m", "not torch and not benchmarks", # Skip torch- and network-dependent tests by default
+    "-m", "not torch and not network", # Skip torch- and network-dependent tests by default
 ]
 log_level = "INFO"
 testpaths = ["test/"]

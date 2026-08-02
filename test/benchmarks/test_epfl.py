@@ -6,11 +6,13 @@ default; the rest runs offline against a fake server or the cache.
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 import pytest
 
 from aigverse.benchmarks import (
+    DEFAULT_REVISION,
     EPFL_ARITHMETIC,
     EPFL_BENCHMARKS,
     EPFL_RANDOM_CONTROL,
@@ -70,7 +72,7 @@ def test_a_cached_file_is_reused(tmp_path: Path) -> None:
     Args:
         tmp_path: Cache directory for this test.
     """
-    cached = tmp_path / "master" / "arithmetic" / "adder.aig"
+    cached = tmp_path / DEFAULT_REVISION / "arithmetic" / "adder.aig"
     cached.parent.mkdir(parents=True)
     cached.write_bytes(b"not really an aiger file, but non-empty")
 
@@ -84,7 +86,7 @@ def test_an_empty_cached_file_is_not_trusted(tmp_path: Path, monkeypatch: pytest
         tmp_path: Cache directory for this test.
         monkeypatch: Used to make any download attempt fail loudly.
     """
-    stale = tmp_path / "master" / "arithmetic" / "adder.aig"
+    stale = tmp_path / DEFAULT_REVISION / "arithmetic" / "adder.aig"
     stale.parent.mkdir(parents=True)
     stale.write_bytes(b"")
 
@@ -126,16 +128,16 @@ def test_the_revision_is_part_of_the_cache_path(tmp_path: Path) -> None:
     Args:
         tmp_path: Cache directory for this test.
     """
-    for revision in ("master", "abcdef0"):
+    for revision in (DEFAULT_REVISION, "abcdef0"):
         cached = tmp_path / revision / "random_control" / "ctrl.aig"
         cached.parent.mkdir(parents=True)
         cached.write_bytes(b"placeholder")
 
-    assert epfl_path("ctrl", cache_dir=tmp_path).parent.parent.name == "master"
+    assert epfl_path("ctrl", cache_dir=tmp_path).parent.parent.name == DEFAULT_REVISION
     assert epfl_path("ctrl", revision="abcdef0", cache_dir=tmp_path).parent.parent.name == "abcdef0"
 
 
-@pytest.mark.benchmarks
+@pytest.mark.network
 def test_downloading_and_parsing_a_small_benchmark(tmp_path: Path) -> None:
     """The end-to-end path, against the real repository.
 
@@ -153,7 +155,7 @@ def test_downloading_and_parsing_a_small_benchmark(tmp_path: Path) -> None:
     assert ntk.num_gates == 174
 
 
-@pytest.mark.benchmarks
+@pytest.mark.network
 def test_the_second_call_hits_the_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Downloading twice would make a benchmark sweep needlessly slow.
 
@@ -170,3 +172,64 @@ def test_the_second_call_hits_the_cache(tmp_path: Path, monkeypatch: pytest.Monk
     monkeypatch.setattr("urllib.request.urlopen", _refuse)
 
     assert epfl_path("ctrl", cache_dir=tmp_path) == first
+
+
+def test_the_default_revision_is_pinned() -> None:
+    """The default must be a commit, not a branch.
+
+    A moving default would not even be self-consistent: whoever already has a
+    warm cache keeps the old circuit forever, while a newcomer downloads the new
+    one, and the two silently disagree.
+    """
+    assert re.fullmatch(r"[0-9a-f]{40}", DEFAULT_REVISION)
+
+
+@pytest.mark.parametrize(
+    "revision",
+    ["../../../etc", "/absolute", "a/../../b", "..", "", "with space", "semi;colon", "-leading-dash"],
+    ids=["traversal", "absolute", "nested-traversal", "bare-dotdot", "empty", "space", "semicolon", "leading-dash"],
+)
+def test_an_unsafe_revision_is_rejected(revision: str, tmp_path: Path) -> None:
+    """A revision becomes a cache path component, so it must be constrained.
+
+    An absolute value would discard the cache root outright and `..` would climb
+    out of it, letting a caller write benchmark files anywhere.
+
+    Args:
+        revision: The revision under test.
+        tmp_path: Cache directory for this test.
+    """
+    with pytest.raises(ValueError, match="invalid revision"):
+        epfl_path("adder", revision=revision, cache_dir=tmp_path)
+
+
+def test_an_unsafe_revision_writes_nothing_outside_the_cache(tmp_path: Path) -> None:
+    """The rejection must happen before anything touches the filesystem.
+
+    Args:
+        tmp_path: Parent of both the cache and the directory that must stay empty.
+    """
+    cache = tmp_path / "cache"
+    outside = tmp_path / "outside"
+    outside.mkdir()
+
+    with pytest.raises(ValueError, match="invalid revision"):
+        epfl_path("adder", revision="../outside", cache_dir=cache)
+
+    assert list(outside.iterdir()) == []
+    assert not cache.exists()
+
+
+@pytest.mark.parametrize("revision", ["master", "v1.0", "feature/some-branch", DEFAULT_REVISION])
+def test_a_legitimate_revision_is_accepted(revision: str, tmp_path: Path) -> None:
+    """Branches, tags and slash-bearing refs are all valid revisions.
+
+    Args:
+        revision: The revision under test.
+        tmp_path: Cache directory for this test.
+    """
+    cached = tmp_path / revision / "arithmetic" / "adder.aig"
+    cached.parent.mkdir(parents=True)
+    cached.write_bytes(b"placeholder")
+
+    assert epfl_path("adder", revision=revision, cache_dir=tmp_path) == cached
