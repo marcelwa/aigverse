@@ -680,3 +680,41 @@ def test_aig_setstate_exceptions():
     bad_state: tuple[Any, ...] = ([1, 2, "bad"],)
     with pytest.raises(ValueError, match="Invalid state: expected an index list"):
         pickle.loads(make_bad_pickle(bad_state))
+
+
+def test_aig_node_methods_raise_on_out_of_range_node(aig_with_single_and: tuple[Aig, AigSignal]) -> None:
+    aig, _ = aig_with_single_and
+    out_of_range_node = aig.size
+
+    with pytest.raises(IndexError):
+        aig.make_signal(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.node_to_index(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.pi_index(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.fanins(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.fanin_size(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.fanout_size(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.is_constant(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.is_pi(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.is_and(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.is_or(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.is_xor(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.is_maj(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.is_ite(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.is_xor3(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.is_nary_and(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.is_nary_or(out_of_range_node)
