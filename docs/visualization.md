@@ -81,41 +81,30 @@ plt.show()
 
 ## Highlighting Critical Paths and Fanout
 
-Wrapping an AIG in {py:class}`~aigverse.networks.DepthAig` exposes per-node critical-path information, and passing
-`fanouts=True` to {py:meth}`~aigverse.networks.Aig.to_networkx` attaches each node's fanout count directly as a
-graph attribute. Combined, these can be used to color-code a plot, making bottlenecks and high-congestion nodes
-immediately visible.
+Wrapping an AIG in {py:class}`~aigverse.networks.DepthAig` or {py:class}`~aigverse.networks.FanoutAig` exposes
+per-node critical-path and fanout information, which can be used to color-code a plot, making bottlenecks and
+high-congestion nodes immediately visible.
 
 ```{code-cell} ipython3
-from aigverse.networks import DepthAig
+from aigverse.networks import DepthAig, FanoutAig
 
 depth_aig = DepthAig(aig)
+fanout_aig = FanoutAig(aig)
 
-# Request fanout counts as a node attribute
-G = aig.to_networkx(fanouts=True)
+G = aig.to_networkx()
 pos = graphviz_layout(G, prog="dot")
 for node, position in pos.items():
     pos[node] = (position[0], -position[1])
 
-# Color critical-path nodes red, all others gray.
-# Synthetic PO nodes (index >= aig.size) are not real AIG nodes, so they are excluded here.
+# Synthetic PO nodes (index >= aig.size) represent outputs, not real AIG nodes, so they are excluded here.
 node_colors = ["red" if node < aig.size and depth_aig.is_on_critical_path(node) else "lightgray" for node in G.nodes()]
-
-# Size nodes by their fanout count
-node_sizes = [300 + 200 * data["fanouts"] for _, data in G.nodes(data=True)]
+node_sizes = [300 + 200 * fanout_aig.fanout_size(node) if node < aig.size else 300 for node in G.nodes()]
 
 plt.figure(figsize=(6, 4))
 nx.draw(G, pos, with_labels=True, node_color=node_colors, node_size=node_sizes, arrows=True, arrowsize=15)
 plt.title("Critical path (red) and fanout-scaled node size")
 plt.show()
 ```
-
-:::{note}
-{py:meth}`~aigverse.networks.Aig.to_networkx` adds one synthetic node per primary output (index `>= aig.size`) to
-represent the network's outputs. These synthetic nodes are not valid arguments for
-{py:class}`~aigverse.networks.DepthAig` or {py:class}`~aigverse.networks.FanoutAig` methods, which only operate on
-real AIG nodes.
-:::
 
 ## Interactive Exploration
 
