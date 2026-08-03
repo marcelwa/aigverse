@@ -286,6 +286,26 @@ print(mux.num_pis, mux.num_pos, mux.num_gates)
 print(decoder.num_pis, decoder.num_pos, decoder.num_gates)
 ```
 
+### 📊 Benchmark Loading
+
+The `aigverse.benchmarks` module fetches standard benchmark suites on demand and caches them locally, so a script
+can name a benchmark instead of carrying a downloader and a checked-in copy of the data. The
+[EPFL combinational suite](https://github.com/lsils/benchmarks) is supported out of the box.
+
+```python
+from aigverse.benchmarks import epfl, epfl_names
+
+# List the benchmark names in a category
+print(epfl_names("arithmetic"))  # ('adder', 'bar', 'div', ...)
+
+# Downloads once and caches thereafter, returned as a NamedAig
+aig = epfl("ctrl")
+print(f"{aig.num_pis} inputs, {aig.num_pos} outputs, {aig.num_gates} AND gates")
+```
+
+For more details, including cache configuration and revision pinning, see the
+[benchmarks documentation](https://aigverse.readthedocs.io/en/latest/benchmarks.html).
+
 ### ✅ Equivalence Checking
 
 Equivalence of AIGs (e.g., after optimization) can be checked using SAT-based equivalence checking.
