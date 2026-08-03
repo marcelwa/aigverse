@@ -102,6 +102,8 @@ markers = [
     "io: Tests for read/write and serialization",
     "generators: Tests for network generators",
     "adapters: Tests for optional adapter integrations",
+    "benchmarks: Tests for benchmark loading",
+    "network: Tests that require internet access (skipped by default)",
     "tts: Tests for truth table utilities",
     "torch: Tests that require the optional PyTorch dependency (skipped by default)",
     "abc: Tests for the external ABC bridge (skipped when no ABC binary is found)",
@@ -109,7 +111,7 @@ markers = [
 addopts = [
     "-ra",
     "--numprocesses=auto", # Automatically use all available CPU cores for parallel testing
-    "-m", "not torch", # Skip torch-marked tests by default; override with -m "torch or not torch"
+    "-m", "not torch and not network", # Skip torch- and network-dependent tests by default
 ]
 log_level = "INFO"
 testpaths = ["test/"]
@@ -122,7 +124,9 @@ archs = "auto64"
 build-frontend = "build[uv]"
 test-groups = ["test", "torch"]
 test-sources = ["test/"]
-test-command = 'pytest test/ -m "torch or not torch"'
+# the -m here replaces the one in [tool.pytest] addopts rather than adding to it,
+# so the network exclusion has to be repeated or wheel CI would download circuits
+test-command = 'pytest test/ -m "(torch or not torch) and not network"'
 
 
 [tool.cibuildwheel.macos]
@@ -193,6 +197,8 @@ isort.required-imports = ["from __future__ import annotations"]
 "python/aigverse/__init__.py" = ["RUF067"]
 "test/**" = ["T20", "ANN", "D", "INP001", "S301", "S403"]
 "docs/**" = ["T20", "ERA001", "INP001"]
+# the loaders document the exceptions that propagate out of their helpers
+"python/aigverse/benchmarks/*.py" = ["DOC502"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]
 "tools/*.py" = ["S603", "S607"]
 # the ABC bridge shells out to a user-configured executable by design, and its

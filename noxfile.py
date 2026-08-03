@@ -65,6 +65,16 @@ def _run_tests(
     extra_command: Sequence[str] = (),
     pytest_run_args: Sequence[str] = (),
 ) -> None:
+    """Install the project into the session and run pytest against it.
+
+    Args:
+        session: The nox session to install into and run in.
+        install_args: Extra arguments forwarded to every `uv` invocation, used to
+            pin resolution for the minimums session.
+        extra_command: A command to run after installing and before testing.
+        pytest_run_args: Extra arguments forwarded to pytest. Note that a `-m`
+            passed here replaces the one in `addopts` rather than adding to it.
+    """
     env = {"UV_PROJECT_ENVIRONMENT": session.virtualenv.location}
 
     if shutil.which("cmake") is None and shutil.which("cmake3") is None:
@@ -77,9 +87,12 @@ def _run_tests(
     only_group_args: list[str] = ["--only-group", "build", "--only-group", "test"]
     if os.environ.get("CI"):
         # CI keeps full coverage: also install the torch group and re-include
-        # torch-marked tests that are deselected by default locally.
+        # torch-marked tests that are deselected by default locally. The
+        # network-marked tests stay out -- they download circuits, and a
+        # hiccup at github.com must not turn the whole matrix red. They have
+        # their own job.
         only_group_args += ["--only-group", "torch"]
-        pytest_run_args = [*pytest_run_args, "-m", "torch or not torch"]
+        pytest_run_args = [*pytest_run_args, "-m", "not network"]
     session.run(
         "uv",
         "sync",

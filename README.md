@@ -45,6 +45,8 @@ representations for downstream data science and ML pipelines.
 - **High-Level API**: Simplify logic synthesis tasks with a Pythonic interface for AIG manipulation and optimization.
 - **ML/Data Science Interoperability**: Optional adapters for graph and array representations used in Python data
   science and machine learning workflows.
+- **Benchmark Suites**: On-demand access to standard benchmark circuits (e.g., the EPFL suite), downloaded once and
+  cached locally.
 - **ABC Integration**: Optionally run [ABC](https://github.com/berkeley-abc/abc) optimization scripts such as `resyn2`
   or `compress2rs` on your networks, driving an ABC executable you already have installed. No ABC is bundled.
 
@@ -285,6 +287,26 @@ print(adder.num_pis, adder.num_pos, adder.num_gates)
 print(mux.num_pis, mux.num_pos, mux.num_gates)
 print(decoder.num_pis, decoder.num_pos, decoder.num_gates)
 ```
+
+### 📊 Benchmark Loading
+
+The `aigverse.benchmarks` module fetches standard benchmark suites on demand and caches them locally, so a script
+can name a benchmark instead of carrying a downloader and a checked-in copy of the data. The
+[EPFL combinational suite](https://github.com/lsils/benchmarks) is supported out of the box.
+
+```python
+from aigverse.benchmarks import epfl, epfl_names
+
+# List the benchmark names in a category
+print(epfl_names("arithmetic"))  # ('adder', 'bar', 'div', ...)
+
+# Downloads once and caches thereafter, returned as a NamedAig
+aig = epfl("ctrl")
+print(f"{aig.num_pis} inputs, {aig.num_pos} outputs, {aig.num_gates} AND gates")
+```
+
+For more details, including cache configuration and revision pinning, see the
+[benchmarks documentation](https://aigverse.readthedocs.io/en/latest/benchmarks.html).
 
 ### ✅ Equivalence Checking
 

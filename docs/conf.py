@@ -95,6 +95,8 @@ nitpick_ignore = [
     # a TypeVar and the Ellipsis in variadic tuple annotations are not documentable targets
     ("py:class", "AigT"),
     ("py:class", "aigverse.abc._runner.AigT"),
+    # autoapi stringifies `tuple[str, ...]` as `tuple[str, Ellipsis]`, and then
+    # nitpicky mode cannot resolve `Ellipsis` as a class. The annotation is fine.
     ("py:class", "Ellipsis"),
 ]
 
