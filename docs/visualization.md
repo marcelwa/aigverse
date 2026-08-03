@@ -120,11 +120,12 @@ resubstitution, refactoring, and rewriting passes from the [Algorithms](algorith
 and remove redundant logic.
 
 ```{code-cell} ipython3
-from aigverse.algorithms import aig_cut_rewriting, aig_resubstitution, balancing, sop_refactoring
+from aigverse.algorithms import aig_cut_rewriting, aig_resubstitution, balancing, cleanup_dangling, sop_refactoring
 from aigverse.generators import carry_lookahead_adder
 from aigverse.networks import DepthAig
 
-aig_cla = carry_lookahead_adder(bitwidth=4)
+# Generators can leave behind a handful of dead gates; clean those up first for a fair baseline
+aig_cla = cleanup_dangling(carry_lookahead_adder(bitwidth=4))
 
 aig_optimized = aig_cla.clone()
 aig_optimized = aig_resubstitution(aig_optimized)
