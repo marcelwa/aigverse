@@ -45,6 +45,8 @@ representations for downstream data science and ML pipelines.
 - **High-Level API**: Simplify logic synthesis tasks with a Pythonic interface for AIG manipulation and optimization.
 - **ML/Data Science Interoperability**: Optional adapters for graph and array representations used in Python data
   science and machine learning workflows.
+- **Benchmark Suites**: On-demand access to standard benchmark circuits (e.g., the EPFL suite), downloaded once and
+  cached locally.
 
 ## 🤔 Motivation
 
