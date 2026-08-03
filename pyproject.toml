@@ -244,6 +244,7 @@ docs = [
     "sphinx>=8.2.3; python_version >= '3.11'",
     "matplotlib>=3.0.0",
     "pygraphviz>=1.9.0",
+    "graphviz>=0.20",
 ]
 test = [
     { include-group = "adapters" },
