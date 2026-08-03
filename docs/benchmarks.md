@@ -57,17 +57,6 @@ for name in epfl_names("random_control"):
     )
 ```
 
-:::{note}
-Unusually for these docs, the examples that load a circuit are **not** executed at build
-time. Everything else here is, and normally that is what keeps the examples honest — but
-an executed `epfl(...)` would make every documentation build depend on `github.com` being
-reachable and prompt, and a stalled download of a one-kilobyte file is enough to fail the
-build outright.
-
-The API these examples show is covered end-to-end by the test suite instead, including a
-job that performs real downloads, which is the right place for that guarantee.
-:::
-
 :::{warning}
 The suite spans four orders of magnitude. `ctrl` has 174 AND gates; `hyp` has over
 214,000 and is a several-hundred-megabyte proposition once loaded and optimized. Start
