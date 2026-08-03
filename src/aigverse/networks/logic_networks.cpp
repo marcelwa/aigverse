@@ -119,8 +119,11 @@ bool contains_node(const Ntk& ntk, const nanobind::object& value)
  * their own (only debug-only asserts), which is undefined behavior for out-of-range ids. This guard turns such
  * calls into a well-defined Python exception instead.
  *
- * @tparam NetworkOrView Network or network-view type exposing a `size()` member.
- * @tparam NodeType Node handle type, implicitly convertible to `uint64_t`.
+ * Uses `node_to_index()` rather than casting `n` directly, so this remains correct for future network types whose
+ * node handles are not already plain integer indices.
+ *
+ * @tparam NetworkOrView Network or network-view type exposing `size()` and `node_to_index()` members.
+ * @tparam NodeType Node handle type accepted by `NetworkOrView::node_to_index()`.
  * @param ntk Network or view instance.
  * @param n Node id to validate.
  * @throws nanobind::index_error If `n` is not a valid node id for `ntk`.
@@ -130,7 +133,7 @@ void check_node(const NetworkOrView& ntk, const NodeType& n)
 {
     namespace nb = nanobind;
 
-    if (static_cast<uint64_t>(n) >= static_cast<uint64_t>(ntk.size()))
+    if (static_cast<uint64_t>(ntk.node_to_index(n)) >= static_cast<uint64_t>(ntk.size()))
     {
         throw nb::index_error("node index out of range");
     }
