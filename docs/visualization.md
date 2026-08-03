@@ -16,7 +16,9 @@ mystnb:
 Logic synthesis is inherently structural, and visualizing an AIG is one of the fastest ways to debug a network,
 understand what an optimization pass actually changed, or explain a circuit to someone else. `aigverse` does not
 ship its own plotting library, but it exposes the network structure through standard formats and adapters so that
-mature Python visualization tooling can be used directly.
+mature Python visualization tooling can be used directly. The examples below share a single, non-trivial randomly
+generated AIG (via {py:func}`~aigverse.generators.random_aig`) so that the resulting structures are actually
+interesting to look at.
 
 ## Graphviz (DOT) Export
 
@@ -27,17 +29,11 @@ notebook using the [`graphviz`](https://graphviz.readthedocs.io/) Python package
 ```{code-cell} ipython3
 import graphviz
 
+from aigverse.generators import random_aig
 from aigverse.io import write_dot
-from aigverse.networks import Aig
 
-# Create a sample AIG
-aig = Aig()
-a = aig.create_pi()
-b = aig.create_pi()
-c = aig.create_pi()
-f1 = aig.create_and(a, b)
-f2 = aig.create_or(f1, c)
-aig.create_po(f2)
+# Generate a moderately sized random AIG, reused throughout this page
+aig = random_aig(num_pis=5, num_gates=18, seed=42)
 
 # Write to DOT format
 write_dot(aig, "example.dot")
@@ -57,26 +53,36 @@ The {py:meth}`~aigverse.networks.Aig.to_networkx` adapter converts an AIG into a
 which can be laid out and drawn with [NetworkX](https://networkx.org/) and [Matplotlib](https://matplotlib.org/).
 A full worked example that labels nodes with their level, fanout, type, and function is available in the
 [NetworkX section](machine_learning.md#networkx) of the Machine Learning Integration guide. A minimal version of
-the same workflow:
+the same workflow, using `networkx.multipartite_layout` to place every node on the row that matches its logic
+level (so all primary inputs line up on a single row) and coloring nodes by type:
 
 ```{code-cell} ipython3
 import matplotlib.pyplot as plt
 import networkx as nx
-from networkx.drawing.nx_agraph import graphviz_layout
 
 import aigverse.adapters
 
-# Convert the AIG to a NetworkX graph
-G = aig.to_networkx()
+# Node type one-hot order is [constant, pi, gate, po]
+type_colors = ["black", "#4C72B0", "#DDDDDD", "#55A868"]
 
-# Layer the graph so inputs and outputs are visually separated
-pos = graphviz_layout(G, prog="dot")
-for node, position in pos.items():
-    pos[node] = (position[0], -position[1])
 
-plt.figure(figsize=(6, 4))
-nx.draw(G, pos, with_labels=True, node_color="lightblue", arrows=True, arrowsize=15)
-plt.show()
+def draw_layered(graph, node_colors, node_sizes, *, title):
+    """Draws a NetworkX AIG graph with nodes arranged into rows by logic level."""
+    pos = nx.multipartite_layout(graph, subset_key="level", align="horizontal")
+    plt.figure(figsize=(8, 5))
+    nx.draw(
+        graph, pos, node_color=node_colors, node_size=node_sizes, edgecolors="black", linewidths=0.8,
+        arrows=True, arrowsize=10, width=0.8,
+    )
+    plt.title(title)
+    plt.show()
+
+
+# Convert the AIG to a NetworkX graph, including each node's logic level
+G = aig.to_networkx(levels=True)
+
+node_colors = [type_colors[data["type"].argmax()] for _, data in G.nodes(data=True)]
+draw_layered(G, node_colors, node_sizes=220, title="Random AIG structure")
 ```
 
 ## Highlighting Critical Paths and Fanout
@@ -91,19 +97,11 @@ from aigverse.networks import DepthAig, FanoutAig
 depth_aig = DepthAig(aig)
 fanout_aig = FanoutAig(aig)
 
-G = aig.to_networkx()
-pos = graphviz_layout(G, prog="dot")
-for node, position in pos.items():
-    pos[node] = (position[0], -position[1])
-
 # Synthetic PO nodes (index >= aig.size) represent outputs, not real AIG nodes, so they are excluded here.
-node_colors = ["red" if node < aig.size and depth_aig.is_on_critical_path(node) else "lightgray" for node in G.nodes()]
-node_sizes = [300 + 200 * fanout_aig.fanout_size(node) if node < aig.size else 300 for node in G.nodes()]
+node_colors = ["#C44E52" if node < aig.size and depth_aig.is_on_critical_path(node) else "#DDDDDD" for node in G.nodes()]
+node_sizes = [150 + 60 * fanout_aig.fanout_size(node) if node < aig.size else 150 for node in G.nodes()]
 
-plt.figure(figsize=(6, 4))
-nx.draw(G, pos, with_labels=True, node_color=node_colors, node_size=node_sizes, arrows=True, arrowsize=15)
-plt.title("Critical path (red) and fanout-scaled node size")
-plt.show()
+draw_layered(G, node_colors, node_sizes, title="Critical path (red) and fanout-scaled node size")
 ```
 
 ## Interactive Exploration
@@ -117,7 +115,8 @@ separately.
 ## Before vs. After: Visualizing Optimization
 
 Comparing the DOT (or NetworkX) rendering of a network before and after an optimization pass such as
-{py:func}`~aigverse.algorithms.balancing` visually confirms the effect of the transformation on depth.
+{py:func}`~aigverse.algorithms.balancing` visually confirms the effect of the transformation on depth and gate
+count.
 
 ```{code-cell} ipython3
 from aigverse.algorithms import balancing
@@ -127,8 +126,8 @@ aig_balanced = balancing(aig.clone(), rebalance_function="sop")
 write_dot(aig, "before.dot")
 write_dot(aig_balanced, "after.dot")
 
-print(f"Depth before: {DepthAig(aig).num_levels} levels")
-print(f"Depth after:  {DepthAig(aig_balanced).num_levels} levels")
+print(f"Before: {aig.num_gates} gates, {DepthAig(aig).num_levels} levels")
+print(f"After:  {aig_balanced.num_gates} gates, {DepthAig(aig_balanced).num_levels} levels")
 ```
 
 ```{code-cell} ipython3
