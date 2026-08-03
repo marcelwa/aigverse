@@ -136,9 +136,7 @@ def test_a_zero_byte_download_is_rejected(tmp_path: Path, monkeypatch: pytest.Mo
         def read() -> bytes:
             return b""
 
-    monkeypatch.setattr(
-        "urllib.request.urlopen", lambda *_a, **_kw: contextlib.nullcontext(_EmptyResponse())
-    )
+    monkeypatch.setattr("urllib.request.urlopen", lambda *_a, **_kw: contextlib.nullcontext(_EmptyResponse()))
 
     with pytest.raises(OSError, match="downloaded EPFL benchmark 'ctrl' is empty"):
         epfl_path("ctrl", cache_dir=tmp_path)
