@@ -91,6 +91,11 @@ myst_substitutions = {
 }
 myst_heading_anchors = 3
 nitpicky = True
+nitpick_ignore = [
+    # autoapi stringifies `tuple[str, ...]` as `tuple[str, Ellipsis]`, and then
+    # nitpicky mode cannot resolve `Ellipsis` as a class. The annotation is fine.
+    ("py:class", "Ellipsis"),
+]
 
 # -- Options for {MyST}NB ----------------------------------------------------
 
