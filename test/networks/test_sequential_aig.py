@@ -361,3 +361,23 @@ def test_sequential_aig_iteration(
     # Alternative way to verify the relationship between ri and ro
     assert saig.ri_to_ro(f1) == saig.get_node(ro1)
     assert saig.ri_to_ro(f2) == saig.get_node(ro2)
+
+
+def test_sequential_aig_out_of_range_node_raises(
+    sequential_aig_ci_co_fixture: tuple[SequentialAig, AigSignal, AigSignal, AigSignal],
+) -> None:
+    saig, _, _, _ = sequential_aig_ci_co_fixture
+    out_of_range_node = saig.size
+
+    with pytest.raises(IndexError):
+        saig.is_ci(out_of_range_node)
+    with pytest.raises(IndexError):
+        saig.is_pi(out_of_range_node)
+    with pytest.raises(IndexError):
+        saig.is_ro(out_of_range_node)
+    with pytest.raises(IndexError):
+        saig.pi_index(out_of_range_node)
+    with pytest.raises(IndexError):
+        saig.ci_index(out_of_range_node)
+    with pytest.raises(IndexError):
+        saig.ro_index(out_of_range_node)

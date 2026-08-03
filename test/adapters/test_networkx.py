@@ -148,6 +148,25 @@ class TestNetworkxAdapter:
                 assert data["fanouts"] >= 0
 
     @staticmethod
+    def test_to_networkx_synthetic_po_nodes_raise_on_native_node_lookups(simple_aig: Aig) -> None:
+        """Regression test for #418.
+
+        to_networkx() adds synthetic PO pseudo-nodes with index >= aig.size. Passing one of those into
+        FanoutAig.fanouts() or DepthAig.is_on_critical_path() used to segfault instead of raising.
+        """
+        graph = simple_aig.to_networkx()
+        synthetic_po_nodes = [node for node in graph.nodes() if node >= simple_aig.size]
+        assert synthetic_po_nodes
+
+        fanout_aig = FanoutAig(simple_aig)
+        depth_aig = DepthAig(simple_aig)
+        for node in synthetic_po_nodes:
+            with pytest.raises(IndexError):
+                fanout_aig.fanouts(node)
+            with pytest.raises(IndexError):
+                depth_aig.is_on_critical_path(node)
+
+    @staticmethod
     def test_to_networkx_edge_types(simple_aig: Aig) -> None:
         """Test edge type one-hot encoding for regular and inverted edges."""
         g = simple_aig.to_networkx()

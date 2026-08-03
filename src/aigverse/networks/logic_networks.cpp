@@ -112,6 +112,30 @@ bool contains_node(const Ntk& ntk, const nanobind::object& value)
     return node_index >= 0 && static_cast<uint64_t>(node_index) < static_cast<uint64_t>(ntk.size());
 }
 
+/**
+ * @brief Validates that a node id refers to an existing node in the network.
+ *
+ * Several native network/view methods index per-node storage directly by node id without any bounds checking of
+ * their own (only debug-only asserts), which is undefined behavior for out-of-range ids. This guard turns such
+ * calls into a well-defined Python exception instead.
+ *
+ * @tparam NetworkOrView Network or network-view type exposing a `size()` member.
+ * @tparam NodeType Node handle type, implicitly convertible to `uint64_t`.
+ * @param ntk Network or view instance.
+ * @param n Node id to validate.
+ * @throws nanobind::index_error If `n` is not a valid node id for `ntk`.
+ */
+template <typename NetworkOrView, typename NodeType>
+void check_node(const NetworkOrView& ntk, const NodeType& n)
+{
+    namespace nb = nanobind;
+
+    if (static_cast<uint64_t>(n) >= static_cast<uint64_t>(ntk.size()))
+    {
+        throw nb::index_error("node index out of range");
+    }
+}
+
 }  // namespace
 
 void bind_tensor_encodings(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
@@ -251,11 +275,32 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
         .def_prop_ro("num_pis", &Ntk::num_pis, R"pb(Number of primary inputs.)pb")
         .def_prop_ro("num_pos", &Ntk::num_pos, R"pb(Number of primary outputs.)pb")
         .def("get_node", &Ntk::get_node, nb::arg("s"), R"pb(Returns the node referenced by a signal.)pb")
-        .def("make_signal", &Ntk::make_signal, nb::arg("n"), R"pb(Creates a signal from a node.)pb")
+        .def(
+            "make_signal",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.make_signal(n);
+            },
+            nb::arg("n"), R"pb(Creates a signal from a node.)pb")
         .def("is_complemented", &Ntk::is_complemented, nb::arg("s"), R"pb(Returns whether a signal is complemented.)pb")
-        .def("node_to_index", &Ntk::node_to_index, nb::arg("n"), R"pb(Returns the integer index of a node.)pb")
+        .def(
+            "node_to_index",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.node_to_index(n);
+            },
+            nb::arg("n"), R"pb(Returns the integer index of a node.)pb")
         .def("index_to_node", &Ntk::index_to_node, nb::arg("index"), R"pb(Returns the node for an index.)pb")
-        .def("pi_index", &Ntk::pi_index, nb::arg("n"), R"pb(Returns the primary-input position of a node.)pb")
+        .def(
+            "pi_index",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.pi_index(n);
+            },
+            nb::arg("n"), R"pb(Returns the primary-input position of a node.)pb")
         .def("pi_at", &Ntk::pi_at, nb::arg("index"), R"pb(Returns the primary input node at ``index``.)pb")
         .def("po_index", &Ntk::po_index, nb::arg("s"), R"pb(Returns the primary-output position of a signal.)pb")
         .def("po_at", &Ntk::po_at, nb::arg("index"), R"pb(Returns the primary output signal at ``index``.)pb")
@@ -321,6 +366,7 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
             "fanins",
             [](const Ntk& ntk, const Node& n)
             {
+                check_node(ntk, n);
                 std::vector<Signal> fanins;
                 fanins.reserve(ntk.fanin_size(n));
                 ntk.foreach_fanin(n, [&fanins](const auto& f) { fanins.push_back(f); });
@@ -328,39 +374,103 @@ void bind_network(nanobind::module_& m, const std::string& network_name)  // NOL
             },
             nb::arg("n"), R"pb(Returns fanin signals of node ``n``.)pb")
         .def(
-            "fanin_size", [](const Ntk& ntk, const Node& n) { return ntk.fanin_size(n); }, nb::arg("n"),
-            R"pb(Returns the number of fanins of node ``n``.)pb")
+            "fanin_size",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.fanin_size(n);
+            },
+            nb::arg("n"), R"pb(Returns the number of fanins of node ``n``.)pb")
         .def(
-            "fanout_size", [](const Ntk& ntk, const Node& n) { return ntk.fanout_size(n); }, nb::arg("n"),
-            R"pb(Returns the number of fanouts of node ``n``.)pb")
-        .def("is_constant", &Ntk::is_constant, nb::arg("n"), R"pb(Returns whether ``n`` is a constant node.)pb")
-        .def("is_pi", &Ntk::is_pi, nb::arg("n"), R"pb(Returns whether ``n`` is a primary input.)pb")
+            "fanout_size",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.fanout_size(n);
+            },
+            nb::arg("n"), R"pb(Returns the number of fanouts of node ``n``.)pb")
+        .def(
+            "is_constant",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.is_constant(n);
+            },
+            nb::arg("n"), R"pb(Returns whether ``n`` is a constant node.)pb")
+        .def(
+            "is_pi",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.is_pi(n);
+            },
+            nb::arg("n"), R"pb(Returns whether ``n`` is a primary input.)pb")
         .def("has_and", &Ntk::has_and, nb::arg("a"), nb::arg("b"),
              R"pb(Returns whether an AND with fanins ``a`` and ``b`` already exists.)pb")
         .def(
-            "is_and", [](const Ntk& ntk, const Node& n) { return ntk.is_and(n); }, nb::arg("n"),
-            R"pb(Returns whether ``n`` is an AND node.)pb")
+            "is_and",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.is_and(n);
+            },
+            nb::arg("n"), R"pb(Returns whether ``n`` is an AND node.)pb")
         .def(
-            "is_or", [](const Ntk& ntk, const Node& n) { return ntk.is_or(n); }, nb::arg("n"),
-            R"pb(Returns whether ``n`` is an OR node.)pb")
+            "is_or",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.is_or(n);
+            },
+            nb::arg("n"), R"pb(Returns whether ``n`` is an OR node.)pb")
         .def(
-            "is_xor", [](const Ntk& ntk, const Node& n) { return ntk.is_xor(n); }, nb::arg("n"),
-            R"pb(Returns whether ``n`` is an XOR node.)pb")
+            "is_xor",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.is_xor(n);
+            },
+            nb::arg("n"), R"pb(Returns whether ``n`` is an XOR node.)pb")
         .def(
-            "is_maj", [](const Ntk& ntk, const Node& n) { return ntk.is_maj(n); }, nb::arg("n"),
-            R"pb(Returns whether ``n`` is a majority node.)pb")
+            "is_maj",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.is_maj(n);
+            },
+            nb::arg("n"), R"pb(Returns whether ``n`` is a majority node.)pb")
         .def(
-            "is_ite", [](const Ntk& ntk, const Node& n) { return ntk.is_ite(n); }, nb::arg("n"),
-            R"pb(Returns whether ``n`` is an if-then-else node.)pb")
+            "is_ite",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.is_ite(n);
+            },
+            nb::arg("n"), R"pb(Returns whether ``n`` is an if-then-else node.)pb")
         .def(
-            "is_xor3", [](const Ntk& ntk, const Node& n) { return ntk.is_xor3(n); }, nb::arg("n"),
-            R"pb(Returns whether ``n`` is a 3-input XOR node.)pb")
+            "is_xor3",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.is_xor3(n);
+            },
+            nb::arg("n"), R"pb(Returns whether ``n`` is a 3-input XOR node.)pb")
         .def(
-            "is_nary_and", [](const Ntk& ntk, const Node& n) { return ntk.is_nary_and(n); }, nb::arg("n"),
-            R"pb(Returns whether ``n`` is an n-ary AND node.)pb")
+            "is_nary_and",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.is_nary_and(n);
+            },
+            nb::arg("n"), R"pb(Returns whether ``n`` is an n-ary AND node.)pb")
         .def(
-            "is_nary_or", [](const Ntk& ntk, const Node& n) { return ntk.is_nary_or(n); }, nb::arg("n"),
-            R"pb(Returns whether ``n`` is an n-ary OR node.)pb")
+            "is_nary_or",
+            [](const Ntk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.is_nary_or(n);
+            },
+            nb::arg("n"), R"pb(Returns whether ``n`` is an n-ary OR node.)pb")
         .def(
             "to_edge_list", [](const Ntk& ntk, const int64_t regular_weight = 0, const int64_t inverted_weight = 1)
             { return aigverse::to_edge_list(ntk, regular_weight, inverted_weight); }, nb::arg("regular_weight") = 0,
@@ -561,9 +671,22 @@ Preserves only combinational structure and does not capture augmented view metad
             "__deepcopy__", [](const DepthNtk& ntk, const nb::dict&) { return DepthNtk{ntk}; }, nb::arg("memo"),
             R"pb(Returns a deep copy of the depth view.)pb")
         .def_prop_ro("num_levels", &DepthNtk::depth, R"pb(Current network depth in levels.)pb")
-        .def("level", &DepthNtk::level, nb::arg("n"), R"pb(Returns the level of node ``n``.)pb")
-        .def("is_on_critical_path", &DepthNtk::is_on_critical_path, nb::arg("n"),
-             R"pb(Returns whether node ``n`` is on at least one critical path.)pb")
+        .def(
+            "level",
+            [](const DepthNtk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.level(n);
+            },
+            nb::arg("n"), R"pb(Returns the level of node ``n``.)pb")
+        .def(
+            "is_on_critical_path",
+            [](const DepthNtk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.is_on_critical_path(n);
+            },
+            nb::arg("n"), R"pb(Returns whether node ``n`` is on at least one critical path.)pb")
         .def("update_levels", &DepthNtk::update_levels, R"pb(Recomputes level information.)pb")
         .def("create_po", &DepthNtk::create_po, nb::arg("f"), R"pb(Creates an output and updates depth information.)pb")
         .def(
@@ -594,6 +717,7 @@ Preserves only combinational structure and does not capture augmented view metad
             "fanouts",
             [](const FanoutNtk& ntk, const Node& n)
             {
+                check_node(ntk, n);
                 std::vector<Node> fanouts;
                 fanouts.reserve(ntk.fanout_size(n));
                 ntk.foreach_fanout(n, [&fanouts](const auto& f) { fanouts.push_back(f); });
@@ -758,9 +882,30 @@ Returns:
         .def("create_ri", &SequentialNtk::create_ri, nb::arg("f"), R"pb(Creates a register input signal.)pb")
         .def_prop_ro("is_combinational", &SequentialNtk::is_combinational,
                      R"pb(Whether the network is combinational.)pb")
-        .def("is_ci", &SequentialNtk::is_ci, nb::arg("n"), R"pb(Returns whether ``n`` is a combinational input.)pb")
-        .def("is_pi", &SequentialNtk::is_pi, nb::arg("n"), R"pb(Returns whether ``n`` is a primary input.)pb")
-        .def("is_ro", &SequentialNtk::is_ro, nb::arg("n"), R"pb(Returns whether ``n`` is a register output.)pb")
+        .def(
+            "is_ci",
+            [](const SequentialNtk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.is_ci(n);
+            },
+            nb::arg("n"), R"pb(Returns whether ``n`` is a combinational input.)pb")
+        .def(
+            "is_pi",
+            [](const SequentialNtk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.is_pi(n);
+            },
+            nb::arg("n"), R"pb(Returns whether ``n`` is a primary input.)pb")
+        .def(
+            "is_ro",
+            [](const SequentialNtk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.is_ro(n);
+            },
+            nb::arg("n"), R"pb(Returns whether ``n`` is a register output.)pb")
         .def_prop_ro("num_pis", &SequentialNtk::num_pis, R"pb(Number of primary inputs.)pb")
         .def_prop_ro("num_pos", &SequentialNtk::num_pos, R"pb(Number of primary outputs.)pb")
         .def_prop_ro("num_cis", &SequentialNtk::num_cis, R"pb(Number of combinational inputs.)pb")
@@ -776,10 +921,31 @@ Returns:
              R"pb(Sets metadata for register ``index``.)pb")
         .def("register_at", &SequentialNtk::register_at, nb::arg("index"),
              R"pb(Returns metadata for register ``index``.)pb")
-        .def("pi_index", &SequentialNtk::pi_index, nb::arg("n"), R"pb(Returns PI index of node ``n``.)pb")
-        .def("ci_index", &SequentialNtk::ci_index, nb::arg("n"), R"pb(Returns CI index of node ``n``.)pb")
+        .def(
+            "pi_index",
+            [](const SequentialNtk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.pi_index(n);
+            },
+            nb::arg("n"), R"pb(Returns PI index of node ``n``.)pb")
+        .def(
+            "ci_index",
+            [](const SequentialNtk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.ci_index(n);
+            },
+            nb::arg("n"), R"pb(Returns CI index of node ``n``.)pb")
         .def("co_index", &SequentialNtk::co_index, nb::arg("s"), R"pb(Returns CO index of signal ``s``.)pb")
-        .def("ro_index", &SequentialNtk::ro_index, nb::arg("n"), R"pb(Returns RO index of node ``n``.)pb")
+        .def(
+            "ro_index",
+            [](const SequentialNtk& ntk, const Node& n)
+            {
+                check_node(ntk, n);
+                return ntk.ro_index(n);
+            },
+            nb::arg("n"), R"pb(Returns RO index of node ``n``.)pb")
         .def("ri_index", &SequentialNtk::ri_index, nb::arg("s"), R"pb(Returns RI index of signal ``s``.)pb")
         .def("ro_to_ri", &SequentialNtk::ro_to_ri, nb::arg("s"), R"pb(Maps a register output signal to its input.)pb")
         .def("ri_to_ro", &SequentialNtk::ri_to_ro, nb::arg("s"), R"pb(Maps a register input signal to its output.)pb")
