@@ -16,9 +16,8 @@ mystnb:
 Logic synthesis is inherently structural, and visualizing an AIG is one of the fastest ways to debug a network,
 understand what an optimization pass actually changed, or explain a circuit to someone else. `aigverse` does not
 ship its own plotting library, but it exposes the network structure through standard formats and adapters so that
-mature Python visualization tooling can be used directly. The examples below share a single, non-trivial randomly
-generated AIG (via {py:func}`~aigverse.generators.random_aig`) so that the resulting structures are actually
-interesting to look at.
+mature Python visualization tooling can be used directly. The examples below share a single, structured benchmark
+network (see {doc}`generators`) so that the resulting structures are non-trivial and reproducible.
 
 ## Graphviz (DOT) Export
 
@@ -29,11 +28,11 @@ notebook using the [`graphviz`](https://graphviz.readthedocs.io/) Python package
 ```{code-cell} ipython3
 import graphviz
 
-from aigverse.generators import random_aig
+from aigverse.generators import ripple_carry_adder
 from aigverse.io import write_dot
 
-# Generate a moderately sized random AIG, reused throughout this page
-aig = random_aig(num_pis=5, num_gates=18, seed=42)
+# A 4-bit ripple-carry adder, reused throughout this page
+aig = ripple_carry_adder(bitwidth=4)
 
 # Write to DOT format
 write_dot(aig, "example.dot")
@@ -82,7 +81,7 @@ def draw_layered(graph, node_colors, node_sizes, *, title):
 G = aig.to_networkx(levels=True)
 
 node_colors = [type_colors[data["type"].argmax()] for _, data in G.nodes(data=True)]
-draw_layered(G, node_colors, node_sizes=220, title="Random AIG structure")
+draw_layered(G, node_colors, node_sizes=180, title="Ripple-carry adder structure")
 ```
 
 ## Highlighting Critical Paths and Fanout
@@ -114,20 +113,30 @@ separately.
 
 ## Before vs. After: Visualizing Optimization
 
-Comparing the DOT (or NetworkX) rendering of a network before and after an optimization pass such as
-{py:func}`~aigverse.algorithms.balancing` visually confirms the effect of the transformation on depth and gate
-count.
+Comparing the DOT rendering of a network before and after an optimization pipeline visually confirms the effect
+of the transformation on structure, depth, and gate count. A 4-bit carry-lookahead adder makes for a good
+demonstration here, since (unlike the ripple-carry adder above) its structure still leaves room for the
+resubstitution, refactoring, and rewriting passes from the [Algorithms](algorithms.md#optimization) guide to find
+and remove redundant logic.
 
 ```{code-cell} ipython3
-from aigverse.algorithms import balancing
+from aigverse.algorithms import aig_cut_rewriting, aig_resubstitution, balancing, sop_refactoring
+from aigverse.generators import carry_lookahead_adder
+from aigverse.networks import DepthAig
 
-aig_balanced = balancing(aig.clone(), rebalance_function="sop")
+aig_cla = carry_lookahead_adder(bitwidth=4)
 
-write_dot(aig, "before.dot")
-write_dot(aig_balanced, "after.dot")
+aig_optimized = aig_cla.clone()
+aig_optimized = aig_resubstitution(aig_optimized)
+aig_optimized = sop_refactoring(aig_optimized)
+aig_optimized = aig_cut_rewriting(aig_optimized)
+aig_optimized = balancing(aig_optimized, rebalance_function="sop")
 
-print(f"Before: {aig.num_gates} gates, {DepthAig(aig).num_levels} levels")
-print(f"After:  {aig_balanced.num_gates} gates, {DepthAig(aig_balanced).num_levels} levels")
+write_dot(aig_cla, "before.dot")
+write_dot(aig_optimized, "after.dot")
+
+print(f"Before: {aig_cla.num_gates} gates, {DepthAig(aig_cla).num_levels} levels")
+print(f"After:  {aig_optimized.num_gates} gates, {DepthAig(aig_optimized).num_levels} levels")
 ```
 
 ```{code-cell} ipython3
