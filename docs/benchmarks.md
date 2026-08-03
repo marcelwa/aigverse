@@ -110,6 +110,6 @@ set_benchmark_cache("/scratch/benchmarks")  # process-wide
 aig = epfl("adder", cache_dir="/tmp/here")  # this call only
 ```
 
-or set `AIGVERSE_BENCHMARK_CACHE` in the environment. The precedence is
-{py:func}`~aigverse.benchmarks.set_benchmark_cache`, then the environment variable, then
+or set `AIGVERSE_BENCHMARK_CACHE` in the environment. The precedence is the per-call
+`cache_dir`, then {py:func}`~aigverse.benchmarks.set_benchmark_cache`, then the environment variable, then
 the platform default.

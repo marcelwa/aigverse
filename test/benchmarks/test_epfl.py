@@ -6,6 +6,7 @@ default; the rest runs offline against a fake server or the cache.
 
 from __future__ import annotations
 
+import contextlib
 import re
 from typing import TYPE_CHECKING
 
@@ -116,6 +117,30 @@ def test_a_failed_download_leaves_no_partial_file(tmp_path: Path, monkeypatch: p
     monkeypatch.setattr("urllib.request.urlopen", _fail)
 
     with pytest.raises(OSError, match="could not download the EPFL benchmark 'ctrl'"):
+        epfl_path("ctrl", cache_dir=tmp_path)
+
+    assert list(tmp_path.rglob("*.aig")) == []
+    assert list(tmp_path.rglob("*.part")) == []
+
+
+def test_a_zero_byte_download_is_rejected(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """An empty response body must not be published as a cached file.
+
+    Args:
+        tmp_path: Cache directory for this test.
+        monkeypatch: Used to make the download return an empty body.
+    """
+
+    class _EmptyResponse:
+        @staticmethod
+        def read() -> bytes:
+            return b""
+
+    monkeypatch.setattr(
+        "urllib.request.urlopen", lambda *_a, **_kw: contextlib.nullcontext(_EmptyResponse())
+    )
+
+    with pytest.raises(OSError, match="downloaded EPFL benchmark 'ctrl' is empty"):
         epfl_path("ctrl", cache_dir=tmp_path)
 
     assert list(tmp_path.rglob("*.aig")) == []

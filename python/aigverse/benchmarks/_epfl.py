@@ -213,12 +213,18 @@ def epfl_path(
     partial = target.with_suffix(".aig.part")
     try:
         with urllib.request.urlopen(url, timeout=timeout) as response:  # ruff: ignore[suspicious-url-open-usage]
-            partial.write_bytes(response.read())
+            data = response.read()
     except (urllib.error.URLError, TimeoutError) as exc:
         partial.unlink(missing_ok=True)
         msg = f"could not download the EPFL benchmark {name!r} from {url}: {exc}"
         raise OSError(msg) from exc
 
+    if not data:
+        partial.unlink(missing_ok=True)
+        msg = f"downloaded EPFL benchmark {name!r} is empty"
+        raise OSError(msg)
+
+    partial.write_bytes(data)
     partial.replace(target)
     return target
 
