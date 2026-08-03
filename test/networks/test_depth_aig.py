@@ -3,6 +3,8 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING
 
+import pytest
+
 from aigverse.networks import DepthAig
 
 if TYPE_CHECKING:
@@ -73,3 +75,13 @@ def test_depth_aig_clone_and_copy_preserve_wrapper_type(depth_aig_single_and: tu
         assert isinstance(candidate, DepthAig)
         assert candidate.num_levels == 1
         assert candidate.level(candidate.get_node(gate)) == 1
+
+
+def test_depth_aig_out_of_range_node_raises(depth_aig_single_and: tuple[DepthAig, AigSignal]) -> None:
+    aig, _ = depth_aig_single_and
+    out_of_range_node = aig.size
+
+    with pytest.raises(IndexError):
+        aig.level(out_of_range_node)
+    with pytest.raises(IndexError):
+        aig.is_on_critical_path(out_of_range_node)

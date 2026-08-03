@@ -22,6 +22,7 @@ Key features include:
 - High-performance C++ backend with a Pythonic interface
 - Optional adapters for graph and numeric interoperability in machine learning and data science workflows
 - Comprehensive tools for logic synthesis and optimization
+- On-demand access to standard benchmark suites (e.g., EPFL), downloaded once and cached locally
 
 `aigverse` is designed as reusable bridge infrastructure rather than as a full end-to-end EDA toolchain.
 
@@ -63,6 +64,7 @@ aigs
 truth_tables
 algorithms
 generators
+benchmarks
 machine_learning
 visualization
 ```

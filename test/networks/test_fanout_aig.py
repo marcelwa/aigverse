@@ -3,6 +3,8 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING
 
+import pytest
+
 from aigverse.networks import FanoutAig
 
 if TYPE_CHECKING:
@@ -36,3 +38,13 @@ def test_fanout_aig_clone_and_copy_preserve_wrapper_type(
     for candidate in (cloned, shallow, deep):
         assert isinstance(candidate, FanoutAig)
         assert candidate.fanout_size(candidate.get_node(gate0)) == 1
+
+
+def test_fanout_aig_out_of_range_node_raises(
+    fanout_aig_branching: tuple[FanoutAig, AigSignal, AigSignal, AigSignal],
+) -> None:
+    aig, _, _, _ = fanout_aig_branching
+    out_of_range_node = aig.size
+
+    with pytest.raises(IndexError):
+        aig.fanouts(out_of_range_node)

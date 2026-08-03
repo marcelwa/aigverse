@@ -53,10 +53,13 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
     "sphinx_design",
+    "sphinx_llm.txt",
     "sphinxext.opengraph",
     "sphinx.ext.viewcode",
     "sphinxcontrib.inkscapeconverter",
 ]
+
+llms_txt_description = "aigverse is a Python library for working with logic networks, synthesis, and optimization."
 
 source_suffix = [".rst", ".md"]
 
@@ -91,6 +94,11 @@ myst_substitutions = {
 }
 myst_heading_anchors = 3
 nitpicky = True
+nitpick_ignore = [
+    # autoapi stringifies `tuple[str, ...]` as `tuple[str, Ellipsis]`, and then
+    # nitpicky mode cannot resolve `Ellipsis` as a class. The annotation is fine.
+    ("py:class", "Ellipsis"),
+]
 
 # -- Options for {MyST}NB ----------------------------------------------------
 
