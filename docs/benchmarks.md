@@ -30,7 +30,9 @@ Loading one gives a {py:class}`~aigverse.networks.NamedAig`, which is an
 {py:class}`~aigverse.networks.Aig` that kept the input and output names from the AIGER
 symbol table, so the names come along at no cost:
 
-```python
+```{code-cell} ipython3
+:tags: [skip-execution]
+
 from aigverse.networks import DepthAig
 
 aig = epfl("ctrl")
@@ -45,7 +47,9 @@ print(f"{aig.num_gates} AND gates, {DepthAig(aig).num_levels} levels")
 
 Sweeping part of the suite is then a loop:
 
-```python
+```{code-cell} ipython3
+:tags: [skip-execution]
+
 for name in epfl_names("random_control"):
     design = epfl(name)
     print(
@@ -76,9 +80,9 @@ parsing.
 
 ## Revisions
 
-The benchmark repository is versioned by commit rather than by release, and its circuits
-do change. The loader therefore defaults to a **pinned commit** rather than to `master`,
-so that two people running the same code get the same circuits.
+The benchmark repository is versioned by commit rather than by release. Its circuits
+don't usually change. The loader defaults to a **pinned commit** rather than to
+`master`, so that two people running the same code get the same circuits.
 
 That is not only about reproducibility across machines. A moving default would not even be
 self-consistent: whoever already had a warm cache would keep the old circuit forever, while

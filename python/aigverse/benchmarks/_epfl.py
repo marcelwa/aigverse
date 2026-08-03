@@ -38,11 +38,12 @@ __all__ = [
 
 _URL = "https://raw.githubusercontent.com/lsils/benchmarks/{revision}/{category}/{name}.aig"
 
-# The suite is versioned by commit rather than by release, and its circuits do
-# change. The default is therefore a pinned commit rather than `master`: two
-# people running the same code must get the same circuits, and a moving default
-# would not even be self-consistent, since whoever already has a warm cache would
-# keep the old file forever while a newcomer downloads the new one.
+# The suite is versioned by commit rather than by release. Its circuits don't
+# usually change, but the default is a pinned commit rather than `master`
+# regardless: two people running the same code must get the same circuits, and
+# a moving default would not even be self-consistent, since whoever already has
+# a warm cache would keep the old file forever while a newcomer downloads the
+# new one.
 #
 # Kept current by the `lsils/benchmarks` custom manager in renovate.json5.
 DEFAULT_REVISION = "0060e156826e733d69bf5b3322d1bdd0d03a1f9a"
@@ -52,7 +53,7 @@ DEFAULT_REVISION = "0060e156826e733d69bf5b3322d1bdd0d03a1f9a"
 # of it. Git refs may contain slashes, so those are allowed and simply nest.
 _SAFE_REVISION = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 
-#: The ten arithmetic benchmarks.
+# The ten arithmetic benchmarks.
 EPFL_ARITHMETIC: frozenset[str] = frozenset({
     "adder",
     "bar",
@@ -66,7 +67,7 @@ EPFL_ARITHMETIC: frozenset[str] = frozenset({
     "square",
 })
 
-#: The ten random/control benchmarks.
+# The ten random/control benchmarks.
 EPFL_RANDOM_CONTROL: frozenset[str] = frozenset({
     "arbiter",
     "cavlc",
@@ -80,12 +81,12 @@ EPFL_RANDOM_CONTROL: frozenset[str] = frozenset({
     "voter",
 })
 
-#: Every benchmark this loader supports.
-#:
-#: The suite as published has 23 circuits. The three MtM ("more than ten
-#: million gates") benchmarks are not among these: they are distributed via
-#: Zenodo rather than the git repository, and at several gigabytes apiece they
-#: want a different delivery story than an on-demand download.
+# Every benchmark this loader supports.
+#
+# The suite as published has 23 circuits. The three MtM ("more than ten
+# million gates") benchmarks are not among these: they are distributed via
+# Zenodo rather than the git repository, and at several gigabytes apiece they
+# want a different delivery story than an on-demand download.
 EPFL_BENCHMARKS: frozenset[str] = EPFL_ARITHMETIC | EPFL_RANDOM_CONTROL
 
 _CATEGORIES: dict[str, frozenset[str]] = {

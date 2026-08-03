@@ -5,13 +5,8 @@ script or an experiment can name a benchmark rather than shipping a downloader
 and a copy of the data.
 
 Nothing is downloaded at import time and no benchmark is bundled with
-`aigverse`; the first call that needs a file fetches it.
-
-Example:
-    >>> from aigverse.benchmarks import epfl
-    >>> aig = epfl("ctrl")  # doctest: +SKIP
-    >>> aig.num_gates  # doctest: +SKIP
-    174
+`aigverse`; the first call that needs a file fetches it. See the
+:doc:`/benchmarks` guide for a runnable example.
 """
 
 from __future__ import annotations

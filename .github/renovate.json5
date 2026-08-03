@@ -40,7 +40,7 @@
     {
       // The benchmark loader pins the revision of the EPFL suite it fetches, so
       // that two people running the same code get the same circuits. Renovate
-      // proposes the bump; the circuits themselves do occasionally change.
+      // proposes the bump, should the circuits ever change.
       customType: "regex",
       description: "Update the pinned revision of the EPFL benchmark suite",
       managerFilePatterns: [
