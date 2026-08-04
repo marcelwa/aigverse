@@ -66,6 +66,7 @@ algorithms
 generators
 benchmarks
 machine_learning
+visualization
 ```
 
 ````{only} not latex
