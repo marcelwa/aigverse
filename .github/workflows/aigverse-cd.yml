@@ -1,0 +1,62 @@
+name: 🐍 • CD
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build-sdist:
+    name: 📦 CD
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build-sdist.yml
+
+  build-wheels:
+    name: 🛞 CD
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-2025]
+    uses: ./.github/workflows/build-wheels.yml
+    with:
+      runs-on: ${{ matrix.runs-on }}
+
+  publish_to_pypi:
+    needs: [build-sdist, build-wheels]
+    runs-on: ubuntu-latest
+    name: 🚀 Publish to PyPI
+    if: github.event_name == 'release' && github.event.action == 'published'
+    permissions:
+      attestations: write # required to publish the build provenance attestation
+      id-token: write # required by actions/attest-build-provenance and PyPI trusted publishing
+    environment:
+      name: pypi
+      url: https://pypi.org/p/aigverse
+    steps:
+      - name: Download the previously stored artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - name: Generate artifact attestation for sdist and wheel(s)
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        with:
+          subject-path: "dist/*"
+
+      - name: Deploy to PyPI
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+        with:
+          skip-existing: true
+          verbose: true
+          attestations: true
