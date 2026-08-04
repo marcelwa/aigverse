@@ -16,8 +16,10 @@ mystnb:
 Logic synthesis is inherently structural, and visualizing an AIG is one of the fastest ways to debug a network,
 understand what an optimization pass actually changed, or explain a circuit to someone else. `aigverse` does not
 ship its own plotting library, but it exposes the network structure through standard formats and adapters so that
-mature Python visualization tooling can be used directly. The examples below share a single, structured benchmark
-network (see {doc}`generators`) so that the resulting structures are non-trivial and reproducible.
+mature Python visualization tooling can be used directly. The examples below use structured benchmark networks
+(see {doc}`generators`) rather than arbitrary toy circuits, so the resulting structures are non-trivial and
+reproducible: the Graphviz, NetworkX, and highlighting examples share a single ripple-carry adder, while the
+optimization comparison at the end uses a separate carry-lookahead adder.
 
 ## Graphviz (DOT) Export
 
@@ -98,7 +100,7 @@ fanout_aig = FanoutAig(aig)
 
 # Synthetic PO nodes (index >= aig.size) represent outputs, not real AIG nodes, so they are excluded here.
 node_colors = ["#C44E52" if node < aig.size and depth_aig.is_on_critical_path(node) else "#DDDDDD" for node in G.nodes()]
-node_sizes = [150 + 60 * fanout_aig.fanout_size(node) if node < aig.size else 150 for node in G.nodes()]
+node_sizes = [100 + 300 * fanout_aig.fanout_size(node) if node < aig.size else 100 for node in G.nodes()]
 
 draw_layered(G, node_colors, node_sizes, title="Critical path (red) and fanout-scaled node size")
 ```
