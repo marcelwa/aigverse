@@ -179,7 +179,7 @@ Three more `&` commands are searches rather than passes, and are priced accordin
   margin.
 
 ```{code-cell} ipython3
-optimized = abc.gia.deepsyn(aig, timeout=5)
+optimized = abc.gia.deepsyn(aig, timeout=2)
 print(f"{aig.num_gates} -> {optimized.num_gates} AND gates")
 ```
 
