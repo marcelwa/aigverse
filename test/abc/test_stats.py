@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING
 import pytest
 
 from aigverse import abc
-from aigverse.abc import AbcExecutionError, AbcStats, gia, stats
+from aigverse.abc import AbcExecutionError, AbcNotFoundError, AbcStats, gia, stats
 from aigverse.abc._stats import _parse
 from aigverse.algorithms import equivalence_checking
 from aigverse.generators import carry_lookahead_adder, ripple_carry_multiplier
-from aigverse.networks import DepthAig, SequentialAig
+from aigverse.networks import AigRegister, DepthAig, SequentialAig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -21,8 +21,12 @@ if TYPE_CHECKING:
     from aigverse.networks import Aig
 
 
-def test_sequential_is_rejected_before_discovery(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The stats helpers share the runner's type guard, ABC or no ABC.
+def test_sequential_reaches_discovery_rather_than_the_type_guard(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A SequentialAig must get past the type guard the stats helpers share.
+
+    It is registered as an `Aig` subclass on the C++ side, so it has to be
+    dispatched explicitly rather than merely accepted; failing on discovery with
+    no ABC present is what shows it was not refused on type.
 
     Args:
         monkeypatch: Used to hide any installed ABC.
@@ -37,8 +41,21 @@ def test_sequential_is_rejected_before_discovery(monkeypatch: pytest.MonkeyPatch
     ntk.create_po(g)
     ntk.create_ri(g)
 
-    with pytest.raises(TypeError, match="SequentialAig is not supported"):
+    with pytest.raises(AbcNotFoundError):
         stats(ntk)
+
+
+def test_a_non_network_is_still_rejected_on_type(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Widening the guard to sequential networks must not widen it to anything.
+
+    Args:
+        monkeypatch: Used to hide any installed ABC.
+    """
+    monkeypatch.delenv("AIGVERSE_ABC", raising=False)
+    monkeypatch.setenv("PATH", "")
+
+    with pytest.raises(TypeError, match="expected an Aig"):
+        stats("not a network")  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="the fake ABC shims rely on POSIX executable bits")
@@ -135,9 +152,8 @@ def test_stats_track_an_optimization() -> None:
 def test_registers_are_parsed_from_either_spelling(line: str, expected: int | None) -> None:
     """`print_stats` prints `lat`, `&ps` prints `ff`, and both mean registers.
 
-    Parsed directly rather than through ABC, because the bridge cannot yet hand a
-    sequential network over -- the `ff` spelling only appears once it can, so
-    without this the field would silently stay `None` for every such network.
+    Parsed directly rather than through ABC so that both spellings are pinned
+    from one place, including the combinational case where `&ps` omits the field.
 
     Args:
         line: A statistics line as ABC prints it.
@@ -165,3 +181,78 @@ def test_abc_counts_can_differ_from_aigverse_after_strashing() -> None:
     aig = carry_lookahead_adder(16)
 
     assert stats(aig).num_gates < aig.num_gates
+
+
+def _sequential_aig(init: int | None) -> SequentialAig:
+    """Builds a one-register sequential network with the given reset value.
+
+    Args:
+        init: The register's reset value, or ``None`` to leave it undefined.
+
+    Returns:
+        The network.
+    """
+    ntk = SequentialAig()
+    a = ntk.create_pi()
+    ro = ntk.create_ro()
+    g = ntk.create_and(a, ro)
+    ntk.create_po(g)
+    ntk.create_ri(g)
+
+    if init is not None:
+        register = AigRegister()
+        register.init = init
+        ntk.set_register(0, register)
+
+    return ntk
+
+
+@pytest.mark.usefixtures("abc_available")
+@pytest.mark.parametrize("init", [0, 1], ids=["reset-zero", "reset-one"])
+def test_registers_are_reported_for_a_sequential_network(init: int) -> None:
+    """Both stores must count the registers of a real sequential network.
+
+    The end-to-end counterpart of the parser test above: `&ps` calls them `ff`,
+    so this is the case that would silently report `None` if only `lat` were
+    matched.
+
+    Args:
+        init: The register's reset value.
+    """
+    ntk = _sequential_aig(init)
+
+    assert stats(ntk).num_registers == ntk.num_registers
+    assert gia.stats(ntk).num_registers == ntk.num_registers
+
+
+@pytest.mark.usefixtures("abc_available")
+def test_an_undefined_reset_survives_the_classic_store() -> None:
+    """A register with no defined reset must not change shape on the way in."""
+    ntk = _sequential_aig(None)
+    measured = stats(ntk)
+
+    assert measured.num_pis == ntk.num_pis
+    assert measured.num_registers == ntk.num_registers
+    assert measured.num_gates == ntk.num_gates
+
+
+@pytest.mark.xfail(
+    reason=(
+        "`&read` rewrites don't-care-initialized flip-flops on the way into the "
+        "GIA store -- it reports 'Converted 0 1-valued FFs and 1 DC-valued FFs' "
+        "and adds a primary input, a register and three AND nodes to model the "
+        "undefined value. Every `gia` wrapper therefore returns a network with a "
+        "different interface than it was given, silently. Registers with a reset "
+        "of 0 or 1 are unaffected."
+    ),
+    strict=True,
+)
+@pytest.mark.usefixtures("abc_available")
+def test_an_undefined_reset_survives_the_gia_store() -> None:
+    """The same guarantee, in the `&` space, where it does not currently hold."""
+    ntk = _sequential_aig(None)
+    measured = gia.stats(ntk)
+
+    assert measured.num_pis == ntk.num_pis
+    assert measured.num_registers == ntk.num_registers
+    assert measured.num_gates == ntk.num_gates

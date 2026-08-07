@@ -132,26 +132,14 @@ def resolve_binary(binary: str | os.PathLike[str] | None) -> Path:
 
 
 def check_supported(ntk: Aig) -> None:
-    """Rejects network types the bridge cannot round-trip.
+    """Rejects anything that is not an AIG.
 
     Args:
         ntk: The network handed to the bridge.
 
     Raises:
-        TypeError: If ``ntk`` is a ``SequentialAig`` or not an ``Aig`` at all.
+        TypeError: If ``ntk`` is not an ``Aig``.
     """
-    # SequentialAig must be tested first: it is registered as a subclass of Aig
-    # on the C++ side, so an isinstance check against Aig would accept it and
-    # the registers would be silently flattened into extra PI/PO pairs.
-    if isinstance(ntk, SequentialAig):
-        msg = (
-            "SequentialAig is not supported by the ABC bridge yet. Writing "
-            "registers to AIGER requires sequential write_aiger support in "
-            "mockturtle, and reading ABC's sequential output back requires "
-            "handling AIGER 1.9 bad-state properties in mockturtle's reader. "
-            "Pass a combinational Aig instead."
-        )
-        raise TypeError(msg)
     if not isinstance(ntk, Aig):
         msg = f"expected an Aig, got {type(ntk).__name__}"
         raise TypeError(msg)
@@ -309,7 +297,7 @@ def run_script(
         The optimized network, of the same type as ``ntk``.
 
     Raises:
-        TypeError: If ``ntk`` is a ``SequentialAig`` or not an ``Aig`` at all.
+        TypeError: If ``ntk`` is not an ``Aig``.
         ValueError: If no command was given.
         AbcNotFoundError: If no ABC executable could be located.
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
@@ -320,7 +308,12 @@ def run_script(
     check_supported(ntk)
     command = _join(commands)
 
-    from ..io import read_aiger_into_aig, write_aiger
+    from ..io import read_aiger_into_aig, read_aiger_into_sequential_aig, write_aiger
+
+    # SequentialAig must be tested before Aig: it is registered as a subclass on
+    # the C++ side, so reading the result back as a combinational network would
+    # flatten its registers into extra primary input and output pairs.
+    sequential = isinstance(ntk, SequentialAig)
 
     with tempfile.TemporaryDirectory(prefix="aigverse-abc-") as tmpdir:
         directory = Path(tmpdir)
@@ -352,13 +345,15 @@ def run_script(
             raise AbcExecutionError(msg, binary=executable, command=script, output=output)
 
         try:
-            result = read_aiger_into_aig(result_path)
+            reader = read_aiger_into_sequential_aig if sequential else read_aiger_into_aig
+            result = reader(result_path)
         except RuntimeError as exc:
             msg = f"could not read the network ABC produced: {exc}"
             raise AbcExecutionError(msg, binary=executable, command=script, output=output) from exc
 
-    # read_aiger_into_aig always yields a NamedAig; narrow it back to the input
-    # type so the bridge is type-preserving.
-    if isinstance(ntk, NamedAig):
+    # read_aiger_into_sequential_aig already yields a SequentialAig, and
+    # read_aiger_into_aig yields a NamedAig; narrow the latter back to a plain Aig
+    # when that is what came in, so the bridge is type-preserving.
+    if sequential or isinstance(ntk, NamedAig):
         return cast("AigT", result)
     return cast("AigT", Aig(result))

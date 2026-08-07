@@ -263,9 +263,10 @@ mix the two in one benchmark table.
 ## Type preservation and limitations
 
 The returned network has the same type as the input: an
-{py:class}`~aigverse.networks.Aig` yields an `Aig`, and a
+{py:class}`~aigverse.networks.Aig` yields an `Aig`, a
 {py:class}`~aigverse.networks.NamedAig` yields a `NamedAig` with its input and output
-names carried through ABC.
+names carried through ABC, and a {py:class}`~aigverse.networks.SequentialAig` yields a
+`SequentialAig` with its registers intact.
 
 :::{warning}
 The bridge transfers AIGs and nothing else, so technology mapping and $k$-LUT mapping are
@@ -275,11 +276,15 @@ quietly handing back something unmapped. Mapping support needs cell and $k$-LUT 
 types in `aigverse` first.
 :::
 
-:::{warning}
-{py:class}`~aigverse.networks.SequentialAig` is rejected with a `TypeError` rather than
-being silently flattened into extra primary inputs and outputs. Sequential support
-requires writing registers to AIGER and reading ABC's sequential output back, neither of
-which is available yet.
+:::{note}
+{py:class}`~aigverse.networks.SequentialAig` round-trips as well, with its registers and
+their reset values intact. The registers travel as AIGER latches; ABC switches to the
+extended AIGER 1.9 encoding whenever one has a non-zero reset value, which is handled
+transparently.
+
+The type is checked before the base class, deliberately: it is registered as an `Aig`
+subclass on the C++ side, so reading ABC's result back as a combinational network would
+flatten the registers into extra primary input and output pairs.
 :::
 
 Each call starts an ABC process and transfers the network through temporary AIGER files,
