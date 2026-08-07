@@ -30,6 +30,8 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             item.add_marker(pytest.mark.tts)
         elif "/test/benchmarks/" in test_path:
             item.add_marker(pytest.mark.benchmarks)
+        elif "/test/abc/" in test_path:
+            item.add_marker(pytest.mark.abc)
 
 
 @pytest.fixture

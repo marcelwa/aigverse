@@ -23,6 +23,7 @@ Key features include:
 - Optional adapters for graph and numeric interoperability in machine learning and data science workflows
 - Comprehensive tools for logic synthesis and optimization
 - On-demand access to standard benchmark suites (e.g., EPFL), downloaded once and cached locally
+- An optional bridge to an externally installed [ABC](https://github.com/berkeley-abc/abc) for its optimization scripts
 
 `aigverse` is designed as reusable bridge infrastructure rather than as a full end-to-end EDA toolchain.
 
@@ -65,6 +66,7 @@ truth_tables
 algorithms
 generators
 benchmarks
+abc
 machine_learning
 visualization
 ```

@@ -1,8 +1,9 @@
 version: 2
 
-formats:
-  - pdf
-  - htmlzip
+# Only HTML is built. Read the Docs caps a build at 15 minutes, and compiling ABC
+# so that the ABC page's examples run for real costs a large part of that; the
+# additional dirhtml and LaTeX passes needed for the htmlzip and pdf formats do
+# not fit alongside it. See the pre_build job below.
 
 build:
   os: ubuntu-24.04
@@ -30,15 +31,21 @@ build:
       - asdf plugin add uv
       - asdf install uv latest
       - asdf global uv latest
+      # Build the same ABC revision the integration tests use, so that the examples
+      # on the ABC documentation page are executed for real rather than shown inert.
+      # berkeley-abc is packaged for Ubuntu 22.04 only and not for the 24.04 image
+      # used here, and Read the Docs offers no build cache, so ABC is compiled. The
+      # post_checkout job above already skips the whole build unless the commit
+      # touches the documentation, so this cost is only paid when the docs change.
+      #
+      # This is the single most expensive step of the build, so it is trimmed where
+      # that is free: ABC defaults to `OPTFLAGS = -g -O`, and the debug information
+      # costs roughly 15% of the compile for something no documentation build ever
+      # reads. The examples here are small enough that ABC's own speed is irrelevant.
+      - ABC_REV=e76768b9d34f9dc67cb6608efecd55db271ff849
+        && git clone --filter=blob:none https://github.com/berkeley-abc/abc.git "$HOME/abc"
+        && git -C "$HOME/abc" checkout --detach "$ABC_REV"
+        && make -C "$HOME/abc" -j"$(nproc)" ABC_USE_NO_READLINE=1 OPTFLAGS=-O
     build:
       html:
-        - uv run --frozen --no-dev --group docs -m sphinx -T -b html -d docs/_build/doctrees -D language=en docs $READTHEDOCS_OUTPUT/html
-      htmlzip:
-        - uv run --frozen --no-dev --group docs -m sphinx -T -b dirhtml -d docs/_build/doctrees -D language=en docs docs/_build/dirhtml
-        - mkdir -p $READTHEDOCS_OUTPUT/htmlzip
-        - zip -r $READTHEDOCS_OUTPUT/htmlzip/html.zip docs/_build/dirhtml/*
-      pdf:
-        - uv run --frozen --no-dev --group docs -m sphinx -T -b latex -d docs/_build/doctrees -D language=en docs docs/_build/latex
-        - cd docs/_build/latex && latexmk -pdf -f -dvi- -ps- -interaction=nonstopmode -jobname=$READTHEDOCS_PROJECT
-        - mkdir -p $READTHEDOCS_OUTPUT/pdf
-        - cp docs/_build/latex/$READTHEDOCS_PROJECT.pdf $READTHEDOCS_OUTPUT/pdf/$READTHEDOCS_PROJECT.pdf
+        - AIGVERSE_ABC="$HOME/abc/abc" uv run --frozen --no-dev --group docs -m sphinx -T -b html -d docs/_build/doctrees -D language=en docs $READTHEDOCS_OUTPUT/html

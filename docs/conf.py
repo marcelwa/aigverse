@@ -95,9 +95,15 @@ myst_substitutions = {
 myst_heading_anchors = 3
 nitpicky = True
 nitpick_ignore = [
+    # a TypeVar and the Ellipsis in variadic tuple annotations are not documentable targets
+    ("py:class", "AigT"),
+    ("py:class", "aigverse.abc._runner.AigT"),
     # autoapi stringifies `tuple[str, ...]` as `tuple[str, Ellipsis]`, and then
     # nitpicky mode cannot resolve `Ellipsis` as a class. The annotation is fine.
     ("py:class", "Ellipsis"),
+    # `gia.stats` returns the `AbcStats` documented at `aigverse.abc.AbcStats`,
+    # but autoapi stringifies the annotation to the defining private module.
+    ("py:class", "aigverse.abc._stats.AbcStats"),
 ]
 
 # -- Options for {MyST}NB ----------------------------------------------------

@@ -125,8 +125,21 @@ class Aig:
         Augmented view metadata is not preserved.
     """
 
+    @overload
     def __init__(self) -> None:
         """Creates an empty AIG network."""
+
+    @overload
+    def __init__(self, ntk: Aig) -> None:
+        """Creates an independent copy of an existing AIG network.
+
+            Augmented views such as NamedAig or DepthAig are accepted as well, in which case
+            their extra metadata (names, levels, ...) is discarded and a plain Aig is
+            returned. The copy is structural: it does not share storage with ``ntk``.
+
+        Args:
+                ntk: The network to copy.
+        """
 
     def clone(self) -> Aig:
         """Creates a structural copy of the network."""

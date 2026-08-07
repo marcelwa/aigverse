@@ -53,6 +53,24 @@
       packageNameTemplate: "https://github.com/lsils/benchmarks",
       currentValueTemplate: "master",
       datasourceTemplate: "git-refs",
+    },
+    {
+      // The ABC integration tests build a pinned berkeley-abc revision rather
+      // than tracking its default branch, so that a red run is never ambiguous
+      // between our change and an upstream one. Renovate proposes the bump.
+      customType: "regex",
+      description: "Update the ABC revision the integration tests build",
+      managerFilePatterns: [
+        ".github/workflows/aigverse-abc-tests.yml",
+        ".readthedocs.yaml"
+      ],
+      matchStrings: [
+        "ABC_REV[:=]\\s*(?<currentDigest>[0-9a-f]{40})"
+      ],
+      depNameTemplate: "berkeley-abc/abc",
+      packageNameTemplate: "https://github.com/berkeley-abc/abc",
+      currentValueTemplate: "master",
+      datasourceTemplate: "git-refs",
     }
   ],
   lockFileMaintenance: {

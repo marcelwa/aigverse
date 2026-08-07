@@ -11,6 +11,7 @@ import argparse
 import contextlib
 import os
 import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -128,6 +129,58 @@ def _run_tests(
     )
 
 
+def _is_abc(candidate: str) -> bool:
+    """Check that a candidate executable really is ABC by asking for its version.
+
+    Args:
+        candidate: Path to the executable to probe.
+
+    Returns:
+        True if the candidate answered with an ABC version banner.
+    """
+    # ABC drops an `abc.history` file wherever it runs, so keep it out of the repo.
+    try:
+        with tempfile.TemporaryDirectory(prefix="aigverse-abc-") as scratch:
+            completed = subprocess.run(  # ruff: ignore[subprocess-without-shell-equals-true]
+                [candidate, "-s", "-q", "version"],
+                cwd=scratch,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=30,
+            )
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+    # The exit code alone would accept anything that succeeds, `/bin/true` included.
+    return completed.returncode == 0 and "abc" in completed.stdout.lower()
+
+
+def _find_abc() -> str | None:
+    """Locate a usable ABC executable the same way the `aigverse.abc` bridge does.
+
+    Kept in sync with `python/aigverse/abc/_binary.py` by hand, since the noxfile
+    runs before `aigverse` is installed and cannot import the bridge. Unlike the
+    bridge, this does probe the candidate: discovery there must stay side-effect
+    free, whereas here the whole point is to fail before a three-minute docs build
+    rather than inside the first executed example.
+
+    Returns:
+        Path to an executable ABC, or None if none was found.
+    """
+    configured = os.environ.get("AIGVERSE_ABC")
+    if configured:
+        # Accepting the variable unvalidated would let the docs build start and
+        # then fail much later, when an example actually invokes ABC.
+        path = Path(configured).expanduser()
+        if not (path.is_file() and os.access(path, os.X_OK)):
+            return None
+        return str(path) if _is_abc(str(path)) else None
+
+    found = shutil.which("abc") or shutil.which("berkeley-abc")
+    return found if found is not None and _is_abc(found) else None
+
+
 @nox.session(reuse_venv=True, python=PYTHON_ALL_VERSIONS, default=True)
 def tests(session: nox.Session) -> None:
     """Run the test suite."""
@@ -159,6 +212,17 @@ def docs(session: nox.Session) -> None:
             "  - macOS: `brew install graphviz`\n"
             "  - Ubuntu: `sudo apt install graphviz`\n"
             "  - Windows: `winget install graphviz` or `choco install graphviz`\n"
+        )
+
+    # The ABC documentation page executes its examples, so it needs a real ABC.
+    if _find_abc() is None:
+        session.error(
+            "ABC is required for building the documentation, because the examples on the "
+            "ABC page are executed. Install it and put it on PATH, or point AIGVERSE_ABC at "
+            "it. For example:\n"
+            "  - from source: `git clone https://github.com/berkeley-abc/abc && make -C abc`\n"
+            "  - Ubuntu 22.04: `sudo apt install berkeley-abc`\n"
+            "  - bundled: any `abc` from Yosys or oss-cad-suite\n"
         )
 
     parser = argparse.ArgumentParser()

@@ -47,6 +47,8 @@ representations for downstream data science and ML pipelines.
   science and machine learning workflows.
 - **Benchmark Suites**: On-demand access to standard benchmark circuits (e.g., the EPFL suite), downloaded once and
   cached locally.
+- **ABC Integration**: Optionally run [ABC](https://github.com/berkeley-abc/abc) optimization scripts such as `resyn2`
+  or `compress2rs` on your networks, driving an ABC executable you already have installed. No ABC is bundled.
 
 ## 🤔 Motivation
 
