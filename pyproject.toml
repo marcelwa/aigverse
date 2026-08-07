@@ -204,6 +204,9 @@ isort.required-imports = ["from __future__ import annotations"]
 # the ABC bridge shells out to a user-configured executable by design, and its
 # public functions document the exceptions that propagate out of their helpers
 "python/aigverse/abc/*.py" = ["S603", "DOC502"]
+# the bridge's tests run the configured ABC themselves, and pin behavior of the
+# private helpers the public wrappers are thin over
+"test/abc/*.py" = ["S603", "PLC2701"]
 "*.pyi" = ["D418", "PYI002", "PYI021", "A003", "N999"]
 "*.ipynb" = [
     "D", # pydocstyle

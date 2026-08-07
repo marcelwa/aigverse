@@ -101,6 +101,9 @@ nitpick_ignore = [
     # autoapi stringifies `tuple[str, ...]` as `tuple[str, Ellipsis]`, and then
     # nitpicky mode cannot resolve `Ellipsis` as a class. The annotation is fine.
     ("py:class", "Ellipsis"),
+    # `gia.stats` returns the `AbcStats` documented at `aigverse.abc.AbcStats`,
+    # but autoapi stringifies the annotation to the defining private module.
+    ("py:class", "aigverse.abc._stats.AbcStats"),
 ]
 
 # -- Options for {MyST}NB ----------------------------------------------------

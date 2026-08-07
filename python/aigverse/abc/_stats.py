@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
     from ..networks import Aig
 
-__all__ = ["AbcStats", "gia_stats", "stats"]
+__all__ = ["AbcStats", "collect_stats", "stats"]
 
 _INPUT_FILE = "in.aig"
 
@@ -30,10 +30,12 @@ _INPUT_FILE = "in.aig"
 _ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
 _IO = re.compile(r"i/o\s*=\s*(\d+)\s*/\s*(\d+)")
-_LATCHES = re.compile(r"lat\s*=\s*(\d+)")
+# `print_stats` calls them latches, `&ps` calls them flops; both mean registers.
+_REGISTERS = re.compile(r"(?:lat|ff)\s*=\s*(\d+)")
 _AND_GATES = re.compile(r"and\s*=\s*(\d+)")
 _LEVELS = re.compile(r"lev\s*=\s*(\d+)")
 _AVERAGE_LEVEL = re.compile(r"lev\s*=\s*\d+\s*\(([0-9.]+)\)")
+_MEMORY = re.compile(r"mem\s*=\s*([0-9.]+)\s*MB")
 
 
 @dataclass(frozen=True)
@@ -53,11 +55,15 @@ class AbcStats:
     num_gates: int
     #: Depth in AND levels.
     num_levels: int
-    #: Number of latches, or ``None`` where ABC did not report any -- ``&ps``
-    #: omits the field entirely.
+    #: Number of registers, or ``None`` where ABC reported no such field.
+    #: ``print_stats`` calls them ``lat`` and ``&ps`` calls them ``ff``; both are
+    #: read into this field, and ``&ps`` omits it entirely for a purely
+    #: combinational network.
     num_registers: int | None = None
     #: Mean level over the outputs, reported by ``&ps`` only.
     average_level: float | None = None
+    #: Memory ABC used for the network in megabytes, reported by ``&ps`` only.
+    memory_mb: float | None = None
     #: The unparsed line, so nothing ABC said is lost.
     raw: str = ""
 
@@ -84,15 +90,17 @@ def _parse(output: str, *, binary: str, command: str) -> AbcStats:
         if not (io and gates and levels):
             continue
 
-        latches = _LATCHES.search(line)
+        registers = _REGISTERS.search(line)
         average = _AVERAGE_LEVEL.search(line)
+        memory = _MEMORY.search(line)
         return AbcStats(
             num_pis=int(io.group(1)),
             num_pos=int(io.group(2)),
             num_gates=int(gates.group(1)),
             num_levels=int(levels.group(1)),
-            num_registers=int(latches.group(1)) if latches else None,
+            num_registers=int(registers.group(1)) if registers else None,
             average_level=float(average.group(1)) if average else None,
+            memory_mb=float(memory.group(1)) if memory else None,
             raw=line,
         )
 
@@ -100,7 +108,7 @@ def _parse(output: str, *, binary: str, command: str) -> AbcStats:
     raise AbcExecutionError(msg, binary=binary, command=command, output=output)
 
 
-def _collect(
+def collect_stats(
     ntk: Aig,
     read_command: str,
     stats_command: str,
@@ -143,33 +151,13 @@ def stats(
 ) -> AbcStats:
     """Reports ABC's ``print_stats`` for a network.
 
-    Args:
-        ntk: The combinational network to measure.
-        timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
-        binary: Overrides the resolved ABC executable for this call only.
-
-    Returns:
-        What ABC reports about the network.
-
-    Raises:
-        TypeError: If ``ntk`` is a ``SequentialAig`` or not an ``Aig`` at all.
-        AbcNotFoundError: If no ABC executable could be located.
-        AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
-        AbcExecutionError: If ABC reported an error or printed nothing usable.
-    """
-    return _collect(ntk, "read_aiger", "print_stats", timeout=timeout, binary=binary)
-
-
-def gia_stats(
-    ntk: Aig,
-    *,
-    timeout: float | None = None,
-    binary: str | os.PathLike[str] | None = None,
-) -> AbcStats:
-    """Reports ABC's ``&ps`` for a network.
-
-    The GIA store's own view. It agrees with :func:`stats` on the counts, adds an
-    average level, and reports no latch count.
+    .. warning::
+        These are ABC's counts, not ``aigverse``'s, and the two can differ for the
+        very same network. ABC structurally hashes as it reads, so any structural
+        redundancy the network carried is gone before ``print_stats`` sees it: a
+        16-bit carry-lookahead adder that ``aigverse`` reports as 186 gates comes
+        back from here as 182. Use :attr:`~aigverse.networks.Aig.num_gates` to
+        describe the network you hold, and this to describe what ABC worked on.
 
     Args:
         ntk: The combinational network to measure.
@@ -185,6 +173,4 @@ def gia_stats(
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or printed nothing usable.
     """
-    # -x suppresses the colour codes; the parser strips them anyway, but this
-    # keeps `raw` readable for anyone printing it.
-    return _collect(ntk, "&read", "&ps -x", timeout=timeout, binary=binary)
+    return collect_stats(ntk, "read_aiger", "print_stats", timeout=timeout, binary=binary)

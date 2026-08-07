@@ -9,16 +9,22 @@ Importing this module always succeeds, whether or not ABC is installed. Use
 :func:`is_available` to check, and expect :exc:`AbcNotFoundError` from any call
 that needs the executable.
 
+The ABC9 (``&``-space) commands live in the :mod:`~aigverse.abc.gia` namespace,
+mirroring ABC's own prefix: ``abc.dc2`` runs ABC's ``dc2`` while ``abc.gia.dc2``
+runs its ``&dc2``.
+
 Example:
     >>> from aigverse import abc
     >>> from aigverse.generators import ripple_carry_adder
     >>> aig = ripple_carry_adder(4)
     >>> if abc.is_available():
     ...     optimized = abc.resyn2(aig)
+    ...     alternative = abc.gia.dc2(aig)
 """
 
 from __future__ import annotations
 
+from . import gia
 from ._binary import (
     ABC_ENV_VAR,
     ABC_RC_ENV_VAR,
@@ -32,22 +38,9 @@ from ._binary import (
 )
 from ._commands import balance, orchestrate, refactor, resub, rewrite
 from ._errors import AbcError, AbcExecutionError, AbcNotFoundError, AbcTimeoutError
-from ._gia import (
-    gia_balance,
-    gia_cec,
-    gia_dc2,
-    gia_deepsyn,
-    gia_fraig,
-    gia_resub,
-    gia_syn2,
-    gia_syn3,
-    gia_syn4,
-    gia_transduction,
-    gia_transtoch,
-)
 from ._runner import run_commands, run_script
 from ._scripts import SCRIPTS, expand_script
-from ._stats import AbcStats, gia_stats, stats
+from ._stats import AbcStats, stats
 from ._wrappers import (
     compress,
     compress2,
@@ -58,6 +51,7 @@ from ._wrappers import (
     resyn2rs,
     resyn3,
 )
+from .gia import CecStatus
 
 __all__ = [
     "ABC_ENV_VAR",
@@ -68,6 +62,7 @@ __all__ = [
     "AbcNotFoundError",
     "AbcStats",
     "AbcTimeoutError",
+    "CecStatus",
     "abc_binary",
     "abc_rc",
     "abc_version",
@@ -78,18 +73,7 @@ __all__ = [
     "dc2",
     "expand_script",
     "find_abc_binary",
-    "gia_balance",
-    "gia_cec",
-    "gia_dc2",
-    "gia_deepsyn",
-    "gia_fraig",
-    "gia_resub",
-    "gia_stats",
-    "gia_syn2",
-    "gia_syn3",
-    "gia_syn4",
-    "gia_transduction",
-    "gia_transtoch",
+    "gia",
     "is_available",
     "orchestrate",
     "refactor",

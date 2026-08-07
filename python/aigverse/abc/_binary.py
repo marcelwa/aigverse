@@ -43,7 +43,7 @@ _override: Path | None = None
 _rc_override: Path | None = None
 
 
-def _validate(path: Path, *, source: str) -> Path:
+def validate_binary(path: Path, *, source: str) -> Path:
     """Checks that a candidate path is an executable file.
 
     Args:
@@ -89,7 +89,7 @@ def set_abc_binary(path: str | os.PathLike[str] | None) -> Path | None:
         _override = None
         return None
 
-    _override = _validate(Path(path), source="set_abc_binary()")
+    _override = validate_binary(Path(path), source="set_abc_binary()")
     return _override
 
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
 
 import pytest
@@ -12,6 +13,7 @@ from aigverse.generators import ripple_carry_multiplier
 from aigverse.networks import Aig, DepthAig, NamedAig
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
     from aigverse.networks import Aig as AigType
@@ -82,7 +84,7 @@ def test_gia_space_round_trips() -> None:
 
 @pytest.mark.parametrize(
     "command",
-    ["gia_balance", "gia_resub", "gia_dc2", "gia_syn2", "gia_syn3", "gia_syn4", "gia_fraig"],
+    ["balance", "resub", "dc2", "syn2", "syn3", "syn4", "fraig"],
 )
 def test_gia_commands_preserve_equivalence(command: str) -> None:
     """Every `&`-space wrapper must optimize without changing the function.
@@ -91,7 +93,7 @@ def test_gia_commands_preserve_equivalence(command: str) -> None:
     demanding a smaller network would be asserting the opposite of their purpose.
     """
     aig = ripple_carry_multiplier(4)
-    result = getattr(abc, command)(aig)
+    result = getattr(abc.gia, command)(aig)
 
     assert result.num_pis == aig.num_pis
     assert result.num_pos == aig.num_pos
@@ -106,11 +108,11 @@ def test_gia_synthesis_reaches_depth_the_classic_scripts_cannot() -> None:
     is that the two families explore different parts of the space.
     """
     aig = ripple_carry_multiplier(4)
-    gia = abc.gia_syn4(aig)
+    result = abc.gia.syn4(aig)
 
-    assert DepthAig(gia).num_levels < DepthAig(aig).num_levels
-    assert DepthAig(gia).num_levels < DepthAig(abc.resyn2(aig)).num_levels
-    assert equivalence_checking(aig, gia)
+    assert DepthAig(result).num_levels < DepthAig(aig).num_levels
+    assert DepthAig(result).num_levels < DepthAig(abc.resyn2(aig)).num_levels
+    assert equivalence_checking(aig, result)
 
 
 def test_gia_scripts_fail_without_the_flag(and_aig: AigType) -> None:
@@ -265,22 +267,25 @@ def test_no_history_file_is_left_behind(tmp_path: Path, monkeypatch: pytest.Monk
 
 
 @pytest.mark.parametrize(
-    ("command", "kwargs"),
+    "call",
     [
-        ("orchestrate", {}),
-        ("gia_deepsyn", {"timeout_seconds": 3}),
-        ("gia_transduction", {"timeout": 300}),
+        abc.orchestrate,
+        lambda ntk: abc.gia.deepsyn(ntk, timeout=3),
+        lambda ntk: abc.gia.transduction(ntk, timeout=300),
     ],
-    ids=["orchestrate", "gia_deepsyn", "gia_transduction"],
+    ids=["orchestrate", "gia.deepsyn", "gia.transduction"],
 )
-def test_high_effort_commands_preserve_equivalence(command: str, kwargs: dict[str, object]) -> None:
+def test_high_effort_commands_preserve_equivalence(call: Callable[[AigType], AigType]) -> None:
     """The high-effort commands must optimize without changing the function.
 
-    `gia_transtoch` is deliberately absent: it is stochastic and slow enough that
+    `gia.transtoch` is deliberately absent: it is stochastic and slow enough that
     pinning it here would make the suite flaky for no extra coverage.
+
+    Args:
+        call: The wrapper under test, already carrying its budget.
     """
     aig = ripple_carry_multiplier(3)
-    result = getattr(abc, command)(aig, **kwargs)
+    result = call(aig)
 
     assert result.num_pis == aig.num_pis
     assert result.num_pos == aig.num_pos
@@ -292,7 +297,7 @@ def test_gia_cec_agrees_with_aigverse() -> None:
     aig = ripple_carry_multiplier(3)
     optimized = abc.compress2rs(aig)
 
-    assert abc.gia_cec(aig, optimized)
+    assert abc.gia.cec(aig, optimized) is abc.CecStatus.EQUIVALENT
     assert equivalence_checking(aig, optimized)
 
 
@@ -306,7 +311,7 @@ def test_gia_cec_detects_a_difference() -> None:
     c, d = right.create_pi(), right.create_pi()
     right.create_po(right.create_or(c, d))
 
-    assert abc.gia_cec(left, right) is False
+    assert abc.gia.cec(left, right) is abc.CecStatus.NOT_EQUIVALENT
     assert not equivalence_checking(left, right)
 
 
@@ -316,4 +321,79 @@ def test_gia_cec_rejects_mismatched_interfaces(and_aig: AigType) -> None:
     wider.create_po(wider.create_and(wider.create_pi(), wider.create_and(wider.create_pi(), wider.create_pi())))
 
     with pytest.raises(abc.AbcExecutionError):
-        abc.gia_cec(and_aig, wider)
+        abc.gia.cec(and_aig, wider)
+
+
+def _equivalent_pair() -> tuple[Aig, Aig]:
+    """Builds two structurally different but equivalent AND networks.
+
+    Returns:
+        A pair of equivalent networks.
+    """
+    left = Aig()
+    a, b = left.create_pi(), left.create_pi()
+    left.create_po(left.create_and(a, b))
+
+    right = Aig()
+    c, d = right.create_pi(), right.create_pi()
+    right.create_po(right.create_and(d, c))
+
+    return left, right
+
+
+@pytest.mark.usefixtures("abc_available")
+def test_cec_status_refuses_to_be_a_boolean() -> None:
+    """The enum must not silently collapse four outcomes into two.
+
+    `if cec(a, b):` would read as "equivalent" while also firing for UNDECIDED
+    and TIMEOUT, which is exactly the confusion the enum exists to prevent.
+    """
+    result = abc.gia.cec(*_equivalent_pair())
+
+    assert result is abc.CecStatus.EQUIVALENT
+    with pytest.raises(TypeError, match="must not be used as a boolean"):
+        bool(result)
+
+
+@pytest.mark.usefixtures("abc_available")
+def test_cec_reports_a_timeout_rather_than_raising() -> None:
+    """An exhausted budget is a verdict of its own, not an exception.
+
+    A zero-second budget is the cheapest way to reach the state; whether ABC
+    reports it as a timeout or manages to decide such a trivial pair anyway is up
+    to ABC, so both are accepted -- what must not happen is an exception.
+    """
+    assert abc.gia.cec(*_equivalent_pair(), timeout=0) in {
+        abc.CecStatus.EQUIVALENT,
+        abc.CecStatus.TIMEOUT,
+        abc.CecStatus.UNDECIDED,
+    }
+
+
+def test_a_missing_binary_override_is_reported_as_not_found(and_aig: AigType, tmp_path: Path) -> None:
+    """`binary=` must fail like `set_abc_binary()`, not like `subprocess`.
+
+    The override reaches `subprocess` directly, so without validation a bad path
+    escapes as an `OSError` from outside the module's own exception hierarchy.
+
+    Args:
+        and_aig: A minimal two-input AND network.
+        tmp_path: Directory for the paths that must be rejected.
+    """
+    with pytest.raises(abc.AbcNotFoundError, match="not an existing file"):
+        abc.resyn2(and_aig, binary=tmp_path / "no-such-abc")
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="every existing file counts as executable on Windows")
+def test_a_non_executable_binary_override_is_reported_as_not_found(and_aig: AigType, tmp_path: Path) -> None:
+    """The other half of the override validation: present, but not runnable.
+
+    Args:
+        and_aig: A minimal two-input AND network.
+        tmp_path: Directory for the file that must be rejected.
+    """
+    not_executable = tmp_path / "abc"
+    not_executable.write_text("#!/bin/sh\n")
+
+    with pytest.raises(abc.AbcNotFoundError, match="not executable"):
+        abc.resyn2(and_aig, binary=not_executable)

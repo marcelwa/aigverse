@@ -8,9 +8,10 @@ from typing import TYPE_CHECKING
 import pytest
 
 from aigverse import abc
-from aigverse.abc import AbcExecutionError, AbcStats, gia_stats, stats
+from aigverse.abc import AbcExecutionError, AbcStats, gia, stats
+from aigverse.abc._stats import _parse
 from aigverse.algorithms import equivalence_checking
-from aigverse.generators import ripple_carry_multiplier
+from aigverse.generators import carry_lookahead_adder, ripple_carry_multiplier
 from aigverse.networks import DepthAig, SequentialAig
 
 if TYPE_CHECKING:
@@ -73,22 +74,29 @@ def test_stats_agree_with_aigverse() -> None:
 def test_gia_stats_agree_with_classic_stats() -> None:
     """The two stores must describe the same network identically."""
     aig = ripple_carry_multiplier(4)
-    classic, gia = stats(aig), gia_stats(aig)
+    classic, from_gia = stats(aig), gia.stats(aig)
 
-    assert (classic.num_pis, classic.num_pos) == (gia.num_pis, gia.num_pos)
-    assert classic.num_gates == gia.num_gates
-    assert classic.num_levels == gia.num_levels
+    assert (classic.num_pis, classic.num_pos) == (from_gia.num_pis, from_gia.num_pos)
+    assert classic.num_gates == from_gia.num_gates
+    assert classic.num_levels == from_gia.num_levels
 
 
 @pytest.mark.usefixtures("abc_available")
 def test_the_two_stores_report_different_extras() -> None:
-    """`print_stats` reports latches, `&ps` reports an average level."""
+    """`print_stats` reports latches, `&ps` reports an average level and memory.
+
+    `&ps` omits the register field entirely for a combinational network -- it
+    prints it as `ff` rather than `lat` when there is one, which
+    `test_registers_are_parsed_from_either_spelling` covers.
+    """
     aig = ripple_carry_multiplier(3)
 
     assert stats(aig).num_registers == 0
     assert stats(aig).average_level is None
-    assert gia_stats(aig).num_registers is None
-    assert gia_stats(aig).average_level is not None
+    assert stats(aig).memory_mb is None
+    assert gia.stats(aig).num_registers is None
+    assert gia.stats(aig).average_level is not None
+    assert gia.stats(aig).memory_mb is not None
 
 
 @pytest.mark.usefixtures("abc_available")
@@ -113,3 +121,47 @@ def test_stats_track_an_optimization() -> None:
     assert after.num_gates <= before.num_gates
     assert after.num_gates == optimized.num_gates
     assert equivalence_checking(aig, optimized)
+
+
+@pytest.mark.parametrize(
+    ("line", "expected"),
+    [
+        ("in : i/o =   1/   1  lat =    3  and =    1  lev = 1", 3),
+        ("in : i/o =   1/   1  ff =     3  and =    1  lev = 1 (1.00)", 3),
+        ("in : i/o =   1/   1  and =    1  lev = 1 (1.00)  mem = 0.00 MB", None),
+    ],
+    ids=["print_stats-lat", "gia-ff", "gia-combinational"],
+)
+def test_registers_are_parsed_from_either_spelling(line: str, expected: int | None) -> None:
+    """`print_stats` prints `lat`, `&ps` prints `ff`, and both mean registers.
+
+    Parsed directly rather than through ABC, because the bridge cannot yet hand a
+    sequential network over -- the `ff` spelling only appears once it can, so
+    without this the field would silently stay `None` for every such network.
+
+    Args:
+        line: A statistics line as ABC prints it.
+        expected: The register count that must come out.
+    """
+    assert _parse(line, binary="abc", command="print_stats").num_registers == expected
+
+
+def test_memory_is_parsed_from_the_gia_line() -> None:
+    """`&ps` reports a memory figure that `print_stats` does not."""
+    line = "in : i/o =   1/   1  and =    1  lev = 1 (1.00)  mem = 1.25 MB"
+
+    assert _parse(line, binary="abc", command="&ps").memory_mb == pytest.approx(1.25)
+
+
+@pytest.mark.usefixtures("abc_available")
+def test_abc_counts_can_differ_from_aigverse_after_strashing() -> None:
+    """ABC's counts describe the network ABC ended up with, not the one given.
+
+    ABC structurally hashes as it reads, so a network carrying structural
+    redundancy shrinks before `print_stats` ever sees it. Pinned rather than
+    merely documented, because anyone building a benchmark table from `stats()`
+    will otherwise attribute the gap to an optimization that never ran.
+    """
+    aig = carry_lookahead_adder(16)
+
+    assert stats(aig).num_gates < aig.num_gates

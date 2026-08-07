@@ -114,11 +114,23 @@ print(f"{aig.num_gates} -> {result.num_gates} AND gates")
 The two stores can also be bridged inside a single script with `&get` and `&put`, but
 those do not carry I/O names across, whereas `gia=True` does.
 
-### `&`-space wrappers
+### The `gia` namespace
 
-The `&` commands have wrappers of their own, which set `gia=True` for you:
-`gia_balance` (`&b`), `gia_resub`, `gia_dc2`, `gia_syn2`, `gia_syn3`, `gia_syn4` and
-`gia_fraig`, plus the high-effort searches below.
+The `&` commands have wrappers of their own in the `gia` namespace, which set `gia=True`
+for you. The namespace mirrors ABC's own prefix, so the two spaces stay visibly distinct
+at the call site:
+
+```{code-cell} ipython3
+print(f"abc.dc2:     {abc.dc2(aig).num_gates} gates")       # ABC's `dc2`
+print(f"abc.gia.dc2: {abc.gia.dc2(aig).num_gates} gates")   # ABC's `&dc2`
+```
+
+It holds {py:func}`~aigverse.abc.gia.balance` (`&b`), {py:func}`~aigverse.abc.gia.resub`,
+{py:func}`~aigverse.abc.gia.dc2`, {py:func}`~aigverse.abc.gia.syn2`,
+{py:func}`~aigverse.abc.gia.syn3`, {py:func}`~aigverse.abc.gia.syn4` and
+{py:func}`~aigverse.abc.gia.fraig`, plus the high-effort searches below,
+{py:func}`~aigverse.abc.gia.cec`, {py:func}`~aigverse.abc.gia.stats`, and
+{py:func}`~aigverse.abc.gia.run_script` for anything not wrapped.
 
 The `&`-space is not a mirror of the classic set — there is no `&rewrite` and no
 `&refactor`, with `&dc2` standing in for both. What it offers instead is a different
@@ -139,15 +151,15 @@ for name, design in [("multiplier", ripple_carry_multiplier(4)), ("adder", aig)]
     print(name)
     report("original", design)
     report("resyn2", abc.resyn2(design))
-    report("gia_syn4", abc.gia_syn4(design))
+    report("gia.syn4", abc.gia.syn4(design))
 ```
 
-On the multiplier, `gia_syn4` buys depth that `resyn2` cannot reach, and pays for it in
+On the multiplier, `gia.syn4` buys depth that `resyn2` cannot reach, and pays for it in
 area. On the adder it does neither — it adds gates and leaves the depth alone, while
 `resyn2` wins outright. Neither family dominates, so measure on your own designs instead
 of assuming.
 
-{py:func}`~aigverse.abc.gia_fraig` is the odd one out and worth knowing about: it is
+{py:func}`~aigverse.abc.gia.fraig` is the odd one out and worth knowing about: it is
 combinational SAT sweeping, which merges nodes that are functionally equivalent but
 structurally different. No amount of rewriting finds those, which makes it a useful pass
 _between_ two structural scripts that each introduced their own duplicates.
@@ -156,55 +168,97 @@ _between_ two structural scripts that each introduced their own duplicates.
 
 Three more `&` commands are searches rather than passes, and are priced accordingly:
 
-- {py:func}`~aigverse.abc.gia_deepsyn` repeatedly restructures with randomized parameters
-  and keeps the smallest result. Give it a budget via `timeout_seconds`, which is ABC's
-  own limit and lets it stop cleanly with its best result so far — unlike `timeout`,
-  which kills the process and yields nothing. Different `seed` values give different
-  results, so it is worth running more than once.
-- {py:func}`~aigverse.abc.gia_transduction` reasons about permissible functions per node
+- {py:func}`~aigverse.abc.gia.deepsyn` repeatedly restructures with randomized parameters
+  and keeps the smallest result. Different `seed` values can give different results, so it
+  is worth running more than once.
+- {py:func}`~aigverse.abc.gia.transduction` reasons about permissible functions per node
   and finds redundancy structural rewriting cannot. It is BDD-based, so its cost climbs
   steeply with size.
-- {py:func}`~aigverse.abc.gia_transtoch` is stochastic transduction — transduction run
+- {py:func}`~aigverse.abc.gia.transtoch` is stochastic transduction — transduction run
   repeatedly with randomized parameters. It is the most expensive thing here by a wide
   margin.
 
+```{code-cell} ipython3
+optimized = abc.gia.deepsyn(aig, timeout=5)
+print(f"{aig.num_gates} -> {optimized.num_gates} AND gates")
+```
+
+There is one `timeout` throughout, and it always means "seconds you are willing to wait".
+Where ABC accepts a budget of its own — as `&deepsyn` does — it is handed over, so ABC
+stops on its own terms and returns the best result it found rather than being killed with
+nothing to show. Where it does not, the process is stopped and an
+{py:exc}`~aigverse.abc.AbcTimeoutError` is raised.
+
 :::{warning}
-The last two are realistically limited to small designs. Always pass a `timeout`.
+The last two are realistically limited to small designs, and neither takes a budget of its
+own, so a `timeout` there discards the work rather than harvesting it. Bound them by size
+first and by `timeout` second.
 :::
 
 ### Equivalence checking
 
-{py:func}`~aigverse.abc.gia_cec` returns a verdict rather than a network, wrapping ABC's
+{py:func}`~aigverse.abc.gia.cec` returns a verdict rather than a network, wrapping ABC's
 `&cec`. It is a genuinely independent second opinion on
 {py:func}`~aigverse.algorithms.equivalence_checking`: two different implementations, so a
 disagreement means one of them has a bug worth finding.
 
 ```{code-cell} ipython3
 optimized = abc.compress2rs(aig)
-print(f"ABC says:      {abc.gia_cec(aig, optimized)}")
+print(f"ABC says:      {abc.gia.cec(aig, optimized)}")
 print(f"aigverse says: {equivalence_checking(aig, optimized)}")
 ```
 
 ABC matches inputs by position rather than by name, so the two networks must have the
-same interface. Note that `&cec` is incomplete under a resource limit — an undecided
-answer is raised as an error rather than returned as `False`, since "not proven equal"
-and "proven different" are very different statements.
+same interface.
+
+`&cec` is incomplete under a resource limit, so there are four outcomes and not two, and
+the result is a {py:class}`~aigverse.abc.CecStatus` rather than a `bool`:
+
+|                  |                                                |
+| ---------------- | ---------------------------------------------- |
+| `EQUIVALENT`     | ABC proved the networks equal                  |
+| `NOT_EQUIVALENT` | ABC found a counterexample                     |
+| `UNDECIDED`      | ABC ran out of its own budget without deciding |
+| `TIMEOUT`        | ABC did not finish within `timeout`            |
+
+The enum deliberately refuses to be truth-tested, because `if abc.gia.cec(a, b):` would
+read as "equivalent" while quietly also firing for `UNDECIDED` — and "not proven equal" is
+not "proven different". Compare against a member instead:
+
+```{code-cell} ipython3
+if abc.gia.cec(aig, optimized) is abc.CecStatus.EQUIVALENT:
+    print("proven equivalent")
+```
 
 ## What ABC thinks of a network
 
-{py:func}`~aigverse.abc.stats` and {py:func}`~aigverse.abc.gia_stats` run ABC's
+{py:func}`~aigverse.abc.stats` and {py:func}`~aigverse.abc.gia.stats` run ABC's
 `print_stats` and `&ps` and return an {py:class}`~aigverse.abc.AbcStats` instead of a line
 of text:
 
 ```{code-cell} ipython3
 print(abc.stats(aig))
-print(abc.gia_stats(aig))
+print(abc.gia.stats(aig))
 ```
 
-The two stores report slightly different things — `print_stats` has a latch count, `&ps`
-has an average level — and both keep the original line in `raw`. Their value is that they
-are an _independent_ measurement: if ABC's counts ever disagree with `aig.num_gates`, the
-AIGER transfer lost something.
+The two stores report slightly different things — `&ps` adds an average level and a memory
+figure, and spells the register count `ff` where `print_stats` spells it `lat` — and both
+keep the original line in `raw`.
+
+:::{warning}
+These are ABC's counts, not `aigverse`'s, and **they can differ for the very same
+network**. ABC structurally hashes as it reads, so any structural redundancy the network
+carried is gone before `print_stats` ever sees it:
+
+```{code-cell} ipython3
+print(f"aigverse says: {aig.num_gates} gates")
+print(f"ABC says:      {abc.stats(aig).num_gates} gates")
+```
+
+Nothing was optimized in between — the gap is the strashing. Use `aig.num_gates` to
+describe the network you hold and `stats()` to describe what ABC worked on, and do not
+mix the two in one benchmark table.
+:::
 
 ## Type preservation and limitations
 
@@ -231,6 +285,50 @@ which is available yet.
 Each call starts an ABC process and transfers the network through temporary AIGER files,
 which costs roughly 20 ms of overhead per call — negligible for batch work, but worth
 keeping in mind in a tight optimization loop.
+
+## When things go wrong
+
+ABC exits with status 0 even for an unknown command or an unreadable file, and writes
+everything to standard output — its standard error stays empty. Failure detection
+therefore scans the output for known error markers and checks that a usable network came
+back, rather than trusting the exit status:
+
+```{code-cell} ipython3
+try:
+    abc.run_script(aig, "no_such_command")
+except abc.AbcExecutionError as error:
+    print(error)
+```
+
+Everything needed to reproduce the call is attached to the exception as `binary`,
+`command`, and `output`, so a failure can be replayed by hand.
+
+The hierarchy is small: {py:exc}`~aigverse.abc.AbcNotFoundError` when no usable executable
+could be located, {py:exc}`~aigverse.abc.AbcTimeoutError` when ABC outlived its `timeout`,
+and {py:exc}`~aigverse.abc.AbcExecutionError` for everything else ABC did wrong. All three
+derive from {py:exc}`~aigverse.abc.AbcError`.
+
+Options are validated in Python before ABC is started, so a value ABC would reject comes
+back as a `ValueError` naming the keyword you wrote rather than as an ABC message:
+
+```{code-cell} ipython3
+for call in (
+    lambda: abc.refactor(aig, max_support=16),
+    lambda: abc.gia.deepsyn(aig, seed=101),
+):
+    try:
+        call()
+    except ValueError as error:
+        print(error)
+```
+
+:::{note}
+ABC is the authority on those ranges and `aigverse` pins no ABC version. The ranges ABC
+prints in its own `-h` output are checked against the installed binary by the test suite,
+so an upstream change is caught rather than guessed at. A few bounds ABC enforces without
+documenting — `refactor` refuses a support above 15 while printing no range at all — are
+recorded with the evidence for them.
+:::
 
 ## Keeping the scripts in sync
 

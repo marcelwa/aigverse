@@ -236,3 +236,6 @@ __pycache__
 *.tar.*
 *.7z
 *.rar
+
+# ABC drops a command history into whatever directory it runs in
+abc.history

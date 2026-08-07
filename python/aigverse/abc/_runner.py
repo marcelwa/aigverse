@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, TypeVar, cast
 
 from ..networks import Aig, NamedAig, SequentialAig
-from ._binary import abc_binary, abc_rc
+from ._binary import abc_binary, abc_rc, validate_binary
 from ._errors import AbcExecutionError, AbcTimeoutError
 
 if TYPE_CHECKING:
@@ -22,6 +22,12 @@ AigT = TypeVar("AigT", bound=Aig)
 
 _INPUT_FILE = "in.aig"
 _OUTPUT_FILE = "out.aig"
+
+# Extra seconds granted to the process on top of a budget ABC was given itself.
+# ABC needs to write its result out after its internal limit expires, and killing
+# it in that window would throw away exactly the work the budget was meant to
+# preserve.
+_BACKSTOP_MARGIN = 60.0
 
 # Substrings that mark a failure in ABC's output. ABC exits with status 0 even for
 # unknown commands and unreadable files, so its output is the only signal available.
@@ -84,8 +90,31 @@ def _join(commands: str | Sequence[str]) -> str:
     return joined
 
 
+def budgeted_timeout(timeout: float | None) -> float | None:
+    """Turns a user-facing budget into the process timeout that backs it.
+
+    Commands that accept a budget of their own are given it, so that ABC stops on
+    its own terms and returns the best result it has. The process timeout is then
+    only a backstop for the case where ABC does not honour its budget at all --
+    it is deliberately generous, because killing the process discards the work.
+
+    Args:
+        timeout: The budget the caller asked for, or ``None`` for no limit.
+
+    Returns:
+        The process timeout to enforce, or ``None`` for no limit.
+    """
+    return None if timeout is None else timeout + _BACKSTOP_MARGIN
+
+
 def resolve_binary(binary: str | os.PathLike[str] | None) -> Path:
     """Resolves the ABC executable a call should use.
+
+    A per-call override is validated exactly as
+    :func:`~aigverse.abc.set_abc_binary` validates the process-wide one, so a
+    path that does not exist or is not executable is reported as an
+    :exc:`AbcNotFoundError` rather than escaping as an ``OSError`` from
+    :mod:`subprocess`.
 
     Args:
         binary: An explicit override, or ``None`` to use the configured one.
@@ -94,9 +123,12 @@ def resolve_binary(binary: str | os.PathLike[str] | None) -> Path:
         Path to the ABC executable.
 
     Raises:
-        AbcNotFoundError: If no ABC executable could be located.
+        AbcNotFoundError: If no ABC executable could be located, or the given
+            override does not point at an executable file.
     """
-    return Path(binary) if binary is not None else abc_binary()
+    if binary is None:
+        return abc_binary()
+    return validate_binary(Path(binary), source="the binary argument")
 
 
 def check_supported(ntk: Aig) -> None:
@@ -268,7 +300,9 @@ def run_script(
             directly. The classic commands then see nothing instead. Mixing the
             two within one script is possible with ``&get``/``&put``, but those
             do not carry I/O names across, whereas ``&read``/``&write`` do.
-        verbose: If ``True``, print everything ABC wrote.
+        verbose: If ``True``, print everything ABC wrote. This is the captured
+            output, not ABC's own ``-v`` reporting -- that differs per command and
+            is left to the caller to add to ``commands``.
         binary: Overrides the resolved ABC executable for this call only.
 
     Returns:
