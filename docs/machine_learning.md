@@ -59,6 +59,8 @@ extract node and edge features, visualize the structure (e.g., with [Matplotlib]
 the graph into downstream model pipelines.
 
 ```{code-cell} ipython3
+:tags: [remove-stderr]
+
 import matplotlib.pyplot as plt
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout

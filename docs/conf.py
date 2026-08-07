@@ -53,10 +53,13 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
     "sphinx_design",
+    "sphinx_llm.txt",
     "sphinxext.opengraph",
     "sphinx.ext.viewcode",
     "sphinxcontrib.inkscapeconverter",
 ]
+
+llms_txt_description = "aigverse is a Python library for working with logic networks, synthesis, and optimization."
 
 source_suffix = [".rst", ".md"]
 

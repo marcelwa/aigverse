@@ -68,6 +68,7 @@ generators
 benchmarks
 abc
 machine_learning
+visualization
 ```
 
 ````{only} not latex

@@ -80,6 +80,8 @@ docs/api/
 docs/example.aig
 docs/example.dot
 docs/example.v
+docs/before.dot
+docs/after.dot
 docs/*.pkl
 docs/aig_pyg_dataset/
 docs/aig_pyg_adj_dataset/
