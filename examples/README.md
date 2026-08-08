@@ -35,8 +35,8 @@ Loads part of the [EPFL benchmark suite](https://github.com/lsils/benchmarks) th
 3. **Is optimizability predictable?** A cheap structural feature of the input is
    correlated against how much the best script managed to remove.
 
-It writes `abc_recipe_study.png` and a `abc_recipe_study.csv` with every raw measurement,
-and prints its findings as it goes.
+It writes `abc_recipe_study.png`, an `abc_recipe_study.csv` with every raw measurement, and an
+`abc_recipe_study_headline.csv` with the summary statistics, and prints its findings as it goes.
 
 Requires an ABC executable — `aigverse` does not ship one. See
 [Installation → ABC Integration](https://aigverse.readthedocs.io/en/latest/installation.html#abc-integration).

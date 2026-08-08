@@ -55,7 +55,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING
 
 import matplotlib as mpl
 
@@ -432,19 +432,24 @@ def report(benchmarks: list[Benchmark]) -> dict[str, float]:
         headline["mean_order_spread"] = float(np.mean(spreads))
         headline["max_order_spread"] = float(np.max(spreads))
         headline["order_insensitive_fraction"] = 1.0 - len(sensitive) / len(spreads)
-        print(
-            f"\n   On {len(spreads) - len(sensitive)} of {len(spreads)} designs the order made no "
-            f"difference at all -- every ordering"
-        )
-        print("   reached the same AND count, so the schedule was simply irrelevant there.")
-        if sensitive:
+        insensitive = len(spreads) - len(sensitive)
+        if insensitive:
             print(
-                f"\n   On the other {len(sensitive)} it moved the result by {np.mean(sensitive):.1%} "
+                f"\n   On {insensitive} of {len(spreads)} designs the order made no difference at all -- every ordering"
+            )
+            print("   reached the same AND count, so the schedule was simply irrelevant there.")
+        if sensitive:
+            where = f"On the other {len(sensitive)}" if insensitive else f"On all {len(sensitive)} of them"
+            print(
+                f"\n   {where} it moved the result by {np.mean(sensitive):.1%} "
                 f"on average and up to {np.max(sensitive):.1%},"
             )
             print("   using exactly the same four transformations the same number of times.")
-            print(f"   Averaged over every design that becomes a much tamer {np.mean(spreads):.1%}, which is why")
-            print("   the per-design view in panel B is the one worth reading.")
+            if insensitive:
+                print(f"   Averaged over every design that becomes a much tamer {np.mean(spreads):.1%}, which is why")
+                print("   the per-design view in panel B is the one worth reading.")
+            else:
+                print("   The per-design view in panel B is the one worth reading.")
 
     # Is one order universally best? Rank each order per benchmark and see whether
     # any of them stays near the top everywhere.
@@ -585,7 +590,7 @@ def _plot_order_spread(ax: plt.Axes, benchmarks: list[Benchmark]) -> None:
     parts = ax.violinplot(data, showextrema=False)
     # matplotlib types this entry as a single Collection artist; at runtime it is a
     # list of them, one per violin.
-    for body in cast("list[Any]", parts["bodies"]):
+    for body in parts["bodies"]:  # ty: ignore[not-iterable]
         body.set_facecolor("#4C72B0")
         body.set_alpha(0.45)
 
@@ -625,13 +630,19 @@ def _plot_order_stability(ax: plt.Axes, benchmarks: list[Benchmark]) -> None:
         ax: The axes to draw on.
         benchmarks: The benchmarks, with their results attached.
     """
-    matrix, names, orders = [], [], None
+    matrix: list[np.ndarray] = []
+    names: list[str] = []
+    orders: list[str] | None = None
     for bench in benchmarks:
         rows = sorted((r for r in bench.results if r.experiment == "order"), key=lambda r: r.recipe)
         if len(rows) < 2:
             continue
+        recipes = [r.recipe for r in rows]
         if orders is None:
-            orders = [r.recipe for r in rows]
+            orders = recipes
+        elif recipes != orders:
+            # an order failed on this design, so its columns would not line up
+            continue
         names.append(bench.name)
         ranks = _rank(np.array([r.gates for r in rows], dtype=float))
         matrix.append(ranks / (len(rows) - 1))
@@ -748,6 +759,20 @@ def write_csv(benchmarks: Iterable[Benchmark], path: Path) -> None:
     print(f"wrote {path}")
 
 
+def write_headline(headline: Mapping[str, float], path: Path) -> None:
+    """Write the headline statistics to CSV so runs can be compared.
+
+    Args:
+        headline: The headline statistics, as returned by :func:`report`.
+        path: Path of the CSV to write.
+    """
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["statistic", "value"])
+        writer.writerows(headline.items())
+    print(f"wrote {path}")
+
+
 def parse_args() -> argparse.Namespace:
     """Parse the command line.
 
@@ -814,8 +839,9 @@ def main() -> int:
     experiment_families(benchmarks, verify=args.verify)
     print(f"\n[3/3] analysis  ({time.perf_counter() - started:.1f}s of ABC time)")
 
-    report(benchmarks)
+    headline = report(benchmarks)
     write_csv(benchmarks, args.csv)
+    write_headline(headline, args.csv.with_name(f"{args.csv.stem}_headline{args.csv.suffix}"))
     plot(benchmarks, args.output)
     return 0
 

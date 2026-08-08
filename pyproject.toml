@@ -268,7 +268,7 @@ examples = [
     # what the standalone PEP 723 scripts under examples/ declare inline. Kept in
     # the dev group as well so `ty` can actually type-check them instead of
     # having to skip the directory.
-    { include-group = "adapters" },
+    "numpy>=1.24",
     "matplotlib>=3.8",
 ]
 test = [
