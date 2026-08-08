@@ -330,6 +330,16 @@ documenting — `refactor` refuses a support above 15 while printing no range at
 recorded with the evidence for them.
 :::
 
+## A worked study
+
+[`examples/abc_recipe_study.py`](https://github.com/marcelwa/aigverse/blob/main/examples/abc_recipe_study.py)
+puts the bridge through a real experiment on the
+[EPFL benchmark suite](https://github.com/lsils/benchmarks), loaded with
+{py:func}`~aigverse.benchmarks.epfl`. It runs all 24 orderings of the four atomic
+commands, compares the classic and `&`-space families on the area–depth plane, and plots
+the result. It is a standalone [PEP 723](https://peps.python.org/pep-0723/) script, so
+`uv run examples/abc_recipe_study.py` needs no setup beyond an ABC binary.
+
 ## Keeping the scripts in sync
 
 The shipped expansions are checked against the `abc.rc` of the ABC the test suite runs

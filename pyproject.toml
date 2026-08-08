@@ -73,6 +73,7 @@ sdist.exclude = [
     "**/.github",
     "**/doc",
     "**/docs",
+    "**/examples",
     "**/test",
 ]
 
@@ -80,6 +81,7 @@ sdist.exclude = [
 sdist-only = ["python/aigverse/_version.py"]
 git-only = [
     "docs/*",
+    "examples/*",
     "test/*",
     ".idea/*",
 ]
@@ -197,6 +199,8 @@ isort.required-imports = ["from __future__ import annotations"]
 "python/aigverse/__init__.py" = ["RUF067"]
 "test/**" = ["T20", "ANN", "D", "INP001", "S301", "S403"]
 "docs/**" = ["T20", "ERA001", "INP001"]
+# standalone PEP 723 scripts: they print their findings and are not a package
+"examples/*.py" = ["T20", "INP001"]
 # the loaders document the exceptions that propagate out of their helpers
 "python/aigverse/benchmarks/*.py" = ["DOC502"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]
@@ -260,6 +264,13 @@ docs = [
     "pygraphviz>=1.9.0",
     "graphviz>=0.20",
 ]
+examples = [
+    # what the standalone PEP 723 scripts under examples/ declare inline. Kept in
+    # the dev group as well so `ty` can actually type-check them instead of
+    # having to skip the directory.
+    "numpy>=1.24",
+    "matplotlib>=3.8",
+]
 test = [
     { include-group = "adapters" },
     "pytest>=9.0.1",
@@ -269,6 +280,7 @@ test = [
 dev = [
     { include-group = "build" },
     { include-group = "adapters" },
+    { include-group = "examples" },
     { include-group = "test" },
     "nox>=2025.10.16",
 ]
