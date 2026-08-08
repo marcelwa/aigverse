@@ -111,18 +111,57 @@
       commitMessagePrefix: "⬆\uFE0F\uD83D\uDC0D",
     },
     {
+      // Everything the custom managers above track is a pinned revision of an
+      // external project, so the shared parts live here and the three rules
+      // below only differ where they have to.
       matchManagers: [
         "custom.regex"
       ],
       addLabels: [
-        "dependencies",
+        "dependencies"
+      ],
+      // `:automergeDigest` (inherited from extends) would otherwise merge these
+      // unattended. Each of these pins decides an outcome rather than a version
+      // -- the C++ core we build against, the ABC our results come from, or the
+      // circuits we measure -- so all three get reviewed.
+      automerge: false,
+    },
+    // All three custom managers report as `custom.regex`, so matching on the
+    // manager alone gives them one shared prefix and one shared set of labels --
+    // which is how ABC bumps ended up announcing themselves with mockturtle's
+    // turtle. They are told apart by dependency name, which is unique to each.
+    // A fourth custom manager needs a rule here too, or its commits carry no
+    // emoji prefix at all.
+    {
+      description: "mockturtle is the C++ core aigverse is built on",
+      matchDepNames: [
+        "marcelwa/mockturtle"
+      ],
+      addLabels: [
         "C++",
         "build_system"
       ],
       commitMessagePrefix: "⬆\uFE0F\uD83D\uDC22",
-      // `:automergeDigest` (inherited from extends) would otherwise merge these
-      // unattended. A mockturtle bump changes the C++ core, so it gets reviewed.
-      automerge: false,
+    },
+    {
+      description: "ABC is an external binary the integration tests and the docs build",
+      matchDepNames: [
+        "berkeley-abc/abc"
+      ],
+      addLabels: [
+        "testing"
+      ],
+      commitMessagePrefix: "⬆\uFE0F\uD83C\uDD70\uFE0F",
+    },
+    {
+      description: "The EPFL suite is the circuit data the benchmark loader fetches",
+      matchDepNames: [
+        "lsils/benchmarks"
+      ],
+      addLabels: [
+        "benchmarks"
+      ],
+      commitMessagePrefix: "⬆\uFE0F\uD83D\uDCCA",
     },
     {
       description: "Group and automerge all patch updates",
