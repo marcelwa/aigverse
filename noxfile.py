@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 nox.needs_version = ">=2025.10.16"
 nox.options.default_venv_backend = "uv"
 
-PYTHON_ALL_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14"]
+PYTHON_ALL_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
 
 if os.environ.get("CI", None):
     nox.options.error_on_missing_interpreters = True
@@ -91,8 +91,14 @@ def _run_tests(
         # network-marked tests stay out -- they download circuits, and a
         # hiccup at github.com must not turn the whole matrix red. They have
         # their own job.
-        only_group_args += ["--only-group", "torch"]
-        pytest_run_args = [*pytest_run_args, "-m", "not network"]
+        marker = "not network"
+        if session.python == "3.15":
+            # torch has no wheels for cp315 yet, so the group can't be
+            # installed there; skip torch coverage on that version only.
+            marker += " and not torch"
+        else:
+            only_group_args += ["--only-group", "torch"]
+        pytest_run_args = [*pytest_run_args, "-m", marker]
     session.run(
         "uv",
         "sync",
