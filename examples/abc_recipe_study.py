@@ -2,7 +2,9 @@
 # /// script
 # requires-python = ">=3.10"
 # dependencies = [
-#     "aigverse",
+#     # `aigverse.abc` landed after v0.1.3; the bound turns "no such module" at
+#     # import time into a resolution error that says what is actually wrong.
+#     "aigverse>=0.1.4",
 #     "matplotlib>=3.8",
 #     "numpy>=1.24",
 # ]
@@ -13,7 +15,7 @@ Logic-synthesis practice leans on a handful of canonical ABC scripts -- ``resyn2
 ``compress2rs`` -- applied more or less universally. This study asks whether that
 habit is justified, using the EPFL benchmark suite and the ``aigverse.abc`` bridge.
 
-It runs three experiments:
+It runs two experiments and then analyses their output:
 
 1. **Does the order of operations matter?** ABC's four atomic transformations
    (``balance``, ``rewrite``, ``refactor``, ``resub``) can be applied in any of 24
@@ -25,11 +27,13 @@ It runs three experiments:
 2. **Do the two ABC command families trade off?** The classic commands optimize
    area while holding depth; the ``&``-space (ABC9) scripts restructure much more
    aggressively and aim at depth. We plot both families on the area-depth plane and
-   check which points survive on the Pareto front.
+   compare, per design, which family reaches the smallest result and which the
+   shallowest.
 
-3. **Can we predict optimizability?** If a cheap structural property of the input
-   predicted how much a script could remove, one could pick a recipe without
-   running it. We correlate input shape with achieved area reduction.
+The analysis then asks a third question of the data experiment 2 produced: **can we
+predict optimizability?** If a cheap structural property of the input predicted how
+much a script could remove, one could pick a recipe without running it. We correlate
+input shape with achieved area reduction.
 
 Benchmarks are fetched and cached by ``aigverse.benchmarks``, so nothing needs to
 be downloaded by hand.
@@ -51,19 +55,15 @@ from __future__ import annotations
 import argparse
 import csv
 import itertools
+import math
 import sys
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from types import MappingProxyType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import matplotlib as mpl
-
-mpl.use("Agg")
-
-from pathlib import Path
-
-import matplotlib.pyplot as plt
 import numpy as np
 
 from aigverse import abc
@@ -71,8 +71,16 @@ from aigverse.algorithms import equivalence_checking
 from aigverse.benchmarks import epfl, epfl_names
 from aigverse.networks import DepthAig
 
+# The figure is only ever written to a file, so pick the non-interactive backend
+# before pyplot is imported and binds one -- otherwise this needs a display.
+mpl.use("Agg")
+
+from matplotlib import pyplot as plt
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Mapping, Sequence
+
+    from matplotlib.axes import Axes
 
     from aigverse.networks import Aig
 
@@ -100,19 +108,39 @@ DEFAULT_SET: tuple[str, ...] = (
     "bar",
 )
 
+# Labels for the two experiments and the two command families. They end up in the
+# CSV and are matched on all over the report, so they are named once here.
+ORDER: Final = "order"
+FAMILY: Final = "family"
+CLASSIC: Final = "classic"
+GIA: Final = "&-space"
+
+#: The expert script every brute-forced schedule is measured against.
+REFERENCE_SCRIPT: Final = "resyn2"
+
+#: SAT conflict budget for --verify. Unbounded checking can outlast the study
+#: itself on designs like `bar` and `max`, so an exhausted budget is reported as
+#: "undecided" rather than allowed to hang.
+CONFLICT_LIMIT: Final = 100_000
+
 # The recipe tables are read-only views: a typo assigning into one of them should
 # fail rather than quietly reshape the experiment. Insertion order is meaningful
 # here too -- it fixes the column order of the rank heatmap.
 
-#: The four atomic transformations every canonical script is built from.
-ATOMS: Mapping[str, Callable[[Aig], Aig]] = MappingProxyType({
-    "b": abc.balance,
-    "rw": abc.rewrite,
-    "rf": abc.refactor,
-    "rs": abc.resub,
+#: The four atomic transformations every canonical script is built from, as the ABC
+#: commands they issue. `abc.balance`, `abc.rewrite`, `abc.refactor` and `abc.resub`
+#: are the same commands with default options, but calling them one at a time costs
+#: one ABC process and one AIGER round-trip *each*; handing the whole schedule to
+#: `abc.run_script` runs it in a single process instead.
+ATOMS: Mapping[str, str] = MappingProxyType({
+    "b": "balance",
+    "rw": "rewrite",
+    "rf": "refactor",
+    "rs": "resub",
 })
 
-#: Expert-designed schedules, for reference against the brute-forced orders.
+#: The canonical `abc.rc` scripts, plus ABC's own `orchestrate`, for reference
+#: against the brute-forced orders.
 CLASSIC_SCRIPTS: Mapping[str, Callable[[Aig], Aig]] = MappingProxyType({
     "resyn": abc.resyn,
     "resyn2": abc.resyn2,
@@ -151,7 +179,10 @@ class Result:
     seconds: float
     base_gates: int
     base_levels: int
-    equivalent: bool | None = None
+    #: One of "unchecked", "equivalent", "different" or "undecided". A plain
+    #: `bool | None` cannot tell "we did not look" apart from "the solver gave up",
+    #: and those mean very different things in the CSV.
+    equivalence: str = "unchecked"
 
     @property
     def area_ratio(self) -> float:
@@ -182,6 +213,35 @@ class Benchmark:
     levels: int
     results: list[Result] = field(default_factory=list)
 
+    def of(self, experiment: str, family: str | None = None) -> list[Result]:
+        """Select this benchmark's results for one experiment.
+
+        Args:
+            experiment: Either :data:`ORDER` or :data:`FAMILY`.
+            family: Restrict to one command family, or None for all of them.
+
+        Returns:
+            The matching results, in the order they were measured.
+        """
+        return [r for r in self.results if r.experiment == experiment and (family is None or r.family == family)]
+
+    def reference(self) -> Result | None:
+        """Find this benchmark's :data:`REFERENCE_SCRIPT` measurement.
+
+        Returns:
+            The result, or None if that script was not run or failed here.
+        """
+        return next((r for r in self.of(FAMILY) if r.recipe == REFERENCE_SCRIPT), None)
+
+    @property
+    def shape(self) -> float:
+        """Levels per gate of the input.
+
+        Returns:
+            High means a long, thin design; low means wide and shallow.
+        """
+        return self.levels / self.gates
+
 
 # --------------------------------------------------------------------------------------
 # Plumbing
@@ -202,14 +262,16 @@ def load(name: str, cache: Path | None) -> Aig:
         The benchmark network.
 
     Raises:
-        SystemExit: If the benchmark is unknown or cannot be downloaded.
+        SystemExit: If the benchmark is unknown, cannot be downloaded, or cannot
+            be parsed.
     """
     try:
         return epfl(name, cache_dir=cache)
-    except ValueError as exc:  # unknown benchmark
-        raise SystemExit(str(exc)) from exc
-    except OSError as exc:  # download failed
-        raise SystemExit(str(exc)) from exc
+    except (ValueError, OSError, RuntimeError) as exc:
+        # unknown benchmark, failed download, or an unparsable AIGER -- all three
+        # are `epfl`'s documented failures and none is worth a traceback here
+        msg = f"{name}: {exc}"
+        raise SystemExit(msg) from exc
 
 
 def measure(aig: Aig) -> tuple[int, int]:
@@ -237,7 +299,7 @@ def run_recipe(
 
     Args:
         bench: The benchmark to optimize.
-        experiment: Which of the three studies this measurement belongs to.
+        experiment: Either :data:`ORDER` or :data:`FAMILY`.
         recipe: Human-readable name of the recipe.
         family: Grouping label used when plotting.
         apply: Callable performing the optimization.
@@ -255,10 +317,7 @@ def run_recipe(
     elapsed = time.perf_counter() - started
 
     gates, levels = measure(optimized)
-    equivalent = equivalence_checking(bench.aig, optimized) if verify else None
-    if equivalent is False:
-        # Worth shouting about: this would be an ABC or a bridge bug, not a result.
-        print(f"    !! {recipe} changed the function of {bench.name}")
+    equivalence = check(bench, optimized, recipe) if verify else "unchecked"
 
     return Result(
         benchmark=bench.name,
@@ -270,12 +329,41 @@ def run_recipe(
         seconds=elapsed,
         base_gates=bench.gates,
         base_levels=bench.levels,
-        equivalent=equivalent,
+        equivalence=equivalence,
     )
+
+
+def check(bench: Benchmark, optimized: Aig, recipe: str) -> str:
+    """Equivalence-check one optimization against its input.
+
+    The SAT check runs under a conflict limit rather than unbounded: on the larger
+    designs an exhaustive proof can outlast the whole study, and "we ran out of
+    budget" is a perfectly reportable answer.
+
+    Args:
+        bench: The benchmark the result came from.
+        optimized: The optimized network.
+        recipe: Name of the recipe, for the message on a mismatch.
+
+    Returns:
+        One of "equivalent", "different" or "undecided".
+    """
+    equivalent = equivalence_checking(bench.aig, optimized, conflict_limit=CONFLICT_LIMIT)
+    if equivalent is None:
+        print(f"    ? {recipe} on {bench.name}: equivalence undecided within {CONFLICT_LIMIT} conflicts")
+        return "undecided"
+    if not equivalent:
+        # Worth shouting about: this would be an ABC or a bridge bug, not a result.
+        print(f"    !! {recipe} changed the function of {bench.name}")
+        return "different"
+    return "equivalent"
 
 
 def apply_sequence(order: Sequence[str], rounds: int) -> Callable[[Aig], Aig]:
     """Build a callable applying a sequence of atomic commands repeatedly.
+
+    The whole schedule goes to ABC as one script, so it costs a single process and
+    a single AIGER round-trip no matter how long it is.
 
     Args:
         order: The atom keys to apply, in order.
@@ -284,23 +372,8 @@ def apply_sequence(order: Sequence[str], rounds: int) -> Callable[[Aig], Aig]:
     Returns:
         A callable taking and returning a network.
     """
-
-    def run(aig: Aig) -> Aig:
-        """Apply the schedule.
-
-        Args:
-            aig: The network to optimize.
-
-        Returns:
-            The optimized network.
-        """
-        current = aig
-        for _ in range(rounds):
-            for key in order:
-                current = ATOMS[key](current)
-        return current
-
-    return run
+    commands = [ATOMS[key] for key in order] * rounds
+    return lambda aig: abc.run_script(aig, commands)
 
 
 # --------------------------------------------------------------------------------------
@@ -317,14 +390,14 @@ def experiment_order(benchmarks: list[Benchmark], rounds: int, *, verify: bool) 
         verify: Whether to equivalence-check every result.
     """
     orders = list(itertools.permutations(ATOMS))
-    print(f"\n[1/3] schedule sensitivity: {len(orders)} orders x {rounds} rounds")
+    print(f"\n[1/2] schedule sensitivity: {len(orders)} orders x {rounds} rounds ({len(ATOMS) * rounds} commands)")
 
     for bench in benchmarks:
         print(f"  {bench.name} ({bench.gates} gates, {bench.levels} levels)")
         for order in orders:
             result = run_recipe(
                 bench,
-                "order",
+                ORDER,
                 "; ".join(order),
                 "permutation",
                 apply_sequence(order, rounds),
@@ -341,13 +414,13 @@ def experiment_families(benchmarks: list[Benchmark], *, verify: bool) -> None:
         benchmarks: The benchmarks to run on.
         verify: Whether to equivalence-check every result.
     """
-    print(f"\n[2/3] family comparison: {len(CLASSIC_SCRIPTS)} classic + {len(GIA_SCRIPTS)} &-space scripts")
+    print(f"\n[2/2] family comparison: {len(CLASSIC_SCRIPTS)} classic + {len(GIA_SCRIPTS)} &-space scripts")
 
     for bench in benchmarks:
         print(f"  {bench.name}")
-        for family, scripts in (("classic", CLASSIC_SCRIPTS), ("&-space", GIA_SCRIPTS)):
+        for family, scripts in ((CLASSIC, CLASSIC_SCRIPTS), (GIA, GIA_SCRIPTS)):
             for name, fn in scripts.items():
-                result = run_recipe(bench, "family", name, family, fn, verify=verify)
+                result = run_recipe(bench, FAMILY, name, family, fn, verify=verify)
                 if result is not None:
                     bench.results.append(result)
 
@@ -399,26 +472,80 @@ def _rank(values: np.ndarray) -> np.ndarray:
     return ranks
 
 
-def report(benchmarks: list[Benchmark]) -> dict[str, float]:
-    """Print the findings and return the headline numbers.
+@dataclass
+class ShapeVsGain:
+    """Input shape against achieved area reduction, for the predictability question."""
+
+    names: list[str] = field(default_factory=list)
+    shapes: list[float] = field(default_factory=list)
+    gains: list[float] = field(default_factory=list)
+
+    @property
+    def rho(self) -> float:
+        """Spearman correlation between the two.
+
+        Returns:
+            The correlation in [-1, 1], or NaN if it is not defined.
+        """
+        return spearman(self.shapes, self.gains)
+
+
+def shape_vs_gain(benchmarks: list[Benchmark]) -> ShapeVsGain:
+    """Pair each benchmark's input shape with the best reduction a classic script hit.
 
     Args:
         benchmarks: The benchmarks, with their results attached.
 
     Returns:
+        The paired samples, covering only benchmarks that have classic results.
+    """
+    paired = ShapeVsGain()
+    for bench in benchmarks:
+        rows = bench.of(FAMILY, CLASSIC)
+        if not rows:
+            continue
+        paired.names.append(bench.name)
+        paired.shapes.append(bench.shape)
+        paired.gains.append(1.0 - min(r.area_ratio for r in rows))
+    return paired
+
+
+def report(benchmarks: list[Benchmark], rounds: int) -> dict[str, float]:
+    """Print the findings and return the headline numbers.
+
+    Args:
+        benchmarks: The benchmarks, with their results attached.
+        rounds: How often each schedule repeated, for the effort comparison.
+
+    Returns:
         A mapping of headline statistic names to values.
     """
-    headline: dict[str, float] = {}
     print("\n" + "=" * 78)
     print("FINDINGS")
     print("=" * 78)
+    return {
+        **_report_order(benchmarks, rounds),
+        **_report_families(benchmarks),
+        **_report_predictability(benchmarks),
+    }
 
-    # --- 1. does order matter? -----------------------------------------------------
+
+def _report_order(benchmarks: list[Benchmark], rounds: int) -> dict[str, float]:
+    """Report on how much the schedule alone moves the result.
+
+    Args:
+        benchmarks: The benchmarks, with their results attached.
+        rounds: How often each schedule repeated, for the effort comparison.
+
+    Returns:
+        This section's headline statistics.
+    """
+    headline: dict[str, float] = {}
     print("\n1. Does the order of the four transformations matter?\n")
     print(f"   {'benchmark':<12} {'best':>8} {'worst':>8} {'spread':>8}   best order")
     spreads = []
     for bench in benchmarks:
-        rows = [r for r in bench.results if r.experiment == "order"]
+        rows = bench.of(ORDER)
         if not rows:
             continue
         best = min(rows, key=lambda r: r.gates)
@@ -451,53 +578,94 @@ def report(benchmarks: list[Benchmark]) -> dict[str, float]:
             else:
                 print("   The per-design view in panel B is the one worth reading.")
 
-    # Is one order universally best? Rank each order per benchmark and see whether
-    # any of them stays near the top everywhere.
+    headline.update(_report_order_stability(benchmarks))
+    headline.update(_report_reference(benchmarks, rounds))
+    return headline
+
+
+def _report_order_stability(benchmarks: list[Benchmark]) -> dict[str, float]:
+    """Report whether any single order is good everywhere.
+
+    Args:
+        benchmarks: The benchmarks, with their results attached.
+
+    Returns:
+        This section's headline statistics.
+    """
+    # Rank each order per benchmark and see whether any of them stays near the top.
     per_order: dict[str, list[float]] = {}
     for bench in benchmarks:
-        rows = [r for r in bench.results if r.experiment == "order"]
+        rows = bench.of(ORDER)
         if len(rows) < 2:
             continue
         ranks = _rank(np.array([r.gates for r in rows], dtype=float))
-        for row, rank in zip(rows, ranks, strict=False):
+        for row, rank in zip(rows, ranks, strict=True):
             per_order.setdefault(row.recipe, []).append(rank / (len(rows) - 1))
 
-    if per_order:
-        mean_rank = {name: float(np.mean(v)) for name, v in per_order.items()}
-        best_order = min(mean_rank, key=lambda k: mean_rank[k])
-        worst_rank_of_best = max(per_order[best_order])
-        headline["best_order_mean_rank"] = mean_rank[best_order]
-        headline["best_order_worst_rank"] = worst_rank_of_best
-        print(f"\n   Best order on average: '{best_order}' (mean normalized rank {mean_rank[best_order]:.2f}),")
-        print(f"   but on its worst benchmark it ranks {worst_rank_of_best:.2f} -- so it is not universally best.")
+    if not per_order:
+        return {}
 
-    # Where does the expert script sit inside that distribution? Note that resyn2
-    # issues ten commands while a schedule here issues four per round, so this is a
-    # comparison of recipes, not a controlled comparison at equal effort.
+    mean_rank = {name: float(np.mean(v)) for name, v in per_order.items()}
+    best_order = min(mean_rank, key=lambda k: mean_rank[k])
+    worst_rank_of_best = max(per_order[best_order])
+    print(f"\n   Best order on average: '{best_order}' (mean normalized rank {mean_rank[best_order]:.2f}),")
+    print(f"   but on its worst benchmark it ranks {worst_rank_of_best:.2f} -- so it is not universally best.")
+    return {
+        "best_order_mean_rank": mean_rank[best_order],
+        "best_order_worst_rank": worst_rank_of_best,
+    }
+
+
+def _report_reference(benchmarks: list[Benchmark], rounds: int) -> dict[str, float]:
+    """Report how the brute-forced orders fare against the expert script.
+
+    Args:
+        benchmarks: The benchmarks, with their results attached.
+        rounds: How often each schedule repeated, for the effort comparison.
+
+    Returns:
+        This section's headline statistics.
+    """
     beaten, total = 0, 0
     for bench in benchmarks:
-        rows = [r for r in bench.results if r.experiment == "order"]
-        expert = [r for r in bench.results if r.experiment == "family" and r.recipe == "resyn2"]
-        if not rows or not expert:
+        rows = bench.of(ORDER)
+        expert = bench.reference()
+        if not rows or expert is None:
             continue
         total += 1
-        if min(r.gates for r in rows) < expert[0].gates:
+        if min(r.gates for r in rows) < expert.gates:
             beaten += 1
-    if total:
-        headline["resyn2_beaten_fraction"] = beaten / total
-        print(
-            f"\n   On {beaten} of {total} benchmarks some plain 4-command order beat resyn2 outright"
-            f" (which issues ten commands)."
-        )
+    if not total:
+        return {}
 
-    # --- 2. do the families trade off? ---------------------------------------------
+    # State the effort honestly: a schedule here issues len(ATOMS) commands per
+    # round, which at the default two rounds is close to what resyn2 spends.
+    issued = len(ATOMS) * rounds
+    reference_length = len(abc.SCRIPTS[REFERENCE_SCRIPT])
+    print(
+        f"\n   On {beaten} of {total} benchmarks some plain {issued}-command order beat"
+        f" {REFERENCE_SCRIPT} outright (which issues {reference_length})."
+    )
+    return {"reference_beaten_fraction": beaten / total}
+
+
+def _report_families(benchmarks: list[Benchmark]) -> dict[str, float]:
+    """Report whether the two command families trade area against depth.
+
+    Args:
+        benchmarks: The benchmarks, with their results attached.
+
+    Returns:
+        This section's headline statistics.
+    """
     print("\n2. Do the classic and &-space families trade area against depth?\n")
     print(f"   {'benchmark':<12} {'best area':>22} {'best depth':>22}")
-    mixed_fronts = 0
+    mixed_fronts, counted = 0, 0
     for bench in benchmarks:
-        rows = [r for r in bench.results if r.experiment == "family"]
+        rows = bench.of(FAMILY)
         if not rows:
             continue
+        counted += 1
         by_area = min(rows, key=lambda r: (r.gates, r.levels))
         by_depth = min(rows, key=lambda r: (r.levels, r.gates))
         if by_area.family != by_depth.family:
@@ -507,37 +675,39 @@ def report(benchmarks: list[Benchmark]) -> dict[str, float]:
             f" {by_depth.recipe:>12} ({by_depth.family[:1]}) {by_depth.levels:>6}"
         )
 
-    counted = sum(1 for b in benchmarks if any(r.experiment == "family" for r in b.results))
-    if counted:
-        headline["mixed_front_fraction"] = mixed_fronts / counted
-        print(
-            f"\n   On {mixed_fronts} of {counted} benchmarks the smallest and the shallowest result "
-            f"come from different families."
-        )
-        print("   Neither family dominates; picking one a priori forfeits one of the two objectives.")
+    if not counted:
+        return {}
 
-    # --- 3. is optimizability predictable? -----------------------------------------
+    print(
+        f"\n   On {mixed_fronts} of {counted} benchmarks the smallest and the shallowest result "
+        f"come from different families."
+    )
+    print("   Neither family dominates; picking one a priori forfeits one of the two objectives.")
+    return {"mixed_front_fraction": mixed_fronts / counted}
+
+
+def _report_predictability(benchmarks: list[Benchmark]) -> dict[str, float]:
+    """Report whether input shape predicts how much a script can remove.
+
+    Args:
+        benchmarks: The benchmarks, with their results attached.
+
+    Returns:
+        This section's headline statistics.
+    """
     print("\n3. Does the shape of the input predict how much can be removed?\n")
-    shapes: list[float] = []
-    gains: list[float] = []
-    for bench in benchmarks:
-        rows = [r for r in bench.results if r.experiment == "family" and r.family == "classic"]
-        if not rows:
-            continue
-        # levels per gate: high means a long, thin design; low means wide and shallow
-        shapes.append(bench.levels / bench.gates)
-        gains.append(1.0 - min(r.area_ratio for r in rows))
+    paired = shape_vs_gain(benchmarks)
+    if len(paired.shapes) < 3:
+        print("   Too few benchmarks with classic results to say anything.")
+        return {}
 
-    if len(shapes) >= 3:
-        rho = spearman(shapes, gains)
-        headline["shape_gain_spearman"] = rho
-        print(f"   Spearman rho between levels/gates and best area reduction: {rho:+.2f}")
-        if abs(rho) < 0.5:
-            print("   Weak: this cheap structural feature does not tell you what a script will achieve.")
-        else:
-            print("   Strong enough to be worth a closer look on a larger benchmark set.")
-
-    return headline
+    rho = paired.rho
+    print(f"   Spearman rho between levels/gates and best area reduction: {rho:+.2f}")
+    if abs(rho) < 0.5:
+        print("   Weak: this cheap structural feature does not tell you what a script will achieve.")
+    else:
+        print("   Strong enough to be worth a closer look on a larger benchmark set.")
+    return {"shape_gain_spearman": rho}
 
 
 # --------------------------------------------------------------------------------------
@@ -545,11 +715,12 @@ def report(benchmarks: list[Benchmark]) -> dict[str, float]:
 # --------------------------------------------------------------------------------------
 
 
-def plot(benchmarks: list[Benchmark], output: Path) -> None:
+def plot(benchmarks: list[Benchmark], rounds: int, output: Path) -> None:
     """Render the four-panel summary figure.
 
     Args:
         benchmarks: The benchmarks, with their results attached.
+        rounds: How often each schedule repeated, for the effort comparison.
         output: Path of the PNG to write.
     """
     fig, axes = plt.subplots(2, 2, figsize=(15, 11))
@@ -559,35 +730,32 @@ def plot(benchmarks: list[Benchmark], output: Path) -> None:
         fontweight="bold",
     )
 
-    _plot_order_spread(axes[0][0], benchmarks)
+    _plot_order_spread(axes[0][0], benchmarks, rounds)
     _plot_order_stability(axes[0][1], benchmarks)
     _plot_area_depth(axes[1][0], benchmarks)
     _plot_predictability(axes[1][1], benchmarks)
 
     fig.tight_layout(rect=(0, 0.02, 1, 0.97))
+    output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output, dpi=150)
     print(f"\nwrote {output}")
 
 
-def _plot_order_spread(ax: plt.Axes, benchmarks: list[Benchmark]) -> None:
+def _plot_order_spread(ax: Axes, benchmarks: list[Benchmark], rounds: int) -> None:
     """Panel A: how much the schedule alone changes the outcome.
 
     Args:
         ax: The axes to draw on.
         benchmarks: The benchmarks, with their results attached.
+        rounds: How often each schedule repeated, for the effort comparison.
     """
-    names, data = [], []
-    for bench in benchmarks:
-        rows = [r for r in bench.results if r.experiment == "order"]
-        if rows:
-            names.append(bench.name)
-            data.append([r.area_ratio for r in rows])
-
-    if not data:
+    # one pass, so the columns and the benchmarks they came from cannot drift apart
+    columns = [(bench, [r.area_ratio for r in bench.of(ORDER)]) for bench in benchmarks if bench.of(ORDER)]
+    if not columns:
         ax.set_visible(False)
         return
 
-    parts = ax.violinplot(data, showextrema=False)
+    parts = ax.violinplot([ratios for _, ratios in columns], showextrema=False)
     # matplotlib types this entry as a single Collection artist; at runtime it is a
     # list of them, one per violin.
     for body in parts["bodies"]:  # ty: ignore[not-iterable]
@@ -595,35 +763,36 @@ def _plot_order_spread(ax: plt.Axes, benchmarks: list[Benchmark]) -> None:
         body.set_alpha(0.45)
 
     rng = np.random.default_rng(0)
-    for index, (bench, column) in enumerate(
-        zip((b for b in benchmarks if any(r.experiment == "order" for r in b.results)), data, strict=False), start=1
-    ):
+    for index, (bench, ratios) in enumerate(columns, start=1):
         # the individual orders, jittered: a design where every order lands on the
         # same value produces no violin at all, and that is itself a finding
         ax.scatter(
-            index + rng.uniform(-0.06, 0.06, len(column)),
-            column,
+            index + rng.uniform(-0.06, 0.06, len(ratios)),
+            ratios,
             s=9,
             color="#2C3E60",
             alpha=0.6,
             zorder=4,
         )
-        expert = [r for r in bench.results if r.experiment == "family" and r.recipe == "resyn2"]
-        if expert:
-            ax.plot(index, expert[0].area_ratio, marker="*", markersize=15, color="#C44E52", zorder=5)
+        expert = bench.reference()
+        if expert is not None:
+            ax.plot(index, expert.area_ratio, marker="*", markersize=15, color="#C44E52", zorder=5)
 
-    ax.set_xticks(range(1, len(names) + 1))
-    ax.set_xticklabels(names, rotation=45, ha="right")
+    ax.set_xticks(range(1, len(columns) + 1))
+    ax.set_xticklabels([bench.name for bench, _ in columns], rotation=45, ha="right")
     ax.axhline(1.0, color="grey", linewidth=0.8, linestyle=":")
     ax.set_ylabel("AND count relative to original")
+    issued = len(ATOMS) * rounds
+    reference_length = len(abc.SCRIPTS[REFERENCE_SCRIPT])
     ax.set_title(
-        "A  All 24 orders of (balance, rewrite, refactor, resub)\nred star = resyn2 (ten commands, not four)",
+        f"A  All {math.factorial(len(ATOMS))} orders of (balance, rewrite, refactor, resub), x{rounds}\n"
+        f"red star = {REFERENCE_SCRIPT} ({reference_length} commands, not {issued})",
         fontsize=10,
     )
     ax.grid(axis="y", alpha=0.3)
 
 
-def _plot_order_stability(ax: plt.Axes, benchmarks: list[Benchmark]) -> None:
+def _plot_order_stability(ax: Axes, benchmarks: list[Benchmark]) -> None:
     """Panel B: whether a good order stays good across designs.
 
     Args:
@@ -634,7 +803,7 @@ def _plot_order_stability(ax: plt.Axes, benchmarks: list[Benchmark]) -> None:
     names: list[str] = []
     orders: list[str] | None = None
     for bench in benchmarks:
-        rows = sorted((r for r in bench.results if r.experiment == "order"), key=lambda r: r.recipe)
+        rows = sorted(bench.of(ORDER), key=lambda r: r.recipe)
         if len(rows) < 2:
             continue
         recipes = [r.recipe for r in rows]
@@ -657,72 +826,62 @@ def _plot_order_stability(ax: plt.Axes, benchmarks: list[Benchmark]) -> None:
     ax.set_xticks(range(len(orders)))
     ax.set_xticklabels(orders, rotation=90, fontsize=6)
     ax.set_title("B  Rank of each order per benchmark\ngreen = best here, red = worst here", fontsize=10)
-    plt.colorbar(image, ax=ax, label="normalized rank")
+    ax.figure.colorbar(image, ax=ax, label="normalized rank")
 
 
-def _plot_area_depth(ax: plt.Axes, benchmarks: list[Benchmark]) -> None:
+def _plot_area_depth(ax: Axes, benchmarks: list[Benchmark]) -> None:
     """Panel C: the area-depth plane, by command family.
 
     Args:
         ax: The axes to draw on.
         benchmarks: The benchmarks, with their results attached.
     """
-    colors = {"classic": "#4C72B0", "&-space": "#DD8452"}
-    seen: set[str] = set()
-
-    for bench in benchmarks:
-        for row in bench.results:
-            if row.experiment != "family":
-                continue
-            ax.scatter(
-                row.area_ratio,
-                row.depth_ratio,
-                color=colors[row.family],
-                alpha=0.65,
-                s=28,
-                label=row.family if row.family not in seen else None,
-            )
-            seen.add(row.family)
+    drawn = False
+    for family, color in ((CLASSIC, "#4C72B0"), (GIA, "#DD8452")):
+        # one call per family rather than one per point: same picture, two artists
+        points = [r for bench in benchmarks for r in bench.of(FAMILY, family)]
+        if not points:
+            continue
+        drawn = True
+        ax.scatter(
+            [r.area_ratio for r in points],
+            [r.depth_ratio for r in points],
+            color=color,
+            alpha=0.65,
+            s=28,
+            label=family,
+        )
 
     ax.axhline(1.0, color="grey", linewidth=0.8, linestyle=":")
     ax.axvline(1.0, color="grey", linewidth=0.8, linestyle=":")
     ax.set_xlabel("AND count relative to original")
     ax.set_ylabel("levels relative to original")
     ax.set_title("C  Where each family lands\nlower-left is better on both axes", fontsize=10)
-    if seen:
+    if drawn:
         ax.legend(loc="best", fontsize=9)
     ax.grid(alpha=0.3)
 
 
-def _plot_predictability(ax: plt.Axes, benchmarks: list[Benchmark]) -> None:
+def _plot_predictability(ax: Axes, benchmarks: list[Benchmark]) -> None:
     """Panel D: input shape against achieved reduction.
 
     Args:
         ax: The axes to draw on.
         benchmarks: The benchmarks, with their results attached.
     """
-    shapes, gains, names = [], [], []
-    for bench in benchmarks:
-        rows = [r for r in bench.results if r.experiment == "family" and r.family == "classic"]
-        if not rows:
-            continue
-        shapes.append(bench.levels / bench.gates)
-        gains.append(1.0 - min(r.area_ratio for r in rows))
-        names.append(bench.name)
-
-    if len(shapes) < 2:
+    paired = shape_vs_gain(benchmarks)
+    if len(paired.shapes) < 2:
         ax.set_visible(False)
         return
 
-    ax.scatter(shapes, gains, color="#55A868", s=55)
-    for x, y, name in zip(shapes, gains, names, strict=False):
+    ax.scatter(paired.shapes, paired.gains, color="#55A868", s=55)
+    for x, y, name in zip(paired.shapes, paired.gains, paired.names, strict=True):
         ax.annotate(name, (x, y), textcoords="offset points", xytext=(5, 4), fontsize=7)
 
-    rho = spearman(shapes, gains)
     ax.set_xscale("log")
     ax.set_xlabel("levels / gates of the input  (log scale)")
     ax.set_ylabel("best area reduction achieved")
-    ax.set_title(f"D  Is optimizability predictable from shape?\nSpearman rho = {rho:+.2f}", fontsize=10)
+    ax.set_title(f"D  Is optimizability predictable from shape?\nSpearman rho = {paired.rho:+.2f}", fontsize=10)
     ax.grid(alpha=0.3)
 
 
@@ -748,8 +907,9 @@ def write_csv(benchmarks: Iterable[Benchmark], path: Path) -> None:
         "seconds",
         "base_gates",
         "base_levels",
-        "equivalent",
+        "equivalence",
     ]
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
@@ -766,11 +926,32 @@ def write_headline(headline: Mapping[str, float], path: Path) -> None:
         headline: The headline statistics, as returned by :func:`report`.
         path: Path of the CSV to write.
     """
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(["statistic", "value"])
         writer.writerows(headline.items())
     print(f"wrote {path}")
+
+
+def positive(value: str) -> int:
+    """Parse a strictly positive integer, for argparse.
+
+    Args:
+        value: The raw command-line token.
+
+    Returns:
+        The parsed value.
+
+    Raises:
+        ArgumentTypeError: If it is not an integer of at least 1. Zero rounds would
+            measure nothing at all, which is never what the caller meant.
+    """
+    parsed = int(value)
+    if parsed < 1:
+        msg = f"expected a positive integer, got {value}"
+        raise argparse.ArgumentTypeError(msg)
+    return parsed
 
 
 def parse_args() -> argparse.Namespace:
@@ -784,7 +965,7 @@ def parse_args() -> argparse.Namespace:
     group.add_argument("--quick", action="store_true", help="use the four smallest benchmarks")
     group.add_argument("--all", action="store_true", help="use every benchmark, including the very large ones")
     group.add_argument("--benchmarks", nargs="+", metavar="NAME", help="explicit benchmark list")
-    parser.add_argument("--rounds", type=int, default=2, help="repetitions of each schedule (default: 2)")
+    parser.add_argument("--rounds", type=positive, default=2, help="repetitions of each schedule (default: 2)")
     parser.add_argument("--verify", action="store_true", help="equivalence-check every result (slow)")
     parser.add_argument(
         "--cache-dir",
@@ -817,8 +998,9 @@ def main() -> int:
     print(f"ABC: {abc.abc_binary()}")
     print(f"     {abc.abc_version()}")
 
+    selected: tuple[str, ...]
     if args.benchmarks:
-        selected = args.benchmarks
+        selected = tuple(args.benchmarks)
     elif args.quick:
         selected = QUICK_SET
     elif args.all:
@@ -837,12 +1019,12 @@ def main() -> int:
     started = time.perf_counter()
     experiment_order(benchmarks, args.rounds, verify=args.verify)
     experiment_families(benchmarks, verify=args.verify)
-    print(f"\n[3/3] analysis  ({time.perf_counter() - started:.1f}s of ABC time)")
+    print(f"\nanalysis  ({time.perf_counter() - started:.1f}s of ABC time)")
 
-    headline = report(benchmarks)
+    headline = report(benchmarks, args.rounds)
     write_csv(benchmarks, args.csv)
     write_headline(headline, args.csv.with_name(f"{args.csv.stem}_headline{args.csv.suffix}"))
-    plot(benchmarks, args.output)
+    plot(benchmarks, args.rounds, args.output)
     return 0
 
 

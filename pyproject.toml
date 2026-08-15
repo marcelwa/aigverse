@@ -2,7 +2,7 @@
 requires = [
     "scikit-build-core>=0.11.6",
     "setuptools-scm>=8.1",
-    "nanobind~=2.13.0",
+    "nanobind~=2.14.0",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -200,7 +200,7 @@ isort.required-imports = ["from __future__ import annotations"]
 "test/**" = ["T20", "ANN", "D", "INP001", "S301", "S403"]
 "docs/**" = ["T20", "ERA001", "INP001"]
 # standalone PEP 723 scripts: they print their findings and are not a package
-"examples/*.py" = ["T20", "INP001"]
+"examples/**" = ["T20", "INP001"]
 # the loaders document the exceptions that propagate out of their helpers
 "python/aigverse/benchmarks/*.py" = ["DOC502"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]
@@ -237,7 +237,7 @@ ignore = [
 build = [
     "scikit-build-core>=0.11.6",
     "setuptools-scm>=8.1",
-    "nanobind~=2.13.0",
+    "nanobind~=2.14.0",
 ]
 adapters = [
     "networkx>=3.0.0",
@@ -260,15 +260,17 @@ docs = [
     "sphinxext-opengraph>=0.9.1",
     "sphinx>=8.1.3",
     "sphinx>=8.2.3; python_version >= '3.11'",
-    "matplotlib>=3.0.0",
+    # kept in step with the `examples` group so `nox -s minimums` resolves one floor
+    "matplotlib>=3.8",
     "pygraphviz>=1.9.0",
     "graphviz>=0.20",
 ]
 examples = [
     # what the standalone PEP 723 scripts under examples/ declare inline. Kept in
     # the dev group as well so `ty` can actually type-check them instead of
-    # having to skip the directory.
-    "numpy>=1.24",
+    # having to skip the directory. numpy arrives through `adapters`, which every
+    # group including this one already pulls in.
+    { include-group = "adapters" },
     "matplotlib>=3.8",
 ]
 test = [

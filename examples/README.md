@@ -2,16 +2,24 @@
 
 Standalone, runnable scripts that show what `aigverse` can do. Each one declares its own
 dependencies inline using [PEP 723](https://peps.python.org/pep-0723/), so
-[`uv`](https://docs.astral.sh/uv/) can run it with no setup at all:
+[`uv`](https://docs.astral.sh/uv/) can run it with no setup at all — from this directory:
 
 ```console
 ./abc_recipe_study.py
 ```
 
-or, equivalently:
+or, equivalently, from the repository root:
 
 ```console
 uv run examples/abc_recipe_study.py
+```
+
+Either form installs `aigverse` from PyPI. To run a script against the checkout you are
+sitting in instead — which is what you want when the script uses something not yet
+released:
+
+```console
+uv run --with-editable . examples/abc_recipe_study.py
 ```
 
 These scripts are not part of the `aigverse` package and are not shipped in the wheel or
@@ -33,7 +41,8 @@ Loads part of the [EPFL benchmark suite](https://github.com/lsils/benchmarks) th
    smallest and the shallowest results come from _different_ families, so committing to
    one up front gives up an objective.
 3. **Is optimizability predictable?** A cheap structural feature of the input is
-   correlated against how much the best script managed to remove.
+   correlated against how much the best script managed to remove. This one is an analysis
+   of the data question 2 produced rather than a third run over ABC.
 
 It writes `abc_recipe_study.png`, an `abc_recipe_study.csv` with every raw measurement, and an
 `abc_recipe_study_headline.csv` with the summary statistics, and prints its findings as it goes.
