@@ -89,6 +89,8 @@ docs = [
 examples = [
     { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "matplotlib", version = "3.11.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
     { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
@@ -120,17 +122,16 @@ adapters = [
     { name = "numpy", specifier = ">=1.23.0" },
 ]
 build = [
-    { name = "nanobind", specifier = "~=2.13.0" },
+    { name = "nanobind", specifier = "~=2.14.0" },
     { name = "scikit-build-core", specifier = ">=0.11.6" },
     { name = "setuptools-scm", specifier = ">=8.1" },
 ]
 dev = [
     { name = "matplotlib", specifier = ">=3.8" },
-    { name = "nanobind", specifier = "~=2.13.0" },
+    { name = "nanobind", specifier = "~=2.14.0" },
     { name = "networkx", specifier = ">=3.0.0" },
     { name = "nox", specifier = ">=2025.10.16" },
     { name = "numpy", specifier = ">=1.23.0" },
-    { name = "numpy", specifier = ">=1.24" },
     { name = "pytest", specifier = ">=9.0.1" },
     { name = "pytest-sugar", specifier = ">=1.1.1" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
@@ -140,7 +141,7 @@ dev = [
 docs = [
     { name = "furo", specifier = ">=2024.8.6" },
     { name = "graphviz", specifier = ">=0.20" },
-    { name = "matplotlib", specifier = ">=3.0.0" },
+    { name = "matplotlib", specifier = ">=3.8" },
     { name = "myst-nb", specifier = ">=1.1.2" },
     { name = "networkx", specifier = ">=3.0.0" },
     { name = "numpy", specifier = ">=1.23.0" },
@@ -158,7 +159,8 @@ docs = [
 ]
 examples = [
     { name = "matplotlib", specifier = ">=3.8" },
-    { name = "numpy", specifier = ">=1.24" },
+    { name = "networkx", specifier = ">=3.0.0" },
+    { name = "numpy", specifier = ">=1.23.0" },
 ]
 test = [
     { name = "networkx", specifier = ">=3.0.0" },
@@ -1772,11 +1774,11 @@ wheels = [
 
 [[package]]
 name = "nanobind"
-version = "2.13.0"
+version = "2.14.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/07/e5/a6fc2f024eaef17c68b94b5f8f56098d31859a7840a11a3dd45da2d3908a/nanobind-2.13.0.tar.gz", hash = "sha256:c7b04d6a6a4cd57985571e605539399b51331ae455d7fce576a5e2fcb89b1dcf", size = 1052101, upload-time = "2026-06-18T06:03:49.491Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1f/23/a6fdf94de7bf760da93a115593cc1756a7b3d408c12681df9e4c63bf11e3/nanobind-2.14.0.tar.gz", hash = "sha256:0cf1477d8b1697abc1454028b6469e7113d9aa6ba3ced8b102cc569affbacb13", size = 1053642, upload-time = "2026-08-07T06:07:51.605Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/39/8d/cec69a0a804711fd89f47fad92cd2a438a1ceaafd9dabaf3b8b403b5cbba/nanobind-2.13.0-py3-none-any.whl", hash = "sha256:9268d7201eaf5519ae61b7a83175f2af77088cb4b99dd3ce5b00550f697da7b7", size = 269387, upload-time = "2026-06-18T06:03:47.508Z" },
+    { url = "https://files.pythonhosted.org/packages/94/17/fba47a85a7b0bfb9ab5a5100e8a26b361b881089c7d8cad9a95f895f1546/nanobind-2.14.0-py3-none-any.whl", hash = "sha256:a57cd4fe613db78410ca13ba007a3ffaf3125b831d8be46ec7f4351e8cf6e513", size = 269917, upload-time = "2026-08-07T06:07:50.045Z" },
 ]
 
 [[package]]

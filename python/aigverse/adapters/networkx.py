@@ -80,15 +80,17 @@ def to_networkx(
         - name (str, optional): Signal name or primary output name for edges to synthetic
             PO nodes (only for :class:`~aigverse.NamedAig`).
     """
-    # one-hot encodings for node types: [const, pi, gate, po]
-    node_type_const: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([1, 0, 0, 0], dtype=dtype)
-    node_type_pi: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([0, 1, 0, 0], dtype=dtype)
-    node_type_gate: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([0, 0, 1, 0], dtype=dtype)
-    node_type_po: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([0, 0, 0, 1], dtype=dtype)
+    # one-hot encodings for node types: [const, pi, gate, po]. The element type
+    # follows the `dtype` argument, so it is not `np.int8` unless that is what the
+    # caller asked for.
+    node_type_const: Final[np.ndarray[Any, np.dtype[np.generic]]] = np.array([1, 0, 0, 0], dtype=dtype)
+    node_type_pi: Final[np.ndarray[Any, np.dtype[np.generic]]] = np.array([0, 1, 0, 0], dtype=dtype)
+    node_type_gate: Final[np.ndarray[Any, np.dtype[np.generic]]] = np.array([0, 0, 1, 0], dtype=dtype)
+    node_type_po: Final[np.ndarray[Any, np.dtype[np.generic]]] = np.array([0, 0, 0, 1], dtype=dtype)
 
     # one-hot encodings for edge types: [regular, inverted]
-    edge_type_regular: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([1, 0], dtype=dtype)
-    edge_type_inverted: Final[np.ndarray[Any, np.dtype[np.int8]]] = np.array([0, 1], dtype=dtype)
+    edge_type_regular: Final[np.ndarray[Any, np.dtype[np.generic]]] = np.array([1, 0], dtype=dtype)
+    edge_type_inverted: Final[np.ndarray[Any, np.dtype[np.generic]]] = np.array([0, 1], dtype=dtype)
 
     # Check if this is a NamedAig
     self_named = self if isinstance(self, NamedAig) else None
