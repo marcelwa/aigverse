@@ -43,7 +43,7 @@ env:
   # tests run against. Tracking a moving `main` would make a red run ambiguous
   # between our change and an upstream one, so this is bumped deliberately.
   # Kept up to date by the `berkeley-abc/abc` custom manager in renovate.json5.
-  ABC_REV: 8e224cd794a10e578d6dc3ee76e504c5c3edbdbe
+  ABC_REV: 5ea34643247f9f45baa3bba40738832d7db19c60
 
 jobs:
   abc-tests:
