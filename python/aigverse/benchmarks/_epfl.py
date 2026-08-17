@@ -46,7 +46,7 @@ _URL = "https://raw.githubusercontent.com/lsils/benchmarks/{revision}/{category}
 # new one.
 #
 # Kept current by the `lsils/benchmarks` custom manager in renovate.json5.
-DEFAULT_REVISION = "0060e156826e733d69bf5b3322d1bdd0d03a1f9a"
+DEFAULT_REVISION = "82d8cc6910419298e713a46644ed59fd3df53038"
 
 # A revision becomes a path component of the cache, so it has to be one: an
 # absolute value would discard the cache root entirely and `..` would climb out
