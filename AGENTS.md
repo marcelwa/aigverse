@@ -143,9 +143,9 @@ Prefix every commit subject and PR title with a plain [gitmoji](https://gitmoji.
 common ones: `✨` new feature, `🐛` bug fix, `📝` docs, `♻️` refactor, `⬆️` dependency bump.
 
 A changelog entry carries the same gitmoji, one sentence, and closes with the pull request reference and every
-contributing author — `- ✨ Add cut enumeration over AIGs ([#368]) ([**@wjrforcyber**])`. Define the two links at
-the bottom of `CHANGELOG.md`, in the `PR links` and `Contributor` blocks. Within a category the newest entry goes
-first.
+contributing author — `- 📝 Add a visualization page to the documentation ([#419]) ([**@marcelwa**])`. Define the
+two links at the bottom of `CHANGELOG.md`, in the `PR links` and `Contributor` blocks. Within a category the newest
+entry goes first.
 
 ## Boundaries
 
