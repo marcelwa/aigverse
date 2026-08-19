@@ -18,6 +18,13 @@ releases may include breaking changes.
 - 👷 Smoke-run the examples in the ABC workflow, so a library change that breaks
   one is caught by CI rather than by the next person to run it ([#410])
   ([**@marcelwa**])
+
+## [0.1.4] - 2026-08-19
+
+### Added
+
+- 📝 Add a changelog and an upgrade guide to the documentation ([#448])
+  ([**@marcelwa**])
 - ✨ Add the `aigverse.abc` module, a bridge that runs the optimization scripts
   and commands of an externally installed ABC ([#405]) ([**@marcelwa**])
 
@@ -36,7 +43,7 @@ releases may include breaking changes.
 - 🔧 Drop the no-op submodule checkout steps from `.readthedocs.yaml` and
   `docs/DevelopmentGuide.md`; the project has no submodules ([#447])
   ([**@marcelwa**])
-- ⬆️ Update `nanobind` to version 2.14.0 ([#430])
+- ⬆️ Update `nanobind` to version 2.15.0 ([#430], [#445])
 
 ### Fixed
 
@@ -134,7 +141,8 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- Version links -->
 
-[unreleased]: https://github.com/marcelwa/aigverse/compare/v0.1.3...HEAD
+[unreleased]: https://github.com/marcelwa/aigverse/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.4
 [0.1.3]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.3
 [0.1.2]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.2
 [0.1.1]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.1
@@ -142,7 +150,9 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#448]: https://github.com/marcelwa/aigverse/pull/448
 [#447]: https://github.com/marcelwa/aigverse/pull/447
+[#445]: https://github.com/marcelwa/aigverse/pull/445
 [#435]: https://github.com/marcelwa/aigverse/pull/435
 [#430]: https://github.com/marcelwa/aigverse/pull/430
 [#421]: https://github.com/marcelwa/aigverse/pull/421

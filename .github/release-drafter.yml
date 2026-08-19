@@ -1,0 +1,64 @@
+name-template: "aigverse $RESOLVED_VERSION Release"
+tag-template: "v$RESOLVED_VERSION"
+categories:
+  # Renovate and pre-commit.ci bumps come first on purpose: Release Drafter puts
+  # a PR in the first category it matches, and collapsing them here keeps them
+  # out of the way of the human changes below without hiding them entirely.
+  - title: "⬆️ Dependencies"
+    collapse-after: 5
+    when:
+      labels:
+        - "dependencies"
+        - "github_actions"
+        - "pre-commit"
+  - title: "✨ Features and Enhancements"
+    when:
+      labels:
+        - "enhancement"
+        - "refactoring"
+        - "performance"
+  - title: "🐛 Bug Fixes"
+    when:
+      labels:
+        - "bug"
+        - "small fix"
+  - title: "📝 Documentation"
+    when:
+      labels:
+        - "documentation"
+  - title: "🔧 Tooling, Build & CI"
+    when:
+      labels:
+        - "tooling"
+        - "build_system"
+        - "testing"
+  - type: "pre-exclude"
+    when:
+      labels:
+        - "skip-changelog"
+        - "release-prep"
+  - type: "version-resolver"
+    semver-increment: "major"
+    when:
+      label: "major"
+  - type: "version-resolver"
+    semver-increment: "minor"
+    when:
+      label: "minor"
+  - type: "version-resolver"
+    semver-increment: "patch"
+    when:
+      label: "patch"
+  - type: "version-resolver"
+    semver-increment: "patch"
+change-template: "- $TITLE ([#$NUMBER]($URL)) (**@$AUTHOR**)"
+change-title-escapes: '\<*_&'
+
+template: |
+  ## 👀 What Changed
+
+  _Please refer to the [changelog](https://github.com/$OWNER/$REPOSITORY/blob/main/CHANGELOG.md) and the [upgrade guide](https://github.com/$OWNER/$REPOSITORY/blob/main/UPGRADING.md) for a structured overview of the changes._
+
+  $CHANGES
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
