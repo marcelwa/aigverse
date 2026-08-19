@@ -533,3 +533,28 @@ If you don't want to use `nox`, you can also build the documentation directly us
 
 The docs can then be found in the `docs/_build` directory.
 :::
+
+## Releasing
+
+Releases are cut from `main` and published from the GitHub Releases UI.
+Publishing a release is what ships the package: the `release: published` event triggers the `publish_to_pypi` job in `.github/workflows/aigverse-pypi-deployment.yml`, which uploads the sdist and the wheels to PyPI via trusted publishing, with build provenance attestation.
+Pushing a tag on its own publishes nothing.
+
+There is no version number to bump anywhere.
+`pyproject.toml` declares `dynamic = ["version"]`, and `vcs-versioning` derives the version from the git tag at build time into the generated `python/aigverse/_version.py`.
+The tag is the single source of truth.
+
+1. **Land everything intended for the release on `main`, and label it.**
+   Release Drafter (`.github/release-drafter.yml`) sorts pull requests into the release notes by label, so an unlabeled pull request ends up uncategorized.
+   Routine Renovate and pre-commit.ci bumps are collapsed into a single `⬆️ Dependencies` block, so they need no special handling.
+
+2. **Open a release-preparation pull request**, labeled `release-prep` so that it excludes itself from the notes.
+   In `CHANGELOG.md`, rename the `## [Unreleased]` heading to `## [X.Y.Z] - <release date>`, add a fresh, empty `## [Unreleased]` heading above it, and update the link references at the bottom: point `[unreleased]` at `compare/vX.Y.Z...HEAD` and add `[X.Y.Z]` pointing at `releases/tag/vX.Y.Z`.
+   Only touch `UPGRADING.md` if the release contains breaking changes.
+
+3. **Merge it.**
+   Release Drafter keeps a draft release up to date on every push to `main`, so the notes for the next release already exist.
+
+4. **Publish the draft.**
+   Open it under [Releases](https://github.com/marcelwa/aigverse/releases), check that the resolved version and the `vX.Y.Z` tag are correct — the version resolver increments the patch level unless a pull request in the release carries a `minor` or `major` label — and set the body to the `[X.Y.Z]` section of `CHANGELOG.md`.
+   Make sure the release targets `main`, then publish it and watch the `🐍 • Packaging` workflow deploy to PyPI.
