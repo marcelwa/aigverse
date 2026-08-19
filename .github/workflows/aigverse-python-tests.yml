@@ -109,3 +109,37 @@ jobs:
 
       - name: 🐍 Test
         run: uvx nox -s tests --verbose
+
+  # The declared floors are only a claim until something installs them. This
+  # resolves every direct dependency down to its minimum and runs the suite
+  # against that, on one runner: it is the dependency metadata under test, not
+  # the platform, and the session already sweeps every supported Python.
+  minimums:
+    name: ⬇️ Minimum dependency versions
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read # required to check out the repository
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
+        with:
+          key: "ubuntu-24.04-aigverse"
+          save: ${{ github.ref == 'refs/heads/main' }}
+          max-size: 10G
+
+      - name: Setup mold
+        uses: rui314/setup-mold@9c9c13bf4c3f1adef0cc596abc155580bcb04444 # v1
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: ⬇️ Test the lowest supported dependency versions
+        run: uvx nox -s minimums --verbose

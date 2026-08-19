@@ -45,7 +45,17 @@ requires-python = ">=3.10"
 dynamic = ["version"]
 
 [project.optional-dependencies]
-adapters = ["networkx>=3.0.0", "numpy>=1.23.0"]
+adapters = [
+    "networkx>=3.0.0",
+    # The floors track the first numpy release that ships wheels for each
+    # interpreter. Below them `nox -s minimums` falls back to a source build of
+    # a numpy that predates the Python it is being built for, which fails.
+    "numpy>=1.23.0",
+    "numpy>=1.23.2; python_version >= '3.11'",
+    "numpy>=1.26.0; python_version >= '3.12'",
+    "numpy>=2.1.0; python_version >= '3.13'",
+    "numpy>=2.3.2; python_version >= '3.14'",
+]
 
 [project.urls]
 Source = "https://github.com/marcelwa/aigverse"
@@ -243,7 +253,14 @@ build = [
 ]
 adapters = [
     "networkx>=3.0.0",
+    # The floors track the first numpy release that ships wheels for each
+    # interpreter. Below them `nox -s minimums` falls back to a source build of
+    # a numpy that predates the Python it is being built for, which fails.
     "numpy>=1.23.0",
+    "numpy>=1.23.2; python_version >= '3.11'",
+    "numpy>=1.26.0; python_version >= '3.12'",
+    "numpy>=2.1.0; python_version >= '3.13'",
+    "numpy>=2.3.2; python_version >= '3.14'",
 ]
 torch = [
     "torch>=2.2.0",

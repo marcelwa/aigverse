@@ -10,6 +10,17 @@ releases may include breaking changes.
 
 ## [Unreleased]
 
+### Added
+
+- 👷 Run `nox -s minimums` in CI, so the declared dependency floors are actually
+  installed and tested instead of only claimed ([#453]) ([**@marcelwa**])
+
+### Fixed
+
+- 🐛 Gate the `numpy` floor by Python version. `numpy>=1.23.0` predates every
+  interpreter in the matrix except 3.10, so resolving it as the lowest direct
+  version fell back to a source build that fails ([#453]) ([**@marcelwa**])
+
 ## [0.1.4] - 2026-08-19
 
 ### Added
@@ -141,6 +152,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#453]: https://github.com/marcelwa/aigverse/pull/453
 [#448]: https://github.com/marcelwa/aigverse/pull/448
 [#447]: https://github.com/marcelwa/aigverse/pull/447
 [#445]: https://github.com/marcelwa/aigverse/pull/445
