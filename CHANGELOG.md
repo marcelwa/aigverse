@@ -12,6 +12,9 @@ releases may include breaking changes.
 
 ### Added
 
+- ✨ Add an `examples/` directory of standalone, PEP 723 scripts that run with
+  `uv run` and no setup, starting with an ABC recipe study that asks whether one
+  best recipe exists ([#410]) ([**@marcelwa**])
 - ✨ Add the `aigverse.abc` module, a bridge that runs the optimization scripts
   and commands of an externally installed ABC ([#405]) ([**@marcelwa**])
 
@@ -143,6 +146,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 [#420]: https://github.com/marcelwa/aigverse/pull/420
 [#419]: https://github.com/marcelwa/aigverse/pull/419
 [#417]: https://github.com/marcelwa/aigverse/pull/417
+[#410]: https://github.com/marcelwa/aigverse/pull/410
 [#409]: https://github.com/marcelwa/aigverse/pull/409
 [#407]: https://github.com/marcelwa/aigverse/pull/407
 [#405]: https://github.com/marcelwa/aigverse/pull/405
