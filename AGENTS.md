@@ -142,6 +142,11 @@ Prefix every commit subject and PR title with a plain [gitmoji](https://gitmoji.
 `🐛`, `📝`) — not the `:shortcode:` text form. See [gitmoji.dev](https://gitmoji.dev) for the full list; a few
 common ones: `✨` new feature, `🐛` bug fix, `📝` docs, `♻️` refactor, `⬆️` dependency bump.
 
+A changelog entry carries the same gitmoji, one sentence, and closes with the pull request reference and every
+contributing author — `- ✨ Add cut enumeration over AIGs ([#368]) ([**@wjrforcyber**])`. Define the two links at
+the bottom of `CHANGELOG.md`, in the `PR links` and `Contributor` blocks. Within a category the newest entry goes
+first.
+
 ## Boundaries
 
 - **Always:** run `uvx nox -s lint` and `uvx nox -s tests-3.12` before considering a change complete; regenerate
