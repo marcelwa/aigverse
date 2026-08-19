@@ -145,7 +145,9 @@ common ones: `✨` new feature, `🐛` bug fix, `📝` docs, `♻️` refactor, 
 A changelog entry carries the same gitmoji, one sentence, and closes with the pull request reference and every
 contributing author — `- 📝 Add a visualization page to the documentation ([#419]) ([**@marcelwa**])`. Define the
 two links at the bottom of `CHANGELOG.md`, in the `PR links` and `Contributor` blocks. Within a category the newest
-entry goes first.
+entry goes first. Routine Renovate and pre-commit.ci bumps are left out entirely; a user-observable dependency
+change from one of those bots (e.g. a runtime dependency version bump) still gets an entry, but without a
+contributor link, since the bot isn't one.
 
 ## Boundaries
 
@@ -154,7 +156,7 @@ entry goes first.
   update `CHANGELOG.md` for user-facing changes. Only touch `UPGRADING.md` for **breaking** changes — i.e. ones that
   require users to change their own code to keep working (renamed/removed APIs, changed defaults, moved modules).
   A user-facing but non-breaking addition (a new function, an added optional parameter) belongs in `CHANGELOG.md`
-  only, not `UPGRADING.md`. Prefix commit messages and PR titles with a gitmoji shortcode (see
+  only, not `UPGRADING.md`. Prefix commit messages and PR titles with a plain gitmoji character (see
   [Commit & PR Conventions](#commit--pr-conventions)).
 - **Ask first:** before adding new dependencies to `pyproject.toml`; before major architectural changes to the C++
   core; before modifying CI workflows in `.github/workflows/`.
