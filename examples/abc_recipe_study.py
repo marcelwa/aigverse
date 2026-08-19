@@ -821,9 +821,13 @@ def _plot_order_spread(ax: Axes, benchmarks: list[Benchmark], rounds: int) -> No
     ax.set_ylabel("AND count relative to original")
     issued = len(ATOMS) * rounds
     reference_length = len(abc.SCRIPTS[REFERENCE_SCRIPT])
+    # label both marks with their own budget: the star is not drawn at the same
+    # effort as the dots, and a reader comparing them needs to be told so
     ax.set_title(
-        f"A  All {math.factorial(len(ATOMS))} orders of (balance, rewrite, refactor, resub), x{rounds}\n"
-        f"red star = {REFERENCE_SCRIPT} ({reference_length} commands, not {issued})",
+        f"A  All {math.factorial(len(ATOMS))} orders of {'/'.join(ATOMS.values())}, "
+        f"{rounds} round{'' if rounds == 1 else 's'}\n"
+        f"dot = one ordering ({issued} commands) \u00b7 "
+        f"red star = {REFERENCE_SCRIPT} ({reference_length} commands)",
         fontsize=10,
     )
     ax.grid(axis="y", alpha=0.3)
