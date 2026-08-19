@@ -2,7 +2,7 @@
 requires = [
     "scikit-build-core~=1.0.3",
     "vcs-versioning~=2.3.0",
-    "nanobind~=2.14.0",
+    "nanobind~=2.15.0",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -239,7 +239,7 @@ ignore = [
 build = [
     "scikit-build-core~=1.0.3",
     "vcs-versioning~=2.3.0",
-    "nanobind~=2.14.0",
+    "nanobind~=2.15.0",
 ]
 adapters = [
     "networkx>=3.0.0",
