@@ -6,7 +6,9 @@
 #     # import time into a resolution error that says what is actually wrong.
 #     "aigverse>=0.1.4",
 #     "matplotlib>=3.8",
-#     "numpy>=1.24",
+#     # same floor as aigverse's own `adapters` extra, so `nox -s minimums`
+#     # resolves one numpy for the whole repository
+#     "numpy>=1.23.0",
 # ]
 # ///
 """Is there one best ABC recipe, or does the right one depend on the design?
@@ -179,9 +181,10 @@ class Result:
     seconds: float
     base_gates: int
     base_levels: int
-    #: One of "unchecked", "equivalent", "different" or "undecided". A plain
-    #: `bool | None` cannot tell "we did not look" apart from "the solver gave up",
-    #: and those mean very different things in the CSV.
+    #: One of "unchecked", "equivalent" or "undecided". A plain `bool | None`
+    #: cannot tell "we did not look" apart from "the solver gave up", and those
+    #: mean very different things in the CSV. A "different" verdict never lands
+    #: here: it aborts the study rather than being reported as a measurement.
     equivalence: str = "unchecked"
 
     @property
@@ -212,6 +215,10 @@ class Benchmark:
     gates: int
     levels: int
     results: list[Result] = field(default_factory=list)
+    #: Cleared once an ordering fails here. Every order statistic is a "best and
+    #: worst of all N orderings", which a partial sweep cannot answer without
+    #: quietly biasing itself against the designs that ran completely.
+    order_complete: bool = True
 
     def of(self, experiment: str, family: str | None = None) -> list[Result]:
         """Select this benchmark's results for one experiment.
@@ -307,6 +314,9 @@ def run_recipe(
 
     Returns:
         The measurement, or None if ABC failed on this input.
+
+    Raises:
+        SystemExit: If the optimization changed the function of the network.
     """
     started = time.perf_counter()
     try:
@@ -318,6 +328,11 @@ def run_recipe(
 
     gates, levels = measure(optimized)
     equivalence = check(bench, optimized, recipe) if verify else "unchecked"
+    if equivalence == "different":
+        # every number this study goes on to print assumes the optimizations
+        # preserved the function, so there is nothing left worth measuring
+        msg = f"aborting: '{recipe}' on {bench.name} is not equivalence-preserving, so the study data is invalid"
+        raise SystemExit(msg)
 
     return Result(
         benchmark=bench.name,
@@ -403,8 +418,10 @@ def experiment_order(benchmarks: list[Benchmark], rounds: int, *, verify: bool) 
                 apply_sequence(order, rounds),
                 verify=verify,
             )
-            if result is not None:
-                bench.results.append(result)
+            if result is None:
+                bench.order_complete = False
+                continue
+            bench.results.append(result)
 
 
 def experiment_families(benchmarks: list[Benchmark], *, verify: bool) -> None:
@@ -490,6 +507,18 @@ class ShapeVsGain:
         return spearman(self.shapes, self.gains)
 
 
+def complete_orders(benchmarks: list[Benchmark]) -> list[Benchmark]:
+    """Select the benchmarks whose order sweep produced every ordering.
+
+    Args:
+        benchmarks: The benchmarks, with their results attached.
+
+    Returns:
+        Those safe to compare orderings on.
+    """
+    return [bench for bench in benchmarks if bench.order_complete]
+
+
 def shape_vs_gain(benchmarks: list[Benchmark]) -> ShapeVsGain:
     """Pair each benchmark's input shape with the best reduction a classic script hit.
 
@@ -542,9 +571,14 @@ def _report_order(benchmarks: list[Benchmark], rounds: int) -> dict[str, float]:
     """
     headline: dict[str, float] = {}
     print("\n1. Does the order of the four transformations matter?\n")
+    complete = complete_orders(benchmarks)
+    dropped = [bench.name for bench in benchmarks if not bench.order_complete]
+    if dropped:
+        print(f"   Excluded, an ordering failed there and a partial sweep is not comparable: {', '.join(dropped)}\n")
+        headline["order_designs_excluded"] = float(len(dropped))
     print(f"   {'benchmark':<12} {'best':>8} {'worst':>8} {'spread':>8}   best order")
     spreads = []
-    for bench in benchmarks:
+    for bench in complete:
         rows = bench.of(ORDER)
         if not rows:
             continue
@@ -578,8 +612,8 @@ def _report_order(benchmarks: list[Benchmark], rounds: int) -> dict[str, float]:
             else:
                 print("   The per-design view in panel B is the one worth reading.")
 
-    headline.update(_report_order_stability(benchmarks))
-    headline.update(_report_reference(benchmarks, rounds))
+    headline.update(_report_order_stability(complete))
+    headline.update(_report_reference(complete, rounds))
     return headline
 
 
@@ -587,7 +621,7 @@ def _report_order_stability(benchmarks: list[Benchmark]) -> dict[str, float]:
     """Report whether any single order is good everywhere.
 
     Args:
-        benchmarks: The benchmarks, with their results attached.
+        benchmarks: The benchmarks whose order sweep ran to completion.
 
     Returns:
         This section's headline statistics.
@@ -620,7 +654,7 @@ def _report_reference(benchmarks: list[Benchmark], rounds: int) -> dict[str, flo
     """Report how the brute-forced orders fare against the expert script.
 
     Args:
-        benchmarks: The benchmarks, with their results attached.
+        benchmarks: The benchmarks whose order sweep ran to completion.
         rounds: How often each schedule repeated, for the effort comparison.
 
     Returns:
@@ -730,8 +764,11 @@ def plot(benchmarks: list[Benchmark], rounds: int, output: Path) -> None:
         fontweight="bold",
     )
 
-    _plot_order_spread(axes[0][0], benchmarks, rounds)
-    _plot_order_stability(axes[0][1], benchmarks)
+    # panels A and B rank orderings against each other, so a design that is
+    # missing one of them belongs in neither
+    complete = complete_orders(benchmarks)
+    _plot_order_spread(axes[0][0], complete, rounds)
+    _plot_order_stability(axes[0][1], complete)
     _plot_area_depth(axes[1][0], benchmarks)
     _plot_predictability(axes[1][1], benchmarks)
 
@@ -746,7 +783,7 @@ def _plot_order_spread(ax: Axes, benchmarks: list[Benchmark], rounds: int) -> No
 
     Args:
         ax: The axes to draw on.
-        benchmarks: The benchmarks, with their results attached.
+        benchmarks: The benchmarks whose order sweep ran to completion.
         rounds: How often each schedule repeated, for the effort comparison.
     """
     # one pass, so the columns and the benchmarks they came from cannot drift apart
@@ -797,7 +834,7 @@ def _plot_order_stability(ax: Axes, benchmarks: list[Benchmark]) -> None:
 
     Args:
         ax: The axes to draw on.
-        benchmarks: The benchmarks, with their results attached.
+        benchmarks: The benchmarks whose order sweep ran to completion.
     """
     matrix: list[np.ndarray] = []
     names: list[str] = []
@@ -810,7 +847,8 @@ def _plot_order_stability(ax: Axes, benchmarks: list[Benchmark]) -> None:
         if orders is None:
             orders = recipes
         elif recipes != orders:
-            # an order failed on this design, so its columns would not line up
+            # `plot` already drops incomplete sweeps; this keeps the function
+            # honest for any other caller, since ragged rows would not line up
             continue
         names.append(bench.name)
         ranks = _rank(np.array([r.gates for r in rows], dtype=float))
@@ -870,7 +908,9 @@ def _plot_predictability(ax: Axes, benchmarks: list[Benchmark]) -> None:
         benchmarks: The benchmarks, with their results attached.
     """
     paired = shape_vs_gain(benchmarks)
-    if len(paired.shapes) < 2:
+    # same floor as the report: two points always correlate perfectly, and the
+    # title would present that artifact as a finding
+    if len(paired.shapes) < 3:
         ax.set_visible(False)
         return
 

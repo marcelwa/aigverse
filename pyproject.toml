@@ -273,8 +273,8 @@ docs = [
 examples = [
     # what the standalone PEP 723 scripts under examples/ declare inline. Kept in
     # the dev group as well so `ty` can actually type-check them instead of
-    # having to skip the directory. numpy arrives through `adapters`, which every
-    # group including this one already pulls in.
+    # having to skip the directory. numpy arrives through `adapters` at the same
+    # floor the scripts declare.
     { include-group = "adapters" },
     "matplotlib>=3.8",
 ]

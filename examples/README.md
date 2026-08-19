@@ -56,3 +56,7 @@ Requires an ABC executable — `aigverse` does not ship one. See
 ./abc_recipe_study.py --all          # the whole EPFL suite, hyp and div included (slow)
 ./abc_recipe_study.py --verify       # equivalence-check every single result
 ```
+
+`--verify` aborts the study if any optimization turns out not to be
+equivalence-preserving: that would be a bug in ABC or in the bridge, and every number
+the study prints rests on it not happening.
