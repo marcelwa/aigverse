@@ -2,8 +2,6 @@
 # /// script
 # requires-python = ">=3.10"
 # dependencies = [
-#     # `aigverse.abc` landed after v0.1.3; the bound turns "no such module" at
-#     # import time into a resolution error that says what is actually wrong.
 #     "aigverse>=0.1.4",
 #     "matplotlib>=3.8",
 #     # same floor as aigverse's own `adapters` extra, so `nox -s minimums`
