@@ -12,5 +12,6 @@ This checklist serves as a reminder of a couple of things that ensure your pull 
 
 - [ ] The pull request only contains commits that are related to it.
 - [ ] I have added appropriate tests and documentation.
+- [ ] I have added a changelog entry for any noteworthy addition, change, fix, or removal.
 - [ ] I have made sure that all CI jobs on GitHub pass.
 - [ ] The pull request introduces no new warnings and follows the project's style guidelines.
