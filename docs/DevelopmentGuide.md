@@ -14,7 +14,6 @@ Ready to contribute to the project? This guide will get you started.
 
    ```console
    $ git clone git@github.com:your_name_here/aigverse.git
-   $ git submodule update --init --recursive
    ```
 
    :::
@@ -24,7 +23,6 @@ Ready to contribute to the project? This guide will get you started.
 
    ```console
    $ git clone git@github.com/marcelwa/aigverse.git
-   $ git submodule update --init --recursive
    ```
 
    :::
