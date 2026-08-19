@@ -161,6 +161,8 @@ docs = [
     { name = "sphinxcontrib-svg2pdfconverter", specifier = ">=1.2.3" },
     { name = "sphinxext-opengraph", specifier = ">=0.9.1" },
     { name = "torch", specifier = ">=2.2.0" },
+    { name = "torch", marker = "python_full_version >= '3.13'", specifier = ">=2.5.0" },
+    { name = "torch", marker = "python_full_version >= '3.14'", specifier = ">=2.9.0" },
 ]
 test = [
     { name = "networkx", specifier = ">=3.0.0" },
@@ -173,7 +175,11 @@ test = [
     { name = "pytest-sugar", specifier = ">=1.1.1" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
 ]
-torch = [{ name = "torch", specifier = ">=2.2.0" }]
+torch = [
+    { name = "torch", specifier = ">=2.2.0" },
+    { name = "torch", marker = "python_full_version >= '3.13'", specifier = ">=2.5.0" },
+    { name = "torch", marker = "python_full_version >= '3.14'", specifier = ">=2.9.0" },
+]
 
 [[package]]
 name = "alabaster"

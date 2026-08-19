@@ -263,7 +263,13 @@ adapters = [
     "numpy>=2.3.2; python_version >= '3.14'",
 ]
 torch = [
+    # Same story as `numpy` above: `--resolution=lowest-direct` installs these
+    # floors literally, and torch ships no wheel for an interpreter that postdates
+    # the release. Unlike numpy it then fails outright rather than attempting a
+    # source build, since torch publishes no sdist.
     "torch>=2.2.0",
+    "torch>=2.5.0; python_version >= '3.13'",
+    "torch>=2.9.0; python_version >= '3.14'",
 ]
 docs = [
     { include-group = "adapters" },
