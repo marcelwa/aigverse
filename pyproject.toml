@@ -1,7 +1,7 @@
 [build-system]
 requires = [
-    "scikit-build-core>=0.11.6",
-    "setuptools-scm>=8.1",
+    "scikit-build-core~=1.0.3",
+    "vcs-versioning~=2.3.0",
     "nanobind~=2.14.0",
 ]
 build-backend = "scikit_build_core.build"
@@ -18,6 +18,14 @@ license = { file = "LICENSE" }
 
 classifiers = [
     "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
@@ -26,15 +34,10 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: MacOS",
-    "Operating System :: POSIX :: Linux",
-    "Intended Audience :: Science/Research",
-    "Natural Language :: English",
-    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Typing :: Typed"
+    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
 ]
 
 requires-python = ">=3.10"
@@ -67,7 +70,6 @@ build.targets = ["aigverse-networks", "aigverse-algorithms", "aigverse-io", "aig
 # Only install the Python package component
 install.components = ["aigverse_Python"]
 
-metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 sdist.include = ["python/aigverse/_version.py"]
 sdist.exclude = [
     "**/.github",
@@ -88,7 +90,11 @@ mode = "git"
 build-backend = "auto"
 
 
-[tool.setuptools_scm]
+[[tool.dynamic-metadata]]
+provider = "vcs_versioning"
+
+
+[tool.vcs-versioning]
 write_to = "python/aigverse/_version.py"
 
 
@@ -231,8 +237,8 @@ ignore = [
 
 [dependency-groups]
 build = [
-    "scikit-build-core>=0.11.6",
-    "setuptools-scm>=8.1",
+    "scikit-build-core~=1.0.3",
+    "vcs-versioning~=2.3.0",
     "nanobind~=2.14.0",
 ]
 adapters = [
@@ -247,7 +253,6 @@ docs = [
     { include-group = "torch" },
     "furo>=2024.8.6",
     "myst-nb>=1.1.2",
-    "setuptools-scm>=8.1",
     "sphinx-autoapi>=3.3.3",
     "sphinx-copybutton>=0.5.2",
     "sphinx-design>=0.6.1",

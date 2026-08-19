@@ -17,6 +17,19 @@ releases may include breaking changes.
 
 ### Changed
 
+- 🔧 Raise the CMake policy upper bound to 4.4, so the project no longer runs
+  under three-release-old policy defaults on CMake 4.2-4.4 ([#447])
+  ([**@marcelwa**])
+- 🔧 Add `Developers`, `Information Technology`, and
+  `Software Development :: Libraries :: Python Modules` trove classifiers, so
+  `aigverse` surfaces on PyPI for its non-research audience too ([#447])
+  ([**@marcelwa**])
+- 🔧 Derive the version from `vcs-versioning` instead of `setuptools-scm`,
+  dropping the transitive `setuptools` dependency from every wheel build
+  ([#447]) ([**@marcelwa**])
+- 🔧 Drop the no-op submodule checkout steps from `.readthedocs.yaml` and
+  `docs/DevelopmentGuide.md`; the project has no submodules ([#447])
+  ([**@marcelwa**])
 - ⬆️ Update `nanobind` to version 2.14.0 ([#430])
 
 ### Fixed
@@ -123,6 +136,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#447]: https://github.com/marcelwa/aigverse/pull/447
 [#435]: https://github.com/marcelwa/aigverse/pull/435
 [#430]: https://github.com/marcelwa/aigverse/pull/430
 [#421]: https://github.com/marcelwa/aigverse/pull/421
