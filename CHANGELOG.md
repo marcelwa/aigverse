@@ -15,6 +15,9 @@ releases may include breaking changes.
 - ✨ Add an `examples/` directory of standalone, PEP 723 scripts that run with
   `uv run` and no setup, starting with an ABC recipe study that asks whether one
   best recipe exists ([#410]) ([**@marcelwa**])
+- 👷 Smoke-run the examples in the ABC workflow, so a library change that breaks
+  one is caught by CI rather than by the next person to run it ([#410])
+  ([**@marcelwa**])
 - ✨ Add the `aigverse.abc` module, a bridge that runs the optimization scripts
   and commands of an externally installed ABC ([#405]) ([**@marcelwa**])
 

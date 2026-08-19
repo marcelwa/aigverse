@@ -11,6 +11,7 @@ on:
     paths:
       - "python/aigverse/abc/**"
       - "test/abc/**"
+      - "examples/**"
       - "src/aigverse/io/write_aiger.cpp"
       - "src/aigverse/io/read_aiger.cpp"
       - "src/aigverse/networks/logic_networks.cpp"
@@ -24,6 +25,7 @@ on:
       # GitHub Actions does not support YAML anchors, so this repeats the list above
       - "python/aigverse/abc/**"
       - "test/abc/**"
+      - "examples/**"
       - "src/aigverse/io/write_aiger.cpp"
       - "src/aigverse/io/read_aiger.cpp"
       - "src/aigverse/networks/logic_networks.cpp"
@@ -118,3 +120,24 @@ jobs:
         run: |
           "${AIGVERSE_ABC}" -s -q "version"
           uvx nox -s tests --verbose -- -m abc
+
+      # Unlike the benchmark job, which exists to exercise the real download,
+      # this one only needs the designs to be present. Keyed on the loader,
+      # so bumping the EPFL revision it pins refetches them.
+      - name: Restore the benchmark cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/epfl-cache
+          key: epfl-${{ matrix.runs-on }}-${{ hashFiles('python/aigverse/benchmarks/_epfl.py') }}
+
+      # `ty` already checks the examples against the library, which catches a
+      # changed signature. It cannot catch a renamed ABC script or a loader that
+      # stopped returning what the script expects, so the script is also run.
+      # `python` is invoked explicitly rather than letting `uv run` read the PEP
+      # 723 block, which would test the last release from PyPI instead of this
+      # checkout.
+      - name: 🧪 Smoke-test the examples
+        run: |
+          uv run --group examples python examples/abc_recipe_study.py \
+            --quick --rounds 1 --cache-dir ~/epfl-cache \
+            --output "${RUNNER_TEMP}/study.png" --csv "${RUNNER_TEMP}/study.csv"
