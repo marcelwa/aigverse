@@ -21,6 +21,8 @@ releases may include breaking changes.
 
 ### Fixed
 
+- 🐛 Forward `-h` and `--help` to `sphinx-build` in the `docs` nox session, which
+  its own argument parser used to intercept ([#453]) ([**@marcelwa**])
 - 🐛 Gate the `numpy` and `torch` floors by Python version. Both predate every
   interpreter in the matrix except 3.10, so resolving them as the lowest direct
   versions fell back to a NumPy source build that fails and to a PyTorch release

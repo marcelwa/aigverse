@@ -241,7 +241,9 @@ def docs(session: nox.Session) -> None:
             "  - bundled: any `abc` from Yosys or oss-cad-suite\n"
         )
 
-    parser = argparse.ArgumentParser()
+    # `add_help=False` for the same reason as in `_run_tests`: `-h`/`--help` belong
+    # to sphinx-build, not to this parser, which only needs to peek at `-b`.
+    parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-b", dest="builder", default="html", help="Build target (default: html)")
     args, posargs = parser.parse_known_args(session.posargs)
 
