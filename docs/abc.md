@@ -287,6 +287,23 @@ subclass on the C++ side, so reading ABC's result back as a combinational networ
 flatten the registers into extra primary input and output pairs.
 :::
 
+:::{warning}
+Reset values are where the two namespaces part ways. The classic one carries `0` and `1`
+across as they are. ABC's `&read` accepts only `0` literally, and rewrites the other two
+cases:
+
+- a **`1`** reset is converted by complementing the flip-flop. The network is equivalent
+  and keeps its interface, but comes back with a reset of `0`.
+- an **undefined** reset is modelled with an extra primary input, an extra register, and
+  three AND nodes, so the network would come back with a different interface than it went
+  in with. The `gia` namespace refuses this with a `ValueError` rather than hand it back
+  silently — including {py:func}`~aigverse.abc.gia.stats`, which would otherwise describe
+  a network the caller never built.
+
+Give the register an explicit reset with `set_register`, or use the classic namespace,
+which transfers the same network unchanged.
+:::
+
 Each call starts an ABC process and transfers the network through temporary AIGER files,
 which costs roughly 20 ms of overhead per call — negligible for batch work, but worth
 keeping in mind in a tight optimization loop.

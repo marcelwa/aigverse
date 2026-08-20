@@ -444,7 +444,80 @@ def test_sequential_aig_with_undefined_reset() -> None:
     result = abc.resyn2(ntk)
 
     assert result.num_registers == 1
-    # "Undefined" is any reset value that is neither 0 nor 1. The exact sentinel
-    # differs by origin -- register_t defaults to 3, while aiger_reader reports a
-    # nondeterministic reset as 255 -- so compare on the property, not the value.
+    # mockturtle's `register_init` spells "no reset value" two ways: `unknown`
+    # (3), which `register_t` defaults to, and `dont_care` (2), which the AIGER
+    # reader reports for a latch whose reset is omitted. Compare on the property
+    # both share, as `register_init::is_defined` does, not on either value.
     assert result.register_at(0).init not in {0, 1}
+
+
+@pytest.mark.parametrize("init", [0, 1], ids=["reset-zero", "reset-one"])
+def test_a_defined_reset_keeps_the_interface_in_the_gia_store(init: int) -> None:
+    """A defined reset keeps the network's shape in the `&` space.
+
+    This is the guarantee the guard protects: `&read` leaves the interface alone
+    for a reset of 0 or 1, and only an undefined one costs an input and a
+    register.
+
+    Args:
+        init: The register's reset value.
+    """
+    ntk = SequentialAig()
+    a = ntk.create_pi()
+    ro = ntk.create_ro()
+    g = ntk.create_and(a, ro)
+    ntk.create_po(g)
+    ntk.create_ri(g)
+
+    register = AigRegister()
+    register.init = init
+    ntk.set_register(0, register)
+
+    result = abc.gia.dc2(ntk)
+
+    assert type(result) is SequentialAig
+    assert result.num_pis == ntk.num_pis
+    assert result.num_pos == ntk.num_pos
+    assert result.num_registers == ntk.num_registers
+
+
+def test_the_gia_store_normalizes_a_one_valued_reset() -> None:
+    """A reset of 1 comes back as 0, which is a re-encoding and not a loss.
+
+    `&read` reports "Converted 1 1-valued FFs" and complements the flip-flop, so
+    the network still computes the same sequence with a reset of 0. Unlike the
+    don't-care case it costs no input and no register, so it is carried rather
+    than refused -- but the reset value itself does not survive the `&` space, and
+    the classic namespace is the one that keeps it.
+    """
+    ntk = SequentialAig()
+    a = ntk.create_pi()
+    ro = ntk.create_ro()
+    g = ntk.create_and(a, ro)
+    ntk.create_po(g)
+    ntk.create_ri(g)
+
+    register = AigRegister()
+    register.init = 1
+    ntk.set_register(0, register)
+
+    assert abc.gia.dc2(ntk).register_at(0).init == 0
+    assert abc.dc2(ntk).register_at(0).init == 1
+
+
+def test_the_gia_store_refuses_an_undefined_reset() -> None:
+    """The interface-changing case is refused rather than silently reshaped."""
+    ntk = SequentialAig()
+    a = ntk.create_pi()
+    ro = ntk.create_ro()
+    g = ntk.create_and(a, ro)
+    ntk.create_po(g)
+    ntk.create_ri(g)
+
+    assert ntk.register_at(0).init not in {0, 1}
+
+    with pytest.raises(ValueError, match="no defined reset value"):
+        abc.gia.dc2(ntk)
+
+    # The classic store carries the very same network across unchanged.
+    assert abc.dc2(ntk).num_registers == ntk.num_registers

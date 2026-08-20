@@ -236,23 +236,77 @@ def test_an_undefined_reset_survives_the_classic_store() -> None:
     assert measured.num_gates == ntk.num_gates
 
 
-@pytest.mark.xfail(
-    reason=(
-        "`&read` rewrites don't-care-initialized flip-flops on the way into the "
-        "GIA store -- it reports 'Converted 0 1-valued FFs and 1 DC-valued FFs' "
-        "and adds a primary input, a register and three AND nodes to model the "
-        "undefined value. Every `gia` wrapper therefore returns a network with a "
-        "different interface than it was given, silently. Registers with a reset "
-        "of 0 or 1 are unaffected."
-    ),
-    strict=True,
-)
-@pytest.mark.usefixtures("abc_available")
-def test_an_undefined_reset_survives_the_gia_store() -> None:
-    """The same guarantee, in the `&` space, where it does not currently hold."""
-    ntk = _sequential_aig(None)
-    measured = gia.stats(ntk)
+def test_an_undefined_reset_is_refused_by_the_gia_store(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The `&` space cannot make the same promise, so it refuses the network.
 
-    assert measured.num_pis == ntk.num_pis
-    assert measured.num_registers == ntk.num_registers
-    assert measured.num_gates == ntk.num_gates
+    `&read` rewrites a don't-care-initialized flip-flop on the way into the GIA
+    store -- it reports "Converted 0 1-valued FFs and 1 DC-valued FFs" and adds a
+    primary input, a register and three AND nodes to model the undefined value.
+    Rather than hand back a network with a different interface than it was given,
+    the bridge refuses it, and does so before ABC is started -- hence the emptied
+    PATH, which would otherwise turn this into a discovery failure.
+
+    Args:
+        monkeypatch: Used to hide any installed ABC.
+    """
+    monkeypatch.delenv("AIGVERSE_ABC", raising=False)
+    monkeypatch.setenv("PATH", "")
+
+    ntk = _sequential_aig(None)
+
+    with pytest.raises(ValueError, match="register 0 has no defined reset value"):
+        gia.stats(ntk)
+
+
+def test_the_gia_refusal_covers_every_entry_point(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Optimization, statistics, and equivalence checking must all refuse alike.
+
+    They reach ABC through three separate paths, so one guard in the runner would
+    leave the other two open.
+
+    Args:
+        monkeypatch: Used to hide any installed ABC.
+    """
+    monkeypatch.delenv("AIGVERSE_ABC", raising=False)
+    monkeypatch.setenv("PATH", "")
+
+    ntk = _sequential_aig(None)
+
+    with pytest.raises(ValueError, match="no defined reset value"):
+        gia.dc2(ntk)
+    with pytest.raises(ValueError, match="no defined reset value"):
+        gia.run_script(ntk, "&syn2")
+    with pytest.raises(ValueError, match="no defined reset value"):
+        gia.cec(ntk, _sequential_aig(0))
+    with pytest.raises(ValueError, match="no defined reset value"):
+        gia.cec(_sequential_aig(0), ntk)
+
+
+@pytest.mark.parametrize("init", [0, 1], ids=["reset-zero", "reset-one"])
+def test_a_defined_reset_is_not_refused(init: int, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The guard must catch the undefined reset and nothing else.
+
+    Args:
+        init: The register's reset value.
+        monkeypatch: Used to hide any installed ABC.
+    """
+    monkeypatch.delenv("AIGVERSE_ABC", raising=False)
+    monkeypatch.setenv("PATH", "")
+
+    # AbcNotFoundError rather than ValueError: the network got past the guard and
+    # on to binary discovery, which is as far as it can go without ABC.
+    with pytest.raises(AbcNotFoundError):
+        gia.stats(_sequential_aig(init))
+
+
+def test_the_classic_store_accepts_what_the_gia_refuses(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The refusal is a property of the `&` space, not of the bridge.
+
+    Args:
+        monkeypatch: Used to hide any installed ABC.
+    """
+    monkeypatch.delenv("AIGVERSE_ABC", raising=False)
+    monkeypatch.setenv("PATH", "")
+
+    with pytest.raises(AbcNotFoundError):
+        stats(_sequential_aig(None))

@@ -10,6 +10,11 @@ releases may include breaking changes.
 
 ## [Unreleased]
 
+### Added
+
+- ✨ Support `SequentialAig` in the `aigverse.abc` bridge, carrying registers and their
+  reset values through ABC ([#406]) ([**@marcelwa**])
+
 ## [0.1.4] - 2026-08-19
 
 ### Added
@@ -152,6 +157,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 [#417]: https://github.com/marcelwa/aigverse/pull/417
 [#409]: https://github.com/marcelwa/aigverse/pull/409
 [#407]: https://github.com/marcelwa/aigverse/pull/407
+[#406]: https://github.com/marcelwa/aigverse/pull/406
 [#405]: https://github.com/marcelwa/aigverse/pull/405
 [#404]: https://github.com/marcelwa/aigverse/pull/404
 [#395]: https://github.com/marcelwa/aigverse/pull/395
