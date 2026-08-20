@@ -391,7 +391,7 @@ $ nox -s minimums -- --full
 ```
 
 CI runs `--full -m "not network"` in the test matrix, keeping the circuit downloads in their own workflow so that a
-hiccup at github.com cannot redden an unrelated run.
+hiccup at GitHub cannot redden an unrelated run.
 A plain local run is therefore not enough to conclude that a change to the `torch` floors is sound.
 :::
 

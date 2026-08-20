@@ -76,7 +76,9 @@ def _run_tests(
             passed here replaces the one in `addopts` rather than adding to it,
             and that a `-m` in the session's posargs replaces it in turn.
     """
-    parser = argparse.ArgumentParser()
+    # `add_help=False` keeps `-h`/`--help` in the leftovers so they reach pytest,
+    # which is what someone typing `nox -s tests -- --help` is asking for.
+    parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument(
         "--full",
         action="store_true",
@@ -103,7 +105,7 @@ def _run_tests(
         # It is off by default so a plain `nox -s tests` stays cheap and offline,
         # and so every caller states what it wants instead of being detected. The
         # test matrix narrows it back with `--full -m "not network"`: those tests
-        # download circuits, and a hiccup at github.com must not redden the whole
+        # download circuits, and a hiccup at GitHub must not redden the whole
         # matrix, so they keep their own workflow.
         only_group_args += ["--only-group", "torch"]
         pytest_run_args = [*pytest_run_args, "-m", ""]
