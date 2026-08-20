@@ -161,7 +161,7 @@ docs = [
     { name = "sphinxcontrib-svg2pdfconverter", specifier = ">=1.2.3" },
     { name = "sphinxext-opengraph", specifier = ">=0.9.1" },
     { name = "torch", specifier = ">=2.2.0" },
-    { name = "torch", marker = "python_full_version >= '3.13'", specifier = ">=2.5.0" },
+    { name = "torch", marker = "python_full_version >= '3.13'", specifier = ">=2.6.0" },
     { name = "torch", marker = "python_full_version >= '3.14'", specifier = ">=2.9.0" },
 ]
 test = [
@@ -177,7 +177,7 @@ test = [
 ]
 torch = [
     { name = "torch", specifier = ">=2.2.0" },
-    { name = "torch", marker = "python_full_version >= '3.13'", specifier = ">=2.5.0" },
+    { name = "torch", marker = "python_full_version >= '3.13'", specifier = ">=2.6.0" },
     { name = "torch", marker = "python_full_version >= '3.14'", specifier = ">=2.9.0" },
 ]
 

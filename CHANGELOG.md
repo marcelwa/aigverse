@@ -17,9 +17,10 @@ releases may include breaking changes.
 
 ### Fixed
 
-- 🐛 Gate the `numpy` floor by Python version. `numpy>=1.23.0` predates every
-  interpreter in the matrix except 3.10, so resolving it as the lowest direct
-  version fell back to a source build that fails ([#453]) ([**@marcelwa**])
+- 🐛 Gate the `numpy` and `torch` floors by Python version. Both predate every
+  interpreter in the matrix except 3.10, so resolving them as the lowest direct
+  versions fell back to a numpy source build that fails, and to a torch with no
+  installable distribution at all ([#453]) ([**@marcelwa**])
 
 ## [0.1.4] - 2026-08-19
 
