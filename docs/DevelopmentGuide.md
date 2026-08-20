@@ -378,6 +378,22 @@ This ensures that the project can still be built and the tests pass with the min
 $ nox -s minimums
 ```
 
+:::{note}
+Both `tests` and `minimums` leave the heavy optional dependencies out by default: the `torch` group is not installed,
+and the tests marked `torch` are deselected.
+That keeps a local run cheap, at the cost of exercising less than CI does.
+Pass `--full` to opt in:
+
+```console
+$ nox -s tests -- --full
+$ nox -s minimums -- --full
+```
+
+CI passes `--full`, so a plain local run is not enough to conclude that a change to the `torch` floors is sound.
+The `network`-marked tests stay out even with `--full`, because they download circuits and a hiccup at github.com
+should not fail an unrelated run; request them explicitly with `-m network`.
+:::
+
 ### Test Fixtures and Markers
 
 The test suite uses layered `pytest` fixtures to keep test setup reusable and localized:
@@ -398,6 +414,8 @@ Useful marker filters include:
 - `generators`
 - `adapters`
 - `tts`
+- `torch` (deselected by default; see `--full` above)
+- `network` (deselected by default; downloads benchmark circuits)
 
 Run a marker subset on a specific Python version with:
 

@@ -73,8 +73,17 @@ def _run_tests(
             pin resolution for the minimums session.
         extra_command: A command to run after installing and before testing.
         pytest_run_args: Extra arguments forwarded to pytest. Note that a `-m`
-            passed here replaces the one in `addopts` rather than adding to it.
+            passed here replaces the one in `addopts` rather than adding to it,
+            and that a `-m` in the session's posargs replaces it in turn.
     """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Install the optional dependency groups and run the tests that need them.",
+    )
+    args, posargs = parser.parse_known_args(session.posargs)
+
     env = {"UV_PROJECT_ENVIRONMENT": session.virtualenv.location}
 
     if shutil.which("cmake") is None and shutil.which("cmake3") is None:
@@ -85,12 +94,16 @@ def _run_tests(
     # install build and test dependencies on top of the existing environment
     python_flag = f"--python={session.python}"
     only_group_args: list[str] = ["--only-group", "build", "--only-group", "test"]
-    if os.environ.get("CI"):
-        # CI keeps full coverage: also install the torch group and re-include
-        # torch-marked tests that are deselected by default locally. The
-        # network-marked tests stay out -- they download circuits, and a
-        # hiccup at github.com must not turn the whole matrix red. They have
-        # their own job.
+    if args.full:
+        # `--full` opts into the heavy optional dependencies -- torch alone
+        # today, several hundred MB of wheel before CUDA -- and re-includes the
+        # tests that `addopts` deselects for needing them. It is off by default
+        # so that a plain `nox -s tests` stays cheap to run locally, and every
+        # caller that wants the full set asks for it rather than being detected.
+        #
+        # The network-marked tests stay out even here: they download circuits,
+        # and a hiccup at github.com must not turn the whole matrix red. Request
+        # them explicitly with `-m network`, as the benchmark workflow does.
         only_group_args += ["--only-group", "torch"]
         pytest_run_args = [*pytest_run_args, "-m", "not network"]
     session.run(
@@ -124,7 +137,7 @@ def _run_tests(
         *install_args,
         "pytest",
         *pytest_run_args,
-        *session.posargs,
+        *posargs,
         env=env,
     )
 

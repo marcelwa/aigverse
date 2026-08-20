@@ -12,8 +12,12 @@ releases may include breaking changes.
 
 ### Added
 
-- 👷 Run `nox -s minimums` in CI, so the declared dependency floors are actually
-  installed and tested instead of only claimed ([#453]) ([**@marcelwa**])
+- 👷 Run `nox -s minimums` in CI across the full platform matrix, so the declared
+  dependency floors are actually installed and tested instead of only claimed
+  ([#453]) ([**@marcelwa**])
+- ✨ Add a `--full` flag to the `tests` and `minimums` nox sessions that installs
+  the optional `torch` group and runs the tests requiring it, replacing the
+  implicit `CI` environment check ([#453]) ([**@marcelwa**])
 
 ### Fixed
 
