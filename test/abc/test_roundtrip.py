@@ -10,7 +10,7 @@ import pytest
 from aigverse import abc
 from aigverse.algorithms import equivalence_checking
 from aigverse.generators import ripple_carry_multiplier
-from aigverse.networks import Aig, AigRegister, DepthAig, NamedAig, SequentialAig
+from aigverse.networks import Aig, DepthAig, NamedAig, SequentialAig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -399,26 +399,13 @@ def test_a_non_executable_binary_override_is_reported_as_not_found(and_aig: AigT
         abc.resyn2(and_aig, binary=not_executable)
 
 
-def test_sequential_aig_keeps_registers_and_type() -> None:
-    """Registers, their reset values, and the network type survive ABC."""
-    ntk = SequentialAig()
-    a = ntk.create_pi()
-    b = ntk.create_pi()
-    ro0 = ntk.create_ro()
-    ro1 = ntk.create_ro()
+def test_sequential_aig_keeps_registers_and_type(sequential_aig: Callable[..., SequentialAig]) -> None:
+    """Registers, their reset values, and the network type survive ABC.
 
-    f1 = ntk.create_and(a, ro0)
-    f2 = ntk.create_and(b, ro1)
-    ntk.create_po(ntk.create_and(f1, f2))
-    ntk.create_ri(f1)
-    ntk.create_ri(f2)
-
-    zero = AigRegister()
-    zero.init = 0
-    ntk.set_register(0, zero)
-    one = AigRegister()
-    one.init = 1
-    ntk.set_register(1, one)
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig(0, 1)
 
     result = abc.resyn2(ntk)
 
@@ -430,14 +417,13 @@ def test_sequential_aig_keeps_registers_and_type() -> None:
     assert result.register_at(1).init == 1
 
 
-def test_sequential_aig_with_undefined_reset() -> None:
-    """A register left at its default reset must not come back as zero-initialized."""
-    ntk = SequentialAig()
-    a = ntk.create_pi()
-    ro = ntk.create_ro()
-    g = ntk.create_and(a, ro)
-    ntk.create_po(g)
-    ntk.create_ri(g)
+def test_sequential_aig_with_undefined_reset(sequential_aig: Callable[..., SequentialAig]) -> None:
+    """A register left at its default reset must not come back as zero-initialized.
+
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig()
 
     assert ntk.register_at(0).init not in {0, 1}
 
@@ -452,7 +438,9 @@ def test_sequential_aig_with_undefined_reset() -> None:
 
 
 @pytest.mark.parametrize("init", [0, 1], ids=["reset-zero", "reset-one"])
-def test_a_defined_reset_keeps_the_interface_in_the_gia_store(init: int) -> None:
+def test_a_defined_reset_keeps_the_interface_in_the_gia_store(
+    init: int, sequential_aig: Callable[..., SequentialAig]
+) -> None:
     """A defined reset keeps the network's shape in the `&` space.
 
     This is the guarantee the guard protects: `&read` leaves the interface alone
@@ -461,17 +449,9 @@ def test_a_defined_reset_keeps_the_interface_in_the_gia_store(init: int) -> None
 
     Args:
         init: The register's reset value.
+        sequential_aig: Builds the network.
     """
-    ntk = SequentialAig()
-    a = ntk.create_pi()
-    ro = ntk.create_ro()
-    g = ntk.create_and(a, ro)
-    ntk.create_po(g)
-    ntk.create_ri(g)
-
-    register = AigRegister()
-    register.init = init
-    ntk.set_register(0, register)
+    ntk = sequential_aig(init)
 
     result = abc.gia.dc2(ntk)
 
@@ -481,7 +461,7 @@ def test_a_defined_reset_keeps_the_interface_in_the_gia_store(init: int) -> None
     assert result.num_registers == ntk.num_registers
 
 
-def test_the_gia_store_normalizes_a_one_valued_reset() -> None:
+def test_the_gia_store_normalizes_a_one_valued_reset(sequential_aig: Callable[..., SequentialAig]) -> None:
     """A reset of 1 comes back as 0, which is a re-encoding and not a loss.
 
     `&read` reports "Converted 1 1-valued FFs" and complements the flip-flop, so
@@ -489,30 +469,23 @@ def test_the_gia_store_normalizes_a_one_valued_reset() -> None:
     don't-care case it costs no input and no register, so it is carried rather
     than refused -- but the reset value itself does not survive the `&` space, and
     the classic namespace is the one that keeps it.
-    """
-    ntk = SequentialAig()
-    a = ntk.create_pi()
-    ro = ntk.create_ro()
-    g = ntk.create_and(a, ro)
-    ntk.create_po(g)
-    ntk.create_ri(g)
 
-    register = AigRegister()
-    register.init = 1
-    ntk.set_register(0, register)
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig(1)
 
     assert abc.gia.dc2(ntk).register_at(0).init == 0
     assert abc.dc2(ntk).register_at(0).init == 1
 
 
-def test_the_gia_store_refuses_an_undefined_reset() -> None:
-    """The interface-changing case is refused rather than silently reshaped."""
-    ntk = SequentialAig()
-    a = ntk.create_pi()
-    ro = ntk.create_ro()
-    g = ntk.create_and(a, ro)
-    ntk.create_po(g)
-    ntk.create_ri(g)
+def test_the_gia_store_refuses_an_undefined_reset(sequential_aig: Callable[..., SequentialAig]) -> None:
+    """The interface-changing case is refused rather than silently reshaped.
+
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig()
 
     assert ntk.register_at(0).init not in {0, 1}
 

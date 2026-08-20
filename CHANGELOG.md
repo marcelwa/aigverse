@@ -12,8 +12,8 @@ releases may include breaking changes.
 
 ### Added
 
-- ✨ Support `SequentialAig` in the `aigverse.abc` bridge, carrying registers and their
-  reset values through ABC ([#406]) ([**@marcelwa**])
+- ✨ Support `SequentialAig` in the `aigverse.abc` bridge, carrying registers through ABC
+  along with their reset values in the classic namespace ([#406]) ([**@marcelwa**])
 
 ## [0.1.4] - 2026-08-19
 

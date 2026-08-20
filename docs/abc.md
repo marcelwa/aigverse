@@ -277,10 +277,11 @@ types in `aigverse` first.
 :::
 
 :::{note}
-{py:class}`~aigverse.networks.SequentialAig` round-trips as well, with its registers and
-their reset values intact. The registers travel as AIGER latches; ABC switches to the
-extended AIGER 1.9 encoding whenever one has a non-zero reset value, which is handled
-transparently.
+{py:class}`~aigverse.networks.SequentialAig` round-trips as well, with its registers
+intact, and — through the classic namespace — their reset values too. The registers travel
+as AIGER latches; ABC switches to the extended AIGER 1.9 encoding whenever one has a
+non-zero reset value, which is handled transparently. The `gia` namespace is stricter
+about reset values; see below.
 
 The type is checked before the base class, deliberately: it is registered as an `Aig`
 subclass on the C++ side, so reading ABC's result back as a combinational network would
