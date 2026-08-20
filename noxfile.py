@@ -80,7 +80,7 @@ def _run_tests(
     parser.add_argument(
         "--full",
         action="store_true",
-        help="Install the optional dependency groups and run the tests that need them.",
+        help="Install every optional dependency group and run every test, network-marked ones included.",
     )
     args, posargs = parser.parse_known_args(session.posargs)
 
@@ -95,17 +95,18 @@ def _run_tests(
     python_flag = f"--python={session.python}"
     only_group_args: list[str] = ["--only-group", "build", "--only-group", "test"]
     if args.full:
-        # `--full` opts into the heavy optional dependencies -- torch alone
-        # today, several hundred MB of wheel before CUDA -- and re-includes the
-        # tests that `addopts` deselects for needing them. It is off by default
-        # so that a plain `nox -s tests` stays cheap to run locally, and every
-        # caller that wants the full set asks for it rather than being detected.
+        # `--full` means everything: the heavy optional dependency groups --
+        # torch alone today, several hundred MB of wheel before CUDA -- plus
+        # every marker that `addopts` deselects, `network` included. An empty
+        # `-m` clears the ini filter rather than narrowing it.
         #
-        # The network-marked tests stay out even here: they download circuits,
-        # and a hiccup at github.com must not turn the whole matrix red. Request
-        # them explicitly with `-m network`, as the benchmark workflow does.
+        # It is off by default so a plain `nox -s tests` stays cheap and offline,
+        # and so every caller states what it wants instead of being detected. The
+        # test matrix narrows it back with `--full -m "not network"`: those tests
+        # download circuits, and a hiccup at github.com must not redden the whole
+        # matrix, so they keep their own workflow.
         only_group_args += ["--only-group", "torch"]
-        pytest_run_args = [*pytest_run_args, "-m", "not network"]
+        pytest_run_args = [*pytest_run_args, "-m", ""]
     session.run(
         "uv",
         "sync",

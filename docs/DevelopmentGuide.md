@@ -379,19 +379,20 @@ $ nox -s minimums
 ```
 
 :::{note}
-Both `tests` and `minimums` leave the heavy optional dependencies out by default: the `torch` group is not installed,
-and the tests marked `torch` are deselected.
-That keeps a local run cheap, at the cost of exercising less than CI does.
-Pass `--full` to opt in:
+By default, both `tests` and `minimums` skip what is expensive or fragile: the `torch` group is not installed, and the
+tests marked `torch` and `network` are deselected.
+That keeps a local run cheap and offline, at the cost of exercising less than CI does.
+
+Pass `--full` to run everything, installing every optional dependency group and selecting every marker:
 
 ```console
 $ nox -s tests -- --full
 $ nox -s minimums -- --full
 ```
 
-CI passes `--full`, so a plain local run is not enough to conclude that a change to the `torch` floors is sound.
-The `network`-marked tests stay out even with `--full`, because they download circuits and a hiccup at github.com
-should not fail an unrelated run; request them explicitly with `-m network`.
+CI runs `--full -m "not network"` in the test matrix, keeping the circuit downloads in their own workflow so that a
+hiccup at github.com cannot redden an unrelated run.
+A plain local run is therefore not enough to conclude that a change to the `torch` floors is sound.
 :::
 
 ### Test Fixtures and Markers
@@ -414,7 +415,7 @@ Useful marker filters include:
 - `generators`
 - `adapters`
 - `tts`
-- `torch` (deselected by default; see `--full` above)
+- `torch` (deselected by default; needs the `torch` group, see `--full` above)
 - `network` (deselected by default; downloads benchmark circuits)
 
 Run a marker subset on a specific Python version with:

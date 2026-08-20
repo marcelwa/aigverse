@@ -16,7 +16,7 @@ releases may include breaking changes.
   dependency floors are actually installed and tested instead of only claimed
   ([#453]) ([**@marcelwa**])
 - ✨ Add a `--full` flag to the `tests` and `minimums` nox sessions that installs
-  the optional `torch` group and runs the tests requiring it, replacing the
+  every optional dependency group and selects every marker, replacing the
   implicit `CI` environment check ([#453]) ([**@marcelwa**])
 
 ### Fixed

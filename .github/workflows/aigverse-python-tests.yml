@@ -113,8 +113,13 @@ jobs:
       # own because wheel availability is itself platform-specific: torch 2.5.0
       # is the first release to build for 3.13, but only for Linux, so a floor
       # that is broken on macOS and Windows passes a Linux-only check.
+      #
+      # `--full` installs the optional groups and selects every marker; the
+      # matrix narrows it back to exclude the network tests, which download
+      # circuits and run in their own workflow so that a hiccup at github.com
+      # cannot redden an unrelated matrix.
       - name: ⬇️ Test the lowest supported dependency versions
-        run: uvx nox -s minimums --verbose -- --full
+        run: uvx nox -s minimums --verbose -- --full -m "not network"
 
       - name: 🐍 Test
-        run: uvx nox -s tests --verbose -- --full
+        run: uvx nox -s tests --verbose -- --full -m "not network"
