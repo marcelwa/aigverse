@@ -1,16 +1,8 @@
-name-template: "aigverse $RESOLVED_VERSION Release"
+name-template: "v$RESOLVED_VERSION"
 tag-template: "v$RESOLVED_VERSION"
 categories:
-  # Renovate and pre-commit.ci bumps come first on purpose: Release Drafter puts
-  # a PR in the first category it matches, and collapsing them here keeps them
-  # out of the way of the human changes below without hiding them entirely.
-  - title: "⬆️ Dependencies"
-    collapse-after: 5
-    when:
-      labels:
-        - "dependencies"
-        - "github_actions"
-        - "pre-commit"
+  # Categories render in the order they are defined, so the changes a reader
+  # cares about come first and the bot bumps sit at the bottom, collapsed.
   - title: "✨ Features and Enhancements"
     when:
       labels:
@@ -26,12 +18,23 @@ categories:
     when:
       labels:
         - "documentation"
+  # Deliberately matched on `tooling` alone. Renovate's custom managers label
+  # the pinned-revision bumps `build_system` (mockturtle) and `testing` (ABC),
+  # so matching those here would list every such bump twice -- once here and
+  # once under Dependencies. A pull request can match several categories, and
+  # `exclusive` only suppresses *later* ones, which cannot help a category that
+  # renders last. Human build and CI work carries `tooling`.
   - title: "🔧 Tooling, Build & CI"
     when:
       labels:
         - "tooling"
-        - "build_system"
-        - "testing"
+  - title: "⬆️ Dependencies"
+    collapse-after: 5
+    when:
+      labels:
+        - "dependencies"
+        - "github_actions"
+        - "pre-commit"
   - type: "pre-exclude"
     when:
       labels:
