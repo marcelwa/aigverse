@@ -73,8 +73,19 @@ def _run_tests(
             pin resolution for the minimums session.
         extra_command: A command to run after installing and before testing.
         pytest_run_args: Extra arguments forwarded to pytest. Note that a `-m`
-            passed here replaces the one in `addopts` rather than adding to it.
+            passed here replaces the one in `addopts` rather than adding to it,
+            and that a `-m` in the session's posargs replaces it in turn.
     """
+    # `add_help=False` keeps `-h`/`--help` in the leftovers so they reach pytest,
+    # which is what someone typing `nox -s tests -- --help` is asking for.
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Install every optional dependency group and run every test, network-marked ones included.",
+    )
+    args, posargs = parser.parse_known_args(session.posargs)
+
     env = {"UV_PROJECT_ENVIRONMENT": session.virtualenv.location}
 
     if shutil.which("cmake") is None and shutil.which("cmake3") is None:
@@ -85,14 +96,19 @@ def _run_tests(
     # install build and test dependencies on top of the existing environment
     python_flag = f"--python={session.python}"
     only_group_args: list[str] = ["--only-group", "build", "--only-group", "test"]
-    if os.environ.get("CI"):
-        # CI keeps full coverage: also install the torch group and re-include
-        # torch-marked tests that are deselected by default locally. The
-        # network-marked tests stay out -- they download circuits, and a
-        # hiccup at github.com must not turn the whole matrix red. They have
-        # their own job.
+    if args.full:
+        # `--full` means everything: the heavy optional dependency groups --
+        # torch alone today, several hundred MB of wheel before CUDA -- plus
+        # every marker that `addopts` deselects, `network` included. An empty
+        # `-m` clears the ini filter rather than narrowing it.
+        #
+        # It is off by default so a plain `nox -s tests` stays cheap and offline,
+        # and so every caller states what it wants instead of being detected. The
+        # test matrix narrows it back with `--full -m "not network"`: those tests
+        # download circuits, and a hiccup at GitHub must not redden the whole
+        # matrix, so they keep their own workflow.
         only_group_args += ["--only-group", "torch"]
-        pytest_run_args = [*pytest_run_args, "-m", "not network"]
+        pytest_run_args = [*pytest_run_args, "-m", ""]
     session.run(
         "uv",
         "sync",
@@ -124,7 +140,7 @@ def _run_tests(
         *install_args,
         "pytest",
         *pytest_run_args,
-        *session.posargs,
+        *posargs,
         env=env,
     )
 
@@ -225,7 +241,9 @@ def docs(session: nox.Session) -> None:
             "  - bundled: any `abc` from Yosys or oss-cad-suite\n"
         )
 
-    parser = argparse.ArgumentParser()
+    # `add_help=False` for the same reason as in `_run_tests`: `-h`/`--help` belong
+    # to sphinx-build, not to this parser, which only needs to peek at `-b`.
+    parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-b", dest="builder", default="html", help="Build target (default: html)")
     args, posargs = parser.parse_known_args(session.posargs)
 

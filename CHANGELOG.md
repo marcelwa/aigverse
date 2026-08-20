@@ -10,6 +10,24 @@ releases may include breaking changes.
 
 ## [Unreleased]
 
+### Added
+
+- 👷 Run `nox -s minimums` in CI across the full platform matrix, so the declared
+  dependency floors are actually installed and tested instead of only claimed
+  ([#453]) ([**@marcelwa**])
+- ✨ Add a `--full` flag to the `tests` and `minimums` nox sessions that installs
+  every optional dependency group and selects every marker, replacing the
+  implicit `CI` environment check ([#453]) ([**@marcelwa**])
+
+### Fixed
+
+- 🐛 Forward `-h` and `--help` to `sphinx-build` in the `docs` nox session, which
+  its own argument parser used to intercept ([#453]) ([**@marcelwa**])
+- 🐛 Gate the `numpy` and `torch` floors by Python version. Both predate every
+  interpreter in the matrix except 3.10, so resolving them as the lowest direct
+  versions fell back to a NumPy source build that fails and to a PyTorch release
+  with no installable distribution ([#453]) ([**@marcelwa**])
+
 ## [0.1.4] - 2026-08-19
 
 ### Added
@@ -141,6 +159,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#453]: https://github.com/marcelwa/aigverse/pull/453
 [#448]: https://github.com/marcelwa/aigverse/pull/448
 [#447]: https://github.com/marcelwa/aigverse/pull/447
 [#445]: https://github.com/marcelwa/aigverse/pull/445
