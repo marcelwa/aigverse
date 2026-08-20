@@ -24,8 +24,6 @@ build:
         fi
       # Unshallow the git clone and fetch tags to get proper version information
       - git fetch --unshallow --tags
-      # Ensure submodules are checked out
-      - git submodule update --init --recursive
     pre_build:
       # Set up uv
       - asdf plugin add uv
@@ -42,7 +40,7 @@ build:
       # that is free: ABC defaults to `OPTFLAGS = -g -O`, and the debug information
       # costs roughly 15% of the compile for something no documentation build ever
       # reads. The examples here are small enough that ABC's own speed is irrelevant.
-      - ABC_REV=e76768b9d34f9dc67cb6608efecd55db271ff849
+      - ABC_REV=5ea34643247f9f45baa3bba40738832d7db19c60
         && git clone --filter=blob:none https://github.com/berkeley-abc/abc.git "$HOME/abc"
         && git -C "$HOME/abc" checkout --detach "$ABC_REV"
         && make -C "$HOME/abc" -j"$(nproc)" ABC_USE_NO_READLINE=1 OPTFLAGS=-O

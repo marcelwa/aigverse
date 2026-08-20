@@ -43,7 +43,7 @@ env:
   # tests run against. Tracking a moving `main` would make a red run ambiguous
   # between our change and an upstream one, so this is bumped deliberately.
   # Kept up to date by the `berkeley-abc/abc` custom manager in renovate.json5.
-  ABC_REV: e76768b9d34f9dc67cb6608efecd55db271ff849
+  ABC_REV: 5ea34643247f9f45baa3bba40738832d7db19c60
 
 jobs:
   abc-tests:
@@ -66,7 +66,7 @@ jobs:
       # Keyed on the pinned revision, so ABC is compiled only when the pin moves.
       - name: Restore the ABC build
         id: abc-cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/abc-bin
           key: abc-${{ matrix.runs-on }}-${{ env.ABC_REV }}
@@ -107,7 +107,7 @@ jobs:
         uses: rui314/setup-mold@9c9c13bf4c3f1adef0cc596abc155580bcb04444 # v1
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
           save-cache: ${{ github.ref == 'refs/heads/main' }}
