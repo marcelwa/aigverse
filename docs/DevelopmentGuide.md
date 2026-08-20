@@ -546,7 +546,8 @@ The tag is the single source of truth.
 
 1. **Land everything intended for the release on `main`, and label it.**
    Release Drafter (`.github/release-drafter.yml`) sorts pull requests into the release notes by label, so an unlabeled pull request ends up uncategorized.
-   Routine Renovate and pre-commit.ci bumps are collapsed into a single `⬆️ Dependencies` block, so they need no special handling.
+   Build and CI work needs the `tooling` label to show up under `🔧 Tooling, Build & CI`; `build_system` and `testing` alone are not enough, because Renovate applies those to its pinned-revision bumps.
+   Routine Renovate and pre-commit.ci bumps are collapsed into a single `⬆️ Dependencies` block at the bottom, so they need no special handling.
 
 2. **Open a release-preparation pull request**, labeled `release-prep` so that it excludes itself from the notes.
    In `CHANGELOG.md`, rename the `## [Unreleased]` heading to `## [X.Y.Z] - <release date>`, add a fresh, empty `## [Unreleased]` heading above it, and update the link references at the bottom: point `[unreleased]` at `compare/vX.Y.Z...HEAD` and add `[X.Y.Z]` pointing at `releases/tag/vX.Y.Z`.
