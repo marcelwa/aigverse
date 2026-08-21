@@ -330,6 +330,67 @@ documenting — `refactor` refuses a support above 15 while printing no range at
 recorded with the evidence for them.
 :::
 
+## A worked study
+
+[`examples/abc_recipe_study.py`](https://github.com/marcelwa/aigverse/blob/main/examples/abc_recipe_study.py)
+puts the bridge through a real experiment, and doubles as a template for running your own:
+
+> **Is there one best ABC recipe, or does the right one depend on the design?**
+
+It loads part of the [EPFL benchmark suite](https://github.com/lsils/benchmarks) with
+{py:func}`~aigverse.benchmarks.epfl` and asks three questions of it.
+
+**Does the order of operations matter?** Rewriting, refactoring, resubstitution and
+balancing — `rewrite`, `refactor`, `resub` and `balance` — can be applied in any of 24
+orders, and every one of them is run on each design. Same transformations, the same
+number of them, different sequence: the order alone moves the final AND count by several
+percent, and the best order is not the same one twice. Each ordering goes to ABC as a
+single script through {py:func}`~aigverse.abc.run_script` rather than as one call per
+command, which is equivalent but avoids a process and an AIGER round-trip per step.
+
+**Do the two command families trade off?** The classic scripts are plotted against their
+`&`-space counterparts on the area–depth plane. On many designs the smallest and the
+shallowest results come from _different_ families, so committing to one up front gives up
+an objective — the same point the multiplier and the adder make above, here on ten
+designs.
+
+**Is optimizability predictable?** A cheap structural feature of the input is correlated
+against how much the best script managed to remove. This one is an analysis of the data
+the previous question produced rather than a third run over ABC.
+
+It writes `abc_recipe_study.png`, a four-panel figure; `abc_recipe_study.csv` with every
+raw measurement; and `abc_recipe_study_headline.csv` with the summary statistics — and
+prints its findings as it goes.
+
+### Running it
+
+The script is standalone: it declares its own dependencies inline with
+[PEP 723](https://peps.python.org/pep-0723/), so [`uv`](https://docs.astral.sh/uv/) runs
+it with no setup beyond an ABC binary. It is not part of the `aigverse` package and ships
+in neither the wheel nor the source distribution, so take it from a checkout of the
+repository:
+
+```console
+uv run examples/abc_recipe_study.py --quick   # four small designs, for a smoke test
+uv run examples/abc_recipe_study.py           # the default ten-design set, ~18 s of ABC time
+uv run examples/abc_recipe_study.py --all     # the whole EPFL suite, hyp and div included (slow)
+```
+
+Those resolve `aigverse` from PyPI; `uv run --with-editable . examples/abc_recipe_study.py`
+runs against the checkout you are sitting in instead, which is what you want when a script
+uses something not yet released.
+
+`--rounds` sets how often each schedule is repeated — two by default, so an ordering
+spends eight commands against `resyn2`'s ten — `--benchmarks` takes an explicit list of
+designs, and `--output` / `--csv` redirect the figure and the tables.
+
+`--verify` equivalence-checks every single result with
+{py:func}`~aigverse.algorithms.equivalence_checking` under a conflict limit, and aborts
+the study if any optimization turns out not to be equivalence-preserving: that would be a
+bug in ABC or in the bridge, and every number the study prints rests on it not happening.
+A check that exhausts its conflict budget is reported as undecided rather than counted as
+a pass.
+
 ## Keeping the scripts in sync
 
 The shipped expansions are checked against the `abc.rc` of the ABC the test suite runs

@@ -18,6 +18,12 @@ releases may include breaking changes.
 - ✨ Add a `--full` flag to the `tests` and `minimums` nox sessions that installs
   every optional dependency group and selects every marker, replacing the
   implicit `CI` environment check ([#453]) ([**@marcelwa**])
+- ✨ Add an `examples/` directory of standalone, PEP 723 scripts that run with
+  `uv run` and no setup, starting with an ABC recipe study that asks whether one
+  best recipe exists ([#410]) ([**@marcelwa**])
+- 👷 Smoke-run the examples in the ABC workflow, so a library change that breaks
+  one is caught by CI rather than by the next person to run it ([#410])
+  ([**@marcelwa**])
 
 ### Fixed
 
@@ -169,6 +175,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 [#420]: https://github.com/marcelwa/aigverse/pull/420
 [#419]: https://github.com/marcelwa/aigverse/pull/419
 [#417]: https://github.com/marcelwa/aigverse/pull/417
+[#410]: https://github.com/marcelwa/aigverse/pull/410
 [#409]: https://github.com/marcelwa/aigverse/pull/409
 [#407]: https://github.com/marcelwa/aigverse/pull/407
 [#405]: https://github.com/marcelwa/aigverse/pull/405
