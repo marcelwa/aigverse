@@ -161,8 +161,11 @@ jobs:
 
       # A hit rate is a fact; a step duration is a guess about one. The other
       # platforms get this from ccache-action's post step.
+      # Never gate the job: `--stop-server` exits non-zero when sccache was never
+      # invoked, which is the failure this step exists to make visible.
       - if: always() && runner.os == 'Windows'
         name: sccache statistics
+        continue-on-error: true
         run: |
-          sccache --show-stats
-          sccache --stop-server
+          sccache --show-stats || true
+          sccache --stop-server || true
