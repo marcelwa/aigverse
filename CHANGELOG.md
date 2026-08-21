@@ -25,8 +25,22 @@ releases may include breaking changes.
   one is caught by CI rather than by the next person to run it ([#410])
   ([**@marcelwa**])
 
+### Changed
+
+- ⚡️ Build the extension once per wheel tag in the `tests` and `minimums` nox
+  sessions instead of once per interpreter. `wheel.py-api = "cp312"` makes 3.12
+  and above one abi3 wheel, so a five-interpreter matrix needs three builds
+  rather than five, and the newer interpreters now run against that one abi3
+  wheel rather than a purpose-built one each ([#456]) ([**@marcelwa**])
+
 ### Fixed
 
+- 👷 Cache Windows compiles. `scikit-build-core` defaults to the Visual Studio
+  generator, which ignores `CMAKE_<LANG>_COMPILER_LAUNCHER`, so the compiler
+  cache was configured on Windows and then never invoked -- every job rebuilt
+  every translation unit once per interpreter. Windows now builds with Ninja and
+  caches with `sccache`, whose MSVC support, unlike ccache's, actually hits
+  ([#456]) ([**@marcelwa**])
 - 🐛 Forward `-h` and `--help` to `sphinx-build` in the `docs` nox session, which
   its own argument parser used to intercept ([#453]) ([**@marcelwa**])
 - 🐛 Gate the `numpy` and `torch` floors by Python version. Both predate every
@@ -165,6 +179,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#456]: https://github.com/marcelwa/aigverse/pull/456
 [#453]: https://github.com/marcelwa/aigverse/pull/453
 [#448]: https://github.com/marcelwa/aigverse/pull/448
 [#447]: https://github.com/marcelwa/aigverse/pull/447

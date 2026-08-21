@@ -90,12 +90,43 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup ccache
+      # Windows is on sccache instead, see below.
+      - if: runner.os != 'Windows'
+        name: Setup ccache
         uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
         with:
           key: "${{matrix.runs-on}}-aigverse"
           save: true
           max-size: 10G
+
+      # MSBuild ignores CMAKE_<LANG>_COMPILER_LAUNCHER, so under scikit-build-core's
+      # default Visual Studio generator the cache was configured and never invoked.
+      # Ninja honours it, but needs MSVC on PATH. sccache rather than ccache,
+      # whose MSVC support reports most invocations uncacheable and hits none.
+      - if: runner.os == 'Windows'
+        name: Set up the MSVC development environment
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+
+      - if: runner.os == 'Windows'
+        name: Build with Ninja so that the compiler cache is used
+        shell: bash
+        run: |
+          echo "CMAKE_GENERATOR=Ninja" >> "$GITHUB_ENV"
+          echo "SCCACHE_DIR=$GITHUB_WORKSPACE/.sccache" >> "$GITHUB_ENV"
+          # ~400 MB working set; a bigger ceiling just evicts other workflows'
+          # caches against the repo-wide 10 GB limit.
+          echo "SCCACHE_CACHE_SIZE=600M" >> "$GITHUB_ENV"
+
+      # Persisting between runs is the whole point: the builds within one job
+      # target different interpreters and share nothing, but recur every run.
+      # Fresh key per run with a prefix restore, since cache entries are immutable.
+      - if: runner.os == 'Windows'
+        name: Cache sccache objects
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .sccache
+          key: sccache-${{ matrix.runs-on }}-aigverse-${{ github.run_id }}
+          restore-keys: sccache-${{ matrix.runs-on }}-aigverse-
 
       - if: runner.os == 'Linux'
         name: Setup mold
@@ -106,6 +137,10 @@ jobs:
         with:
           enable-cache: true
           save-cache: ${{ github.ref == 'refs/heads/main' }}
+
+      - if: runner.os == 'Windows'
+        name: Install sccache
+        run: uv tool install sccache
 
       # The declared floors are only a claim until something installs them, so
       # resolve every direct dependency down to its minimum and run the suite
@@ -123,3 +158,14 @@ jobs:
 
       - name: 🐍 Test
         run: uvx nox -s tests --verbose -- --full -m "not network"
+
+      # A hit rate is a fact; a step duration is a guess about one. The other
+      # platforms get this from ccache-action's post step. `--show-stats` is left
+      # to fail the job, since it only fails when sccache itself is broken, which
+      # is the thing this step exists to catch; `--stop-server` exits non-zero
+      # when no server was ever started, which is not an error.
+      - if: always() && runner.os == 'Windows'
+        name: sccache statistics
+        run: |
+          sccache --show-stats
+          sccache --stop-server || true
