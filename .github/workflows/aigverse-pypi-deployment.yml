@@ -117,7 +117,7 @@ jobs:
         run: |
           mkdir -p "$GITHUB_WORKSPACE/.sccache"
           echo "CIBW_CONTAINER_ENGINE=docker; create_args: --volume=$GITHUB_WORKSPACE/.sccache:/sccache" >> "$GITHUB_ENV"
-          echo "CIBW_ENVIRONMENT_LINUX=SCCACHE_DIR=/sccache SCCACHE_CACHE_SIZE=2G" >> "$GITHUB_ENV"
+          echo "CIBW_ENVIRONMENT_LINUX=SCCACHE_DIR=/sccache SCCACHE_CACHE_SIZE=2G CMAKE_ARGS=-DCMAKE_VERBOSE_MAKEFILE=ON" >> "$GITHUB_ENV"
 
       - if: runner.os == 'Linux'
         name: Cache sccache objects
