@@ -41,7 +41,7 @@ function(aigverse_enable_cache)
     if(CMAKE_GENERATOR MATCHES "Visual Studio")
       message(
         WARNING
-          "${CACHE_OPTION} was found, but the '${CMAKE_GENERATOR}' generator ignores "
+          "${CACHE_BINARY} was found, but the '${CMAKE_GENERATOR}' generator ignores "
           "compiler launchers, so nothing will be cached. Configure with -G Ninja "
           "(or set CMAKE_GENERATOR=Ninja) to make the cache effective.")
     endif()

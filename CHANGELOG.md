@@ -30,8 +30,8 @@ releases may include breaking changes.
 - ⚡️ Build the extension once per wheel tag in the `tests` and `minimums` nox
   sessions instead of once per interpreter. `wheel.py-api = "cp312"` makes 3.12
   and above one abi3 wheel, so a five-interpreter matrix needs three builds
-  rather than five, and the newer interpreters now run against the very artefact
-  PyPI ships ([#456]) ([**@marcelwa**])
+  rather than five, and the newer interpreters now run against that one abi3
+  wheel rather than a purpose-built one each ([#456]) ([**@marcelwa**])
 
 ### Fixed
 

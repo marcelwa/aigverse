@@ -107,7 +107,8 @@ def _build_or_reuse_wheel(
 
     Every session used to rebuild the extension, so 3.12 and up each recompiled
     the same sources into the identical abi3 wheel. Building once per tag also
-    means the newer interpreters run against the artefact PyPI ships.
+    means the newer interpreters run against that one wheel, which is the same
+    abi3 artefact users install, rather than a purpose-built one each.
 
     `tests` and `minimums` cannot share a wheel: `minimums` resolves the build
     dependencies to their floors, so its wheel comes from a different nanobind.
