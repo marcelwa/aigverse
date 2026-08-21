@@ -18,9 +18,9 @@ the source distribution.
 
 > **Is there one best ABC recipe, or does the right one depend on the design?**
 
-Runs all 24 orderings of ABC's four atomic commands over part of the EPFL benchmark suite
-and weighs the classic command family against its `&`-space counterpart. Requires an ABC
-executable — `aigverse` does not ship one.
+Runs all 24 orderings of rewriting, refactoring, resubstitution and balancing over part of
+the EPFL benchmark suite, and weighs ABC's classic command family against its `&`-space
+counterpart. Requires an ABC executable — `aigverse` does not ship one.
 
 [ABC Integration → A worked study](https://aigverse.readthedocs.io/en/latest/abc.html#a-worked-study)
 describes the experiment, its options, and its outputs.

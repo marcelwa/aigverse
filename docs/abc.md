@@ -340,11 +340,12 @@ puts the bridge through a real experiment, and doubles as a template for running
 It loads part of the [EPFL benchmark suite](https://github.com/lsils/benchmarks) with
 {py:func}`~aigverse.benchmarks.epfl` and asks three questions of it.
 
-**Does the order of operations matter?** All 24 orderings of the four atomic commands —
-`balance`, `rewrite`, `refactor`, `resub` — are run on each design. Same transformations,
-the same number of them, different sequence: the order alone moves the final AND count by
-several percent, and the best order is not the same one twice. Each ordering goes to ABC
-as a single script through {py:func}`~aigverse.abc.run_script` rather than as one call per
+**Does the order of operations matter?** Rewriting, refactoring, resubstitution and
+balancing — `rewrite`, `refactor`, `resub` and `balance` — can be applied in any of 24
+orders, and every one of them is run on each design. Same transformations, the same
+number of them, different sequence: the order alone moves the final AND count by several
+percent, and the best order is not the same one twice. Each ordering goes to ABC as a
+single script through {py:func}`~aigverse.abc.run_script` rather than as one call per
 command, which is equivalent but avoids a process and an AIGER round-trip per step.
 
 **Do the two command families trade off?** The classic scripts are plotted against their
