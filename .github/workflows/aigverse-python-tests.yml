@@ -132,7 +132,11 @@ jobs:
         run: |
           echo "CMAKE_GENERATOR=Ninja" >> "$GITHUB_ENV"
           echo "SCCACHE_DIR=$GITHUB_WORKSPACE/.sccache" >> "$GITHUB_ENV"
-          echo "SCCACHE_CACHE_SIZE=2G" >> "$GITHUB_ENV"
+          # The working set is ~400 MB for the six builds a job does. 2G let a
+          # single entry reach 1.2 GB when the build layout changed and both
+          # generations of objects were kept, and GitHub evicts repo-wide at
+          # 10 GB, so an oversized entry here costs other workflows their cache.
+          echo "SCCACHE_CACHE_SIZE=600M" >> "$GITHUB_ENV"
 
       # A fresh key every run with a prefix restore, so each run starts from the
       # most recent cache and stores its own. GitHub's cache entries are
