@@ -137,6 +137,16 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e # v3.3
 
+      # The container compiles as root and sccache creates its directories 0700,
+      # so the runner cannot read them back and the cache save fails with
+      # `tar: .sccache/a: Cannot open: Permission denied`. That is only a
+      # warning, so without this the job stays green while saving nothing.
+      # `always()` keeps a partial cache from a failed build, which is still
+      # worth having.
+      - if: always() && runner.os == 'Linux'
+        name: Hand the container's cache back to the runner
+        run: sudo chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE/.sccache"
+
       - name: Upload wheel as an artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

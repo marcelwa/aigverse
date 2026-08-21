@@ -165,9 +165,9 @@ test-command = 'pytest test/ -m "(torch or not torch) and not network"'
 # so anything written there is discarded along with the container.
 [tool.cibuildwheel.linux]
 before-all = "/opt/python/cp312-cp312/bin/pip install sccache && ln -sf /opt/python/cp312-cp312/bin/sccache /usr/local/bin/sccache || true"
-# Runs before each build, so the last one reports the hit rate for everything
-# built before it. A hit rate is a fact; a job duration is a guess about one.
-before-build = "sccache --show-stats || true"
+# Runs after each build and before its tests, so every build reports its own
+# hit rate. A hit rate is a fact; a job duration is a guess about one.
+before-test = "sccache --show-stats || true"
 
 [tool.cibuildwheel.macos]
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
