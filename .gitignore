@@ -222,6 +222,8 @@ Thumbs.db
 # Experiment files
 *.json
 *.csv
+# what the standalone scripts under examples/ write into the working directory
+abc_recipe_study.png
 
 # Coverage files
 lcov.info

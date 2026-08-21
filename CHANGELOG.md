@@ -12,8 +12,30 @@ releases may include breaking changes.
 
 ### Added
 
-- ✨ Support `SequentialAig` in the `aigverse.abc` bridge, carrying registers through ABC
-  along with their reset values in the classic namespace ([#406]) ([**@marcelwa**])
+- 👷 Run `nox -s minimums` in CI across the full platform matrix, so the declared
+  dependency floors are actually installed and tested instead of only claimed
+  ([#453]) ([**@marcelwa**])
+- ✨ Add a `--full` flag to the `tests` and `minimums` nox sessions that installs
+  every optional dependency group and selects every marker, replacing the
+  implicit `CI` environment check ([#453]) ([**@marcelwa**])
+- ✨ Add an `examples/` directory of standalone, PEP 723 scripts that run with
+  `uv run` and no setup, starting with an ABC recipe study that asks whether one
+  best recipe exists ([#410]) ([**@marcelwa**])
+- 👷 Smoke-run the examples in the ABC workflow, so a library change that breaks
+  one is caught by CI rather than by the next person to run it ([#410])
+  ([**@marcelwa**])
+- ✨ Support `SequentialAig` in the `aigverse.abc` bridge, carrying registers
+  through ABC along with their reset values in the classic namespace ([#406])
+  ([**@marcelwa**])
+
+### Fixed
+
+- 🐛 Forward `-h` and `--help` to `sphinx-build` in the `docs` nox session, which
+  its own argument parser used to intercept ([#453]) ([**@marcelwa**])
+- 🐛 Gate the `numpy` and `torch` floors by Python version. Both predate every
+  interpreter in the matrix except 3.10, so resolving them as the lowest direct
+  versions fell back to a NumPy source build that fails and to a PyTorch release
+  with no installable distribution ([#453]) ([**@marcelwa**])
 
 ## [0.1.4] - 2026-08-19
 
@@ -146,6 +168,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#453]: https://github.com/marcelwa/aigverse/pull/453
 [#448]: https://github.com/marcelwa/aigverse/pull/448
 [#447]: https://github.com/marcelwa/aigverse/pull/447
 [#445]: https://github.com/marcelwa/aigverse/pull/445
@@ -155,6 +178,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 [#420]: https://github.com/marcelwa/aigverse/pull/420
 [#419]: https://github.com/marcelwa/aigverse/pull/419
 [#417]: https://github.com/marcelwa/aigverse/pull/417
+[#410]: https://github.com/marcelwa/aigverse/pull/410
 [#409]: https://github.com/marcelwa/aigverse/pull/409
 [#407]: https://github.com/marcelwa/aigverse/pull/407
 [#406]: https://github.com/marcelwa/aigverse/pull/406
