@@ -148,27 +148,6 @@ test-sources = ["test/"]
 test-command = 'pytest test/ -m "(torch or not torch) and not network"'
 
 
-# The manylinux image ships no compiler cache at all, so the Linux wheels
-# compiled uncached. sccache comes from PyPI rather than EPEL, which carries
-# only ccache 3.7.7: the host runs 4.9.1, the two on-disk formats are not
-# compatible, and pointing both at one directory produced a second full set of
-# objects instead of a single hit. PyPI also publishes aarch64 wheels, which the
-# official ccache static builds do not.
-#
-# The install is allowed to fail. If PyPI is ever unreachable `Cache.cmake`
-# warns and the build proceeds uncached, which is a better failure mode for a
-# release than a broken one.
-#
-# The cache directory is bind-mounted into the container by the workflow, which
-# is also where `SCCACHE_DIR` is set. It cannot live under /project:
-# cibuildwheel copies the project in with `docker cp` rather than mounting it,
-# so anything written there is discarded along with the container.
-[tool.cibuildwheel.linux]
-before-all = "/opt/python/cp312-cp312/bin/pip install sccache && ln -sf /opt/python/cp312-cp312/bin/sccache /usr/local/bin/sccache || true"
-# Runs after each build and before its tests, so every build reports its own
-# hit rate. A hit rate is a fact; a job duration is a guess about one.
-before-test = "sccache --show-stats || true"
-
 [tool.cibuildwheel.macos]
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 

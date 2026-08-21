@@ -95,37 +95,31 @@ jobs:
       - name: Set up MSVC development environment (Windows only)
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
-      # Linux only, and that is not an oversight. cibuildwheel builds each wheel
-      # under a directory it names randomly per run -- `cibw-run-43zqqz1p`, then
-      # `cibw-run-ihw907m4` -- and on the native runners the build interpreter
-      # lives inside it, so its include path lands in every compile command and
-      # no command ever repeats. Measured with a restored 276 MB cache present:
-      # windows 145 requests / 0 hits, macOS 145 calls / 0 hits. Base-directory
-      # rewriting cannot recover it either: both caches rewrite paths relative
-      # to the compile working directory, which here sits on a separate stable
-      # root, so the varying component survives the rewrite.
+      # No compiler cache here, deliberately. Every wheel build compiles against
+      # nanobind headers inside uv's PEP 517 build-isolation environment, which
+      # is a directory named randomly per run:
       #
-      # The container has no such problem. Everything the Linux build sees is
-      # fixed -- /opt/python/cp310-cp310, /project/build/... -- so its commands
-      # do repeat and the cache works.
+      #   -I/tmp/build-env-r57r75a3/lib/python3.10/site-packages/nanobind/include
+      #   -I/tmp/build-env-sjkp5_7v/lib/python3.10/site-packages/nanobind/include
       #
-      # The key carries `-wheels` because this workflow and the test matrix used
-      # to share `${{matrix.runs-on}}-aigverse` and evict each other, their
-      # objects being disjoint.
-      - if: runner.os == 'Linux'
-        name: Share the sccache directory with the manylinux container
-        run: |
-          mkdir -p "$GITHUB_WORKSPACE/.sccache"
-          echo "CIBW_CONTAINER_ENGINE=docker; create_args: --volume=$GITHUB_WORKSPACE/.sccache:/sccache" >> "$GITHUB_ENV"
-          echo "CIBW_ENVIRONMENT_LINUX=SCCACHE_DIR=/sccache SCCACHE_CACHE_SIZE=2G CMAKE_ARGS=-DCMAKE_VERBOSE_MAKEFILE=ON" >> "$GITHUB_ENV"
-
-      - if: runner.os == 'Linux'
-        name: Cache sccache objects
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .sccache
-          key: sccache-${{ matrix.runs-on }}-aigverse-wheels-${{ github.run_id }}
-          restore-keys: sccache-${{ matrix.runs-on }}-aigverse-wheels-
+      # That one token is the only difference between two runs of the same
+      # commit, out of 78 in the command, and it is enough that no compilation
+      # ever repeats. Disabling build isolation does not help: cibuildwheel's own
+      # per-build virtualenv is `/tmp/tmp.XXXXXXXX/venv`, randomised the same way.
+      # Base-directory rewriting cannot recover it either, since both caches
+      # rewrite relative to the compile working directory, which sits on a
+      # separate stable root.
+      #
+      # Measured on all four platforms with a restored cache present: windows 145
+      # requests / 0 hits, macOS 145 / 0, and Linux 145 / 0 even with sccache
+      # reachable inside the container and 0 non-cacheable calls. The test matrix
+      # is cacheable precisely because it builds with `--no-build-isolation-package`
+      # against stable `.nox/<session>` virtualenvs -- see aigverse-python-tests.yml,
+      # which hits 360 of 360.
+      #
+      # A cache action here was also actively harmful: it shared the key
+      # `${{ matrix.runs-on }}-aigverse` with the test matrix while producing
+      # disjoint objects, so each run overwrote a cache the other could not use.
 
       - if: runner.os == 'Linux'
         name: Setup mold
@@ -138,16 +132,6 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e # v3.3
-
-      # The container compiles as root and sccache creates its directories 0700,
-      # so the runner cannot read them back and the cache save fails with
-      # `tar: .sccache/a: Cannot open: Permission denied`. That is only a
-      # warning, so without this the job stays green while saving nothing.
-      # `always()` keeps a partial cache from a failed build, which is still
-      # worth having.
-      - if: always() && runner.os == 'Linux'
-        name: Hand the container's cache back to the runner
-        run: sudo chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE/.sccache"
 
       - name: Upload wheel as an artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
