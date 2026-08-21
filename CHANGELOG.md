@@ -12,6 +12,10 @@ releases may include breaking changes.
 
 ### Added
 
+- ✨ Add `simulate_sequential`, which runs a `SequentialAig` over a number of clock
+  cycles from its reset state and returns the primary output values and the register
+  values per cycle. `simulate` has no notion of a register and never assigns the
+  register outputs at all ([#458]) ([**@marcelwa**])
 - 👷 Run `nox -s minimums` in CI across the full platform matrix, so the declared
   dependency floors are actually installed and tested instead of only claimed
   ([#453]) ([**@marcelwa**])
@@ -165,6 +169,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#458]: https://github.com/marcelwa/aigverse/pull/458
 [#453]: https://github.com/marcelwa/aigverse/pull/453
 [#448]: https://github.com/marcelwa/aigverse/pull/448
 [#447]: https://github.com/marcelwa/aigverse/pull/447
