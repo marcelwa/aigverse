@@ -100,8 +100,10 @@ jobs:
       # `cibw-run-ihw907m4` -- and on the native runners the build interpreter
       # lives inside it, so its include path lands in every compile command and
       # no command ever repeats. Measured with a restored 276 MB cache present:
-      # windows 145 requests / 0 hits, macOS 145 calls / 0 hits. Neither ccache
-      # nor sccache can normalise that away.
+      # windows 145 requests / 0 hits, macOS 145 calls / 0 hits. Base-directory
+      # rewriting cannot recover it either: both caches rewrite paths relative
+      # to the compile working directory, which here sits on a separate stable
+      # root, so the varying component survives the rewrite.
       #
       # The container has no such problem. Everything the Linux build sees is
       # fixed -- /opt/python/cp310-cp310, /project/build/... -- so its commands
