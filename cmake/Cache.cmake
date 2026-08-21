@@ -26,6 +26,19 @@ function(aigverse_enable_cache)
 
   unset(CACHE_BINARY CACHE)
   find_program(CACHE_BINARY NAMES ${CACHE_OPTION})
+
+  # Fall back to whichever cache is actually installed. The manylinux container
+  # the wheels are built in carries only sccache, and a contributor with one of
+  # the two on PATH should not have to name it.
+  if(NOT CACHE_BINARY)
+    list(REMOVE_ITEM CACHE_OPTION_VALUES ${CACHE_OPTION})
+    find_program(CACHE_BINARY NAMES ${CACHE_OPTION_VALUES})
+    if(CACHE_BINARY)
+      message(STATUS "${CACHE_OPTION} was not found, falling back to "
+                     "${CACHE_BINARY}")
+    endif()
+  endif()
+
   if(CACHE_BINARY)
     # The Visual Studio generator ignores CMAKE_<LANG>_COMPILER_LAUNCHER
     # outright. Configuring one there looks like it works and caches nothing,

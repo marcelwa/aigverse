@@ -111,23 +111,19 @@ jobs:
       # to share `${{matrix.runs-on}}-aigverse` and evict each other, their
       # objects being disjoint.
       - if: runner.os == 'Linux'
-        name: Setup ccache
-        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
-        with:
-          key: "${{matrix.runs-on}}-aigverse-wheels"
-          save: true
-          max-size: 10G
-
-      # cibuildwheel copies the project into the manylinux container with
-      # `docker cp` instead of mounting it, so the container needs an explicit
-      # volume to reach the cache directory the action manages on the host.
-      # Without it ccache runs inside the container and writes into a filesystem
-      # that is thrown away with it.
-      - if: runner.os == 'Linux'
-        name: Share the ccache directory with the manylinux container
+        name: Share the sccache directory with the manylinux container
         run: |
-          echo "CIBW_CONTAINER_ENGINE=docker; create_args: --volume=$GITHUB_WORKSPACE/.ccache:/ccache" >> "$GITHUB_ENV"
-          echo "CIBW_ENVIRONMENT_LINUX=CCACHE_DIR=/ccache" >> "$GITHUB_ENV"
+          mkdir -p "$GITHUB_WORKSPACE/.sccache"
+          echo "CIBW_CONTAINER_ENGINE=docker; create_args: --volume=$GITHUB_WORKSPACE/.sccache:/sccache" >> "$GITHUB_ENV"
+          echo "CIBW_ENVIRONMENT_LINUX=SCCACHE_DIR=/sccache SCCACHE_CACHE_SIZE=2G" >> "$GITHUB_ENV"
+
+      - if: runner.os == 'Linux'
+        name: Cache sccache objects
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .sccache
+          key: sccache-${{ matrix.runs-on }}-aigverse-wheels-${{ github.run_id }}
+          restore-keys: sccache-${{ matrix.runs-on }}-aigverse-wheels-
 
       - if: runner.os == 'Linux'
         name: Setup mold
