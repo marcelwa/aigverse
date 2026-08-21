@@ -3,6 +3,9 @@
 name: 🐍 • CI
 
 on:
+  # Manual runs make the pipeline measurable: dispatched runs get a unique
+  # concurrency group, so repeats of the same ref do not cancel each other.
+  workflow_dispatch:
   merge_group:
   push:
     branches: ["main"]
