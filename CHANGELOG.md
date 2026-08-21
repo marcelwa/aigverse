@@ -32,7 +32,7 @@ releases may include breaking changes.
   latch outputs for a network type that cannot hold registers, then indexed past
   the end of its own signal vector -- a segmentation fault on most designs and a
   silently register-less network on the rest. The error names the sequential
-  reader to use instead ([#456]) ([**@marcelwa**])
+  reader to use instead ([#457]) ([**@marcelwa**])
 - 🐛 Forward `-h` and `--help` to `sphinx-build` in the `docs` nox session, which
   its own argument parser used to intercept ([#453]) ([**@marcelwa**])
 - 🐛 Gate the `numpy` and `torch` floors by Python version. Both predate every
@@ -171,7 +171,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
-[#456]: https://github.com/marcelwa/aigverse/pull/456
+[#457]: https://github.com/marcelwa/aigverse/pull/457
 [#453]: https://github.com/marcelwa/aigverse/pull/453
 [#448]: https://github.com/marcelwa/aigverse/pull/448
 [#447]: https://github.com/marcelwa/aigverse/pull/447
