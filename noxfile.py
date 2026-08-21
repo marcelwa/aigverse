@@ -58,18 +58,16 @@ def lint(session: nox.Session) -> None:
     session.run("prek", "run", "--all-files", *session.posargs, external=True)
 
 
-# Wheels already built during this nox invocation, keyed by (group, wheel tag).
-# Memoized per process rather than left on disk, so a stale wheel from an earlier
-# invocation can never be picked up.
+# Wheels built during this nox invocation, keyed by (group, wheel tag). Memoized
+# per process, so a stale wheel from an earlier invocation cannot be picked up.
 _BUILT_WHEELS: dict[tuple[str, str], Path] = {}
 
 
 def _wheel_tag(python: str) -> str:
     """Return the wheel tag a given interpreter builds.
 
-    `wheel.py-api = "cp312"` in pyproject.toml means 3.12 and everything above it
-    produce one and the same abi3 wheel, so they share a tag and only need
-    building once.
+    `wheel.py-api = "cp312"` makes 3.12 and above one and the same abi3 wheel, so
+    they share a tag and only need building once.
 
     Args:
         python: The interpreter version, as nox spells it, e.g. "3.12".
@@ -87,8 +85,7 @@ def _venv_python(session: nox.Session) -> Path:
     """Return the path to the session virtualenv's interpreter.
 
     `uv build --no-build-isolation` builds with whatever `--python` names, so it
-    has to be pointed at the environment holding the `build` group rather than at
-    a bare version number, which would resolve to a system interpreter.
+    needs the environment holding the `build` group, not a bare version number.
 
     Args:
         session: The nox session whose virtualenv to locate.
@@ -108,16 +105,12 @@ def _build_or_reuse_wheel(
 ) -> Path:
     """Build the project wheel for this session's tag, or reuse one already built.
 
-    Every session used to rebuild the extension from scratch, which for a matrix
-    of six interpreters meant six compilations of the same 26 translation units
-    per nox invocation, twice over across `tests` and `minimums`. Three of those
-    tags are identical, so this collapses them: 3.12 through 3.15 share one abi3
-    wheel and it is built once. It is also closer to what users get, since the
-    newer interpreters then exercise the very artefact PyPI ships.
+    Every session used to rebuild the extension, so 3.12 and up each recompiled
+    the same sources into the identical abi3 wheel. Building once per tag also
+    means the newer interpreters run against the artefact PyPI ships.
 
     `tests` and `minimums` cannot share a wheel: `minimums` resolves the build
-    dependencies down to their floors, so its wheel is built by a different
-    nanobind and scikit-build-core.
+    dependencies to their floors, so its wheel comes from a different nanobind.
 
     Args:
         session: The nox session requesting the wheel.
@@ -229,8 +222,8 @@ def _run_tests(
         "install",
         "--python",
         str(_venv_python(session)),
-        # the version is derived from the commit, so an uncommitted source change
-        # rebuilds to the same version and would otherwise be skipped as present
+        # the version comes from the commit, so an uncommitted source change
+        # rebuilds to the same version and would be skipped as already present
         "--reinstall-package",
         "aigverse",
         str(wheel),

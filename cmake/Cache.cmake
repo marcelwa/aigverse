@@ -1,9 +1,7 @@
 # Enable cache if available
 function(aigverse_enable_cache)
-  # ccache's MSVC support is nominal: half the invocations come back
-  # "Uncacheable" and the rest never hit, so it costs a process launch per
-  # translation unit and returns nothing. sccache is what MSVC builds actually
-  # cache with, so make it the default there.
+  # ccache's MSVC support is nominal: most invocations come back "Uncacheable"
+  # and the rest never hit. sccache is what MSVC builds actually cache with.
   if(MSVC)
     set(CACHE_OPTION_DEFAULT "sccache")
   else()
@@ -27,9 +25,7 @@ function(aigverse_enable_cache)
   unset(CACHE_BINARY CACHE)
   find_program(CACHE_BINARY NAMES ${CACHE_OPTION})
 
-  # Fall back to whichever cache is actually installed. The manylinux container
-  # the wheels are built in carries only sccache, and a contributor with one of
-  # the two on PATH should not have to name it.
+  # A contributor with only one of the two on PATH should not have to name it.
   if(NOT CACHE_BINARY)
     list(REMOVE_ITEM CACHE_OPTION_VALUES ${CACHE_OPTION})
     find_program(CACHE_BINARY NAMES ${CACHE_OPTION_VALUES})
@@ -40,10 +36,8 @@ function(aigverse_enable_cache)
   endif()
 
   if(CACHE_BINARY)
-    # The Visual Studio generator ignores CMAKE_<LANG>_COMPILER_LAUNCHER
-    # outright. Configuring one there looks like it works and caches nothing,
-    # which is exactly how this went unnoticed until Windows CI was timed
-    # against the other platforms.
+    # The Visual Studio generator ignores compiler launchers outright, so
+    # configuring one there looks like it works and caches nothing.
     if(CMAKE_GENERATOR MATCHES "Visual Studio")
       message(
         WARNING

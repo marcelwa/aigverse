@@ -95,31 +95,15 @@ jobs:
       - name: Set up MSVC development environment (Windows only)
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
-      # No compiler cache here, deliberately. Every wheel build compiles against
-      # nanobind headers inside uv's PEP 517 build-isolation environment, which
-      # is a directory named randomly per run:
+      # No compiler cache here, deliberately. Wheels compile against nanobind
+      # headers inside uv's build-isolation environment, a directory named
+      # randomly per run (`/tmp/build-env-r57r75a3`, then `/tmp/build-env-sjkp5_7v`),
+      # so no compilation ever repeats. Disabling isolation does not help either:
+      # cibuildwheel's own build venv is randomised the same way. Measured on all
+      # four platforms with a restored cache present: 145 requests, 0 hits.
       #
-      #   -I/tmp/build-env-r57r75a3/lib/python3.10/site-packages/nanobind/include
-      #   -I/tmp/build-env-sjkp5_7v/lib/python3.10/site-packages/nanobind/include
-      #
-      # That one token is the only difference between two runs of the same
-      # commit, out of 78 in the command, and it is enough that no compilation
-      # ever repeats. Disabling build isolation does not help: cibuildwheel's own
-      # per-build virtualenv is `/tmp/tmp.XXXXXXXX/venv`, randomised the same way.
-      # Base-directory rewriting cannot recover it either, since both caches
-      # rewrite relative to the compile working directory, which sits on a
-      # separate stable root.
-      #
-      # Measured on all four platforms with a restored cache present: windows 145
-      # requests / 0 hits, macOS 145 / 0, and Linux 145 / 0 even with sccache
-      # reachable inside the container and 0 non-cacheable calls. The test matrix
-      # is cacheable precisely because it builds with `--no-build-isolation-package`
-      # against stable `.nox/<session>` virtualenvs -- see aigverse-python-tests.yml,
-      # which hits 360 of 360.
-      #
-      # A cache action here was also actively harmful: it shared the key
-      # `${{ matrix.runs-on }}-aigverse` with the test matrix while producing
-      # disjoint objects, so each run overwrote a cache the other could not use.
+      # A cache action here was also harmful, sharing a key with the test matrix
+      # while producing disjoint objects, so each run evicted the other's.
 
       - if: runner.os == 'Linux'
         name: Setup mold

@@ -3,9 +3,6 @@
 name: 🐍 • CI
 
 on:
-  # Manual runs make the pipeline measurable: dispatched runs get a unique
-  # concurrency group, so repeats of the same ref do not cancel each other.
-  workflow_dispatch:
   merge_group:
   push:
     branches: ["main"]
@@ -102,26 +99,10 @@ jobs:
           save: true
           max-size: 10G
 
-      # Windows needs three things that the other platforms get for free.
-      #
-      # scikit-build-core defaults to the Visual Studio generator on Windows,
-      # and MSBuild ignores CMAKE_<LANG>_COMPILER_LAUNCHER, so the compiler
-      # cache was configured and then never invoked: the job used to end with
-      # "Cache size (GB): 0.0 / 10.0" after twenty minutes of compiling. Ninja
-      # honours the launcher, but only runs if MSVC is already on PATH, hence
-      # the developer environment.
-      #
-      # The cache itself is sccache rather than ccache. ccache's MSVC support
-      # does not work in practice -- measured against this same workload it
-      # reports half the invocations as uncacheable and never hits on the rest.
-      # `cmake/Cache.cmake` picks sccache automatically under MSVC.
-      #
-      # The cache has to persist between runs to be worth anything here. A
-      # job-local cache was measured first and returned nothing: the ten builds
-      # inside one job compile against ten different interpreters, each in its
-      # own nox virtualenv, so no two of them are the same compilation and
-      # sccache reported 360 requests and 0 hits. The identical ten recur on
-      # every run, though, which is exactly why ccache hits 360 of 360 on Linux.
+      # MSBuild ignores CMAKE_<LANG>_COMPILER_LAUNCHER, so under scikit-build-core's
+      # default Visual Studio generator the cache was configured and never invoked.
+      # Ninja honours it, but needs MSVC on PATH. sccache rather than ccache,
+      # whose MSVC support reports most invocations uncacheable and hits none.
       - if: runner.os == 'Windows'
         name: Set up the MSVC development environment
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
@@ -132,16 +113,13 @@ jobs:
         run: |
           echo "CMAKE_GENERATOR=Ninja" >> "$GITHUB_ENV"
           echo "SCCACHE_DIR=$GITHUB_WORKSPACE/.sccache" >> "$GITHUB_ENV"
-          # The working set is ~400 MB for the six builds a job does. 2G let a
-          # single entry reach 1.2 GB when the build layout changed and both
-          # generations of objects were kept, and GitHub evicts repo-wide at
-          # 10 GB, so an oversized entry here costs other workflows their cache.
+          # ~400 MB working set; a bigger ceiling just evicts other workflows'
+          # caches against the repo-wide 10 GB limit.
           echo "SCCACHE_CACHE_SIZE=600M" >> "$GITHUB_ENV"
 
-      # A fresh key every run with a prefix restore, so each run starts from the
-      # most recent cache and stores its own. GitHub's cache entries are
-      # immutable, so the usual save-under-the-same-key idiom would only ever
-      # write once and then go stale.
+      # Persisting between runs is the whole point: the builds within one job
+      # target different interpreters and share nothing, but recur every run.
+      # Fresh key per run with a prefix restore, since cache entries are immutable.
       - if: runner.os == 'Windows'
         name: Cache sccache objects
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -181,10 +159,8 @@ jobs:
       - name: 🐍 Test
         run: uvx nox -s tests --verbose -- --full -m "not network"
 
-      # A hit rate is a fact; a step duration is a guess about one. Print it on
-      # every run so a cache that quietly stops working is visible immediately
-      # rather than after someone times the matrix against itself. The other
-      # platforms get the same thing from ccache-action's post step.
+      # A hit rate is a fact; a step duration is a guess about one. The other
+      # platforms get this from ccache-action's post step.
       - if: always() && runner.os == 'Windows'
         name: sccache statistics
         run: |
