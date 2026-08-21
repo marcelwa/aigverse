@@ -25,6 +25,14 @@ releases may include breaking changes.
   one is caught by CI rather than by the next person to run it ([#410])
   ([**@marcelwa**])
 
+### Changed
+
+- ⚡️ Build the extension once per wheel tag in the `tests` and `minimums` nox
+  sessions instead of once per interpreter. `wheel.py-api = "cp312"` makes 3.12
+  and above one abi3 wheel, so a five-interpreter matrix needs three builds
+  rather than five, and the newer interpreters now run against the very artefact
+  PyPI ships ([#456]) ([**@marcelwa**])
+
 ### Fixed
 
 - 👷 Cache Windows compiles. `scikit-build-core` defaults to the Visual Studio
