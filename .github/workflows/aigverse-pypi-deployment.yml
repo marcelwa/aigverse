@@ -95,12 +95,38 @@ jobs:
       - name: Set up MSVC development environment (Windows only)
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
-      - name: Setup ccache
+      # The key carries `-wheels` because this workflow and the test matrix used
+      # to share `${{matrix.runs-on}}-aigverse` and evict each other. cibuildwheel
+      # builds against its own CPython installs, the test matrix against nox
+      # virtualenvs, so the two produce disjoint objects and neither could ever
+      # use what the other stored: the macOS wheel job restored a cache written
+      # by the test workflow and reported 145 calls, 0 hits.
+      - if: runner.os != 'Windows'
+        name: Setup ccache
         uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
         with:
-          key: "${{matrix.runs-on}}-aigverse"
+          key: "${{matrix.runs-on}}-aigverse-wheels"
           save: true
           max-size: 10G
+
+      # Same defect, and the same fix, as the test matrix: scikit-build-core
+      # picks the Visual Studio generator, MSBuild ignores the compiler launcher,
+      # and the job cached nothing at all. See `aigverse-python-tests.yml`.
+      - if: runner.os == 'Windows'
+        name: Build with Ninja so that the compiler cache is used
+        shell: bash
+        run: |
+          echo "CMAKE_GENERATOR=Ninja" >> "$GITHUB_ENV"
+          echo "SCCACHE_DIR=$GITHUB_WORKSPACE/.sccache" >> "$GITHUB_ENV"
+          echo "SCCACHE_CACHE_SIZE=2G" >> "$GITHUB_ENV"
+
+      - if: runner.os == 'Windows'
+        name: Cache sccache objects
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .sccache
+          key: sccache-${{ matrix.runs-on }}-aigverse-wheels-${{ github.run_id }}
+          restore-keys: sccache-${{ matrix.runs-on }}-aigverse-wheels-
 
       - if: runner.os == 'Linux'
         name: Setup mold
@@ -111,8 +137,18 @@ jobs:
         with:
           enable-cache: false
 
+      - if: runner.os == 'Windows'
+        name: Install sccache
+        run: uv tool install sccache
+
       - name: Build wheels
         uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e # v3.3
+
+      - if: always() && runner.os == 'Windows'
+        name: sccache statistics
+        run: |
+          sccache --show-stats
+          sccache --stop-server
 
       - name: Upload wheel as an artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

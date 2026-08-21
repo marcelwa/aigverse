@@ -148,6 +148,19 @@ test-sources = ["test/"]
 test-command = 'pytest test/ -m "(torch or not torch) and not network"'
 
 
+# Linux wheels build inside the manylinux container, which has no ccache and
+# cannot see the host's. The workspace is mounted at /project, so the cache
+# directory the ccache action manages on the host is reachable from inside --
+# it just has to be named by its in-container path. Without this the Linux wheel
+# job restored a 0.3 GB cache and then never invoked ccache once.
+#
+# The install is allowed to fail: ccache lives in EPEL, and if that is ever
+# unavailable `Cache.cmake` warns and the build proceeds uncached rather than
+# breaking a release.
+[tool.cibuildwheel.linux]
+before-all = "yum install -y epel-release ccache || true"
+environment = { CCACHE_DIR = "/project/.ccache" }
+
 [tool.cibuildwheel.macos]
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
