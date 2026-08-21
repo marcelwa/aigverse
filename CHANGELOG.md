@@ -27,6 +27,12 @@ releases may include breaking changes.
 
 ### Fixed
 
+- 👷 Cache Windows compiles. `scikit-build-core` defaults to the Visual Studio
+  generator, which ignores `CMAKE_<LANG>_COMPILER_LAUNCHER`, so the compiler
+  cache was configured on Windows and then never invoked -- every job rebuilt
+  every translation unit once per interpreter. Windows now builds with Ninja and
+  caches with `sccache`, whose MSVC support, unlike ccache's, actually hits
+  ([#456]) ([**@marcelwa**])
 - 🐛 Forward `-h` and `--help` to `sphinx-build` in the `docs` nox session, which
   its own argument parser used to intercept ([#453]) ([**@marcelwa**])
 - 🐛 Gate the `numpy` and `torch` floors by Python version. Both predate every
@@ -165,6 +171,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#456]: https://github.com/marcelwa/aigverse/pull/456
 [#453]: https://github.com/marcelwa/aigverse/pull/453
 [#448]: https://github.com/marcelwa/aigverse/pull/448
 [#447]: https://github.com/marcelwa/aigverse/pull/447
