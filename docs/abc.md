@@ -260,32 +260,79 @@ describe the network you hold and `stats()` to describe what ABC worked on, and 
 mix the two in one benchmark table.
 :::
 
-## Type preservation and limitations
+## Sequential networks
 
-The returned network has the same type as the input: an
-{py:class}`~aigverse.networks.Aig` yields an `Aig`, a
-{py:class}`~aigverse.networks.NamedAig` yields a `NamedAig` with its input and output
-names carried through ABC, and a {py:class}`~aigverse.networks.SequentialAig` yields a
-`SequentialAig` with its registers intact.
+{py:class}`~aigverse.networks.SequentialAig` crosses the bridge like any other network, and
+its registers cross with it. Here is an 8-bit accumulator — a ripple-carry adder whose sum
+feeds back into the state register:
 
-:::{warning}
-The bridge transfers AIGs and nothing else, so technology mapping and $k$-LUT mapping are
-out of reach. A command such as `map` or `if -K 6` runs happily inside ABC, but the mapped
-netlist it leaves behind cannot be written as AIGER, and the call raises rather than
-quietly handing back something unmapped. Mapping support needs cell and $k$-LUT network
-types in `aigverse` first.
-:::
+```{code-cell} ipython3
+from aigverse.networks import AigRegister, SequentialAig
+
+
+def accumulator(width: int = 8) -> SequentialAig:
+    """Builds an accumulator: `state <- state + data` on every cycle."""
+    ntk = SequentialAig()
+
+    data = [ntk.create_pi() for _ in range(width)]
+    state = [ntk.create_ro() for _ in range(width)]
+
+    carry = ntk.get_constant(False)
+    total = []
+    for a, b in zip(state, data, strict=True):
+        total.append(ntk.create_xor3(a, b, carry))
+        carry = ntk.create_maj(a, b, carry)
+
+    # Primary outputs go in before register inputs: both are combinational outputs
+    # of the same network, and `po_at` / `ri_at` slice that one list by position.
+    for bit in total:
+        ntk.create_po(bit)
+    for bit in total:
+        ntk.create_ri(bit)
+
+    for index in range(width):
+        register = AigRegister()
+        register.init = 0
+        ntk.set_register(index, register)
+
+    return ntk
+
+
+acc = accumulator()
+print(f"{acc.num_pis} PIs, {acc.num_pos} POs, {acc.num_registers} registers, {acc.num_gates} AND gates")
+```
+
+Every script accepts it, and the registers come out the other side untouched:
+
+```{code-cell} ipython3
+for script in ("resyn", "resyn2", "resyn2rs", "compress2rs", "dc2"):
+    result = getattr(abc, script)(acc)
+    print(
+        f"{script:12s} {acc.num_gates:>3} -> {result.num_gates:<3} AND gates, "
+        f"{result.num_registers} registers, back as a {type(result).__name__}"
+    )
+```
+
+Roughly a third of the logic goes, with all eight registers still in place — and both
+equivalence checkers agree it is the same circuit.
+{py:func}`~aigverse.algorithms.equivalence_checking` compares the register outputs as
+inputs, which is the right check for an optimization that is not allowed to move the
+register boundary:
+
+```{code-cell} ipython3
+best = abc.compress2rs(acc)
+
+print("equivalence_checking:", equivalence_checking(acc, best))
+print("gia.cec:             ", abc.gia.cec(acc, best))
+```
 
 :::{note}
-{py:class}`~aigverse.networks.SequentialAig` round-trips as well, with its registers
-intact, and — through the classic namespace — their reset values too. The registers travel
-as AIGER latches; ABC switches to the extended AIGER 1.9 encoding whenever one has a
-non-zero reset value, which is handled transparently. The `gia` namespace is stricter
-about reset values; see below.
+The registers travel as AIGER latches; ABC switches to the extended AIGER 1.9 encoding
+whenever one has a non-zero reset value, which is handled transparently.
 
-The type is checked before the base class, deliberately: it is registered as an `Aig`
-subclass on the C++ side, so reading ABC's result back as a combinational network would
-flatten the registers into extra primary input and output pairs.
+The type is checked before the base class, deliberately: `SequentialAig` is registered as
+an `Aig` subclass on the C++ side, so the result has to be read back with the sequential
+reader. Reading it as a combinational network would not preserve the registers.
 :::
 
 :::{warning}
@@ -303,6 +350,22 @@ cases:
 
 Give the register an explicit reset with `set_register`, or use the classic namespace,
 which transfers the same network unchanged.
+:::
+
+## Type preservation and limitations
+
+The returned network has the same type as the input: an
+{py:class}`~aigverse.networks.Aig` yields an `Aig`, a
+{py:class}`~aigverse.networks.NamedAig` yields a `NamedAig` with its input and output
+names carried through ABC, and a {py:class}`~aigverse.networks.SequentialAig` yields a
+`SequentialAig` with its registers intact.
+
+:::{warning}
+The bridge transfers AIGs and nothing else, so technology mapping and $k$-LUT mapping are
+out of reach. A command such as `map` or `if -K 6` runs happily inside ABC, but the mapped
+netlist it leaves behind cannot be written as AIGER, and the call raises rather than
+quietly handing back something unmapped. Mapping support needs cell and $k$-LUT network
+types in `aigverse` first.
 :::
 
 Each call starts an ABC process and transfers the network through temporary AIGER files,

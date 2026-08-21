@@ -351,8 +351,8 @@ def run_script(
     from ..io import read_aiger_into_aig, read_aiger_into_sequential_aig, write_aiger
 
     # SequentialAig must be tested before Aig: it is registered as a subclass on
-    # the C++ side, so reading the result back as a combinational network would
-    # flatten its registers into extra primary input and output pairs.
+    # the C++ side, so an `isinstance` check against Aig would accept it and pick
+    # the combinational reader, which does not preserve registers.
     sequential = isinstance(ntk, SequentialAig)
 
     with tempfile.TemporaryDirectory(prefix="aigverse-abc-") as tmpdir:
