@@ -28,11 +28,13 @@ releases may include breaking changes.
 ### Fixed
 
 - 🐛 Refuse an AIGER file with latches in `read_aiger_into_aig` and
-  `read_ascii_aiger_into_aig` instead of crashing. mockturtle's reader skipped the
-  latch outputs for a network type that cannot hold registers, then indexed past
-  the end of its own signal vector -- a segmentation fault on most designs and a
-  silently register-less network on the rest. The error names the sequential
-  reader to use instead ([#457]) ([**@marcelwa**])
+  `read_ascii_aiger_into_aig`, which used to segfault the interpreter.
+  mockturtle's reader skipped the latch outputs for a network type that cannot
+  hold registers, then indexed past the end of its own signal vector -- a
+  segmentation fault on most designs and a silently register-less network on the
+  rest. The error names the sequential reader to use instead, and mockturtle is
+  bumped to the revision that fixes the out-of-bounds read itself ([#457])
+  ([**@marcelwa**])
 - 🐛 Forward `-h` and `--help` to `sphinx-build` in the `docs` nox session, which
   its own argument parser used to intercept ([#453]) ([**@marcelwa**])
 - 🐛 Gate the `numpy` and `torch` floors by Python version. Both predate every
