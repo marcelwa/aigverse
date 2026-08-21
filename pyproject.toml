@@ -45,7 +45,18 @@ requires-python = ">=3.10"
 dynamic = ["version"]
 
 [project.optional-dependencies]
-adapters = ["networkx>=3.0.0", "numpy>=1.23.0"]
+adapters = [
+    "networkx>=3.0.0",
+    # 1.23.0 is the project's own floor; the marked ones raise it to the lowest
+    # numpy that still ships wheels for each newer interpreter. Below them
+    # `nox -s minimums` falls back to a source build of a numpy that predates the
+    # Python it is being built for, which fails.
+    "numpy>=1.23.0",
+    "numpy>=1.23.2; python_version >= '3.11'",
+    "numpy>=1.26.0; python_version >= '3.12'",
+    "numpy>=2.1.0; python_version >= '3.13'",
+    "numpy>=2.3.2; python_version >= '3.14'",
+]
 
 [project.urls]
 Source = "https://github.com/marcelwa/aigverse"
@@ -247,10 +258,26 @@ build = [
 ]
 adapters = [
     "networkx>=3.0.0",
+    # 1.23.0 is the project's own floor; the marked ones raise it to the lowest
+    # numpy that still ships wheels for each newer interpreter. Below them
+    # `nox -s minimums` falls back to a source build of a numpy that predates the
+    # Python it is being built for, which fails.
     "numpy>=1.23.0",
+    "numpy>=1.23.2; python_version >= '3.11'",
+    "numpy>=1.26.0; python_version >= '3.12'",
+    "numpy>=2.1.0; python_version >= '3.13'",
+    "numpy>=2.3.2; python_version >= '3.14'",
 ]
 torch = [
+    # Same story as `numpy` above: `--resolution=lowest-direct` installs these
+    # floors literally, and torch ships no wheel for an interpreter that postdates
+    # the release. Unlike numpy it then fails outright rather than attempting a
+    # source build, since torch publishes no sdist. A wheel on Linux alone is not
+    # enough either -- 2.5.0 was the first release to build for 3.13, but only for
+    # Linux, so the 3.13 floor is the 2.6.0 that also covers macOS and Windows.
     "torch>=2.2.0",
+    "torch>=2.6.0; python_version >= '3.13'",
+    "torch>=2.9.0; python_version >= '3.14'",
 ]
 docs = [
     { include-group = "adapters" },
