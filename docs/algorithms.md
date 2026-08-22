@@ -57,6 +57,93 @@ for node, tt in node_tts.items():
     print(f"  Node {node}: {tt.to_binary()}")
 ```
 
+### Sequential Simulation
+
+{py:func}`~aigverse.algorithms.simulate` evaluates the combinational logic exactly once and has no notion of a
+register. Handed a {py:class}`~aigverse.networks.SequentialAig` it never assigns the register outputs at all, so
+every value downstream of one is meaningless.
+
+{py:func}`~aigverse.algorithms.simulate_sequential` runs the network over a number of clock cycles instead. Every
+register starts at its reset value, the combinational logic is evaluated once per cycle, the primary outputs are
+recorded, and the register inputs are latched into the register outputs for the next cycle.
+
+A design with no primary inputs runs off its reset state alone. A 4-bit linear-feedback shift register seeded with
+`0b0001` walks through all fifteen of its non-zero states before repeating:
+
+```{code-cell} ipython3
+from aigverse.algorithms import simulate_sequential
+from aigverse.networks import AigRegister, SequentialAig
+
+lfsr = SequentialAig()
+
+state = [lfsr.create_ro() for _ in range(4)]
+feedback = lfsr.create_xor(state[3], state[2])
+
+# Primary outputs go in before register inputs: both are combinational outputs of
+# the same network, and `po_at` / `ri_at` slice that one list by position.
+lfsr.create_po(state[3])
+
+lfsr.create_ri(feedback)
+for bit in range(3):
+    lfsr.create_ri(state[bit])
+
+# Seed the register chain with 0b0001
+for bit in range(4):
+    register = AigRegister()
+    register.init = 1 if bit == 0 else 0
+    lfsr.set_register(bit, register)
+
+result = simulate_sequential(lfsr, 15)
+
+print("output: ", "".join(str(int(cycle[0])) for cycle in result.outputs))
+print("cycles: ", result.num_cycles)
+print("reset:  ", result.reset_state)
+print("final:  ", result.final_state)
+```
+
+A full period brings the registers back to their seed, so `final_state` matches `reset_state`.
+
+The result carries two traces, both indexed by clock cycle first: `outputs[cycle][index]` is the value primary
+output `index` took in that cycle, and `states[cycle][index]` the value register `index` held while that cycle was
+evaluated. The state trace is one entry longer than the output trace, because simulating _n_ cycles crosses _n + 1_
+state boundaries:
+
+```{code-cell} ipython3
+for cycle, registers in enumerate(result.states):
+    print(f"  boundary {cycle:2d}: {''.join(str(int(bit)) for bit in registers)}")
+```
+
+Designs with primary inputs are driven by a stimulus, one assignment per cycle. Cycles past the end of it repeat
+the last assignment, so a single assignment holds for the whole run:
+
+```{code-cell} ipython3
+# A three-stage shift register: what goes in comes out three cycles later
+shift = SequentialAig()
+
+data = shift.create_pi()
+stages = [shift.create_ro() for _ in range(3)]
+
+shift.create_po(stages[2])
+
+shift.create_ri(data)
+shift.create_ri(stages[0])
+shift.create_ri(stages[1])
+
+for stage in range(3):
+    register = AigRegister()
+    register.init = 0
+    shift.set_register(stage, register)
+
+# A single pulse on the input, then silence
+pulse = simulate_sequential(shift, 6, [[True], [False]])
+
+print("output:", "".join(str(int(cycle[0])) for cycle in pulse.outputs))
+```
+
+A register may declare no reset value at all, which is what a fresh
+{py:class}`~aigverse.networks.AigRegister` carries and what an AIGER latch with a nondeterministic reset reads back
+as. Simulation needs a concrete value, so `undefined_reset_value` says which one it should use.
+
 ## Optimization
 
 AIG optimization aims to reduce the number of AND gates and inverters in a circuit while maintaining its logical
