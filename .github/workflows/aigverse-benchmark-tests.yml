@@ -47,9 +47,6 @@ jobs:
       - name: Clone Repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # `vcs-versioning` needs the tags to derive a version; a shallow
-          # clone falls back to a placeholder.
-          fetch-depth: 0
           persist-credentials: false
 
       - name: Setup ccache

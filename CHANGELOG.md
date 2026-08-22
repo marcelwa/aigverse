@@ -12,9 +12,6 @@ releases may include breaking changes.
 
 ### Added
 
-- ✨ Build, test, and ship free-threaded wheels. Free-threaded interpreters have
-  no stable ABI before the `abi3t` of Python 3.15, so they fall back to a
-  linked, version-specific build ([#463]) ([**@marcelwa**])
 - 👷 Run `nox -s minimums` in CI across the full platform matrix, so the declared
   dependency floors are actually installed and tested instead of only claimed
   ([#453]) ([**@marcelwa**])
@@ -34,7 +31,9 @@ releases may include breaking changes.
   every supported Python from 3.10 up instead of three. Cold build time drops
   3.15x and the shipped payload 4.3x; the extensions themselves shrink 26% by no
   longer each carrying their own copy of the nanobind library, which is now the
-  separate `nanobind-backend` runtime dependency ([#463]) ([**@marcelwa**])
+  separate `nanobind-backend` runtime dependency. Free-threaded interpreters are
+  not supported until Python 3.15 brings them a stable ABI ([#463])
+  ([**@marcelwa**])
 - ⚡️ Build the extension once per wheel tag in the `tests` and `minimums` nox
   sessions instead of once per interpreter, so interpreters sharing a tag reuse
   one wheel rather than each getting a purpose-built one ([#456])

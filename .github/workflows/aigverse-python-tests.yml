@@ -52,9 +52,6 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # `vcs-versioning` needs the tags to derive a version; a shallow
-          # clone falls back to a placeholder.
-          fetch-depth: 0
           persist-credentials: false
 
       - name: Install the latest version of uv
@@ -63,10 +60,8 @@ jobs:
           enable-cache: true
           save-cache: ${{ github.ref == 'refs/heads/main' }}
 
-      # The hooks pre-commit.ci cannot run: `ty` needs the built project, and
-      # `uv-lock` needs network for the project's dynamic metadata.
-      - name: Run the hooks pre-commit.ci skips
-        run: uvx prek run -a ty uv-lock
+      - name: Run ty
+        run: uvx prek run -a ty
 
       - name: Check if stub files are up to date
         run: |
@@ -93,9 +88,6 @@ jobs:
       - name: Clone Repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # `vcs-versioning` needs the tags to derive a version; a shallow
-          # clone falls back to a placeholder.
-          fetch-depth: 0
           persist-credentials: false
 
       # Windows is on sccache instead, see below.

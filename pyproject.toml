@@ -42,9 +42,12 @@ classifiers = [
 
 requires-python = ">=3.10"
 
-# `dependencies` is dynamic: only split-mode wheels need the nanobind backend.
-# See tools/aigverse_dynamic_deps.py
-dynamic = ["version", "dependencies"]
+# Split-mode extensions resolve the compiled nanobind backend at import time.
+# Never pin or upper-bound it: two projects pinning different versions could not
+# be installed together.
+dependencies = ["nanobind-backend>=1.0"]
+
+dynamic = ["version"]
 
 [project.optional-dependencies]
 adapters = [
@@ -109,10 +112,6 @@ build-backend = "auto"
 provider = "vcs_versioning"
 
 
-[[tool.dynamic-metadata]]
-provider = { path = "tools", module = "aigverse_dynamic_deps" }
-
-
 [tool.vcs-versioning]
 write_to = "python/aigverse/_version.py"
 
@@ -143,9 +142,8 @@ testpaths = ["test/"]
 
 
 [tool.cibuildwheel]
-# cp310 builds the abi3 wheel for every GIL-enabled CPython. Free-threading has
-# no stable ABI before 3.15 (PEP 803), so it needs a wheel per version.
-build = ["cp310-*", "cp314t-*"]
+# cp310 builds the one abi3 wheel that serves every supported CPython
+build = "cp310-*"
 # nanobind-backend publishes no musllinux wheels
 skip = ["*-musllinux_*"]
 archs = "auto64"
@@ -177,7 +175,6 @@ cache-keys = [
     { git = { commit = true, tags = true } },
     { file = "src/**/*.cpp" },
     { file = "python/**/*.py" },
-    { file = "tools/*.py" }, # the provider decides the runtime dependencies
 ]
 
 [tool.uv.sources]
@@ -231,8 +228,7 @@ isort.required-imports = ["from __future__ import annotations"]
 # the loaders document the exceptions that propagate out of their helpers
 "python/aigverse/benchmarks/*.py" = ["DOC502"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]
-# the metadata provider is loaded by path, not imported as a package (INP001)
-"tools/*.py" = ["S603", "S607", "INP001"]
+"tools/*.py" = ["S603", "S607"]
 # the ABC bridge shells out to a user-configured executable by design, and its
 # public functions document the exceptions that propagate out of their helpers
 "python/aigverse/abc/*.py" = ["S603", "DOC502"]

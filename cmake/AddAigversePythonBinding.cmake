@@ -2,21 +2,16 @@ function(add_aigverse_python_binding target_name)
   cmake_parse_arguments(ARG "" "MODULE_NAME;INSTALL_DIR" "" ${ARGN})
   set(SOURCES ${ARG_UNPARSED_ARGUMENTS})
 
-  # Split mode resolves the nanobind library at import time from the
-  # `nanobind-backend` wheel, so one abi3 binary covers Python 3.10 up.
-  # Free-threading has no stable ABI before the `abi3t` of 3.15, so it links the
-  # library in and builds one wheel per version instead.
-  if(NB_FREE_THREADED AND Python_VERSION VERSION_LESS 3.15)
-    set(AIGVERSE_NB_ABI_OPTIONS FREE_THREADED)
-  else()
-    set(AIGVERSE_NB_ABI_OPTIONS BACKEND_MODULE nanobind_backend FREE_THREADED)
-  endif()
-
   nanobind_add_module(
     # Extension name
     ${target_name}
-    # Stable ABI strategy, plus free-threaded support
-    ${AIGVERSE_NB_ABI_OPTIONS}
+    # Split mode: the nanobind library is resolved at import time from the
+    # `nanobind-backend` wheel, so one abi3 binary covers Python 3.10 up.
+    # Requires free-threaded Python 3.15 or newer (`abi3t`, PEP 803).
+    BACKEND_MODULE
+    nanobind_backend
+    # Free-threaded support
+    FREE_THREADED
     # Link-time optimization
     LTO
     # Suppress compiler warnings in the nanobind project

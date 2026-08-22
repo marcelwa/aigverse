@@ -24,12 +24,7 @@ if TYPE_CHECKING:
 nox.needs_version = ">=2025.10.16"
 nox.options.default_venv_backend = "uv"
 
-PYTHON_GIL_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14"]
-# Free-threading is supported from 3.14 (PEP 779) and has no stable ABI before
-# 3.15, so each of these builds its own wheel. 3.13t is excluded: it is neither
-# shipped nor supported, and fails upstream on Windows.
-PYTHON_FREE_THREADED_VERSIONS = ["3.14t"]
-PYTHON_ALL_VERSIONS = [*PYTHON_GIL_VERSIONS, *PYTHON_FREE_THREADED_VERSIONS]
+PYTHON_ALL_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
 if os.environ.get("CI", None):
     nox.options.error_on_missing_interpreters = True
@@ -54,27 +49,6 @@ def preserve_lockfile() -> Generator[None]:
             shutil.move(str(temp_lockfile), str(lockfile))
 
 
-@contextlib.contextmanager
-def restore_lockfile() -> Generator[None]:
-    """Put `uv.lock` back the way it was after a session that rewrites it.
-
-    A free-threaded interpreter resolves the project without `nanobind-backend`,
-    so syncing one rewrites the lockfile. Unlike `preserve_lockfile`, the file
-    stays put while the session runs, so uv still resolves from it.
-    """
-    lockfile = Path("uv.lock")
-    if not lockfile.exists():
-        yield
-        return
-
-    original = lockfile.read_bytes()
-    try:
-        yield
-    finally:
-        if not lockfile.exists() or lockfile.read_bytes() != original:
-            lockfile.write_bytes(original)
-
-
 @nox.session(reuse_venv=True, default=True)
 def lint(session: nox.Session) -> None:
     """Run the linter."""
@@ -92,19 +66,16 @@ _BUILT_WHEELS: dict[tuple[str, str], Path] = {}
 def _wheel_tag(python: str) -> str:
     """Return the wheel tag a given interpreter builds.
 
-    Every GIL-enabled interpreter from 3.10 up builds one and the same abi3
-    wheel, so they share a tag and it only needs building once. Free-threaded
-    interpreters have no stable ABI before 3.15 and each build their own.
+    Every supported interpreter builds one and the same abi3 wheel, so they
+    share a tag and it only needs building once.
 
     Args:
-        python: The interpreter version, as nox spells it, e.g. "3.12" or "3.13t".
+        python: The interpreter version, as nox spells it, e.g. "3.12".
 
     Returns:
         The tag identifying the wheel that interpreter builds.
     """
-    if python.endswith("t"):
-        major, minor = (int(part) for part in python[:-1].split("."))
-        return f"cp{major}{minor}t"
+    del python
     return "cp310-abi3"
 
 
@@ -232,12 +203,7 @@ def _run_tests(
         # test matrix narrows it back with `--full -m "not network"`: those tests
         # download circuits, and a hiccup at GitHub must not redden the whole
         # matrix, so they keep their own workflow.
-        #
-        # torch is skipped on free-threaded interpreters: it has no wheel for
-        # every free-threaded platform and no sdist. Its tests use
-        # `pytest.importorskip` and skip cleanly without it.
-        if not session.python.endswith("t"):
-            only_group_args += ["--only-group", "torch"]
+        only_group_args += ["--only-group", "torch"]
         pytest_run_args = [*pytest_run_args, "-m", ""]
     session.run(
         "uv",
@@ -333,21 +299,12 @@ def _find_abc() -> str | None:
 @nox.session(reuse_venv=True, python=PYTHON_ALL_VERSIONS, default=True)
 def tests(session: nox.Session) -> None:
     """Run the test suite."""
-    if session.python.endswith("t"):
-        with restore_lockfile():
-            _run_tests(session, group="tests")
-    else:
-        _run_tests(session, group="tests")
+    _run_tests(session, group="tests")
 
 
-@nox.session(reuse_venv=True, venv_backend="uv", python=PYTHON_GIL_VERSIONS, default=True)
+@nox.session(reuse_venv=True, venv_backend="uv", python=PYTHON_ALL_VERSIONS, default=True)
 def minimums(session: nox.Session) -> None:
-    """Test the minimum versions of dependencies.
-
-    GIL-enabled interpreters only: the floors are PEP 508 markers, which cannot
-    tell a free-threaded interpreter from a GIL one, and the `torch` floor has
-    no free-threaded wheel.
-    """
+    """Test the minimum versions of dependencies."""
     with preserve_lockfile():
         _run_tests(
             session,
