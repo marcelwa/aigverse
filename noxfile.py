@@ -66,8 +66,8 @@ _BUILT_WHEELS: dict[tuple[str, str], Path] = {}
 def _wheel_tag(python: str) -> str:
     """Return the wheel tag a given interpreter builds.
 
-    `wheel.py-api = "cp312"` makes 3.12 and above one and the same abi3 wheel, so
-    they share a tag and only need building once.
+    Every supported interpreter builds one and the same abi3 wheel, so they
+    share a tag and it only needs building once.
 
     Args:
         python: The interpreter version, as nox spells it, e.g. "3.12".
@@ -75,10 +75,8 @@ def _wheel_tag(python: str) -> str:
     Returns:
         The tag identifying the wheel that interpreter builds.
     """
-    major, minor = (int(part) for part in python.split("."))
-    if (major, minor) >= (3, 12):
-        return "cp312-abi3"
-    return f"cp{major}{minor}"
+    del python
+    return "cp310-abi3"
 
 
 def _venv_python(session: nox.Session) -> Path:

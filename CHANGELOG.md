@@ -27,11 +27,17 @@ releases may include breaking changes.
 
 ### Changed
 
+- ⚡️ Adopt nanobind 3.0's split mode, so one `abi3` wheel per platform covers
+  every supported Python from 3.10 up instead of three. Cold build time drops
+  3.15x and the shipped payload 4.3x; the extensions themselves shrink 26% by no
+  longer each carrying their own copy of the nanobind library, which is now the
+  separate `nanobind-backend` runtime dependency. Free-threaded interpreters are
+  not supported until Python 3.15 brings them a stable ABI ([#463])
+  ([**@marcelwa**])
 - ⚡️ Build the extension once per wheel tag in the `tests` and `minimums` nox
-  sessions instead of once per interpreter. `wheel.py-api = "cp312"` makes 3.12
-  and above one abi3 wheel, so a five-interpreter matrix needs three builds
-  rather than five, and the newer interpreters now run against that one abi3
-  wheel rather than a purpose-built one each ([#456]) ([**@marcelwa**])
+  sessions instead of once per interpreter, so interpreters sharing a tag reuse
+  one wheel rather than each getting a purpose-built one ([#456])
+  ([**@marcelwa**])
 
 ### Fixed
 
@@ -179,6 +185,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#463]: https://github.com/marcelwa/aigverse/pull/463
 [#456]: https://github.com/marcelwa/aigverse/pull/456
 [#453]: https://github.com/marcelwa/aigverse/pull/453
 [#448]: https://github.com/marcelwa/aigverse/pull/448
