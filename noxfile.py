@@ -211,7 +211,14 @@ def _run_tests(
         # test matrix narrows it back with `--full -m "not network"`: those tests
         # download circuits, and a hiccup at GitHub must not redden the whole
         # matrix, so they keep their own workflow.
-        only_group_args += ["--only-group", "torch"]
+        #
+        # torch is the exception: it publishes no wheel for every free-threaded
+        # platform -- there is none for 3.13t on aarch64 -- and ships no sdist to
+        # fall back on, so requesting the group there fails the whole session.
+        # The torch-marked tests guard themselves with `pytest.importorskip`, so
+        # they skip cleanly when it is absent.
+        if not session.python.endswith("t"):
+            only_group_args += ["--only-group", "torch"]
         pytest_run_args = [*pytest_run_args, "-m", ""]
     session.run(
         "uv",
