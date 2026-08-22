@@ -26,6 +26,15 @@ multiplier, ``&syn4`` trades 84 gates at 16 levels for 168 gates at 13 levels --
 depth the classic scripts cannot reach on that design. On a 16-bit carry-lookahead
 adder the same command buys nothing: it grows the network and leaves the depth
 where it was, while ``resyn2`` beats it on both counts. Neither family dominates.
+
+The ``&`` space is also stricter than the classic one about register reset
+values. ``&read`` accepts only a reset of 0 literally: it converts a 1-valued
+flip-flop by complementing it, which is an equivalent network that comes back
+with a reset of 0, and it models an *undefined* reset with an extra primary
+input, an extra register, and three AND nodes -- a network with a different
+interface than it went in with. The first is carried, the second is refused with
+a ``ValueError`` by every function here. The classic store keeps either reset
+value as it is.
 """
 
 from __future__ import annotations
@@ -37,7 +46,7 @@ from typing import TYPE_CHECKING
 
 from ._errors import AbcExecutionError, AbcTimeoutError
 from ._options import check_option
-from ._runner import AigT, budgeted_timeout, check_supported, resolve_binary, run_commands
+from ._runner import AigT, budgeted_timeout, check_gia_supported, check_supported, resolve_binary, run_commands
 from ._runner import run_script as _base_run_script
 from ._stats import AbcStats, collect_stats
 
@@ -113,7 +122,7 @@ def _run(
     """Runs a single ``&``-space command through the GIA transfer path.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         command: The assembled ABC command.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
@@ -143,7 +152,7 @@ def balance(
     where the classic one only re-associates AND trees.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         delay_only: If ``True``, balance for delay without regard to area.
         and_only: If ``True``, use only AND nodes instead of AND/XOR/MUX.
         strict_area: If ``True``, control area strictly while balancing for
@@ -189,7 +198,7 @@ def resub(
     The ``&``-space counterpart of :func:`~aigverse.abc.resub`.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         max_inserts: Limit on the number of nodes added (ABC's ``-N``, at least
             0), or ``None`` for ABC's default.
         max_support: Limit on the support size (ABC's ``-S``, at least 1), or
@@ -234,7 +243,7 @@ def dc2(
     which has a direct ``&`` counterpart.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         update_levels: If ``True`` (ABC's default), track levels while rewriting.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
@@ -271,7 +280,7 @@ def syn2(
         not a failure; compare the result before keeping it.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         delay_relaxation: Delay relaxation ratio (ABC's ``-R``, at least 0), or
             ``None`` for ABC's default of 20. Higher values allow more delay in
             exchange for area.
@@ -323,7 +332,7 @@ def syn3(
         designs where there is no depth to recover.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
         binary: Overrides the resolved ABC executable for this call only.
@@ -351,7 +360,7 @@ def syn4(
         the three. Expect the AND count to grow, sometimes considerably.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
         binary: Overrides the resolved ABC executable for this call only.
@@ -378,7 +387,7 @@ def fraig(
     two structural scripts that each introduced their own duplicates.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         conflict_limit: Maximum SAT conflicts per node (ABC's ``-C``, at least 0),
             or ``None`` for ABC's default. Lower values bound the runtime on hard
             instances at the cost of missing some merges. It is the only one of
@@ -431,7 +440,7 @@ def deepsyn(
     an error, so the result could never come back across the bridge.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         timeout: Seconds ABC may spend searching (ABC's ``-T``), or ``None`` for
             no limit. Strongly recommended.
         iterations: Number of search iterations (ABC's ``-I``, at least 1), or
@@ -503,7 +512,7 @@ def transduction(
     Contributed to ABC by Yukio Miyasaka.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         transduction_type: Which variant to run (ABC's ``-T``, 0 to 8), or
             ``None`` for ABC's default of 1 (``Resub``). Types 6 to 8 are the
             repeat scripts and are considerably more expensive.
@@ -591,7 +600,7 @@ def transtoch(
     Contributed to ABC by Yukio Miyasaka.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         restarts: Number of restarts (ABC's ``-N``), or ``None`` for ABC's
             default. Each restart costs a full transduction run.
         hops: Perturbation steps between restarts (ABC's ``-M``), or ``None`` for
@@ -690,13 +699,16 @@ def cec(
         The outcome of the check.
 
     Raises:
-        TypeError: If either argument is a ``SequentialAig`` or not an ``Aig``.
-        ValueError: If an option is outside the range ABC accepts.
+        TypeError: If either argument is not an ``Aig``.
+        ValueError: If an option is outside the range ABC accepts, or if either
+            argument has a register whose reset value is undefined.
         AbcNotFoundError: If no ABC executable could be located.
         AbcExecutionError: If ABC failed outright.
     """
     check_supported(ntk)
     check_supported(other)
+    check_gia_supported(ntk)
+    check_gia_supported(other)
 
     command = "&cec"
     if conflict_limit is not None:
@@ -756,7 +768,7 @@ def stats(
         was handed over. See :func:`~aigverse.abc.stats` for the details.
 
     Args:
-        ntk: The combinational network to measure.
+        ntk: The network to measure.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         binary: Overrides the resolved ABC executable for this call only.
 
@@ -764,7 +776,8 @@ def stats(
         What ABC reports about the network.
 
     Raises:
-        TypeError: If ``ntk`` is a ``SequentialAig`` or not an ``Aig`` at all.
+        TypeError: If ``ntk`` is not an ``Aig``.
+        ValueError: If ``ntk`` has a register whose reset value is undefined.
         AbcNotFoundError: If no ABC executable could be located.
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or printed nothing usable.
@@ -790,7 +803,7 @@ def run_script(
     on it directly. Equivalent to calling that function with ``gia=True``.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         commands: A single ``;``-separated ABC command string, or a sequence of
             individual commands.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
@@ -803,8 +816,9 @@ def run_script(
         The optimized network, of the same type as ``ntk``.
 
     Raises:
-        TypeError: If ``ntk`` is a ``SequentialAig`` or not an ``Aig`` at all.
-        ValueError: If no command was given.
+        TypeError: If ``ntk`` is not an ``Aig``.
+        ValueError: If no command was given, or if ``ntk`` has a register whose
+            reset value is undefined.
         AbcNotFoundError: If no ABC executable could be located.
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or produced no usable output.

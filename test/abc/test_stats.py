@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from aigverse import abc
-from aigverse.abc import AbcExecutionError, AbcStats, gia, stats
+from aigverse.abc import AbcExecutionError, AbcNotFoundError, AbcStats, gia, stats
 from aigverse.abc._stats import _parse
 from aigverse.algorithms import equivalence_checking
 from aigverse.generators import carry_lookahead_adder, ripple_carry_multiplier
@@ -21,8 +21,28 @@ if TYPE_CHECKING:
     from aigverse.networks import Aig
 
 
-def test_sequential_is_rejected_before_discovery(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The stats helpers share the runner's type guard, ABC or no ABC.
+def test_sequential_reaches_discovery_rather_than_the_type_guard(
+    monkeypatch: pytest.MonkeyPatch, sequential_aig: Callable[..., SequentialAig]
+) -> None:
+    """A SequentialAig must get past the type guard the stats helpers share.
+
+    It is registered as an `Aig` subclass on the C++ side, so it has to be
+    dispatched explicitly rather than merely accepted; failing on discovery with
+    no ABC present is what shows it was not refused on type.
+
+    Args:
+        monkeypatch: Used to hide any installed ABC.
+        sequential_aig: Builds the network.
+    """
+    monkeypatch.delenv("AIGVERSE_ABC", raising=False)
+    monkeypatch.setenv("PATH", "")
+
+    with pytest.raises(AbcNotFoundError):
+        stats(sequential_aig(0))
+
+
+def test_a_non_network_is_still_rejected_on_type(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Widening the guard to sequential networks must not widen it to anything.
 
     Args:
         monkeypatch: Used to hide any installed ABC.
@@ -30,15 +50,8 @@ def test_sequential_is_rejected_before_discovery(monkeypatch: pytest.MonkeyPatch
     monkeypatch.delenv("AIGVERSE_ABC", raising=False)
     monkeypatch.setenv("PATH", "")
 
-    ntk = SequentialAig()
-    a = ntk.create_pi()
-    ro = ntk.create_ro()
-    g = ntk.create_and(a, ro)
-    ntk.create_po(g)
-    ntk.create_ri(g)
-
-    with pytest.raises(TypeError, match="SequentialAig is not supported"):
-        stats(ntk)
+    with pytest.raises(TypeError, match="expected an Aig"):
+        stats("not a network")  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="the fake ABC shims rely on POSIX executable bits")
@@ -135,9 +148,8 @@ def test_stats_track_an_optimization() -> None:
 def test_registers_are_parsed_from_either_spelling(line: str, expected: int | None) -> None:
     """`print_stats` prints `lat`, `&ps` prints `ff`, and both mean registers.
 
-    Parsed directly rather than through ABC, because the bridge cannot yet hand a
-    sequential network over -- the `ff` spelling only appears once it can, so
-    without this the field would silently stay `None` for every such network.
+    Parsed directly rather than through ABC so that both spellings are pinned
+    from one place, including the combinational case where `&ps` omits the field.
 
     Args:
         line: A statistics line as ABC prints it.
@@ -165,3 +177,127 @@ def test_abc_counts_can_differ_from_aigverse_after_strashing() -> None:
     aig = carry_lookahead_adder(16)
 
     assert stats(aig).num_gates < aig.num_gates
+
+
+@pytest.mark.usefixtures("abc_available")
+@pytest.mark.parametrize("init", [0, 1], ids=["reset-zero", "reset-one"])
+def test_registers_are_reported_for_a_sequential_network(
+    init: int, sequential_aig: Callable[..., SequentialAig]
+) -> None:
+    """Both stores must count the registers of a real sequential network.
+
+    The end-to-end counterpart of the parser test above: `&ps` calls them `ff`,
+    so this is the case that would silently report `None` if only `lat` were
+    matched.
+
+    Args:
+        init: The register's reset value.
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig(init)
+
+    assert stats(ntk).num_registers == ntk.num_registers
+    assert gia.stats(ntk).num_registers == ntk.num_registers
+
+
+@pytest.mark.usefixtures("abc_available")
+def test_an_undefined_reset_survives_the_classic_store(sequential_aig: Callable[..., SequentialAig]) -> None:
+    """A register with no defined reset must not change shape on the way in.
+
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig()
+    measured = stats(ntk)
+
+    assert measured.num_pis == ntk.num_pis
+    assert measured.num_registers == ntk.num_registers
+    assert measured.num_gates == ntk.num_gates
+
+
+def test_an_undefined_reset_is_refused_by_the_gia_store(
+    monkeypatch: pytest.MonkeyPatch, sequential_aig: Callable[..., SequentialAig]
+) -> None:
+    """The `&` space cannot make the same promise, so it refuses the network.
+
+    `&read` rewrites a don't-care-initialized flip-flop on the way into the GIA
+    store -- it reports "Converted 0 1-valued FFs and 1 DC-valued FFs" and adds a
+    primary input, a register and three AND nodes to model the undefined value.
+    Rather than hand back a network with a different interface than it was given,
+    the bridge refuses it, and does so before ABC is started -- hence the emptied
+    PATH, which would otherwise turn this into a discovery failure.
+
+    Args:
+        monkeypatch: Used to hide any installed ABC.
+        sequential_aig: Builds the network.
+    """
+    monkeypatch.delenv("AIGVERSE_ABC", raising=False)
+    monkeypatch.setenv("PATH", "")
+
+    ntk = sequential_aig()
+
+    with pytest.raises(ValueError, match="register 0 has no defined reset value"):
+        gia.stats(ntk)
+
+
+def test_the_gia_refusal_covers_every_entry_point(
+    monkeypatch: pytest.MonkeyPatch, sequential_aig: Callable[..., SequentialAig]
+) -> None:
+    """Optimization, statistics, and equivalence checking must all refuse alike.
+
+    They reach ABC through three separate paths, so one guard in the runner would
+    leave the other two open.
+
+    Args:
+        monkeypatch: Used to hide any installed ABC.
+        sequential_aig: Builds the network.
+    """
+    monkeypatch.delenv("AIGVERSE_ABC", raising=False)
+    monkeypatch.setenv("PATH", "")
+
+    ntk = sequential_aig()
+
+    with pytest.raises(ValueError, match="no defined reset value"):
+        gia.dc2(ntk)
+    with pytest.raises(ValueError, match="no defined reset value"):
+        gia.run_script(ntk, "&syn2")
+    with pytest.raises(ValueError, match="no defined reset value"):
+        gia.cec(ntk, sequential_aig(0))
+    with pytest.raises(ValueError, match="no defined reset value"):
+        gia.cec(sequential_aig(0), ntk)
+
+
+@pytest.mark.parametrize("init", [0, 1], ids=["reset-zero", "reset-one"])
+def test_a_defined_reset_is_not_refused(
+    init: int, monkeypatch: pytest.MonkeyPatch, sequential_aig: Callable[..., SequentialAig]
+) -> None:
+    """The guard must catch the undefined reset and nothing else.
+
+    Args:
+        init: The register's reset value.
+        monkeypatch: Used to hide any installed ABC.
+        sequential_aig: Builds the network.
+    """
+    monkeypatch.delenv("AIGVERSE_ABC", raising=False)
+    monkeypatch.setenv("PATH", "")
+
+    # AbcNotFoundError rather than ValueError: the network got past the guard and
+    # on to binary discovery, which is as far as it can go without ABC.
+    with pytest.raises(AbcNotFoundError):
+        gia.stats(sequential_aig(init))
+
+
+def test_the_classic_store_accepts_what_the_gia_refuses(
+    monkeypatch: pytest.MonkeyPatch, sequential_aig: Callable[..., SequentialAig]
+) -> None:
+    """The refusal is a property of the `&` space, not of the bridge.
+
+    Args:
+        monkeypatch: Used to hide any installed ABC.
+        sequential_aig: Builds the network.
+    """
+    monkeypatch.delenv("AIGVERSE_ABC", raising=False)
+    monkeypatch.setenv("PATH", "")
+
+    with pytest.raises(AbcNotFoundError):
+        stats(sequential_aig())

@@ -10,7 +10,7 @@ import pytest
 from aigverse import abc
 from aigverse.algorithms import equivalence_checking
 from aigverse.generators import ripple_carry_multiplier
-from aigverse.networks import Aig, DepthAig, NamedAig
+from aigverse.networks import Aig, DepthAig, NamedAig, SequentialAig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -397,3 +397,100 @@ def test_a_non_executable_binary_override_is_reported_as_not_found(and_aig: AigT
 
     with pytest.raises(abc.AbcNotFoundError, match="not executable"):
         abc.resyn2(and_aig, binary=not_executable)
+
+
+def test_sequential_aig_keeps_registers_and_type(sequential_aig: Callable[..., SequentialAig]) -> None:
+    """Registers, their reset values, and the network type survive ABC.
+
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig(0, 1)
+
+    result = abc.resyn2(ntk)
+
+    assert type(result) is SequentialAig
+    assert result.num_pis == ntk.num_pis
+    assert result.num_pos == ntk.num_pos
+    assert result.num_registers == ntk.num_registers
+    assert result.register_at(0).init == 0
+    assert result.register_at(1).init == 1
+
+
+def test_sequential_aig_with_undefined_reset(sequential_aig: Callable[..., SequentialAig]) -> None:
+    """A register left at its default reset must not come back as zero-initialized.
+
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig()
+
+    assert ntk.register_at(0).init not in {0, 1}
+
+    result = abc.resyn2(ntk)
+
+    assert result.num_registers == 1
+    # mockturtle's `register_init` spells "no reset value" two ways: `unknown`
+    # (3), which `register_t` defaults to, and `dont_care` (2), which the AIGER
+    # reader reports for a latch whose reset is omitted. Compare on the property
+    # both share, as `register_init::is_defined` does, not on either value.
+    assert result.register_at(0).init not in {0, 1}
+
+
+@pytest.mark.parametrize("init", [0, 1], ids=["reset-zero", "reset-one"])
+def test_a_defined_reset_keeps_the_interface_in_the_gia_store(
+    init: int, sequential_aig: Callable[..., SequentialAig]
+) -> None:
+    """A defined reset keeps the network's shape in the `&` space.
+
+    This is the guarantee the guard protects: `&read` leaves the interface alone
+    for a reset of 0 or 1, and only an undefined one costs an input and a
+    register.
+
+    Args:
+        init: The register's reset value.
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig(init)
+
+    result = abc.gia.dc2(ntk)
+
+    assert type(result) is SequentialAig
+    assert result.num_pis == ntk.num_pis
+    assert result.num_pos == ntk.num_pos
+    assert result.num_registers == ntk.num_registers
+
+
+def test_the_gia_store_normalizes_a_one_valued_reset(sequential_aig: Callable[..., SequentialAig]) -> None:
+    """A reset of 1 comes back as 0, which is a re-encoding and not a loss.
+
+    `&read` reports "Converted 1 1-valued FFs" and complements the flip-flop, so
+    the network still computes the same sequence with a reset of 0. Unlike the
+    don't-care case it costs no input and no register, so it is carried rather
+    than refused -- but the reset value itself does not survive the `&` space, and
+    the classic namespace is the one that keeps it.
+
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig(1)
+
+    assert abc.gia.dc2(ntk).register_at(0).init == 0
+    assert abc.dc2(ntk).register_at(0).init == 1
+
+
+def test_the_gia_store_refuses_an_undefined_reset(sequential_aig: Callable[..., SequentialAig]) -> None:
+    """The interface-changing case is refused rather than silently reshaped.
+
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig()
+
+    assert ntk.register_at(0).init not in {0, 1}
+
+    with pytest.raises(ValueError, match="no defined reset value"):
+        abc.gia.dc2(ntk)
+
+    # The classic store carries the very same network across unchanged.
+    assert abc.dc2(ntk).num_registers == ntk.num_registers

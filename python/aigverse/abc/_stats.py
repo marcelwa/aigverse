@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ._errors import AbcExecutionError
-from ._runner import check_supported, resolve_binary, run_commands
+from ._runner import check_gia_supported, check_supported, resolve_binary, run_commands
 
 if TYPE_CHECKING:
     import os
@@ -127,8 +127,14 @@ def collect_stats(
 
     Returns:
         The parsed statistics.
+
+    Raises:
+        ValueError: If the network is loaded into the GIA store and has a register
+            whose reset value is undefined.
     """
     check_supported(ntk)
+    if read_command.startswith("&"):
+        check_gia_supported(ntk)
     executable = resolve_binary(binary)
 
     from ..io import write_aiger
@@ -160,7 +166,7 @@ def stats(
         describe the network you hold, and this to describe what ABC worked on.
 
     Args:
-        ntk: The combinational network to measure.
+        ntk: The network to measure.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         binary: Overrides the resolved ABC executable for this call only.
 
@@ -168,7 +174,7 @@ def stats(
         What ABC reports about the network.
 
     Raises:
-        TypeError: If ``ntk`` is a ``SequentialAig`` or not an ``Aig`` at all.
+        TypeError: If ``ntk`` is not an ``Aig``.
         AbcNotFoundError: If no ABC executable could be located.
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or printed nothing usable.

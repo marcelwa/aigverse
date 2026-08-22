@@ -24,6 +24,9 @@ releases may include breaking changes.
 - 👷 Smoke-run the examples in the ABC workflow, so a library change that breaks
   one is caught by CI rather than by the next person to run it ([#410])
   ([**@marcelwa**])
+- ✨ Support `SequentialAig` in the `aigverse.abc` bridge, carrying registers
+  through ABC along with their reset values in the classic namespace ([#406])
+  ([**@marcelwa**])
 
 ### Changed
 
@@ -200,6 +203,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 [#410]: https://github.com/marcelwa/aigverse/pull/410
 [#409]: https://github.com/marcelwa/aigverse/pull/409
 [#407]: https://github.com/marcelwa/aigverse/pull/407
+[#406]: https://github.com/marcelwa/aigverse/pull/406
 [#405]: https://github.com/marcelwa/aigverse/pull/405
 [#404]: https://github.com/marcelwa/aigverse/pull/404
 [#395]: https://github.com/marcelwa/aigverse/pull/395

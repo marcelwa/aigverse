@@ -43,7 +43,7 @@ def balance(
     Restructures the AND trees of the network to reduce its depth.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         minimize_levels: If ``True`` (ABC's default), balance for minimal depth.
         exor: If ``True``, balance multi-input EXOR structures as well.
         duplicate: If ``True``, allow logic to be duplicated.
@@ -82,7 +82,7 @@ def rewrite(
     Replaces 4-input subgraphs with smaller pre-computed equivalents.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         preserve_levels: If ``True`` (ABC's default), never increase the depth.
         zero_cost: If ``True``, also apply replacements that do not reduce the
             size, which perturbs the structure and can unlock later gains.
@@ -118,7 +118,7 @@ def refactor(
     table, which reaches larger cuts than :func:`rewrite` does.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         max_support: Maximum support of a collapsed node (ABC's ``-N``, 1 to 15),
             or ``None`` for ABC's default of 10. Larger values are slower. ABC
             documents no range but rejects anything above 15.
@@ -171,7 +171,7 @@ def resub(
     logic that rewriting and refactoring cannot reach because it is not local.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         max_cut_size: Maximum cut size (ABC's ``-K``, 4 to 16), or ``None`` for
             ABC's default of 8. The canonical scripts sweep this from 6 to 12.
         max_inserts: Maximum number of nodes to add (ABC's ``-N``, 0 to 3), or
@@ -239,7 +239,7 @@ def orchestrate(
     standalone :func:`rewrite` and :func:`refactor` commands.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         max_cut_size: Resubstitution cut size (ABC's ``-K``, 4 to 16), or ``None``
             for ABC's default of 8.
         max_inserts: Nodes resubstitution may add (ABC's ``-N``, 0 to 3), or

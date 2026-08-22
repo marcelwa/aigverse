@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from aigverse.abc import is_available
-from aigverse.networks import Aig
+from aigverse.networks import Aig, AigRegister, SequentialAig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -56,6 +56,54 @@ def and_aig() -> Aig:
     x1 = aig.create_pi()
     aig.create_po(aig.create_and(x0, x1))
     return aig
+
+
+@pytest.fixture
+def sequential_aig() -> Callable[..., SequentialAig]:
+    """Builds a sequential network with one register per given reset value.
+
+    Every register drives, and is driven through, its own AND gate, so the
+    network has as many registers as reset values and always one primary output.
+
+    Returns:
+        A factory taking the reset values, one per register, where ``None`` leaves
+        a register at its default -- which is undefined, not zero. Called without
+        arguments it yields a single register with that default.
+    """
+
+    def _make(*inits: int | None) -> SequentialAig:
+        """Builds the network.
+
+        Args:
+            inits: One reset value per register, or ``None`` for the default.
+
+        Returns:
+            The network.
+        """
+        values = inits or (None,)
+
+        ntk = SequentialAig()
+        pis = [ntk.create_pi() for _ in values]
+        ros = [ntk.create_ro() for _ in values]
+
+        gates = list(map(ntk.create_and, pis, ros))
+        for gate in gates:
+            ntk.create_ri(gate)
+
+        output = gates[0]
+        for gate in gates[1:]:
+            output = ntk.create_and(output, gate)
+        ntk.create_po(output)
+
+        for index, init in enumerate(values):
+            if init is not None:
+                register = AigRegister()
+                register.init = init
+                ntk.set_register(index, register)
+
+        return ntk
+
+    return _make
 
 
 @pytest.fixture
