@@ -49,8 +49,7 @@ releases may include breaking changes.
   mockturtle's reader skipped the latch outputs for a network type that cannot
   hold registers, then indexed past the end of its own signal vector -- a
   segmentation fault on most designs and a silently register-less network on the
-  rest. The error names the sequential reader to use instead, and mockturtle is
-  bumped to the revision that fixes the out-of-bounds read itself ([#457])
+  rest. The error names the sequential reader to use instead ([#457])
   ([**@marcelwa**])
 - 👷 Cache Windows compiles. `scikit-build-core` defaults to the Visual Studio
   generator, which ignores `CMAKE_<LANG>_COMPILER_LAUNCHER`, so the compiler
