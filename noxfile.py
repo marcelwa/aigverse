@@ -27,7 +27,14 @@ nox.options.default_venv_backend = "uv"
 PYTHON_GIL_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14"]
 # Free-threaded interpreters have no stable ABI before 3.15, so unlike the
 # GIL-enabled ones they each build their own wheel.
-PYTHON_FREE_THREADED_VERSIONS = ["3.13t", "3.14t"]
+#
+# 3.14 is the floor because that is where free-threading became officially
+# supported (PEP 779) and the first version cibuildwheel still offers, so it is
+# also the only free-threaded wheel shipped. 3.13t was the experimental build
+# and is left out: on Windows it fails in ways that are not the project's --
+# CPython refusing to load an extension twice in a process, and a numpy cast
+# overflow -- and testing what is neither shipped nor supported buys nothing.
+PYTHON_FREE_THREADED_VERSIONS = ["3.14t"]
 PYTHON_ALL_VERSIONS = [*PYTHON_GIL_VERSIONS, *PYTHON_FREE_THREADED_VERSIONS]
 
 if os.environ.get("CI", None):
@@ -51,6 +58,32 @@ def preserve_lockfile() -> Generator[None]:
             if lockfile.exists():
                 lockfile.unlink()
             shutil.move(str(temp_lockfile), str(lockfile))
+
+
+@contextlib.contextmanager
+def restore_lockfile() -> Generator[None]:
+    """Put `uv.lock` back the way it was after a session that rewrites it.
+
+    A free-threaded interpreter resolves the project without `nanobind-backend`
+    (see `tools/aigverse_dynamic_deps.py`), so syncing one rewrites the
+    lockfile. Left in place that modifies a tracked file, which both surprises
+    whoever ran the session and destabilises the version `vcs-versioning`
+    derives, since a dirty tree earns a `.dYYYYMMDD` suffix.
+
+    Unlike `preserve_lockfile`, the lockfile stays put while the session runs,
+    so uv resolves from it rather than from scratch.
+    """
+    lockfile = Path("uv.lock")
+    if not lockfile.exists():
+        yield
+        return
+
+    original = lockfile.read_bytes()
+    try:
+        yield
+    finally:
+        if not lockfile.exists() or lockfile.read_bytes() != original:
+            lockfile.write_bytes(original)
 
 
 @nox.session(reuse_venv=True, default=True)
@@ -314,7 +347,11 @@ def _find_abc() -> str | None:
 @nox.session(reuse_venv=True, python=PYTHON_ALL_VERSIONS, default=True)
 def tests(session: nox.Session) -> None:
     """Run the test suite."""
-    _run_tests(session, group="tests")
+    if session.python.endswith("t"):
+        with restore_lockfile():
+            _run_tests(session, group="tests")
+    else:
+        _run_tests(session, group="tests")
 
 
 @nox.session(reuse_venv=True, venv_backend="uv", python=PYTHON_GIL_VERSIONS, default=True)
