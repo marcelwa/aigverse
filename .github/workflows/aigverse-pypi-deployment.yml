@@ -95,12 +95,15 @@ jobs:
       - name: Set up MSVC development environment (Windows only)
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
-        with:
-          key: "${{matrix.runs-on}}-aigverse"
-          save: true
-          max-size: 10G
+      # No compiler cache here, deliberately. Wheels compile against nanobind
+      # headers inside uv's build-isolation environment, a directory named
+      # randomly per run (`/tmp/build-env-r57r75a3`, then `/tmp/build-env-sjkp5_7v`),
+      # so no compilation ever repeats. Disabling isolation does not help either:
+      # cibuildwheel's own build venv is randomised the same way. Measured on all
+      # four platforms with a restored cache present: 145 requests, 0 hits.
+      #
+      # A cache action here was also harmful, sharing a key with the test matrix
+      # while producing disjoint objects, so each run evicted the other's.
 
       - if: runner.os == 'Linux'
         name: Setup mold

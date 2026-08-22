@@ -28,8 +28,28 @@ releases may include breaking changes.
   through ABC along with their reset values in the classic namespace ([#406])
   ([**@marcelwa**])
 
+### Changed
+
+- ⚡️ Adopt nanobind 3.0's split mode, so one `abi3` wheel per platform covers
+  every supported Python from 3.10 up instead of three. Cold build time drops
+  3.15x and the shipped payload 4.3x; the extensions themselves shrink 26% by no
+  longer each carrying their own copy of the nanobind library, which is now the
+  separate `nanobind-backend` runtime dependency. Free-threaded interpreters are
+  not supported until Python 3.15 brings them a stable ABI ([#463])
+  ([**@marcelwa**])
+- ⚡️ Build the extension once per wheel tag in the `tests` and `minimums` nox
+  sessions instead of once per interpreter, so interpreters sharing a tag reuse
+  one wheel rather than each getting a purpose-built one ([#456])
+  ([**@marcelwa**])
+
 ### Fixed
 
+- 👷 Cache Windows compiles. `scikit-build-core` defaults to the Visual Studio
+  generator, which ignores `CMAKE_<LANG>_COMPILER_LAUNCHER`, so the compiler
+  cache was configured on Windows and then never invoked -- every job rebuilt
+  every translation unit once per interpreter. Windows now builds with Ninja and
+  caches with `sccache`, whose MSVC support, unlike ccache's, actually hits
+  ([#456]) ([**@marcelwa**])
 - 🐛 Forward `-h` and `--help` to `sphinx-build` in the `docs` nox session, which
   its own argument parser used to intercept ([#453]) ([**@marcelwa**])
 - 🐛 Gate the `numpy` and `torch` floors by Python version. Both predate every
@@ -168,6 +188,8 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#463]: https://github.com/marcelwa/aigverse/pull/463
+[#456]: https://github.com/marcelwa/aigverse/pull/456
 [#453]: https://github.com/marcelwa/aigverse/pull/453
 [#448]: https://github.com/marcelwa/aigverse/pull/448
 [#447]: https://github.com/marcelwa/aigverse/pull/447

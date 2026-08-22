@@ -58,9 +58,103 @@ def lint(session: nox.Session) -> None:
     session.run("prek", "run", "--all-files", *session.posargs, external=True)
 
 
+# Wheels built during this nox invocation, keyed by (group, wheel tag). Memoized
+# per process, so a stale wheel from an earlier invocation cannot be picked up.
+_BUILT_WHEELS: dict[tuple[str, str], Path] = {}
+
+
+def _wheel_tag(python: str) -> str:
+    """Return the wheel tag a given interpreter builds.
+
+    Every supported interpreter builds one and the same abi3 wheel, so they
+    share a tag and it only needs building once.
+
+    Args:
+        python: The interpreter version, as nox spells it, e.g. "3.12".
+
+    Returns:
+        The tag identifying the wheel that interpreter builds.
+    """
+    del python
+    return "cp310-abi3"
+
+
+def _venv_python(session: nox.Session) -> Path:
+    """Return the path to the session virtualenv's interpreter.
+
+    `uv build --no-build-isolation` builds with whatever `--python` names, so it
+    needs the environment holding the `build` group, not a bare version number.
+
+    Args:
+        session: The nox session whose virtualenv to locate.
+
+    Returns:
+        Path to the interpreter inside the session's virtualenv.
+    """
+    venv = Path(session.virtualenv.location)
+    return venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+
+
+def _build_or_reuse_wheel(
+    session: nox.Session,
+    group: str,
+    env: dict[str, str],
+    install_args: Sequence[str],
+) -> Path:
+    """Build the project wheel for this session's tag, or reuse one already built.
+
+    Every session used to rebuild the extension, so 3.12 and up each recompiled
+    the same sources into the identical abi3 wheel. Building once per tag also
+    means the newer interpreters run against that one wheel, which is the same
+    abi3 artefact users install, rather than a purpose-built one each.
+
+    `tests` and `minimums` cannot share a wheel: `minimums` resolves the build
+    dependencies to their floors, so its wheel comes from a different nanobind.
+
+    Args:
+        session: The nox session requesting the wheel.
+        group: Which family of sessions this belongs to, `tests` or `minimums`.
+        env: Environment to run `uv` with.
+        install_args: Extra `uv` arguments, used to pin resolution.
+
+    Returns:
+        Path to the built wheel.
+    """
+    key = (group, _wheel_tag(session.python))
+    cached = _BUILT_WHEELS.get(key)
+    if cached is not None and cached.is_file():
+        session.log(f"reusing {cached.name}, already built for {key[1]}")
+        return cached
+
+    out_dir = Path(".nox") / "_wheels" / f"{key[0]}-{key[1]}"
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    out_dir.mkdir(parents=True)
+
+    session.run(
+        "uv",
+        "build",
+        "--wheel",
+        "--no-build-isolation",  # build deps are already in the session venv
+        "--python",
+        str(_venv_python(session)),
+        "--out-dir",
+        str(out_dir),
+        *install_args,
+        env=env,
+    )
+
+    built = sorted(out_dir.glob("*.whl"))
+    if not built:
+        session.error(f"uv build produced no wheel in {out_dir}")
+    _BUILT_WHEELS[key] = built[0]
+    return built[0]
+
+
 def _run_tests(
     session: nox.Session,
     *,
+    group: str,
     install_args: Sequence[str] = (),
     extra_command: Sequence[str] = (),
     pytest_run_args: Sequence[str] = (),
@@ -69,6 +163,8 @@ def _run_tests(
 
     Args:
         session: The nox session to install into and run in.
+        group: Which family of sessions this belongs to, `tests` or `minimums`.
+            Wheels are shared between sessions of the same group and tag.
         install_args: Extra arguments forwarded to every `uv` invocation, used to
             pin resolution for the minimums session.
         extra_command: A command to run after installing and before testing.
@@ -118,15 +214,18 @@ def _run_tests(
         *install_args,
         env=env,
     )
+    wheel = _build_or_reuse_wheel(session, group, env, install_args)
     session.run(
         "uv",
-        "sync",
-        "--inexact",
-        "--no-dev",  # do not auto-install dev dependencies
-        "--no-build-isolation-package",
-        "aigverse",  # build the project without isolation
-        python_flag,
-        *install_args,
+        "pip",
+        "install",
+        "--python",
+        str(_venv_python(session)),
+        # the version comes from the commit, so an uncommitted source change
+        # rebuilds to the same version and would be skipped as already present
+        "--reinstall-package",
+        "aigverse",
+        str(wheel),
         env=env,
     )
     if extra_command:
@@ -200,7 +299,7 @@ def _find_abc() -> str | None:
 @nox.session(reuse_venv=True, python=PYTHON_ALL_VERSIONS, default=True)
 def tests(session: nox.Session) -> None:
     """Run the test suite."""
-    _run_tests(session)
+    _run_tests(session, group="tests")
 
 
 @nox.session(reuse_venv=True, venv_backend="uv", python=PYTHON_ALL_VERSIONS, default=True)
@@ -209,6 +308,7 @@ def minimums(session: nox.Session) -> None:
     with preserve_lockfile():
         _run_tests(
             session,
+            group="minimums",
             install_args=["--resolution=lowest-direct"],
             pytest_run_args=["-Wdefault"],
         )
