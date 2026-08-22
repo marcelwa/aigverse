@@ -12,11 +12,8 @@ ci:
   autoupdate_commit_msg: "⬆️ Bump pre-commit hooks"
   autofix_commit_msg: "🎨 Incorporated pre-commit fixes"
   autoupdate_schedule: quarterly
-  # `uv-lock` joins `ty` here because `dependencies` is dynamic (see
-  # tools/aigverse_dynamic_deps.py): uv has to build the project to learn its
-  # metadata, and pre-commit.ci runs hooks without network access. The Lint job
-  # in the Python tests workflow runs the full hook set with network, so the
-  # lockfile is still verified on every pull request.
+  # `uv-lock` needs to build the project for its dynamic metadata, and
+  # pre-commit.ci runs hooks offline. The Lint job runs the full set with network.
   skip: [ty, uv-lock]
 
 exclude: "^(docs/examples/|.*/_deps/)"

@@ -25,15 +25,9 @@ nox.needs_version = ">=2025.10.16"
 nox.options.default_venv_backend = "uv"
 
 PYTHON_GIL_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14"]
-# Free-threaded interpreters have no stable ABI before 3.15, so unlike the
-# GIL-enabled ones they each build their own wheel.
-#
-# 3.14 is the floor because that is where free-threading became officially
-# supported (PEP 779) and the first version cibuildwheel still offers, so it is
-# also the only free-threaded wheel shipped. 3.13t was the experimental build
-# and is left out: on Windows it fails in ways that are not the project's --
-# CPython refusing to load an extension twice in a process, and a numpy cast
-# overflow -- and testing what is neither shipped nor supported buys nothing.
+# Free-threading is supported from 3.14 (PEP 779) and has no stable ABI before
+# 3.15, so each of these builds its own wheel. 3.13t is excluded: it is neither
+# shipped nor supported, and fails upstream on Windows.
 PYTHON_FREE_THREADED_VERSIONS = ["3.14t"]
 PYTHON_ALL_VERSIONS = [*PYTHON_GIL_VERSIONS, *PYTHON_FREE_THREADED_VERSIONS]
 
@@ -64,14 +58,9 @@ def preserve_lockfile() -> Generator[None]:
 def restore_lockfile() -> Generator[None]:
     """Put `uv.lock` back the way it was after a session that rewrites it.
 
-    A free-threaded interpreter resolves the project without `nanobind-backend`
-    (see `tools/aigverse_dynamic_deps.py`), so syncing one rewrites the
-    lockfile. Left in place that modifies a tracked file, which both surprises
-    whoever ran the session and destabilises the version `vcs-versioning`
-    derives, since a dirty tree earns a `.dYYYYMMDD` suffix.
-
-    Unlike `preserve_lockfile`, the lockfile stays put while the session runs,
-    so uv resolves from it rather than from scratch.
+    A free-threaded interpreter resolves the project without `nanobind-backend`,
+    so syncing one rewrites the lockfile. Unlike `preserve_lockfile`, the file
+    stays put while the session runs, so uv still resolves from it.
     """
     lockfile = Path("uv.lock")
     if not lockfile.exists():
@@ -103,10 +92,9 @@ _BUILT_WHEELS: dict[tuple[str, str], Path] = {}
 def _wheel_tag(python: str) -> str:
     """Return the wheel tag a given interpreter builds.
 
-    nanobind's split mode plus `wheel.py-api = "cp310"` make every GIL-enabled
-    interpreter from 3.10 up build one and the same abi3 wheel, so they share a
-    tag and it only needs building once. Free-threaded interpreters have no
-    stable ABI before 3.15, so each of those builds its own wheel.
+    Every GIL-enabled interpreter from 3.10 up builds one and the same abi3
+    wheel, so they share a tag and it only needs building once. Free-threaded
+    interpreters have no stable ABI before 3.15 and each build their own.
 
     Args:
         python: The interpreter version, as nox spells it, e.g. "3.12" or "3.13t".
@@ -245,11 +233,9 @@ def _run_tests(
         # download circuits, and a hiccup at GitHub must not redden the whole
         # matrix, so they keep their own workflow.
         #
-        # torch is the exception: it publishes no wheel for every free-threaded
-        # platform -- there is none for 3.13t on aarch64 -- and ships no sdist to
-        # fall back on, so requesting the group there fails the whole session.
-        # The torch-marked tests guard themselves with `pytest.importorskip`, so
-        # they skip cleanly when it is absent.
+        # torch is skipped on free-threaded interpreters: it has no wheel for
+        # every free-threaded platform and no sdist. Its tests use
+        # `pytest.importorskip` and skip cleanly without it.
         if not session.python.endswith("t"):
             only_group_args += ["--only-group", "torch"]
         pytest_run_args = [*pytest_run_args, "-m", ""]
@@ -358,11 +344,9 @@ def tests(session: nox.Session) -> None:
 def minimums(session: nox.Session) -> None:
     """Test the minimum versions of dependencies.
 
-    GIL-enabled interpreters only: this session pins every direct dependency to
-    its declared floor, and those floors are expressed with PEP 508 markers,
-    which cannot tell a free-threaded interpreter from a GIL one. The `torch`
-    floor for 3.13 ships no free-threaded wheel, and there is no marker able to
-    raise it for 3.13t alone.
+    GIL-enabled interpreters only: the floors are PEP 508 markers, which cannot
+    tell a free-threaded interpreter from a GIL one, and the `torch` floor has
+    no free-threaded wheel.
     """
     with preserve_lockfile():
         _run_tests(

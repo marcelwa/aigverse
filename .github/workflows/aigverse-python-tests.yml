@@ -52,12 +52,8 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # `vcs-versioning` derives the version from git, and warns that a
-          # shallow clone "may cause errors". It does: without tags it falls back
-          # to a placeholder whose dirty marker is not stable between the metadata
-          # and wheel phases of an editable build, which trips scikit-build-core's
-          # metadata consistency check. The packaging and CodeQL workflows already
-          # fetch the full history for the same reason.
+          # `vcs-versioning` needs the tags to derive a version; a shallow
+          # clone falls back to a placeholder.
           fetch-depth: 0
           persist-credentials: false
 
@@ -95,12 +91,8 @@ jobs:
       - name: Clone Repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # `vcs-versioning` derives the version from git, and warns that a
-          # shallow clone "may cause errors". It does: without tags it falls back
-          # to a placeholder whose dirty marker is not stable between the metadata
-          # and wheel phases of an editable build, which trips scikit-build-core's
-          # metadata consistency check. The packaging and CodeQL workflows already
-          # fetch the full history for the same reason.
+          # `vcs-versioning` needs the tags to derive a version; a shallow
+          # clone falls back to a placeholder.
           fetch-depth: 0
           persist-credentials: false
 

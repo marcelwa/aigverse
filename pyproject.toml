@@ -42,8 +42,8 @@ classifiers = [
 
 requires-python = ">=3.10"
 
-# `dependencies` is dynamic because the nanobind backend is only required by
-# wheels built in split mode; see tools/aigverse_dynamic_deps.py
+# `dependencies` is dynamic: only split-mode wheels need the nanobind backend.
+# See tools/aigverse_dynamic_deps.py
 dynamic = ["version", "dependencies"]
 
 [project.optional-dependencies]
@@ -76,8 +76,7 @@ ninja.version = ">=1.10"
 build-dir = "build/{wheel_tag}/{build_type}"
 # Explicitly set the package directory
 wheel.packages = ["python/aigverse"]
-# Split mode lowers the Stable ABI floor to nanobind's minimum, covering
-# every supported CPython with a single wheel per platform
+# One Stable ABI wheel per platform covers every supported CPython
 wheel.py-api = "cp310"
 # Only build the Python bindings target
 build.targets = ["aigverse-networks", "aigverse-algorithms", "aigverse-io", "aigverse-generators", "aigverse-utils"]
@@ -144,11 +143,10 @@ testpaths = ["test/"]
 
 
 [tool.cibuildwheel]
-# cp310 produces the abi3 wheel serving every GIL-enabled CPython from 3.10 up.
-# Free-threading is officially supported from 3.14 (PEP 779) and has no stable
-# ABI before the `abi3t` of 3.15 (PEP 803), so it is still one wheel per version.
+# cp310 builds the abi3 wheel for every GIL-enabled CPython. Free-threading has
+# no stable ABI before 3.15 (PEP 803), so it needs a wheel per version.
 build = ["cp310-*", "cp314t-*"]
-# no nanobind-backend wheels are published for musllinux
+# nanobind-backend publishes no musllinux wheels
 skip = ["*-musllinux_*"]
 archs = "auto64"
 build-frontend = "build[uv]"
@@ -179,8 +177,7 @@ cache-keys = [
     { git = { commit = true, tags = true } },
     { file = "src/**/*.cpp" },
     { file = "python/**/*.py" },
-    # the dynamic-metadata provider decides the runtime dependencies
-    { file = "tools/*.py" },
+    { file = "tools/*.py" }, # the provider decides the runtime dependencies
 ]
 
 [tool.uv.sources]
@@ -234,8 +231,7 @@ isort.required-imports = ["from __future__ import annotations"]
 # the loaders document the exceptions that propagate out of their helpers
 "python/aigverse/benchmarks/*.py" = ["DOC502"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]
-# the build-metadata provider is loaded by path by scikit-build-core, not
-# imported as part of a package, so it has no `__init__.py` (INP001)
+# the metadata provider is loaded by path, not imported as a package (INP001)
 "tools/*.py" = ["S603", "S607", "INP001"]
 # the ABC bridge shells out to a user-configured executable by design, and its
 # public functions document the exceptions that propagate out of their helpers

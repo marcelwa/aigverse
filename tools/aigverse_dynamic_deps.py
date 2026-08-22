@@ -1,19 +1,16 @@
 """scikit-build ``dynamic-metadata`` provider for the nanobind backend dependency.
 
-The backend is only needed by extensions built in nanobind's *split mode*, and
-which mode a wheel uses depends on the interpreter it is built for. Declaring
-``nanobind-backend`` statically would make the free-threaded wheels
-uninstallable, because no ``nanobind-backend`` wheel is published for
-``cp313t``/``cp314t`` and the project has no sdist to fall back on.
+Only extensions built in nanobind's *split mode* need the backend, and which
+mode applies depends on the interpreter. A static declaration would make the
+free-threaded wheels uninstallable, since no ``nanobind-backend`` wheel is
+published for them.
 
 Wired up in ``pyproject.toml`` as::
 
     [[tool.dynamic-metadata]]
     provider = { path = "tools", module = "aigverse_dynamic_deps" }
 
-Keep the mode check below in step with the one in
-``cmake/AddAigversePythonBinding.cmake`` -- they decide the same thing about the
-same interpreter, one for the metadata and one for the build.
+Keep :func:`_uses_split_mode` in step with ``cmake/AddAigversePythonBinding.cmake``.
 """
 
 from __future__ import annotations
@@ -27,8 +24,8 @@ if TYPE_CHECKING:
 
 __all__ = ["dynamic_metadata", "dynamic_wheel"]
 
-#: No upper bound and never pinned: newer backends serve older extensions, and
-#: two projects pinning different versions could not be installed together.
+#: Never upper-bounded or pinned: two projects pinning different versions could
+#: not be installed together.
 BACKEND_REQUIREMENT = "nanobind-backend>=1.0"
 
 
@@ -40,9 +37,8 @@ def _uses_split_mode() -> bool:
     """Report whether this interpreter's extensions are built in split mode.
 
     Split mode targets a stable ABI, which free-threaded interpreters only have
-    from Python 3.15 on (the ``abi3t`` of PEP 803). Below that they are built in
-    linked mode, which carries its own copy of the nanobind library and needs no
-    backend at runtime.
+    from Python 3.15 on (the ``abi3t`` of PEP 803). Below that they link the
+    nanobind library in and need no backend at runtime.
 
     Returns:
         True if the extensions resolve a backend at import time.
