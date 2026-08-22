@@ -140,6 +140,24 @@ private:
 Use `#pragma once` and prefer STL features. `clang-tidy`/`clang-format` config lives in `.clang-tidy`/`.clang-format`
 at the repo root.
 
+### Comments
+
+Comment the current state of the code, not the path that led to it. A comment earns its place by explaining a
+constraint the code cannot show on its own — an external limitation, a non-obvious ordering, a number's origin.
+It does not earn it by recounting what was tried, what failed, or why an alternative was rejected; that belongs in
+the commit message and the pull request, which are where someone goes looking for history.
+
+```python
+# Good - the constraint, stated once
+# torch has no wheel for every free-threaded platform and no sdist.
+
+# Bad - the investigation
+# torch publishes no wheel for every free-threaded platform -- there is none for
+# 3.13t on aarch64 -- and ships no sdist to fall back on, so requesting the group
+# there fails the whole session. The torch-marked tests guard themselves with
+# `pytest.importorskip`, so they skip cleanly when it is absent.
+```
+
 ## Commit & PR Conventions
 
 Prefix every commit subject and PR title with a plain [gitmoji](https://gitmoji.dev) emoji character (e.g. `✨`,

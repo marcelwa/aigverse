@@ -2,7 +2,7 @@
 requires = [
     "scikit-build-core~=1.0.3",
     "vcs-versioning~=2.3.0",
-    "nanobind~=2.15.0",
+    "nanobind~=3.0.0",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -42,6 +42,11 @@ classifiers = [
 
 requires-python = ">=3.10"
 
+# Split-mode extensions resolve the compiled nanobind backend at import time.
+# Never pin or upper-bound it: two projects pinning different versions could not
+# be installed together.
+dependencies = ["nanobind-backend>=1.0"]
+
 dynamic = ["version"]
 
 [project.optional-dependencies]
@@ -74,8 +79,8 @@ ninja.version = ">=1.10"
 build-dir = "build/{wheel_tag}/{build_type}"
 # Explicitly set the package directory
 wheel.packages = ["python/aigverse"]
-# Enable Stable ABI builds for CPython 3.12+
-wheel.py-api = "cp312"
+# One Stable ABI wheel per platform covers every supported CPython
+wheel.py-api = "cp310"
 # Only build the Python bindings target
 build.targets = ["aigverse-networks", "aigverse-algorithms", "aigverse-io", "aigverse-generators", "aigverse-utils"]
 # Only install the Python package component
@@ -137,7 +142,9 @@ testpaths = ["test/"]
 
 
 [tool.cibuildwheel]
-build = "cp3*"
+# cp310 builds the one abi3 wheel that serves every supported CPython
+build = "cp310-*"
+# nanobind-backend publishes no musllinux wheels
 skip = ["*-musllinux_*"]
 archs = "auto64"
 build-frontend = "build[uv]"
@@ -156,7 +163,7 @@ before-build = "uv pip install delvewheel>=1.11.2"
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --ignore-existing"
 
 [[tool.cibuildwheel.overrides]]
-select = "cp312-*"
+select = "cp310-*"
 inherit.repair-wheel-command = "append"
 repair-wheel-command = "uvx abi3audit --strict --report {wheel}"
 
@@ -254,7 +261,7 @@ ignore = [
 build = [
     "scikit-build-core~=1.0.3",
     "vcs-versioning~=2.3.0",
-    "nanobind~=2.15.0",
+    "nanobind~=3.0.0",
 ]
 adapters = [
     "networkx>=3.0.0",
