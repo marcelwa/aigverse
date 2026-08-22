@@ -24,7 +24,11 @@ if TYPE_CHECKING:
 nox.needs_version = ">=2025.10.16"
 nox.options.default_venv_backend = "uv"
 
-PYTHON_ALL_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14"]
+PYTHON_GIL_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14"]
+# Free-threaded interpreters have no stable ABI before 3.15, so unlike the
+# GIL-enabled ones they each build their own wheel.
+PYTHON_FREE_THREADED_VERSIONS = ["3.13t", "3.14t"]
+PYTHON_ALL_VERSIONS = [*PYTHON_GIL_VERSIONS, *PYTHON_FREE_THREADED_VERSIONS]
 
 if os.environ.get("CI", None):
     nox.options.error_on_missing_interpreters = True
@@ -66,19 +70,21 @@ _BUILT_WHEELS: dict[tuple[str, str], Path] = {}
 def _wheel_tag(python: str) -> str:
     """Return the wheel tag a given interpreter builds.
 
-    `wheel.py-api = "cp312"` makes 3.12 and above one and the same abi3 wheel, so
-    they share a tag and only need building once.
+    nanobind's split mode plus `wheel.py-api = "cp310"` make every GIL-enabled
+    interpreter from 3.10 up build one and the same abi3 wheel, so they share a
+    tag and it only needs building once. Free-threaded interpreters have no
+    stable ABI before 3.15, so each of those builds its own wheel.
 
     Args:
-        python: The interpreter version, as nox spells it, e.g. "3.12".
+        python: The interpreter version, as nox spells it, e.g. "3.12" or "3.13t".
 
     Returns:
         The tag identifying the wheel that interpreter builds.
     """
-    major, minor = (int(part) for part in python.split("."))
-    if (major, minor) >= (3, 12):
-        return "cp312-abi3"
-    return f"cp{major}{minor}"
+    if python.endswith("t"):
+        major, minor = (int(part) for part in python[:-1].split("."))
+        return f"cp{major}{minor}t"
+    return "cp310-abi3"
 
 
 def _venv_python(session: nox.Session) -> Path:
@@ -304,9 +310,16 @@ def tests(session: nox.Session) -> None:
     _run_tests(session, group="tests")
 
 
-@nox.session(reuse_venv=True, venv_backend="uv", python=PYTHON_ALL_VERSIONS, default=True)
+@nox.session(reuse_venv=True, venv_backend="uv", python=PYTHON_GIL_VERSIONS, default=True)
 def minimums(session: nox.Session) -> None:
-    """Test the minimum versions of dependencies."""
+    """Test the minimum versions of dependencies.
+
+    GIL-enabled interpreters only: this session pins every direct dependency to
+    its declared floor, and those floors are expressed with PEP 508 markers,
+    which cannot tell a free-threaded interpreter from a GIL one. The `torch`
+    floor for 3.13 ships no free-threaded wheel, and there is no marker able to
+    raise it for 3.13t alone.
+    """
     with preserve_lockfile():
         _run_tests(
             session,
