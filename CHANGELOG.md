@@ -44,6 +44,10 @@ releases may include breaking changes.
 
 ### Fixed
 
+- 🐛 Refuse an AIGER file with latches in `read_aiger_into_aig` and
+  `read_ascii_aiger_into_aig`, which used to segfault or silently drop the
+  registers, and point users at the sequential reader instead ([#457])
+  ([**@marcelwa**])
 - 👷 Cache Windows compiles. `scikit-build-core` defaults to the Visual Studio
   generator, which ignores `CMAKE_<LANG>_COMPILER_LAUNCHER`, so the compiler
   cache was configured on Windows and then never invoked -- every job rebuilt
@@ -190,6 +194,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 [#463]: https://github.com/marcelwa/aigverse/pull/463
 [#458]: https://github.com/marcelwa/aigverse/pull/458
+[#457]: https://github.com/marcelwa/aigverse/pull/457
 [#456]: https://github.com/marcelwa/aigverse/pull/456
 [#453]: https://github.com/marcelwa/aigverse/pull/453
 [#448]: https://github.com/marcelwa/aigverse/pull/448
