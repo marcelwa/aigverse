@@ -338,9 +338,8 @@ short of its registers.
 :::
 
 :::{warning}
-Reset values are where the two namespaces part ways. The classic one carries `0` and `1`
-across as they are. ABC's `&read` accepts only `0` literally, and rewrites the other two
-cases:
+The classic namespace carries a reset of `0` or `1` across unchanged. ABC's `&read`
+accepts only `0` literally, and rewrites the other two cases:
 
 - a **`1`** reset is converted by complementing the flip-flop. The network is equivalent
   and keeps its interface, but comes back with a reset of `0`.
@@ -354,10 +353,10 @@ Give the register an explicit reset with `set_register`, or use the classic name
 which transfers the same network unchanged.
 :::
 
-The first of those two is worth seeing rather than taking on trust, because the reset value
-really is gone afterwards. A 4-bit LFSR is the design to check it on: it has no primary
-inputs at all, so it runs off its reset state alone, and a seed that failed to survive would
-leave it stuck at zero rather than walking its fifteen states.
+A 4-bit LFSR makes the `1` case easy to check directly, instead of taking the claim above
+on trust: it has no primary inputs, so its whole output comes from the reset state alone,
+and a seed that didn't survive the round trip through ABC would show up immediately as an
+all-zero sequence instead of the LFSR's full 15-state cycle.
 
 ```{code-cell} ipython3
 from aigverse.algorithms import simulate_sequential
@@ -395,10 +394,11 @@ print(f"classic      {run(through_classic):>15}   resets {resets(through_classic
 print(f"gia          {run(through_gia):>15}   resets {resets(through_gia)}")
 ```
 
-The `gia` result reports a reset of `0` on every register and still produces the identical
-sequence: the complement was pushed into the logic rather than dropped. That is what makes
-it a re-encoding, and it is why the undefined case — which cannot be re-encoded without an
-extra input and an extra register — is refused instead.
+The `gia` result reports a reset of `0` on every register but still produces the same
+sequence: the complement got pushed into the logic instead of being dropped. The undefined
+case can't be re-encoded the same way — modelling an unknown value takes an extra input and
+register, not just a rewritten logic cone — which is why `gia` refuses it rather than
+reshaping the network to fit.
 
 ## Type preservation and limitations
 
