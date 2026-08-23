@@ -87,19 +87,70 @@ def sequential_aig() -> Callable[..., SequentialAig]:
         ros = [ntk.create_ro() for _ in values]
 
         gates = list(map(ntk.create_and, pis, ros))
-        for gate in gates:
-            ntk.create_ri(gate)
 
         output = gates[0]
         for gate in gates[1:]:
             output = ntk.create_and(output, gate)
+
+        # The primary output goes in before the register inputs: both are
+        # combinational outputs of one network, and `po_at` / `ri_at` slice that
+        # single list by position, so creating them the other way round shifts the
+        # whole interface by one.
         ntk.create_po(output)
+
+        for gate in gates:
+            ntk.create_ri(gate)
 
         for index, init in enumerate(values):
             if init is not None:
                 register = AigRegister()
                 register.init = init
                 ntk.set_register(index, register)
+
+        return ntk
+
+    return _make
+
+
+@pytest.fixture
+def lfsr() -> Callable[..., SequentialAig]:
+    """Builds a Fibonacci LFSR with taps on the top two bits.
+
+    It has no primary inputs at all, so it runs off its reset state alone. That
+    makes it the network to reach for when a test needs to check what the design
+    *does* rather than how many registers it has: get the reset values wrong and
+    the output collapses to a constant.
+
+    Returns:
+        A factory taking the register count and the seed, the latter as an integer
+        whose bit ``i`` is register ``i``'s reset value.
+    """
+
+    def _make(width: int = 4, seed: int = 1) -> SequentialAig:
+        """Builds the network.
+
+        Args:
+            width: Number of registers.
+            seed: Reset state.
+
+        Returns:
+            The network.
+        """
+        ntk = SequentialAig()
+
+        state = [ntk.create_ro() for _ in range(width)]
+        feedback = ntk.create_xor(state[width - 1], state[width - 2])
+
+        ntk.create_po(state[width - 1])
+
+        ntk.create_ri(feedback)
+        for bit in range(width - 1):
+            ntk.create_ri(state[bit])
+
+        for bit in range(width):
+            register = AigRegister()
+            register.init = (seed >> bit) & 1
+            ntk.set_register(bit, register)
 
         return ntk
 

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from aigverse import abc
-from aigverse.algorithms import equivalence_checking
+from aigverse.algorithms import equivalence_checking, simulate_sequential
 from aigverse.generators import ripple_carry_multiplier
 from aigverse.networks import Aig, DepthAig, NamedAig, SequentialAig
 
@@ -494,3 +494,110 @@ def test_the_gia_store_refuses_an_undefined_reset(sequential_aig: Callable[..., 
 
     # The classic store carries the very same network across unchanged.
     assert abc.dc2(ntk).num_registers == ntk.num_registers
+
+
+def test_a_sequential_round_trip_preserves_behavior(lfsr: Callable[..., SequentialAig]) -> None:
+    """The registers surviving is not the claim; the circuit still running is.
+
+    Every other sequential test here counts registers and reads reset values back.
+    This one runs the design: a 4-bit LFSR walks all fifteen of its non-zero states
+    off its reset value alone, so a round trip that damaged either the logic or the
+    seed would collapse the output to a constant rather than change a count.
+
+    Args:
+        lfsr: Builds the network.
+    """
+    ntk = lfsr()
+    before = simulate_sequential(ntk, 15)
+
+    after = simulate_sequential(abc.resyn2(ntk), 15)
+
+    assert after.outputs == before.outputs
+    assert after.states == before.states
+    # a maximal-length sequence, so the seed really did take effect
+    assert len({tuple(state) for state in before.states[:-1]}) == 15
+
+
+def test_the_gia_reset_conversion_is_a_re_encoding_not_a_loss(
+    lfsr: Callable[..., SequentialAig],
+) -> None:
+    """`&read` complements a one-valued flip-flop; the design is unchanged by it.
+
+    This is the one claim in the bridge that a count cannot check. The reset value
+    genuinely does not survive the `&` space -- it comes back as 0 -- so the only
+    evidence that nothing was lost is that the network still produces the same
+    sequence from its own reset state.
+
+    Args:
+        lfsr: Builds the network.
+    """
+    ntk = lfsr()
+    reference = simulate_sequential(ntk, 15)
+
+    assert ntk.register_at(0).init == 1
+
+    through_gia = abc.gia.dc2(ntk)
+
+    # the reset value itself is gone
+    assert [through_gia.register_at(i).init for i in range(through_gia.num_registers)] == [0, 0, 0, 0]
+
+    # the behavior it encoded is not
+    assert simulate_sequential(through_gia, 15).outputs == reference.outputs
+
+
+def test_the_classic_store_keeps_both_the_reset_and_the_behavior(
+    lfsr: Callable[..., SequentialAig],
+) -> None:
+    """What the `&` space re-encodes, the classic namespace carries as it is.
+
+    Args:
+        lfsr: Builds the network.
+    """
+    ntk = lfsr()
+    reference = simulate_sequential(ntk, 15)
+
+    through_classic = abc.dc2(ntk)
+
+    assert [through_classic.register_at(i).init for i in range(through_classic.num_registers)] == [1, 0, 0, 0]
+    assert simulate_sequential(through_classic, 15).outputs == reference.outputs
+
+
+def test_a_sequential_optimization_is_equivalence_preserving(
+    sequential_aig: Callable[..., SequentialAig],
+) -> None:
+    """The register boundary may not move, so a combinational check is the right one.
+
+    `equivalence_checking` compares the register outputs as inputs, which is exactly
+    what an optimization that is not allowed to touch the registers must preserve.
+
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig(0, 1, 0)
+
+    for script in ("resyn2", "compress2rs", "dc2"):
+        result = getattr(abc, script)(ntk)
+
+        assert result.num_registers == ntk.num_registers
+        assert equivalence_checking(ntk, result)
+
+
+def test_a_requested_reshape_is_not_refused(lfsr: Callable[..., SequentialAig]) -> None:
+    """The guards are about ABC reshaping a network unasked, not about `comb`.
+
+    `comb` flattens the registers into primary input and output pairs, which is a
+    different interface than went in -- but the caller asked for exactly that, so
+    it is carried out rather than refused. The `gia` guard exists because `&read`
+    does the same thing without being asked.
+
+    Args:
+        lfsr: Builds the network.
+    """
+    ntk = lfsr()
+
+    result = abc.run_script(ntk, "comb")
+
+    assert type(result) is SequentialAig
+    assert result.num_registers == 0
+    assert result.num_pis == ntk.num_pis + ntk.num_registers
+    assert result.num_pos == ntk.num_pos + ntk.num_registers

@@ -332,7 +332,9 @@ whenever one has a non-zero reset value, which is handled transparently.
 
 The type is checked before the base class, deliberately: `SequentialAig` is registered as
 an `Aig` subclass on the C++ side, so the result has to be read back with the sequential
-reader. Reading it as a combinational network would not preserve the registers.
+reader. {py:func}`~aigverse.io.read_aiger_into_aig` refuses a latched file outright rather
+than flatten it, so getting this wrong would raise rather than quietly return a network
+short of its registers.
 :::
 
 :::{warning}
@@ -352,6 +354,52 @@ Give the register an explicit reset with `set_register`, or use the classic name
 which transfers the same network unchanged.
 :::
 
+The first of those two is worth seeing rather than taking on trust, because the reset value
+really is gone afterwards. A 4-bit LFSR is the design to check it on: it has no primary
+inputs at all, so it runs off its reset state alone, and a seed that failed to survive would
+leave it stuck at zero rather than walking its fifteen states.
+
+```{code-cell} ipython3
+from aigverse.algorithms import simulate_sequential
+
+lfsr = SequentialAig()
+
+state = [lfsr.create_ro() for _ in range(4)]
+feedback = lfsr.create_xor(state[3], state[2])
+
+lfsr.create_po(state[3])
+
+lfsr.create_ri(feedback)
+for bit in range(3):
+    lfsr.create_ri(state[bit])
+
+for bit in range(4):
+    register = AigRegister()
+    register.init = 1 if bit == 0 else 0
+    lfsr.set_register(bit, register)
+
+
+def run(ntk):
+    return "".join(str(int(cycle[0])) for cycle in simulate_sequential(ntk, 15).outputs)
+
+
+def resets(ntk):
+    return [ntk.register_at(i).init for i in range(ntk.num_registers)]
+
+
+through_classic = abc.dc2(lfsr)
+through_gia = abc.gia.dc2(lfsr)
+
+print(f"reference    {run(lfsr):>15}   resets {resets(lfsr)}")
+print(f"classic      {run(through_classic):>15}   resets {resets(through_classic)}")
+print(f"gia          {run(through_gia):>15}   resets {resets(through_gia)}")
+```
+
+The `gia` result reports a reset of `0` on every register and still produces the identical
+sequence: the complement was pushed into the logic rather than dropped. That is what makes
+it a re-encoding, and it is why the undefined case — which cannot be re-encoded without an
+extra input and an extra register — is refused instead.
+
 ## Type preservation and limitations
 
 The returned network has the same type as the input: an
@@ -359,6 +407,12 @@ The returned network has the same type as the input: an
 {py:class}`~aigverse.networks.NamedAig` yields a `NamedAig` with its input and output
 names carried through ABC, and a {py:class}`~aigverse.networks.SequentialAig` yields a
 `SequentialAig` with its registers intact.
+
+What the guards protect is the transfer, not the script. ABC reshaping a network without
+being asked — `&read` turning an undefined reset into an extra input and register — is
+refused, while a command that reshapes it deliberately is carried out: `run_script(ntk,
+"comb")` flattens every register into a primary input and output pair and hands back a
+`SequentialAig` with none left, because that is what `comb` is for.
 
 :::{warning}
 The bridge transfers AIGs and nothing else, so technology mapping and $k$-LUT mapping are
