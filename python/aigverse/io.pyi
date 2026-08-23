@@ -18,7 +18,9 @@ def read_aiger_into_aig(filename: str | os.PathLike) -> aigverse.networks.NamedA
         The parsed network instance.
 
     Raises:
-        RuntimeError: If parsing the AIGER file fails.
+        RuntimeError: If parsing the AIGER file fails, or if the file has latches, which this
+            network type cannot represent. Read a sequential design with `read_aiger_into_sequential_aig`
+            or `read_ascii_aiger_into_sequential_aig` instead.
     """
 
 def read_ascii_aiger_into_aig(filename: str | os.PathLike) -> aigverse.networks.NamedAig:
@@ -31,7 +33,9 @@ def read_ascii_aiger_into_aig(filename: str | os.PathLike) -> aigverse.networks.
         The parsed network instance.
 
     Raises:
-        RuntimeError: If parsing the ASCII AIGER file fails.
+        RuntimeError: If parsing the ASCII AIGER file fails, or if the file has latches, which this
+            network type cannot represent. Read a sequential design with `read_aiger_into_sequential_aig`
+            or `read_ascii_aiger_into_sequential_aig` instead.
     """
 
 def read_aiger_into_sequential_aig(filename: str | os.PathLike) -> aigverse.networks.SequentialAig:
