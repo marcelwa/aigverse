@@ -110,9 +110,9 @@ def _parse(output: str, *, binary: str, command: str) -> AbcStats:
 
 def collect_stats(
     ntk: Aig,
-    read_command: str,
     stats_command: str,
     *,
+    gia: bool,
     timeout: float | None,
     binary: str | os.PathLike[str] | None,
 ) -> AbcStats:
@@ -120,8 +120,10 @@ def collect_stats(
 
     Args:
         ntk: The network to measure.
-        read_command: ABC command loading the network into the right store.
         stats_command: ABC command printing the statistics.
+        gia: If ``True``, load the network into the GIA store rather than the
+            classic one. The read command and the guards follow from it, so the
+            two cannot disagree about which store is in play.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         binary: Overrides the resolved ABC executable for this call only.
 
@@ -133,11 +135,13 @@ def collect_stats(
             whose reset value is undefined.
     """
     check_supported(ntk)
-    if read_command.startswith("&"):
+    if gia:
         check_gia_supported(ntk)
     executable = resolve_binary(binary)
 
     from ..io import write_aiger
+
+    read_command = "&read" if gia else "read_aiger"
 
     with tempfile.TemporaryDirectory(prefix="aigverse-abc-") as tmpdir:
         directory = Path(tmpdir)
@@ -179,4 +183,4 @@ def stats(
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or printed nothing usable.
     """
-    return collect_stats(ntk, "read_aiger", "print_stats", timeout=timeout, binary=binary)
+    return collect_stats(ntk, "print_stats", gia=False, timeout=timeout, binary=binary)

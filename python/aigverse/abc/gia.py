@@ -784,7 +784,7 @@ def stats(
     """
     # -x suppresses the colour codes; the parser strips them anyway, but this
     # keeps `raw` readable for anyone printing it.
-    return collect_stats(ntk, "&read", "&ps -x", timeout=timeout, binary=binary)
+    return collect_stats(ntk, "&ps -x", gia=True, timeout=timeout, binary=binary)
 
 
 def run_script(
