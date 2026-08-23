@@ -45,11 +45,8 @@ releases may include breaking changes.
 ### Fixed
 
 - 🐛 Refuse an AIGER file with latches in `read_aiger_into_aig` and
-  `read_ascii_aiger_into_aig`, which used to segfault the interpreter.
-  mockturtle's reader skipped the latch outputs for a network type that cannot
-  hold registers, then indexed past the end of its own signal vector -- a
-  segmentation fault on most designs and a silently register-less network on the
-  rest. The error names the sequential reader to use instead ([#457])
+  `read_ascii_aiger_into_aig`, which used to segfault or silently drop the
+  registers, and point users at the sequential reader instead ([#457])
   ([**@marcelwa**])
 - 👷 Cache Windows compiles. `scikit-build-core` defaults to the Visual Studio
   generator, which ignores `CMAKE_<LANG>_COMPILER_LAUNCHER`, so the compiler
