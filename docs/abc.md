@@ -238,9 +238,9 @@ every call already gets its own temporary directory, its own working directory a
 cores, and hands the results back in input order:
 
 ```{code-cell} ipython3
-from aigverse.generators import carry_lookahead_adder, ripple_carry_adder
+from aigverse.generators import carry_lookahead_adder
 
-designs = [ripple_carry_adder(8), carry_lookahead_adder(8), ripple_carry_adder(12)]
+designs = [carry_lookahead_adder(width) for width in (4, 8, 16)]
 optimized = abc.run_many(designs, abc.expand_script("resyn2"))
 
 for before, after in zip(designs, optimized):
