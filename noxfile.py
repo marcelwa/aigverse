@@ -11,6 +11,7 @@ import argparse
 import contextlib
 import os
 import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -57,9 +58,103 @@ def lint(session: nox.Session) -> None:
     session.run("prek", "run", "--all-files", *session.posargs, external=True)
 
 
+# Wheels built during this nox invocation, keyed by (group, wheel tag). Memoized
+# per process, so a stale wheel from an earlier invocation cannot be picked up.
+_BUILT_WHEELS: dict[tuple[str, str], Path] = {}
+
+
+def _wheel_tag(python: str) -> str:
+    """Return the wheel tag a given interpreter builds.
+
+    Every supported interpreter builds one and the same abi3 wheel, so they
+    share a tag and it only needs building once.
+
+    Args:
+        python: The interpreter version, as nox spells it, e.g. "3.12".
+
+    Returns:
+        The tag identifying the wheel that interpreter builds.
+    """
+    del python
+    return "cp310-abi3"
+
+
+def _venv_python(session: nox.Session) -> Path:
+    """Return the path to the session virtualenv's interpreter.
+
+    `uv build --no-build-isolation` builds with whatever `--python` names, so it
+    needs the environment holding the `build` group, not a bare version number.
+
+    Args:
+        session: The nox session whose virtualenv to locate.
+
+    Returns:
+        Path to the interpreter inside the session's virtualenv.
+    """
+    venv = Path(session.virtualenv.location)
+    return venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+
+
+def _build_or_reuse_wheel(
+    session: nox.Session,
+    group: str,
+    env: dict[str, str],
+    install_args: Sequence[str],
+) -> Path:
+    """Build the project wheel for this session's tag, or reuse one already built.
+
+    Every session used to rebuild the extension, so 3.12 and up each recompiled
+    the same sources into the identical abi3 wheel. Building once per tag also
+    means the newer interpreters run against that one wheel, which is the same
+    abi3 artefact users install, rather than a purpose-built one each.
+
+    `tests` and `minimums` cannot share a wheel: `minimums` resolves the build
+    dependencies to their floors, so its wheel comes from a different nanobind.
+
+    Args:
+        session: The nox session requesting the wheel.
+        group: Which family of sessions this belongs to, `tests` or `minimums`.
+        env: Environment to run `uv` with.
+        install_args: Extra `uv` arguments, used to pin resolution.
+
+    Returns:
+        Path to the built wheel.
+    """
+    key = (group, _wheel_tag(session.python))
+    cached = _BUILT_WHEELS.get(key)
+    if cached is not None and cached.is_file():
+        session.log(f"reusing {cached.name}, already built for {key[1]}")
+        return cached
+
+    out_dir = Path(".nox") / "_wheels" / f"{key[0]}-{key[1]}"
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    out_dir.mkdir(parents=True)
+
+    session.run(
+        "uv",
+        "build",
+        "--wheel",
+        "--no-build-isolation",  # build deps are already in the session venv
+        "--python",
+        str(_venv_python(session)),
+        "--out-dir",
+        str(out_dir),
+        *install_args,
+        env=env,
+    )
+
+    built = sorted(out_dir.glob("*.whl"))
+    if not built:
+        session.error(f"uv build produced no wheel in {out_dir}")
+    _BUILT_WHEELS[key] = built[0]
+    return built[0]
+
+
 def _run_tests(
     session: nox.Session,
     *,
+    group: str,
     install_args: Sequence[str] = (),
     extra_command: Sequence[str] = (),
     pytest_run_args: Sequence[str] = (),
@@ -68,12 +163,25 @@ def _run_tests(
 
     Args:
         session: The nox session to install into and run in.
+        group: Which family of sessions this belongs to, `tests` or `minimums`.
+            Wheels are shared between sessions of the same group and tag.
         install_args: Extra arguments forwarded to every `uv` invocation, used to
             pin resolution for the minimums session.
         extra_command: A command to run after installing and before testing.
         pytest_run_args: Extra arguments forwarded to pytest. Note that a `-m`
-            passed here replaces the one in `addopts` rather than adding to it.
+            passed here replaces the one in `addopts` rather than adding to it,
+            and that a `-m` in the session's posargs replaces it in turn.
     """
+    # `add_help=False` keeps `-h`/`--help` in the leftovers so they reach pytest,
+    # which is what someone typing `nox -s tests -- --help` is asking for.
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Install every optional dependency group and run every test, network-marked ones included.",
+    )
+    args, posargs = parser.parse_known_args(session.posargs)
+
     env = {"UV_PROJECT_ENVIRONMENT": session.virtualenv.location}
 
     if shutil.which("cmake") is None and shutil.which("cmake3") is None:
@@ -84,14 +192,19 @@ def _run_tests(
     # install build and test dependencies on top of the existing environment
     python_flag = f"--python={session.python}"
     only_group_args: list[str] = ["--only-group", "build", "--only-group", "test"]
-    if os.environ.get("CI"):
-        # CI keeps full coverage: also install the torch group and re-include
-        # torch-marked tests that are deselected by default locally. The
-        # network-marked tests stay out -- they download circuits, and a
-        # hiccup at github.com must not turn the whole matrix red. They have
-        # their own job.
+    if args.full:
+        # `--full` means everything: the heavy optional dependency groups --
+        # torch alone today, several hundred MB of wheel before CUDA -- plus
+        # every marker that `addopts` deselects, `network` included. An empty
+        # `-m` clears the ini filter rather than narrowing it.
+        #
+        # It is off by default so a plain `nox -s tests` stays cheap and offline,
+        # and so every caller states what it wants instead of being detected. The
+        # test matrix narrows it back with `--full -m "not network"`: those tests
+        # download circuits, and a hiccup at GitHub must not redden the whole
+        # matrix, so they keep their own workflow.
         only_group_args += ["--only-group", "torch"]
-        pytest_run_args = [*pytest_run_args, "-m", "not network"]
+        pytest_run_args = [*pytest_run_args, "-m", ""]
     session.run(
         "uv",
         "sync",
@@ -101,15 +214,18 @@ def _run_tests(
         *install_args,
         env=env,
     )
+    wheel = _build_or_reuse_wheel(session, group, env, install_args)
     session.run(
         "uv",
-        "sync",
-        "--inexact",
-        "--no-dev",  # do not auto-install dev dependencies
-        "--no-build-isolation-package",
-        "aigverse",  # build the project without isolation
-        python_flag,
-        *install_args,
+        "pip",
+        "install",
+        "--python",
+        str(_venv_python(session)),
+        # the version comes from the commit, so an uncommitted source change
+        # rebuilds to the same version and would be skipped as already present
+        "--reinstall-package",
+        "aigverse",
+        str(wheel),
         env=env,
     )
     if extra_command:
@@ -123,15 +239,67 @@ def _run_tests(
         *install_args,
         "pytest",
         *pytest_run_args,
-        *session.posargs,
+        *posargs,
         env=env,
     )
+
+
+def _is_abc(candidate: str) -> bool:
+    """Check that a candidate executable really is ABC by asking for its version.
+
+    Args:
+        candidate: Path to the executable to probe.
+
+    Returns:
+        True if the candidate answered with an ABC version banner.
+    """
+    # ABC drops an `abc.history` file wherever it runs, so keep it out of the repo.
+    try:
+        with tempfile.TemporaryDirectory(prefix="aigverse-abc-") as scratch:
+            completed = subprocess.run(  # ruff: ignore[subprocess-without-shell-equals-true]
+                [candidate, "-s", "-q", "version"],
+                cwd=scratch,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=30,
+            )
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+    # The exit code alone would accept anything that succeeds, `/bin/true` included.
+    return completed.returncode == 0 and "abc" in completed.stdout.lower()
+
+
+def _find_abc() -> str | None:
+    """Locate a usable ABC executable the same way the `aigverse.abc` bridge does.
+
+    Kept in sync with `python/aigverse/abc/_binary.py` by hand, since the noxfile
+    runs before `aigverse` is installed and cannot import the bridge. Unlike the
+    bridge, this does probe the candidate: discovery there must stay side-effect
+    free, whereas here the whole point is to fail before a three-minute docs build
+    rather than inside the first executed example.
+
+    Returns:
+        Path to an executable ABC, or None if none was found.
+    """
+    configured = os.environ.get("AIGVERSE_ABC")
+    if configured:
+        # Accepting the variable unvalidated would let the docs build start and
+        # then fail much later, when an example actually invokes ABC.
+        path = Path(configured).expanduser()
+        if not (path.is_file() and os.access(path, os.X_OK)):
+            return None
+        return str(path) if _is_abc(str(path)) else None
+
+    found = shutil.which("abc") or shutil.which("berkeley-abc")
+    return found if found is not None and _is_abc(found) else None
 
 
 @nox.session(reuse_venv=True, python=PYTHON_ALL_VERSIONS, default=True)
 def tests(session: nox.Session) -> None:
     """Run the test suite."""
-    _run_tests(session)
+    _run_tests(session, group="tests")
 
 
 @nox.session(reuse_venv=True, venv_backend="uv", python=PYTHON_ALL_VERSIONS, default=True)
@@ -140,6 +308,7 @@ def minimums(session: nox.Session) -> None:
     with preserve_lockfile():
         _run_tests(
             session,
+            group="minimums",
             install_args=["--resolution=lowest-direct"],
             pytest_run_args=["-Wdefault"],
         )
@@ -161,7 +330,20 @@ def docs(session: nox.Session) -> None:
             "  - Windows: `winget install graphviz` or `choco install graphviz`\n"
         )
 
-    parser = argparse.ArgumentParser()
+    # The ABC documentation page executes its examples, so it needs a real ABC.
+    if _find_abc() is None:
+        session.error(
+            "ABC is required for building the documentation, because the examples on the "
+            "ABC page are executed. Install it and put it on PATH, or point AIGVERSE_ABC at "
+            "it. For example:\n"
+            "  - from source: `git clone https://github.com/berkeley-abc/abc && make -C abc`\n"
+            "  - Ubuntu 22.04: `sudo apt install berkeley-abc`\n"
+            "  - bundled: any `abc` from Yosys or oss-cad-suite\n"
+        )
+
+    # `add_help=False` for the same reason as in `_run_tests`: `-h`/`--help` belong
+    # to sphinx-build, not to this parser, which only needs to peek at `-b`.
+    parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-b", dest="builder", default="html", help="Build target (default: html)")
     args, posargs = parser.parse_known_args(session.posargs)
 

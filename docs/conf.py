@@ -9,28 +9,13 @@
 
 from __future__ import annotations
 
-import warnings
 from importlib import metadata
-from pathlib import Path
-
-ROOT = Path(__file__).parent.parent.resolve()
-
 
 try:
-    from aigverse import __version__ as version
-except ModuleNotFoundError:
-    try:
-        version = metadata.version("aigverse")
-    except ModuleNotFoundError:
-        msg = (
-            "Package should be installed to produce documentation! "
-            "Assuming a modern git archive was used for version discovery."
-        )
-        warnings.warn(msg, stacklevel=1)
-
-        from setuptools_scm import get_version
-
-        version = get_version(root=str(ROOT), fallback_root=ROOT)
+    version = metadata.version("aigverse")
+except metadata.PackageNotFoundError:
+    msg = "aigverse must be installed to build the documentation"
+    raise ModuleNotFoundError(msg) from None
 
 # Filter git details from version
 release = version.split("+")[0]
@@ -95,9 +80,15 @@ myst_substitutions = {
 myst_heading_anchors = 3
 nitpicky = True
 nitpick_ignore = [
+    # a TypeVar and the Ellipsis in variadic tuple annotations are not documentable targets
+    ("py:class", "AigT"),
+    ("py:class", "aigverse.abc._runner.AigT"),
     # autoapi stringifies `tuple[str, ...]` as `tuple[str, Ellipsis]`, and then
     # nitpicky mode cannot resolve `Ellipsis` as a class. The annotation is fine.
     ("py:class", "Ellipsis"),
+    # `gia.stats` returns the `AbcStats` documented at `aigverse.abc.AbcStats`,
+    # but autoapi stringifies the annotation to the defining private module.
+    ("py:class", "aigverse.abc._stats.AbcStats"),
 ]
 
 # -- Options for {MyST}NB ----------------------------------------------------

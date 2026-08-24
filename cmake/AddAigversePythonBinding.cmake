@@ -5,8 +5,11 @@ function(add_aigverse_python_binding target_name)
   nanobind_add_module(
     # Extension name
     ${target_name}
-    # Use stable Python ABI (supported in Python 3.12+)
-    STABLE_ABI
+    # Split mode: the nanobind library is resolved at import time from the
+    # `nanobind-backend` wheel, so one abi3 binary covers Python 3.10 up.
+    # Requires free-threaded Python 3.15 or newer (`abi3t`, PEP 803).
+    BACKEND_MODULE
+    nanobind_backend
     # Free-threaded support
     FREE_THREADED
     # Link-time optimization

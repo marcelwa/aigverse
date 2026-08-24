@@ -1,0 +1,171 @@
+# this file is heavily based on https://github.com/cda-tum/mqt-workflows/blob/main/.github/workflows/reusable-python-ci.yml
+
+name: 🐍 • CI
+
+on:
+  merge_group:
+  push:
+    branches: ["main"]
+    paths:
+      - "src/aigverse/**"
+      - "test/**"
+      - "**/*.py"
+      - "**/*.pyi"
+      - "**/*.hpp"
+      - "**/*.cpp"
+      - "**/*.cmake"
+      - "**/CMakeLists.txt"
+      - "libs/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/aigverse-python-tests.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "src/aigverse/**"
+      - "test/**"
+      - "**/*.py"
+      - "**/*.pyi"
+      - "**/*.hpp"
+      - "**/*.cpp"
+      - "**/*.cmake"
+      - "**/CMakeLists.txt"
+      - "libs/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/aigverse-python-tests.yml"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: 🚨 Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read # required to check out the repository
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Run ty
+        run: uvx prek run -a ty
+
+      - name: Check if stub files are up to date
+        run: |
+          uvx nox -s stubs
+          if [[ -n "$(git status --porcelain python)" ]]; then
+            echo "Stub files are not up to date. Please run 'nox -s stubs' and commit the changes."
+            git --no-pager diff python
+            exit 1
+          fi
+
+      - name: Run check-sdist
+        run: uvx check-sdist --inject-junk
+
+  python-tests:
+    name: 🐍 ${{ matrix.runs-on }}
+    runs-on: ${{ matrix.runs-on }}
+    permissions:
+      contents: read # required to check out the repository
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-2025]
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Windows is on sccache instead, see below.
+      - if: runner.os != 'Windows'
+        name: Setup ccache
+        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
+        with:
+          key: "${{matrix.runs-on}}-aigverse"
+          save: true
+          max-size: 10G
+
+      # MSBuild ignores CMAKE_<LANG>_COMPILER_LAUNCHER, so under scikit-build-core's
+      # default Visual Studio generator the cache was configured and never invoked.
+      # Ninja honours it, but needs MSVC on PATH. sccache rather than ccache,
+      # whose MSVC support reports most invocations uncacheable and hits none.
+      - if: runner.os == 'Windows'
+        name: Set up the MSVC development environment
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+
+      - if: runner.os == 'Windows'
+        name: Build with Ninja so that the compiler cache is used
+        shell: bash
+        run: |
+          echo "CMAKE_GENERATOR=Ninja" >> "$GITHUB_ENV"
+          echo "SCCACHE_DIR=$GITHUB_WORKSPACE/.sccache" >> "$GITHUB_ENV"
+          # ~400 MB working set; a bigger ceiling just evicts other workflows'
+          # caches against the repo-wide 10 GB limit.
+          echo "SCCACHE_CACHE_SIZE=600M" >> "$GITHUB_ENV"
+
+      # Persisting between runs is the whole point: the builds within one job
+      # target different interpreters and share nothing, but recur every run.
+      # Fresh key per run with a prefix restore, since cache entries are immutable.
+      - if: runner.os == 'Windows'
+        name: Cache sccache objects
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .sccache
+          key: sccache-${{ matrix.runs-on }}-aigverse-${{ github.run_id }}
+          restore-keys: sccache-${{ matrix.runs-on }}-aigverse-
+
+      - if: runner.os == 'Linux'
+        name: Setup mold
+        uses: rui314/setup-mold@7e4f20ad28a2e8ca6fd0892ccf72e2abb706b9c3 # v1
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+
+      - if: runner.os == 'Windows'
+        name: Install sccache
+        run: uv tool install sccache
+
+      # The declared floors are only a claim until something installs them, so
+      # resolve every direct dependency down to its minimum and run the suite
+      # against that. This shares the matrix rather than sitting in a job of its
+      # own because wheel availability is itself platform-specific: torch 2.5.0
+      # is the first release to build for 3.13, but only for Linux, so a floor
+      # that is broken on macOS and Windows passes a Linux-only check.
+      #
+      # `--full` installs the optional groups and selects every marker; the
+      # matrix narrows it back to exclude the network tests, which download
+      # circuits and run in their own workflow so that a hiccup at github.com
+      # cannot redden an unrelated matrix.
+      - name: ⬇️ Test the lowest supported dependency versions
+        run: uvx nox -s minimums --verbose -- --full -m "not network"
+
+      - name: 🐍 Test
+        run: uvx nox -s tests --verbose -- --full -m "not network"
+
+      # A hit rate is a fact; a step duration is a guess about one. The other
+      # platforms get this from ccache-action's post step. `--show-stats` is left
+      # to fail the job, since it only fails when sccache itself is broken, which
+      # is the thing this step exists to catch; `--stop-server` exits non-zero
+      # when no server was ever started, which is not an error.
+      - if: always() && runner.os == 'Windows'
+        name: sccache statistics
+        run: |
+          sccache --show-stats
+          sccache --stop-server || true

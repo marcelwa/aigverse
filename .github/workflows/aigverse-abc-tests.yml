@@ -1,0 +1,143 @@
+name: 🅰️ • ABC
+
+# The ABC bridge drives an external ABC executable, which is deliberately not a
+# dependency of aigverse. Its integration tests are therefore skipped everywhere
+# else, and this workflow is the only place they actually run.
+
+on:
+  merge_group:
+  push:
+    branches: ["main"]
+    paths:
+      - "python/aigverse/abc/**"
+      - "test/abc/**"
+      - "examples/**"
+      - "src/aigverse/io/write_aiger.cpp"
+      - "src/aigverse/io/read_aiger.cpp"
+      - "src/aigverse/networks/logic_networks.cpp"
+      - "test/conftest.py"
+      - "noxfile.py"
+      - "pyproject.toml"
+      - ".github/workflows/aigverse-abc-tests.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      # GitHub Actions does not support YAML anchors, so this repeats the list above
+      - "python/aigverse/abc/**"
+      - "test/abc/**"
+      - "examples/**"
+      - "src/aigverse/io/write_aiger.cpp"
+      - "src/aigverse/io/read_aiger.cpp"
+      - "src/aigverse/networks/logic_networks.cpp"
+      - "test/conftest.py"
+      - "noxfile.py"
+      - "pyproject.toml"
+      - ".github/workflows/aigverse-abc-tests.yml"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  # Pinned revision of https://github.com/berkeley-abc/abc that the integration
+  # tests run against. Tracking a moving `main` would make a red run ambiguous
+  # between our change and an upstream one, so this is bumped deliberately.
+  # Kept up to date by the `berkeley-abc/abc` custom manager in renovate.json5.
+  ABC_REV: 5ea34643247f9f45baa3bba40738832d7db19c60
+
+jobs:
+  abc-tests:
+    name: 🅰️ ABC integration on ${{ matrix.runs-on }}
+    runs-on: ${{ matrix.runs-on }}
+    permissions:
+      contents: read # required to check out the repository
+    strategy:
+      fail-fast: false
+      matrix:
+        # Windows is deliberately absent: ABC has no supported MSVC build, and
+        # users on Windows bring their own binary, so there is nothing to install.
+        runs-on: [ubuntu-24.04, macos-15]
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Keyed on the pinned revision, so ABC is compiled only when the pin moves.
+      - name: Restore the ABC build
+        id: abc-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/abc-bin
+          key: abc-${{ matrix.runs-on }}-${{ env.ABC_REV }}
+
+      - if: steps.abc-cache.outputs.cache-hit != 'true'
+        name: Build ABC
+        run: |
+          git clone https://github.com/berkeley-abc/abc.git "${RUNNER_TEMP}/abc"
+          git -C "${RUNNER_TEMP}/abc" checkout --detach "${ABC_REV}"
+          make -C "${RUNNER_TEMP}/abc" -j"$(getconf _NPROCESSORS_ONLN)" ABC_USE_NO_READLINE=1
+          mkdir -p ~/abc-bin
+          cp "${RUNNER_TEMP}/abc/abc" ~/abc-bin/abc
+          # abc.rc carries the alias definitions the shipped script expansions
+          # are checked against, so it travels with the binary
+          cp "${RUNNER_TEMP}/abc/abc.rc" ~/abc-bin/abc.rc
+
+      # $HOME differs between the Linux and macOS runners, so the paths are
+      # resolved by the shell rather than hardcoded in a step-level `env:`.
+      # AIGVERSE_REQUIRE_ABC turns the suite's skips into failures, so this job
+      # cannot go green if the binary is missing or unusable.
+      - name: Point aigverse at the ABC build
+        run: |
+          {
+            echo "AIGVERSE_ABC=${HOME}/abc-bin/abc"
+            echo "AIGVERSE_ABC_RC=${HOME}/abc-bin/abc.rc"
+            echo "AIGVERSE_REQUIRE_ABC=1"
+          } >> "${GITHUB_ENV}"
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
+        with:
+          key: "${{ matrix.runs-on }}-aigverse"
+          save: ${{ github.ref == 'refs/heads/main' }}
+          max-size: 10G
+
+      - if: runner.os == 'Linux'
+        name: Setup mold
+        uses: rui314/setup-mold@7e4f20ad28a2e8ca6fd0892ccf72e2abb706b9c3 # v1
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+
+      # `nox -s tests` covers every supported Python version; the bridge is pure
+      # Python, so a version-specific break would otherwise go unnoticed here.
+      - name: 🅰️ Test against ABC
+        run: |
+          "${AIGVERSE_ABC}" -s -q "version"
+          uvx nox -s tests --verbose -- -m abc
+
+      # Unlike the benchmark job, which exists to exercise the real download,
+      # this one only needs the designs to be present. Keyed on the loader,
+      # so bumping the EPFL revision it pins refetches them.
+      - name: Restore the benchmark cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/epfl-cache
+          key: epfl-${{ matrix.runs-on }}-${{ hashFiles('python/aigverse/benchmarks/_epfl.py') }}
+
+      # `ty` already checks the examples against the library, which catches a
+      # changed signature. It cannot catch a renamed ABC script or a loader that
+      # stopped returning what the script expects, so the script is also run.
+      # `python` is invoked explicitly rather than letting `uv run` read the PEP
+      # 723 block, which would test the last release from PyPI instead of this
+      # checkout.
+      - name: 🧪 Smoke-test the examples
+        run: |
+          uv run --group examples python examples/abc_recipe_study.py \
+            --quick --rounds 1 --cache-dir ~/epfl-cache \
+            --output "${RUNNER_TEMP}/study.png" --csv "${RUNNER_TEMP}/study.csv"

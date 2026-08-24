@@ -53,6 +53,24 @@
       packageNameTemplate: "https://github.com/lsils/benchmarks",
       currentValueTemplate: "master",
       datasourceTemplate: "git-refs",
+    },
+    {
+      // The ABC integration tests build a pinned berkeley-abc revision rather
+      // than tracking its default branch, so that a red run is never ambiguous
+      // between our change and an upstream one. Renovate proposes the bump.
+      customType: "regex",
+      description: "Update the ABC revision the integration tests build",
+      managerFilePatterns: [
+        ".github/workflows/aigverse-abc-tests.yml",
+        ".readthedocs.yaml"
+      ],
+      matchStrings: [
+        "ABC_REV[:=]\\s*(?<currentDigest>[0-9a-f]{40})"
+      ],
+      depNameTemplate: "berkeley-abc/abc",
+      packageNameTemplate: "https://github.com/berkeley-abc/abc",
+      currentValueTemplate: "master",
+      datasourceTemplate: "git-refs",
     }
   ],
   lockFileMaintenance: {
@@ -93,18 +111,57 @@
       commitMessagePrefix: "⬆\uFE0F\uD83D\uDC0D",
     },
     {
+      // Everything the custom managers above track is a pinned revision of an
+      // external project, so the shared parts live here and the three rules
+      // below only differ where they have to.
       matchManagers: [
         "custom.regex"
       ],
       addLabels: [
-        "dependencies",
+        "dependencies"
+      ],
+      // `:automergeDigest` (inherited from extends) would otherwise merge these
+      // unattended. Each of these pins decides an outcome rather than a version
+      // -- the C++ core we build against, the ABC our results come from, or the
+      // circuits we measure -- so all three get reviewed.
+      automerge: false,
+    },
+    // All three custom managers report as `custom.regex`, so matching on the
+    // manager alone gives them one shared prefix and one shared set of labels --
+    // which is how ABC bumps ended up announcing themselves with mockturtle's
+    // turtle. They are told apart by dependency name, which is unique to each.
+    // A fourth custom manager needs a rule here too, or its commits carry no
+    // emoji prefix at all.
+    {
+      description: "mockturtle is the C++ core aigverse is built on",
+      matchDepNames: [
+        "marcelwa/mockturtle"
+      ],
+      addLabels: [
         "C++",
         "build_system"
       ],
       commitMessagePrefix: "⬆\uFE0F\uD83D\uDC22",
-      // `:automergeDigest` (inherited from extends) would otherwise merge these
-      // unattended. A mockturtle bump changes the C++ core, so it gets reviewed.
-      automerge: false,
+    },
+    {
+      description: "ABC is an external binary the integration tests and the docs build",
+      matchDepNames: [
+        "berkeley-abc/abc"
+      ],
+      addLabels: [
+        "testing"
+      ],
+      commitMessagePrefix: "⬆\uFE0F\uD83C\uDD70\uFE0F",
+    },
+    {
+      description: "The EPFL suite is the circuit data the benchmark loader fetches",
+      matchDepNames: [
+        "lsils/benchmarks"
+      ],
+      addLabels: [
+        "benchmarks"
+      ],
+      commitMessagePrefix: "⬆\uFE0F\uD83D\uDCCA",
     },
     {
       description: "Group and automerge all patch updates",
@@ -114,13 +171,6 @@
         "patch"
       ],
       automerge: true
-    },
-    {
-      description: "2026.07.20 crashes validate-pyproject with UnboundLocalError on any [tool.uv] table; unpin once fixed upstream (see GalacticDynamics/quax-blocks#55)",
-      matchPackageNames: [
-        "henryiii/validate-pyproject-schema-store"
-      ],
-      allowedVersions: "<= 2026.07.17"
     }
   ]
 }

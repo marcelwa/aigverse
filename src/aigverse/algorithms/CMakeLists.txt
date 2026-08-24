@@ -7,6 +7,7 @@ add_aigverse_python_binding(
   refactoring.cpp
   resubstitution.cpp
   rewriting.cpp
+  sequential_simulation.cpp
   simulation.cpp
   MODULE_NAME
   algorithms

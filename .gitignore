@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 .ccache/
+.sccache/
 cmake-build-*
 
 # Distribution / packaging
@@ -80,6 +81,8 @@ docs/api/
 docs/example.aig
 docs/example.dot
 docs/example.v
+docs/before.dot
+docs/after.dot
 docs/*.pkl
 docs/aig_pyg_dataset/
 docs/aig_pyg_adj_dataset/
@@ -138,7 +141,7 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# setuptools_scm
+# vcs-versioning
 python/aigverse/_version.py
 
 # SKBuild cache dir
@@ -220,6 +223,8 @@ Thumbs.db
 # Experiment files
 *.json
 *.csv
+# what the standalone scripts under examples/ write into the working directory
+abc_recipe_study.png
 
 # Coverage files
 lcov.info
@@ -234,3 +239,6 @@ __pycache__
 *.tar.*
 *.7z
 *.rar
+
+# ABC drops a command history into whatever directory it runs in
+abc.history

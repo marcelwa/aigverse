@@ -4,6 +4,7 @@ The module contains readers and writers for common file formats in the domain.
 """
 
 import os
+from typing import overload
 
 import aigverse.networks
 
@@ -17,7 +18,9 @@ def read_aiger_into_aig(filename: str | os.PathLike) -> aigverse.networks.NamedA
         The parsed network instance.
 
     Raises:
-        RuntimeError: If parsing the AIGER file fails.
+        RuntimeError: If parsing the AIGER file fails, or if the file has latches, which this
+            network type cannot represent. Read a sequential design with `read_aiger_into_sequential_aig`
+            or `read_ascii_aiger_into_sequential_aig` instead.
     """
 
 def read_ascii_aiger_into_aig(filename: str | os.PathLike) -> aigverse.networks.NamedAig:
@@ -30,7 +33,9 @@ def read_ascii_aiger_into_aig(filename: str | os.PathLike) -> aigverse.networks.
         The parsed network instance.
 
     Raises:
-        RuntimeError: If parsing the ASCII AIGER file fails.
+        RuntimeError: If parsing the ASCII AIGER file fails, or if the file has latches, which this
+            network type cannot represent. Read a sequential design with `read_aiger_into_sequential_aig`
+            or `read_ascii_aiger_into_sequential_aig` instead.
     """
 
 def read_aiger_into_sequential_aig(filename: str | os.PathLike) -> aigverse.networks.SequentialAig:
@@ -59,6 +64,11 @@ def read_ascii_aiger_into_sequential_aig(filename: str | os.PathLike) -> aigvers
         RuntimeError: If parsing the ASCII AIGER file fails.
     """
 
+@overload
+def write_aiger(ntk: aigverse.networks.SequentialAig, filename: str | os.PathLike) -> None: ...
+@overload
+def write_aiger(ntk: aigverse.networks.NamedAig, filename: str | os.PathLike) -> None: ...
+@overload
 def write_aiger(ntk: aigverse.networks.Aig, filename: str | os.PathLike) -> None:
     """Writes a logic network to a binary AIGER file.
 

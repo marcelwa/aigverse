@@ -1,8 +1,8 @@
 [build-system]
 requires = [
-    "scikit-build-core>=0.11.6",
-    "setuptools-scm>=8.1",
-    "nanobind~=2.13.0",
+    "scikit-build-core~=1.0.3",
+    "vcs-versioning~=2.3.0",
+    "nanobind~=3.0.0",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -18,6 +18,14 @@ license = { file = "LICENSE" }
 
 classifiers = [
     "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
@@ -26,23 +34,34 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: MacOS",
-    "Operating System :: POSIX :: Linux",
-    "Intended Audience :: Science/Research",
-    "Natural Language :: English",
-    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Typing :: Typed"
+    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
 ]
 
 requires-python = ">=3.10"
 
+# Split-mode extensions resolve the compiled nanobind backend at import time.
+# Never pin or upper-bound it: two projects pinning different versions could not
+# be installed together.
+dependencies = ["nanobind-backend>=1.0"]
+
 dynamic = ["version"]
 
 [project.optional-dependencies]
-adapters = ["networkx>=3.0.0", "numpy>=1.23.0"]
+adapters = [
+    "networkx>=3.0.0",
+    # 1.23.0 is the project's own floor; the marked ones raise it to the lowest
+    # numpy that still ships wheels for each newer interpreter. Below them
+    # `nox -s minimums` falls back to a source build of a numpy that predates the
+    # Python it is being built for, which fails.
+    "numpy>=1.23.0",
+    "numpy>=1.23.2; python_version >= '3.11'",
+    "numpy>=1.26.0; python_version >= '3.12'",
+    "numpy>=2.1.0; python_version >= '3.13'",
+    "numpy>=2.3.2; python_version >= '3.14'",
+]
 
 [project.urls]
 Source = "https://github.com/marcelwa/aigverse"
@@ -60,19 +79,19 @@ ninja.version = ">=1.10"
 build-dir = "build/{wheel_tag}/{build_type}"
 # Explicitly set the package directory
 wheel.packages = ["python/aigverse"]
-# Enable Stable ABI builds for CPython 3.12+
-wheel.py-api = "cp312"
+# One Stable ABI wheel per platform covers every supported CPython
+wheel.py-api = "cp310"
 # Only build the Python bindings target
 build.targets = ["aigverse-networks", "aigverse-algorithms", "aigverse-io", "aigverse-generators", "aigverse-utils"]
 # Only install the Python package component
 install.components = ["aigverse_Python"]
 
-metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 sdist.include = ["python/aigverse/_version.py"]
 sdist.exclude = [
     "**/.github",
     "**/doc",
     "**/docs",
+    "**/examples",
     "**/test",
 ]
 
@@ -80,6 +99,7 @@ sdist.exclude = [
 sdist-only = ["python/aigverse/_version.py"]
 git-only = [
     "docs/*",
+    "examples/*",
     "test/*",
     ".idea/*",
 ]
@@ -88,7 +108,11 @@ mode = "git"
 build-backend = "auto"
 
 
-[tool.setuptools_scm]
+[[tool.dynamic-metadata]]
+provider = "vcs_versioning"
+
+
+[tool.vcs-versioning]
 write_to = "python/aigverse/_version.py"
 
 
@@ -106,6 +130,7 @@ markers = [
     "network: Tests that require internet access (skipped by default)",
     "tts: Tests for truth table utilities",
     "torch: Tests that require the optional PyTorch dependency (skipped by default)",
+    "abc: Tests for the external ABC bridge (skipped when no ABC binary is found)",
 ]
 addopts = [
     "-ra",
@@ -117,7 +142,9 @@ testpaths = ["test/"]
 
 
 [tool.cibuildwheel]
-build = "cp3*"
+# cp310 builds the one abi3 wheel that serves every supported CPython
+build = "cp310-*"
+# nanobind-backend publishes no musllinux wheels
 skip = ["*-musllinux_*"]
 archs = "auto64"
 build-frontend = "build[uv]"
@@ -136,7 +163,7 @@ before-build = "uv pip install delvewheel>=1.11.2"
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --ignore-existing"
 
 [[tool.cibuildwheel.overrides]]
-select = "cp312-*"
+select = "cp310-*"
 inherit.repair-wheel-command = "append"
 repair-wheel-command = "uvx abi3audit --strict --report {wheel}"
 
@@ -196,10 +223,18 @@ isort.required-imports = ["from __future__ import annotations"]
 "python/aigverse/__init__.py" = ["RUF067"]
 "test/**" = ["T20", "ANN", "D", "INP001", "S301", "S403"]
 "docs/**" = ["T20", "ERA001", "INP001"]
+# standalone PEP 723 scripts: they print their findings and are not a package
+"examples/**" = ["T20", "INP001"]
 # the loaders document the exceptions that propagate out of their helpers
 "python/aigverse/benchmarks/*.py" = ["DOC502"]
 "noxfile.py" = ["T20", "TID251", "ERA001"]
 "tools/*.py" = ["S603", "S607"]
+# the ABC bridge shells out to a user-configured executable by design, and its
+# public functions document the exceptions that propagate out of their helpers
+"python/aigverse/abc/*.py" = ["S603", "DOC502"]
+# the bridge's tests run the configured ABC themselves, and pin behavior of the
+# private helpers the public wrappers are thin over
+"test/abc/*.py" = ["S603", "PLC2701"]
 "*.pyi" = ["D418", "PYI002", "PYI021", "A003", "N999"]
 "*.ipynb" = [
     "D", # pydocstyle
@@ -224,23 +259,38 @@ ignore = [
 
 [dependency-groups]
 build = [
-    "scikit-build-core>=0.11.6",
-    "setuptools-scm>=8.1",
-    "nanobind~=2.13.0",
+    "scikit-build-core~=1.0.3",
+    "vcs-versioning~=2.3.0",
+    "nanobind~=3.0.0",
 ]
 adapters = [
     "networkx>=3.0.0",
+    # 1.23.0 is the project's own floor; the marked ones raise it to the lowest
+    # numpy that still ships wheels for each newer interpreter. Below them
+    # `nox -s minimums` falls back to a source build of a numpy that predates the
+    # Python it is being built for, which fails.
     "numpy>=1.23.0",
+    "numpy>=1.23.2; python_version >= '3.11'",
+    "numpy>=1.26.0; python_version >= '3.12'",
+    "numpy>=2.1.0; python_version >= '3.13'",
+    "numpy>=2.3.2; python_version >= '3.14'",
 ]
 torch = [
+    # Same story as `numpy` above: `--resolution=lowest-direct` installs these
+    # floors literally, and torch ships no wheel for an interpreter that postdates
+    # the release. Unlike numpy it then fails outright rather than attempting a
+    # source build, since torch publishes no sdist. A wheel on Linux alone is not
+    # enough either -- 2.5.0 was the first release to build for 3.13, but only for
+    # Linux, so the 3.13 floor is the 2.6.0 that also covers macOS and Windows.
     "torch>=2.2.0",
+    "torch>=2.6.0; python_version >= '3.13'",
+    "torch>=2.9.0; python_version >= '3.14'",
 ]
 docs = [
     { include-group = "adapters" },
     { include-group = "torch" },
     "furo>=2024.8.6",
     "myst-nb>=1.1.2",
-    "setuptools-scm>=8.1",
     "sphinx-autoapi>=3.3.3",
     "sphinx-copybutton>=0.5.2",
     "sphinx-design>=0.6.1",
@@ -249,8 +299,18 @@ docs = [
     "sphinxext-opengraph>=0.9.1",
     "sphinx>=8.1.3",
     "sphinx>=8.2.3; python_version >= '3.11'",
-    "matplotlib>=3.0.0",
+    # kept in step with the `examples` group so `nox -s minimums` resolves one floor
+    "matplotlib>=3.8",
     "pygraphviz>=1.9.0",
+    "graphviz>=0.20",
+]
+examples = [
+    # what the standalone PEP 723 scripts under examples/ declare inline. Kept in
+    # the dev group as well so `ty` can actually type-check them instead of
+    # having to skip the directory. numpy arrives through `adapters` at the same
+    # floor the scripts declare.
+    { include-group = "adapters" },
+    "matplotlib>=3.8",
 ]
 test = [
     { include-group = "adapters" },
@@ -261,6 +321,7 @@ test = [
 dev = [
     { include-group = "build" },
     { include-group = "adapters" },
+    { include-group = "examples" },
     { include-group = "test" },
     "nox>=2025.10.16",
 ]

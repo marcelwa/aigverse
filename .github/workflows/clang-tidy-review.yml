@@ -1,0 +1,77 @@
+name: Clang-Tidy Review
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "**/*.hpp"
+      - "**/*.cpp"
+      - ".github/workflows/clang-tidy-review.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "**/*.hpp"
+      - "**/*.cpp"
+      - ".github/workflows/clang-tidy-review.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  clangtidy:
+    runs-on: ubuntu-latest
+    name: 🚨 Clang-Tidy
+    permissions:
+      contents: read
+      pull-requests: write # required to post/update the clang-tidy thread comment on the PR
+
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake libpython3-dev
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Install build dependencies with uv
+        run: uv sync --only-group build --no-install-project
+
+      - name: Generate compilation database
+        # kept absolute (not simplified to a relative path) because CMake caches this value and
+        # nanobind's build-time custom commands may invoke it from other working directories
+        env:
+          WORKSPACE: ${{ github.workspace }}
+        run: >
+          cmake -B build -S .
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          -DPython_EXECUTABLE="$WORKSPACE/.venv/bin/python"
+
+      - name: Run clang-tidy
+        id: linter
+        uses: cpp-linter/cpp-linter-action@cab1143a2c149bc41e85b070a9de81716974c18f # v2.21.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          style: ""
+          tidy-checks: ""
+          database: "build"
+          step-summary: true
+          thread-comments: ${{ ((github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork) && 'update') || 'false' }}
+          ignore: "build|libs/*|docs/*"
+          extra-args: "-I${{ github.workspace }}/include -I${{ github.workspace }}/src/aigverse"
+          version: "21"
+          files-changed-only: true
+
+      - if: steps.linter.outputs.checks-failed > 0
+        run: exit 1
