@@ -77,8 +77,8 @@ def run_many(
 ) -> list[AigT | AbcError]: ...
 
 
-# For a caller whose `return_exceptions` is decided at runtime, which neither literal
-# overload above can match.
+# For a caller whose `return_exceptions` is decided at runtime. mypy and pyright
+# expand a `bool` into its two literals and match the overloads above; `ty` does not.
 @overload
 def run_many(
     networks: Iterable[AigT],
@@ -115,7 +115,8 @@ def run_many(
             rows[name] = abc.run_many(designs, script)
 
     Results come back in input order, never completion order, so ``zip(networks,
-    results)`` is always valid.
+    results)`` is always valid. Every result is held at once regardless of ``jobs``,
+    which is the memory a whole corpus costs.
 
     Expect a speedup below the number of cores. A batch is as slow as its slowest
     network, and the AIGER transfer at each end of a run holds the GIL, so only the
@@ -130,8 +131,9 @@ def run_many(
         jobs: How many ABC processes to keep running at once. ``None`` (default)
             uses the number of CPUs available to this process, capped at the number
             of networks; ``1`` runs inline without a thread pool. On large designs
-            memory, not CPU, is what limits this. A CPU *quota* -- ``docker
-            --cpus=2`` -- is not visible here, so set ``jobs`` explicitly under one.
+            memory rather than CPU is what limits this, since each worker holds a
+            whole ABC in flight. A CPU *quota* -- ``docker --cpus=2`` -- is not
+            visible here, so set ``jobs`` explicitly under one.
         timeout: Seconds to wait for ABC to terminate, **per network** rather than
             for the batch as a whole, or ``None`` for no limit.
         use_init_file: If ``False`` (default), ABC is invoked with ``-s`` so that
@@ -158,7 +160,9 @@ def run_many(
         TypeError: If any element of ``networks`` is not an ``Aig``.
         ValueError: If ``jobs`` is below 1, if no command was given, or if ``gia``
             is set and a network has a register whose reset value is undefined.
-        AbcNotFoundError: If no ABC executable could be located.
+        AbcNotFoundError: If no ABC executable could be located. Resolution
+            happens once before any network is run, so this is raised whatever
+            ``return_exceptions`` says.
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds for
             some network and ``return_exceptions`` is not set.
         AbcExecutionError: If ABC reported an error for some network and
@@ -172,8 +176,11 @@ def run_many(
         carries that.
 
     Note:
-        Interrupting a batch drops the networks that have not started yet, but does
-        not kill the ABC processes already running; ``timeout`` is what bounds those.
+        Interrupting a batch drops the networks that have not started yet. Ctrl-C in a
+        terminal reaches the running ABC processes too, because they share the
+        foreground process group, but an interrupt delivered to the interpreter alone
+        does not -- ``run_commands`` keeps no handle on what it spawned, so ``timeout``
+        is what bounds those.
     """
     items = list(networks)
 
@@ -182,11 +189,11 @@ def run_many(
     if jobs is not None and jobs < 1:
         msg = f"jobs must be at least 1, got {jobs}"
         raise ValueError(msg)
-    command = join_commands(commands)
     for ntk in items:
         check_supported(ntk)
         if gia:
             check_gia_supported(ntk)
+    command = join_commands(commands)
 
     # Before resolving the binary, so an empty batch is a no-op on a machine
     # without ABC rather than an AbcNotFoundError.

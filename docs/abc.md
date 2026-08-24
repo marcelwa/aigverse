@@ -263,8 +263,8 @@ transfer.
 
 Expect a speedup below the number of cores. A batch is only as fast as its slowest network,
 and the AIGER transfer at each end of a run holds the GIL, so it is the ABC processes that
-overlap rather than the whole call. The recipe study below drops from 44 to 11 seconds on
-sixteen cores — a little under 4x for 400 runs.
+overlap rather than the whole call. The recipe study below drops from 20 to 8 seconds on
+sixteen cores — about 2.5x for its 400 runs.
 
 The wrappers take one network each, but every script they run is reachable as commands:
 {py:func}`~aigverse.abc.expand_script` hands out the canonical ones, and a command with
@@ -569,7 +569,7 @@ repository:
 
 ```console
 uv run examples/abc_recipe_study.py --quick   # four small designs, for a smoke test
-uv run examples/abc_recipe_study.py           # the default ten-design set, ~11 s on sixteen cores
+uv run examples/abc_recipe_study.py           # the default ten-design set, ~8 s on sixteen cores
 uv run examples/abc_recipe_study.py --all     # the whole EPFL suite, hyp and div included (slow)
 ```
 

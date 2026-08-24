@@ -9,6 +9,7 @@ count, which is what makes a batch's items distinguishable from inside ABC.
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -27,7 +28,6 @@ from aigverse.networks import Aig, NamedAig, SequentialAig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from pathlib import Path
 
 # The fake-ABC shims rely on the executable bit, which does not carry over on Windows.
 requires_posix = pytest.mark.skipif(sys.platform == "win32", reason="the fake ABC shims rely on POSIX executable bits")
@@ -242,7 +242,7 @@ if inputs == 4:
     with pytest.raises(AbcExecutionError) as excinfo:
         run_many(networks, "balance", jobs=2, binary=shim)
 
-    assert any("index 2" in note for note in excinfo.value.__notes__)
+    assert any("index 2" in note for note in getattr(excinfo.value, "__notes__", []))
 
 
 @requires_posix
@@ -358,7 +358,7 @@ def test_the_binary_is_resolved_once_for_a_batch(
 def test_a_single_call_resolves_the_binary_once(
     monkeypatch: pytest.MonkeyPatch, and_aig: Aig, fake_abc: Callable[[str], Path]
 ) -> None:
-    """`run_script` used to resolve again after ABC had run, only to name it in errors.
+    """Discovery walks PATH, so a single call must not repeat it either.
 
     Args:
         monkeypatch: Used to count discovery calls.
@@ -385,6 +385,90 @@ def test_a_single_call_resolves_the_binary_once(
     run_script(and_aig, "balance")
 
     assert calls == 1
+
+
+@requires_posix
+def test_one_job_returns_failures_in_place_too(and_aig: Aig, fake_abc: Callable[[str], Path]) -> None:
+    """The serial path is the threaded path's twin, not a shortcut past its behaviour.
+
+    Args:
+        and_aig: A small network to batch.
+        fake_abc: Builds the stand-in executable.
+    """
+    shim = fake_abc("print(\"** cmd error: unknown command 'nope'\")\nsys.exit(0)")
+
+    results = run_many([and_aig, and_aig], "nope", jobs=1, binary=shim, return_exceptions=True)
+
+    assert [type(result) for result in results] == [AbcExecutionError, AbcExecutionError]
+
+
+@requires_posix
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="exception notes are 3.11+")
+def test_one_job_names_the_failing_network_too(fake_abc: Callable[[str], Path]) -> None:
+    """The index note is attached on the serial path as well.
+
+    Args:
+        fake_abc: Builds the stand-in executable.
+    """
+    shim = fake_abc(
+        _READ_INPUTS
+        + """
+if inputs == 3:
+    print("** cmd error: unknown command 'nope'")
+    sys.exit(0)
+(cwd / "out.aig").write_bytes(source.read_bytes())
+"""
+    )
+
+    with pytest.raises(AbcExecutionError) as excinfo:
+        run_many([aig_with_pis(2), aig_with_pis(3)], "balance", jobs=1, binary=shim)
+
+    assert any("index 1" in note for note in getattr(excinfo.value, "__notes__", []))
+
+
+@requires_posix
+def test_networks_may_be_any_iterable(and_aig: Aig, fake_abc: Callable[[str], Path]) -> None:
+    """`networks` is consumed in full up front, so a one-shot iterable is fine.
+
+    Args:
+        and_aig: A small network to batch.
+        fake_abc: Builds the stand-in executable.
+    """
+    results = run_many((and_aig for _ in range(3)), "balance", jobs=2, binary=fake_abc(_HAPPY))
+
+    assert len(results) == 3
+
+
+def test_a_non_abc_failure_is_never_returned_in_place(monkeypatch: pytest.MonkeyPatch, and_aig: Aig) -> None:
+    """A full disk is not a per-network ABC failure, so it must not land in the list.
+
+    Args:
+        monkeypatch: Used to make the per-network work fail with an OSError.
+        and_aig: A small network to batch.
+    """
+    from aigverse.abc import _batch
+
+    def explode(*_args: object, **_kwargs: object) -> None:
+        """Fails the way the filesystem would.
+
+        Raises:
+            OSError: Always.
+        """
+        msg = "no space left on device"
+        raise OSError(msg)
+
+    monkeypatch.setattr(_batch, "run_script", explode)
+    monkeypatch.setattr(_batch, "resolve_binary", lambda _binary: Path("/nonexistent/abc"))
+
+    with pytest.raises(OSError, match="no space left"):
+        run_many([and_aig, and_aig], "balance", jobs=2, return_exceptions=True)
+
+
+def test_the_default_job_count_is_at_least_one() -> None:
+    """Every fallback in the ladder must yield a usable worker count."""
+    from aigverse.abc._batch import _default_jobs
+
+    assert _default_jobs() >= 1
 
 
 @requires_posix

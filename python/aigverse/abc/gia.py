@@ -864,8 +864,8 @@ def run_many(
 ) -> list[AigT | AbcError]: ...
 
 
-# For a caller whose `return_exceptions` is decided at runtime, which neither literal
-# overload above can match.
+# For a caller whose `return_exceptions` is decided at runtime. mypy and pyright
+# expand a `bool` into its two literals and match the overloads above; `ty` does not.
 @overload
 def run_many(
     networks: Iterable[AigT],

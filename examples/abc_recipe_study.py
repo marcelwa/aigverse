@@ -308,7 +308,7 @@ def run_batch(
     gia: bool,
     jobs: int | None,
     verify: bool,
-) -> int:
+) -> list[Benchmark]:
     """Apply one recipe to every benchmark at once and record what it did.
 
     The whole design set goes to ABC as a single parallel batch, so the recipe

@@ -21,7 +21,8 @@ releases may include breaking changes.
 
 - ⚡️ Run `examples/abc_recipe_study.py`'s sweep as one batch per recipe rather than one
   ABC call at a time, and give it a `--jobs` flag. Its 400 runs over the default design
-  set drop from 44 s to 11 s on sixteen cores, with identical measurements ([#467])
+  set drop from 20 s to 8 s on sixteen cores, with every measurement unchanged. Its CSV
+  loses the `seconds` column, which a concurrent run cannot measure per item ([#467])
   ([**@marcelwa**])
 - ⚡️ Release the GIL in the `generators` bindings, so random and structured
   network construction overlaps across threads instead of blocking every other
@@ -32,9 +33,10 @@ releases may include breaking changes.
 
 ### Fixed
 
-- 🐛 Resolve the ABC executable once per `run_script` call instead of twice. The second
-  lookup ran after ABC had already finished, purely to name the binary in an error, so a
-  binary that disappeared mid-run discarded a successful result ([#467]) ([**@marcelwa**])
+- 🐛 Look the ABC executable up on `PATH` once per `run_script` call instead of twice. The
+  second lookup ran after ABC had already finished, purely to name the binary in an error,
+  so a binary that disappeared mid-run discarded a successful result ([#467])
+  ([**@marcelwa**])
 
 ## [0.1.5] - 2026-08-24
 
