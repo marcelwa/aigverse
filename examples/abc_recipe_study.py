@@ -38,9 +38,11 @@ input shape with achieved area reduction.
 Benchmarks are fetched and cached by ``aigverse.benchmarks``, so nothing needs to
 be downloaded by hand.
 
-Every recipe goes to ABC as one parallel batch over the whole design set through
-``aigverse.abc.run_many``, so the study runs on every core rather than one.
-``--verify`` makes it SAT-bound instead, which hides most of that.
+Every recipe goes to ABC as one batch over the whole design set through
+``aigverse.abc.run_many``, which overlaps the designs rather than running them one
+after another. How many overlap is ``--jobs``, one per core by default and never
+more than there are designs. ``--verify`` makes the study SAT-bound instead, which
+hides most of what that buys.
 
 Usage:
     ./abc_recipe_study.py                    # default benchmark subset
@@ -311,10 +313,10 @@ def run_batch(
 ) -> list[Benchmark]:
     """Apply one recipe to every benchmark at once and record what it did.
 
-    The whole design set goes to ABC as a single parallel batch, so the recipe
-    costs one round of ABC time rather than one per design. Failures come back in
-    place of their result, so a design ABC chokes on does not cost the sweep the
-    rest of the row.
+    The whole design set goes to ABC as a single batch, so the recipe costs roughly
+    what its slowest design costs rather than the sum over all of them. Failures come
+    back in place of their result, so a design ABC chokes on does not cost the sweep
+    the rest of the row.
 
     Args:
         benchmarks: The benchmarks to optimize.
