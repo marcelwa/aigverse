@@ -258,7 +258,7 @@ def test_a_failure_cancels_the_queued_networks(tmp_path: Path, fake_abc: Callabl
     shim = fake_abc(
         _READ_INPUTS
         + f"""
-(pathlib.Path({str(markers)!r}) / f"{{os.getpid()}}").touch()
+(pathlib.Path({str(markers)!r}) / f"{{os.getpid()}}-{{time.time_ns()}}").touch()
 if inputs == 2:
     print("** cmd error: unknown command 'nope'")
     sys.exit(0)
@@ -272,8 +272,9 @@ time.sleep(1.0)
     with pytest.raises(AbcExecutionError):
         run_many(networks, "balance", jobs=2, binary=shim)
 
-    # Two workers, so at most a handful can have started; the margin is deliberately
-    # enormous, because what is being pinned is "not all of them", not a count.
+    # A PID alone would not identify an invocation, since the shims are short-lived
+    # and a PID is reusable. Two workers, so at most a handful can have started; the
+    # margin is deliberately enormous, because what is pinned is "not all of them".
     assert len(list(markers.iterdir())) < len(networks) // 2
 
 
