@@ -1,0 +1,72 @@
+name: CD
+
+# Everything that publishes. Kept apart from `ci.yml` so that no workflow reachable from
+# a pull request ever holds the credentials to release: PyPI is only ever touched from a
+# published release.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  packaging-sdist:
+    name: 📦 Packaging
+    permissions:
+      contents: read # required to check out the repository
+    uses: ./.github/workflows/packaging-sdist.yml
+
+  packaging-wheels:
+    name: 🛞 Packaging
+    permissions:
+      contents: read # required to check out the repository
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-2025]
+    uses: ./.github/workflows/packaging-wheels.yml
+    with:
+      runs-on: ${{ matrix.runs-on }}
+
+  publish-to-pypi:
+    name: 🚀 Publish to PyPI
+    needs: [packaging-sdist, packaging-wheels]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # `workflow_dispatch` builds the artifacts above as a dry run and stops here, so the
+    # release path can be exercised without publishing anything.
+    if: github.event_name == 'release' && github.event.action == 'published'
+    # the one place in the repository that can reach PyPI. Naming a deployment environment
+    # gives that step somewhere to hang required reviewers or a wait timer; until such a
+    # rule is configured the environment imposes nothing
+    environment:
+      name: pypi
+      url: https://pypi.org/p/aigverse
+    permissions:
+      attestations: write # required to publish the build provenance attestation
+      id-token: write # required by actions/attest-build-provenance and PyPI trusted publishing
+    steps:
+      - name: Download the previously stored artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - name: Generate artifact attestation for sdist and wheel(s)
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: "dist/*"
+
+      - name: Deploy to PyPI
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+        with:
+          skip-existing: true
+          verbose: true
+          attestations: true

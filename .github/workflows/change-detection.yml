@@ -1,0 +1,191 @@
+name: ❓ • Change Detection
+
+# Decides which parts of CI run for a pull request. Every flag defaults to `true` off
+# pull requests, because `push`, `merge_group`, `schedule`, and `workflow_dispatch` have
+# no diff base to compare against — a merge group therefore always runs the full fleet.
+#
+# This replaces the `on: paths:` filters the individual workflows used to carry. A
+# workflow skipped by `paths:` never reports its status context at all, so it can never
+# be a required check; a job skipped by one of these flags still lets the `🚦 Check`
+# guard in `ci.yml` conclude. That difference is the reason this file exists.
+
+on:
+  workflow_call:
+    outputs:
+      run-python-tests:
+        description: Whether to build the extension and run the test suite
+        value: ${{ jobs.change-detection.outputs.run-python-tests || false }}
+      run-python-linter:
+        description: Whether to type check the Python sources and verify the stubs
+        value: ${{ jobs.change-detection.outputs.run-python-linter || false }}
+      run-benchmark-tests:
+        description: Whether to exercise the EPFL benchmark downloader
+        value: ${{ jobs.change-detection.outputs.run-benchmark-tests || false }}
+      run-abc-tests:
+        description: Whether to run the ABC bridge against a real ABC build
+        value: ${{ jobs.change-detection.outputs.run-abc-tests || false }}
+      run-cpp-linter:
+        description: Whether to run Clang-Tidy
+        value: ${{ jobs.change-detection.outputs.run-cpp-linter || false }}
+      run-codeql:
+        description: Whether to run the CodeQL analysis
+        value: ${{ jobs.change-detection.outputs.run-codeql || false }}
+      run-packaging:
+        description: Whether to build the source distribution and the wheels
+        value: ${{ jobs.change-detection.outputs.run-packaging || false }}
+      run-workflows:
+        description: Whether to audit the workflow definitions
+        value: ${{ jobs.change-detection.outputs.run-workflows || false }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-change-detection
+  cancel-in-progress: true
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  change-detection:
+    name: 🕵️ Check
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      contents: read # required to check out the repository and diff against the base ref
+    outputs:
+      run-python-tests: >-
+        ${{ github.event_name != 'pull_request'
+        || steps.filter.outputs.run-python-tests == 'true' }}
+      run-python-linter: >-
+        ${{ github.event_name != 'pull_request'
+        || steps.filter.outputs.run-python-linter == 'true' }}
+      run-benchmark-tests: >-
+        ${{ github.event_name != 'pull_request'
+        || steps.filter.outputs.run-benchmark-tests == 'true' }}
+      run-abc-tests: >-
+        ${{ github.event_name != 'pull_request'
+        || steps.filter.outputs.run-abc-tests == 'true' }}
+      run-cpp-linter: >-
+        ${{ github.event_name != 'pull_request'
+        || steps.filter.outputs.run-cpp-linter == 'true' }}
+      run-codeql: >-
+        ${{ github.event_name != 'pull_request'
+        || steps.filter.outputs.run-codeql == 'true' }}
+      run-packaging: >-
+        ${{ github.event_name != 'pull_request'
+        || steps.filter.outputs.run-packaging == 'true' }}
+      run-workflows: >-
+        ${{ github.event_name != 'pull_request'
+        || steps.filter.outputs.run-workflows == 'true' }}
+
+    steps:
+      # Checked out so that the filters resolve against `git diff` rather than the REST
+      # API, whose changed-file listing stops at 300 entries and would throw on a large
+      # pull request instead of degrading.
+      - name: Clone Repository
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Unlike GitHub's own `on: paths:`, the filter document here is parsed as YAML by
+      # the action, so the shared path groups can be anchors instead of copy-paste.
+      - name: Determine which parts of the pipeline are affected
+        if: github.event_name == 'pull_request'
+        id: filter
+        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
+        with:
+          filters: |
+            # Sources the compiled extension is built from. There is no `libs/`:
+            # mockturtle, kitty, and lorina arrive through CMake `FetchContent`.
+            extension: &extension
+              - "src/**"
+              - "cmake/**"
+              - "CMakeLists.txt"
+            # Everything that shapes the installed Python package or how it is built.
+            package: &package
+              - "python/**"
+              - "noxfile.py"
+              - "pyproject.toml"
+              - "uv.lock"
+
+            run-python-tests:
+              - *extension
+              - *package
+              - "test/**"
+              - ".github/workflows/ci.yml"
+              - ".github/workflows/change-detection.yml"
+              - ".github/workflows/python-tests.yml"
+
+            run-python-linter:
+              - *extension
+              - *package
+              - "test/**"
+              - "examples/**"
+              - ".pre-commit-config.yaml"
+              - ".github/workflows/ci.yml"
+              - ".github/workflows/change-detection.yml"
+              - ".github/workflows/python-linter.yml"
+
+            # The loader is pure Python, but it is exercised through an installed
+            # aigverse, so the extension is in scope as well.
+            run-benchmark-tests:
+              - *extension
+              - "python/aigverse/benchmarks/**"
+              - "test/benchmarks/**"
+              - "test/conftest.py"
+              - "noxfile.py"
+              - "pyproject.toml"
+              - ".github/workflows/ci.yml"
+              - ".github/workflows/change-detection.yml"
+              - ".github/workflows/benchmark-tests.yml"
+
+            # The bridge hands AIGER files to ABC and reads them back, so the two I/O
+            # translation units and the name bookkeeping they depend on are in scope.
+            run-abc-tests:
+              - "python/aigverse/abc/**"
+              - "test/abc/**"
+              - "examples/**"
+              - "src/aigverse/io/read_aiger.cpp"
+              - "src/aigverse/io/write_aiger.cpp"
+              - "src/aigverse/networks/logic_networks.cpp"
+              - "test/conftest.py"
+              - "noxfile.py"
+              - "pyproject.toml"
+              - ".github/workflows/ci.yml"
+              - ".github/workflows/change-detection.yml"
+              - ".github/workflows/abc-tests.yml"
+
+            run-cpp-linter:
+              - *extension
+              - ".clang-tidy"
+              - ".github/workflows/ci.yml"
+              - ".github/workflows/change-detection.yml"
+              - ".github/workflows/cpp-linter.yml"
+
+            run-codeql:
+              - *extension
+              - *package
+              - "test/**"
+              - "examples/**"
+              - ".github/workflows/ci.yml"
+              - ".github/workflows/change-detection.yml"
+              - ".github/workflows/codeql.yml"
+
+            # `[tool.cibuildwheel] test-command` runs pytest against every wheel, so the
+            # filter has to cover everything the extension is compiled from, not just
+            # what shapes the distribution.
+            run-packaging:
+              - *extension
+              - *package
+              - "test/**"
+              - ".github/workflows/ci.yml"
+              - ".github/workflows/cd.yml"
+              - ".github/workflows/change-detection.yml"
+              - ".github/workflows/packaging-sdist.yml"
+              - ".github/workflows/packaging-wheels.yml"
+
+            run-workflows:
+              - ".github/workflows/**"

@@ -1,42 +1,23 @@
 name: 📝 • CodeQL
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - "**/*.hpp"
-      - "**/*.cpp"
-      - "**/*.cmake"
-      - "**/CMakeLists.txt"
-      - "**/*.py"
-      - "**/*.pyi"
-      - "libs/**"
-      - ".github/workflows/aigverse-codeql.yml"
-  pull_request:
-    branches: ["main"]
-    paths:
-      - "**/*.hpp"
-      - "**/*.cpp"
-      - "**/*.cmake"
-      - "**/CMakeLists.txt"
-      - "**/*.py"
-      - "**/*.pyi"
-      - "libs/**"
-      - ".github/workflows/aigverse-codeql.yml"
-  merge_group:
-  schedule:
-    - cron: "30 5 * * 6"
+  workflow_call:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-codeql
   cancel-in-progress: true
 
 permissions: {}
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   analyze:
-    name: ${{matrix.emoji}} Analysis
-    runs-on: ubuntu-latest
+    name: ${{ matrix.emoji }} Analysis
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     permissions:
       actions: read # required by github/codeql-action/init to check the workflow run
       contents: read # required to check out the repository
@@ -45,6 +26,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # The build mode is what decides how the database is built. C++ is `manual`: the
+        # CMake build between `init` and `analyze` below is what CodeQL traces. Python has
+        # no build at all, which is `none`.
         language: ["cpp", "python"]
         include:
           - language: cpp
@@ -61,20 +45,25 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      # `save: false`, so this consumes the test matrix's cache without writing back a
+      # Debug build's objects. The key has to be the runner label the matrix actually
+      # uses: spelled `ubuntu-latest-aigverse`, it matched nothing.
       - name: Setup ccache
+        if: matrix.language == 'cpp'
         uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
         with:
-          key: "ubuntu-latest-aigverse"
+          key: "ubuntu-24.04-aigverse"
           save: false
           max-size: 10G
 
       - name: Set up mold as linker
+        if: matrix.language == 'cpp'
         uses: rui314/setup-mold@7e4f20ad28a2e8ca6fd0892ccf72e2abb706b9c3 # v1
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
         with:
-          languages: ${{matrix.language}}
+          languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
           config: |
             queries:

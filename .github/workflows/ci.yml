@@ -1,0 +1,183 @@
+name: CI
+
+# The thin caller. Every real job lives in a callable workflow beside this file; the only
+# work done here is deciding what runs and aggregating the outcome into `🚦 Check`.
+#
+# Deliberately no `on: paths:` filters. A workflow that `paths:` skips never reports a
+# status context, so it can never be required by branch protection. Filtering moved into
+# `change-detection.yml`, whose flags skip *jobs* while `🚦 Check` still concludes.
+
+on:
+  # unconditional on `main`: these runs are what write the compiler and uv caches that
+  # pull request runs restore from, since every cache step saves only on this ref
+  push:
+    branches: ["main"]
+  # deliberately unfiltered: a pull request onto any other base still has to report `🚦 Check`,
+  # and a required context that never arrives blocks that pull request forever
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  change-detection:
+    name: 🔍 Change
+    permissions:
+      contents: read # required to check out the repository
+    uses: ./.github/workflows/change-detection.yml
+
+  # `nox -s tests` and `nox -s minimums` across every supported interpreter. The caller
+  # job's name is the group its checks appear under, so it stays a short label and
+  # deliberately does not mention the matrix — GitHub appends the entry itself, and the
+  # called job spells it out: `🐍 Test (ubuntu-24.04) / 🐍 ubuntu-24.04`.
+  python-tests:
+    name: 🐍 Test
+    permissions:
+      contents: read # required to check out the repository
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-python-tests)
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-2025]
+    uses: ./.github/workflows/python-tests.yml
+    with:
+      runs-on: ${{ matrix.runs-on }}
+
+  python-linter:
+    name: 🚨 Lint
+    permissions:
+      contents: read # required to check out the repository
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-python-linter)
+    uses: ./.github/workflows/python-linter.yml
+
+  cpp-linter:
+    name: 🚨 Clang-Tidy
+    permissions:
+      contents: read # required to check out the repository
+      pull-requests: write # required to post/update the clang-tidy thread comment on the PR
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-cpp-linter)
+    uses: ./.github/workflows/cpp-linter.yml
+
+  benchmark-tests:
+    name: 📊 Benchmarks
+    permissions:
+      contents: read # required to check out the repository
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-benchmark-tests)
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-2025]
+    uses: ./.github/workflows/benchmark-tests.yml
+    with:
+      runs-on: ${{ matrix.runs-on }}
+
+  abc-tests:
+    name: 🅰️ ABC
+    permissions:
+      contents: read # required to check out the repository
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-abc-tests)
+    strategy:
+      fail-fast: false
+      matrix:
+        # Windows is deliberately absent: ABC has no supported MSVC build, and
+        # users on Windows bring their own binary, so there is nothing to install.
+        runs-on: [ubuntu-24.04, macos-15]
+    uses: ./.github/workflows/abc-tests.yml
+    with:
+      runs-on: ${{ matrix.runs-on }}
+
+  codeql:
+    name: 📝 CodeQL
+    permissions:
+      actions: read # required by github/codeql-action/init to check the workflow run
+      contents: read # required to check out the repository
+      security-events: write # required to upload the SARIF results
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-codeql)
+    uses: ./.github/workflows/codeql.yml
+
+  packaging-sdist:
+    name: 📦 Packaging
+    permissions:
+      contents: read # required to check out the repository
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-packaging)
+    uses: ./.github/workflows/packaging-sdist.yml
+
+  packaging-wheels:
+    name: 🛞 Packaging
+    permissions:
+      contents: read # required to check out the repository
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-packaging)
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-2025]
+    uses: ./.github/workflows/packaging-wheels.yml
+    with:
+      runs-on: ${{ matrix.runs-on }}
+
+  zizmor:
+    name: 🌈 Zizmor
+    permissions:
+      contents: read # required to check out the repository
+      security-events: write # required to upload results to the code scanning API
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-workflows)
+    uses: ./.github/workflows/zizmor.yml
+
+  # This job does nothing and is only used for branch protection. `if: always()` is what
+  # makes it usable as a required check: without it a failed dependency would *skip* the
+  # guard, and a skipped required context leaves a pull request waiting forever.
+  required-checks-pass:
+    name: 🚦 Check
+    if: always()
+    needs:
+      - change-detection
+      - python-tests
+      - python-linter
+      - cpp-linter
+      - benchmark-tests
+      - abc-tests
+      - codeql
+      - packaging-sdist
+      - packaging-wheels
+      - zizmor
+    runs-on: ubuntu-slim
+    permissions: {}
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        # `re-actors/alls-green` fails on any skip that `allowed-skips` did not predict — a
+        # job skipped because an upstream job died still fails the guard. A hand-rolled
+        # `contains(needs.*.result, 'failure')` would silently pass on lost coverage.
+        uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
+        with:
+          allowed-skips: >-
+            ${{ !fromJSON(needs.change-detection.outputs.run-python-tests)
+            && 'python-tests,' || '' }}
+            ${{ !fromJSON(needs.change-detection.outputs.run-python-linter)
+            && 'python-linter,' || '' }}
+            ${{ !fromJSON(needs.change-detection.outputs.run-cpp-linter)
+            && 'cpp-linter,' || '' }}
+            ${{ !fromJSON(needs.change-detection.outputs.run-benchmark-tests)
+            && 'benchmark-tests,' || '' }}
+            ${{ !fromJSON(needs.change-detection.outputs.run-abc-tests)
+            && 'abc-tests,' || '' }}
+            ${{ !fromJSON(needs.change-detection.outputs.run-codeql)
+            && 'codeql,' || '' }}
+            ${{ !fromJSON(needs.change-detection.outputs.run-packaging)
+            && 'packaging-sdist,packaging-wheels,' || '' }}
+            ${{ !fromJSON(needs.change-detection.outputs.run-workflows)
+            && 'zizmor' || '' }}
+          jobs: ${{ toJSON(needs) }}

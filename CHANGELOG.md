@@ -33,6 +33,11 @@ releases may include breaking changes.
 
 ### Changed
 
+- 👷 Restructure CI into a thin `ci.yml` caller over one reusable workflow per
+  concern, gated by a `change-detection` job. Path filtering moved out of
+  `on: paths:`, which suppresses the status context entirely and so can never be
+  a required check, and into flags that skip jobs while the single `🚦 Check`
+  guard still concludes ([#422]) ([**@marcelwa**])
 - ⚡️ Adopt nanobind 3.0's split mode, so one `abi3` wheel per platform covers
   every supported Python from 3.10 up instead of three. Cold build time drops
   3.15x and the shipped payload 4.3x; the extensions themselves shrink 26% by no
@@ -205,6 +210,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 [#445]: https://github.com/marcelwa/aigverse/pull/445
 [#435]: https://github.com/marcelwa/aigverse/pull/435
 [#430]: https://github.com/marcelwa/aigverse/pull/430
+[#422]: https://github.com/marcelwa/aigverse/pull/422
 [#421]: https://github.com/marcelwa/aigverse/pull/421
 [#420]: https://github.com/marcelwa/aigverse/pull/420
 [#419]: https://github.com/marcelwa/aigverse/pull/419

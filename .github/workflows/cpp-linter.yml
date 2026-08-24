@@ -1,31 +1,25 @@
-name: Clang-Tidy Review
+name: 🚨 • Clang-Tidy
 
 on:
-  pull_request:
-    branches: ["main"]
-    paths:
-      - "**/*.hpp"
-      - "**/*.cpp"
-      - ".github/workflows/clang-tidy-review.yml"
-  push:
-    branches: ["main"]
-    paths:
-      - "**/*.hpp"
-      - "**/*.cpp"
-      - ".github/workflows/clang-tidy-review.yml"
+  workflow_call:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-cpp-linter
   cancel-in-progress: true
 
 permissions: {}
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
-  clangtidy:
-    runs-on: ubuntu-latest
+  cpp-linter:
     name: 🚨 Clang-Tidy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     permissions:
-      contents: read
+      contents: read # required to check out the repository
       pull-requests: write # required to post/update the clang-tidy thread comment on the PR
 
     steps:
