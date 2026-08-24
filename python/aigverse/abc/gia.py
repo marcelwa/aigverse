@@ -864,6 +864,21 @@ def run_many(
 ) -> list[AigT | AbcError]: ...
 
 
+# For a caller whose `return_exceptions` is decided at runtime, which neither literal
+# overload above can match.
+@overload
+def run_many(
+    networks: Iterable[AigT],
+    commands: str | Sequence[str],
+    *,
+    jobs: int | None = ...,
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+    return_exceptions: bool,
+) -> list[AigT] | list[AigT | AbcError]: ...
+
+
 def run_many(
     networks: Iterable[AigT],
     commands: str | Sequence[str],
@@ -894,11 +909,11 @@ def run_many(
         binary: Overrides the resolved ABC executable for this call only. It is
             resolved once for the whole batch.
         return_exceptions: If ``True``, each failing network yields its
-            :exc:`AbcError` in place of a result instead of aborting the batch.
+            :exc:`~aigverse.abc.AbcError` in place of a result instead of aborting the batch.
 
     Returns:
         The optimized networks, in input order, each of the same type as its input
-        -- with :exc:`AbcError` instances in place of the failures when
+        -- with :exc:`~aigverse.abc.AbcError` instances in place of the failures when
         ``return_exceptions`` is set.
 
     Raises:
@@ -911,19 +926,6 @@ def run_many(
         AbcExecutionError: If ABC reported an error for some network and
             ``return_exceptions`` is not set.
     """
-    # Split rather than forwarded: `return_exceptions` is a plain bool here, which
-    # matches neither of the batch function's literal overloads.
-    if return_exceptions:
-        return _base_run_many(
-            networks,
-            commands,
-            jobs=jobs,
-            timeout=timeout,
-            use_init_file=use_init_file,
-            gia=True,
-            binary=binary,
-            return_exceptions=True,
-        )
     return _base_run_many(
         networks,
         commands,
@@ -932,4 +934,5 @@ def run_many(
         use_init_file=use_init_file,
         gia=True,
         binary=binary,
+        return_exceptions=return_exceptions,
     )

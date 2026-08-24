@@ -10,14 +10,31 @@ releases may include breaking changes.
 
 ## [Unreleased]
 
+### Added
+
+- ✨ Add `run_many` to the `aigverse.abc` bridge, which runs one ABC script over many
+  networks at once, one process per network across all cores, and with
+  `return_exceptions=True` hands back each failure in its network's place instead of
+  losing the batch to the first bad design ([#467]) ([**@marcelwa**])
+
 ### Changed
 
+- ⚡️ Run `examples/abc_recipe_study.py`'s sweep as one batch per recipe rather than one
+  ABC call at a time, and give it a `--jobs` flag. Its 400 runs over the default design
+  set drop from 44 s to 11 s on sixteen cores, with identical measurements ([#467])
+  ([**@marcelwa**])
 - ⚡️ Release the GIL in the `generators` bindings, so random and structured
   network construction overlaps across threads instead of blocking every other
   worker ([#478]) ([**@marcelwa**])
 - ⚡️ Release the GIL in the `io` bindings, so reading and writing networks
   overlaps across threads instead of serializing against every other worker
   ([#477]) ([**@marcelwa**])
+
+### Fixed
+
+- 🐛 Resolve the ABC executable once per `run_script` call instead of twice. The second
+  lookup ran after ABC had already finished, purely to name the binary in an error, so a
+  binary that disappeared mid-run discarded a successful result ([#467]) ([**@marcelwa**])
 
 ## [0.1.5] - 2026-08-24
 
@@ -210,6 +227,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#467]: https://github.com/marcelwa/aigverse/pull/467
 [#478]: https://github.com/marcelwa/aigverse/pull/478
 [#477]: https://github.com/marcelwa/aigverse/pull/477
 [#463]: https://github.com/marcelwa/aigverse/pull/463
