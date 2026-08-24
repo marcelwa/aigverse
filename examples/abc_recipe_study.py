@@ -38,11 +38,16 @@ input shape with achieved area reduction.
 Benchmarks are fetched and cached by ``aigverse.benchmarks``, so nothing needs to
 be downloaded by hand.
 
+Every recipe goes to ABC as one parallel batch over the whole design set through
+``aigverse.abc.run_many``, so the study runs on every core rather than one.
+``--verify`` makes it SAT-bound instead, which hides most of that.
+
 Usage:
     ./abc_recipe_study.py                    # default benchmark subset
     ./abc_recipe_study.py --quick            # fewest benchmarks, for a smoke test
     ./abc_recipe_study.py --all              # the whole EPFL suite (slow)
     ./abc_recipe_study.py --benchmarks adder bar ctrl
+    ./abc_recipe_study.py --jobs 4           # cap the ABC processes run at once
     ./abc_recipe_study.py --verify           # equivalence-check every result
 
 `aigverse` does not ship ABC. Install one and put it on ``PATH``, or point
@@ -78,7 +83,7 @@ mpl.use("Agg")
 from matplotlib import pyplot as plt
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Mapping, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
 
     from matplotlib.axes import Axes
 
@@ -131,7 +136,8 @@ CONFLICT_LIMIT: Final = 100_000
 #: commands they issue. `abc.balance`, `abc.rewrite`, `abc.refactor` and `abc.resub`
 #: are the same commands with default options, but calling them one at a time costs
 #: one ABC process and one AIGER round-trip *each*; handing the whole schedule to
-#: `abc.run_script` runs it in a single process instead.
+#: ABC runs it in a single process instead. One schedule then goes out across every
+#: design at once through `abc.run_many`.
 ATOMS: Mapping[str, str] = MappingProxyType({
     "b": "balance",
     "rw": "rewrite",
@@ -140,29 +146,31 @@ ATOMS: Mapping[str, str] = MappingProxyType({
 })
 
 #: The canonical `abc.rc` scripts, plus ABC's own `orchestrate`, for reference
-#: against the brute-forced orders.
-CLASSIC_SCRIPTS: Mapping[str, Callable[[Aig], Aig]] = MappingProxyType({
-    "resyn": abc.resyn,
-    "resyn2": abc.resyn2,
-    "resyn3": abc.resyn3,
-    "compress": abc.compress,
-    "compress2": abc.compress2,
-    "resyn2rs": abc.resyn2rs,
-    "compress2rs": abc.compress2rs,
-    "dc2": abc.dc2,
-    "orchestrate": abc.orchestrate,
+#: against the brute-forced orders. Held as the commands they issue rather than as
+#: the `abc.resyn2`-style wrappers, so a whole design set goes to `abc.run_many` in
+#: one call; at default options every one of those wrappers issues exactly this.
+CLASSIC_SCRIPTS: Mapping[str, tuple[str, ...]] = MappingProxyType({
+    "resyn": abc.expand_script("resyn"),
+    "resyn2": abc.expand_script("resyn2"),
+    "resyn3": abc.expand_script("resyn3"),
+    "compress": abc.expand_script("compress"),
+    "compress2": abc.expand_script("compress2"),
+    "resyn2rs": abc.expand_script("resyn2rs"),
+    "compress2rs": abc.expand_script("compress2rs"),
+    "dc2": abc.expand_script("dc2"),
+    "orchestrate": ("orchestrate",),
 })
 
-#: The &-space counterparts. `gia.fraig` is SAT sweeping rather than restructuring,
-#: and is included because it removes redundancy the others structurally cannot see.
-GIA_SCRIPTS: Mapping[str, Callable[[Aig], Aig]] = MappingProxyType({
-    "&b": abc.gia.balance,
-    "&resub": abc.gia.resub,
-    "&dc2": abc.gia.dc2,
-    "&syn2": abc.gia.syn2,
-    "&syn3": abc.gia.syn3,
-    "&syn4": abc.gia.syn4,
-    "&fraig": abc.gia.fraig,
+#: The &-space counterparts. `&fraig` is SAT sweeping rather than restructuring, and
+#: is included because it removes redundancy the others structurally cannot see.
+GIA_SCRIPTS: Mapping[str, tuple[str, ...]] = MappingProxyType({
+    "&b": ("&b",),
+    "&resub": ("&resub",),
+    "&dc2": ("&dc2",),
+    "&syn2": ("&syn2",),
+    "&syn3": ("&syn3",),
+    "&syn4": ("&syn4",),
+    "&fraig": ("&fraig",),
 })
 
 
@@ -176,7 +184,6 @@ class Result:
     family: str
     gates: int
     levels: int
-    seconds: float
     base_gates: int
     base_levels: int
     #: One of "unchecked", "equivalent" or "undecided". A plain `bool | None`
@@ -291,39 +298,75 @@ def measure(aig: Aig) -> tuple[int, int]:
     return aig.num_gates, DepthAig(aig).num_levels
 
 
-def run_recipe(
+def run_batch(
+    benchmarks: list[Benchmark],
+    experiment: str,
+    recipe: str,
+    family: str,
+    commands: tuple[str, ...],
+    *,
+    gia: bool,
+    jobs: int | None,
+    verify: bool,
+) -> int:
+    """Apply one recipe to every benchmark at once and record what it did.
+
+    The whole design set goes to ABC as a single parallel batch, so the recipe
+    costs one round of ABC time rather than one per design. Failures come back in
+    place of their result, so a design ABC chokes on does not cost the sweep the
+    rest of the row.
+
+    Args:
+        benchmarks: The benchmarks to optimize.
+        experiment: Either :data:`ORDER` or :data:`FAMILY`.
+        recipe: Human-readable name of the recipe.
+        family: Grouping label used when plotting.
+        commands: The ABC commands the recipe issues.
+        gia: Whether the commands are `&`-space ones.
+        jobs: How many ABC processes to run at once, or None for one per core.
+        verify: Whether to equivalence-check every result.
+
+    Returns:
+        The benchmarks ABC failed on, which is empty in the normal case.
+    """
+    run = abc.gia.run_many if gia else abc.run_many
+    optimized = run([bench.aig for bench in benchmarks], commands, jobs=jobs, return_exceptions=True)
+
+    failed: list[Benchmark] = []
+    for bench, result in zip(benchmarks, optimized, strict=True):
+        if isinstance(result, abc.AbcError):
+            print(f"    ! {recipe} failed on {bench.name}: {result}")
+            failed.append(bench)
+            continue
+        bench.results.append(record(bench, experiment, recipe, family, result, verify=verify))
+    return failed
+
+
+def record(
     bench: Benchmark,
     experiment: str,
     recipe: str,
     family: str,
-    apply: Callable[[Aig], Aig],
+    optimized: Aig,
     *,
     verify: bool,
-) -> Result | None:
-    """Apply one recipe to one benchmark and record what it did.
+) -> Result:
+    """Measure one optimized network and turn it into a row.
 
     Args:
-        bench: The benchmark to optimize.
+        bench: The benchmark the result came from.
         experiment: Either :data:`ORDER` or :data:`FAMILY`.
         recipe: Human-readable name of the recipe.
         family: Grouping label used when plotting.
-        apply: Callable performing the optimization.
+        optimized: What ABC produced.
         verify: Whether to equivalence-check the result.
 
     Returns:
-        The measurement, or None if ABC failed on this input.
+        The measurement.
 
     Raises:
         SystemExit: If the optimization changed the function of the network.
     """
-    started = time.perf_counter()
-    try:
-        optimized = apply(bench.aig)
-    except abc.AbcError as exc:
-        print(f"    ! {recipe} failed on {bench.name}: {exc}")
-        return None
-    elapsed = time.perf_counter() - started
-
     gates, levels = measure(optimized)
     equivalence = check(bench, optimized, recipe) if verify else "unchecked"
     if equivalence == "different":
@@ -339,7 +382,6 @@ def run_recipe(
         family=family,
         gates=gates,
         levels=levels,
-        seconds=elapsed,
         base_gates=bench.gates,
         base_levels=bench.levels,
         equivalence=equivalence,
@@ -372,8 +414,8 @@ def check(bench: Benchmark, optimized: Aig, recipe: str) -> str:
     return "equivalent"
 
 
-def apply_sequence(order: Sequence[str], rounds: int) -> Callable[[Aig], Aig]:
-    """Build a callable applying a sequence of atomic commands repeatedly.
+def commands_for(order: Sequence[str], rounds: int) -> tuple[str, ...]:
+    """Expand a schedule of atomic transformations into ABC commands.
 
     The whole schedule goes to ABC as one script, so it costs a single process and
     a single AIGER round-trip no matter how long it is.
@@ -383,10 +425,9 @@ def apply_sequence(order: Sequence[str], rounds: int) -> Callable[[Aig], Aig]:
         rounds: How often to repeat the whole sequence.
 
     Returns:
-        A callable taking and returning a network.
+        The commands, in the order ABC runs them.
     """
-    commands = [ATOMS[key] for key in order] * rounds
-    return lambda aig: abc.run_script(aig, commands)
+    return tuple(ATOMS[key] for key in order) * rounds
 
 
 # --------------------------------------------------------------------------------------
@@ -394,50 +435,62 @@ def apply_sequence(order: Sequence[str], rounds: int) -> Callable[[Aig], Aig]:
 # --------------------------------------------------------------------------------------
 
 
-def experiment_order(benchmarks: list[Benchmark], rounds: int, *, verify: bool) -> None:
+def experiment_order(benchmarks: list[Benchmark], rounds: int, *, jobs: int | None, verify: bool) -> None:
     """Run every ordering of the four atomic transformations.
+
+    One ordering at a time, across every design at once: the designs are what the
+    batch parallelizes over, and keeping the orders sequential keeps the progress
+    line meaningful.
 
     Args:
         benchmarks: The benchmarks to run on.
         rounds: How often each schedule repeats.
+        jobs: How many ABC processes to run at once, or None for one per core.
         verify: Whether to equivalence-check every result.
     """
     orders = list(itertools.permutations(ATOMS))
     print(f"\n[1/2] schedule sensitivity: {len(orders)} orders x {rounds} rounds ({len(ATOMS) * rounds} commands)")
 
-    for bench in benchmarks:
-        print(f"  {bench.name} ({bench.gates} gates, {bench.levels} levels)")
-        for order in orders:
-            result = run_recipe(
-                bench,
-                ORDER,
-                "; ".join(order),
-                "permutation",
-                apply_sequence(order, rounds),
-                verify=verify,
-            )
-            if result is None:
-                bench.order_complete = False
-                continue
-            bench.results.append(result)
+    for order in orders:
+        recipe = "; ".join(order)
+        failed = run_batch(
+            benchmarks,
+            ORDER,
+            recipe,
+            "permutation",
+            commands_for(order, rounds),
+            gia=False,
+            jobs=jobs,
+            verify=verify,
+        )
+        print(f"  {recipe:<20} {len(benchmarks) - len(failed)}/{len(benchmarks)} designs")
+        for bench in failed:
+            bench.order_complete = False
 
 
-def experiment_families(benchmarks: list[Benchmark], *, verify: bool) -> None:
+def experiment_families(benchmarks: list[Benchmark], *, jobs: int | None, verify: bool) -> None:
     """Run the canonical classic scripts and their `&`-space counterparts.
 
     Args:
         benchmarks: The benchmarks to run on.
+        jobs: How many ABC processes to run at once, or None for one per core.
         verify: Whether to equivalence-check every result.
     """
     print(f"\n[2/2] family comparison: {len(CLASSIC_SCRIPTS)} classic + {len(GIA_SCRIPTS)} &-space scripts")
 
-    for bench in benchmarks:
-        print(f"  {bench.name}")
-        for family, scripts in ((CLASSIC, CLASSIC_SCRIPTS), (GIA, GIA_SCRIPTS)):
-            for name, fn in scripts.items():
-                result = run_recipe(bench, FAMILY, name, family, fn, verify=verify)
-                if result is not None:
-                    bench.results.append(result)
+    for family, scripts in ((CLASSIC, CLASSIC_SCRIPTS), (GIA, GIA_SCRIPTS)):
+        for name, commands in scripts.items():
+            failed = run_batch(
+                benchmarks,
+                FAMILY,
+                name,
+                family,
+                commands,
+                gia=family == GIA,
+                jobs=jobs,
+                verify=verify,
+            )
+            print(f"  {name:<20} {len(benchmarks) - len(failed)}/{len(benchmarks)} designs")
 
 
 # --------------------------------------------------------------------------------------
@@ -946,7 +999,6 @@ def write_csv(benchmarks: Iterable[Benchmark], path: Path) -> None:
         "family",
         "gates",
         "levels",
-        "seconds",
         "base_gates",
         "base_levels",
         "equivalence",
@@ -1009,6 +1061,7 @@ def parse_args() -> argparse.Namespace:
     group.add_argument("--benchmarks", nargs="+", metavar="NAME", help="explicit benchmark list")
     parser.add_argument("--rounds", type=positive, default=2, help="repetitions of each schedule (default: 2)")
     parser.add_argument("--verify", action="store_true", help="equivalence-check every result (slow)")
+    parser.add_argument("--jobs", type=positive, help="ABC processes to run at once (default: one per core)")
     parser.add_argument(
         "--cache-dir",
         type=Path,
@@ -1059,9 +1112,14 @@ def main() -> int:
         benchmarks.append(Benchmark(name=name, aig=aig, gates=gates, levels=levels))
 
     started = time.perf_counter()
-    experiment_order(benchmarks, args.rounds, verify=args.verify)
-    experiment_families(benchmarks, verify=args.verify)
-    print(f"\nanalysis  ({time.perf_counter() - started:.1f}s of ABC time)")
+    experiment_order(benchmarks, args.rounds, jobs=args.jobs, verify=args.verify)
+    experiment_families(benchmarks, jobs=args.jobs, verify=args.verify)
+    elapsed = time.perf_counter() - started
+
+    # Wall clock rather than summed ABC time: the runs overlap now, so the two are
+    # no longer the same number and only this one bounds how long the study takes.
+    runs = len(benchmarks) * (math.factorial(len(ATOMS)) + len(CLASSIC_SCRIPTS) + len(GIA_SCRIPTS))
+    print(f"\nanalysis  ({runs} ABC runs in {elapsed:.1f}s of wall clock)")
 
     headline = report(benchmarks, args.rounds)
     write_csv(benchmarks, args.csv)
