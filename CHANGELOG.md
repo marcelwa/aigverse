@@ -34,10 +34,8 @@ releases may include breaking changes.
 ### Changed
 
 - 👷 Restructure CI into a thin `ci.yml` caller over one reusable workflow per
-  concern, gated by a `change-detection` job. Path filtering moved out of
-  `on: paths:`, which suppresses the status context entirely and so can never be
-  a required check, and into flags that skip jobs while the single `🚦 Check`
-  guard still concludes ([#422]) ([**@marcelwa**])
+  concern, gated by change detection and aggregated into a single required
+  `🚦 Check` ([#422]) ([**@marcelwa**])
 - ⚡️ Adopt nanobind 3.0's split mode, so one `abi3` wheel per platform covers
   every supported Python from 3.10 up instead of three. Cold build time drops
   3.15x and the shipped payload 4.3x; the extensions themselves shrink 26% by no
