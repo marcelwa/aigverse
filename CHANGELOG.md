@@ -10,6 +10,8 @@ releases may include breaking changes.
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-08-24
+
 ### Added
 
 - ✨ Add `simulate_sequential`, which runs a `SequentialAig` over a number of clock
@@ -189,7 +191,8 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- Version links -->
 
-[unreleased]: https://github.com/marcelwa/aigverse/compare/v0.1.4...HEAD
+[unreleased]: https://github.com/marcelwa/aigverse/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.5
 [0.1.4]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.4
 [0.1.3]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.3
 [0.1.2]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.2
