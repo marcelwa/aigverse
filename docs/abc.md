@@ -260,12 +260,159 @@ describe the network you hold and `stats()` to describe what ABC worked on, and 
 mix the two in one benchmark table.
 :::
 
+## Sequential networks
+
+{py:class}`~aigverse.networks.SequentialAig` crosses the bridge like any other network, and
+its registers cross with it. Here is an 8-bit accumulator — a ripple-carry adder whose sum
+feeds back into the state register:
+
+```{code-cell} ipython3
+from aigverse.networks import AigRegister, SequentialAig
+
+
+def accumulator(width: int = 8) -> SequentialAig:
+    """Builds an accumulator: `state <- state + data` on every cycle."""
+    ntk = SequentialAig()
+
+    data = [ntk.create_pi() for _ in range(width)]
+    state = [ntk.create_ro() for _ in range(width)]
+
+    carry = ntk.get_constant(False)
+    total = []
+    for a, b in zip(state, data, strict=True):
+        total.append(ntk.create_xor3(a, b, carry))
+        carry = ntk.create_maj(a, b, carry)
+
+    # Primary outputs go in before register inputs: both are combinational outputs
+    # of the same network, and `po_at` / `ri_at` slice that one list by position.
+    for bit in total:
+        ntk.create_po(bit)
+    for bit in total:
+        ntk.create_ri(bit)
+
+    for index in range(width):
+        register = AigRegister()
+        register.init = 0
+        ntk.set_register(index, register)
+
+    return ntk
+
+
+acc = accumulator()
+print(f"{acc.num_pis} PIs, {acc.num_pos} POs, {acc.num_registers} registers, {acc.num_gates} AND gates")
+```
+
+Every script accepts it, and the registers come out the other side untouched:
+
+```{code-cell} ipython3
+for script in ("resyn", "resyn2", "resyn2rs", "compress2rs", "dc2"):
+    result = getattr(abc, script)(acc)
+    print(
+        f"{script:12s} {acc.num_gates:>3} -> {result.num_gates:<3} AND gates, "
+        f"{result.num_registers} registers, back as a {type(result).__name__}"
+    )
+```
+
+Roughly a third of the logic goes, with all eight registers still in place — and both
+equivalence checkers agree it is the same circuit.
+{py:func}`~aigverse.algorithms.equivalence_checking` compares the register outputs as
+inputs, which is the right check for an optimization that is not allowed to move the
+register boundary:
+
+```{code-cell} ipython3
+best = abc.compress2rs(acc)
+
+print("equivalence_checking:", equivalence_checking(acc, best))
+print("gia.cec:             ", abc.gia.cec(acc, best))
+```
+
+:::{note}
+The registers travel as AIGER latches; ABC switches to the extended AIGER 1.9 encoding
+whenever one has a non-zero reset value, which is handled transparently.
+
+The type is checked before the base class, deliberately: `SequentialAig` is registered as
+an `Aig` subclass on the C++ side, so the result has to be read back with the sequential
+reader. {py:func}`~aigverse.io.read_aiger_into_aig` refuses a latched file outright rather
+than flatten it, so getting this wrong would raise rather than quietly return a network
+short of its registers.
+:::
+
+:::{warning}
+The classic namespace carries a reset of `0` or `1` across unchanged. ABC's `&read`
+accepts only `0` literally, and rewrites the other two cases:
+
+- a **`1`** reset is converted by complementing the flip-flop. The network is equivalent
+  and keeps its interface, but comes back with a reset of `0`.
+- an **undefined** reset is modelled with an extra primary input, an extra register, and
+  three AND nodes, so the network would come back with a different interface than it went
+  in with. The `gia` namespace refuses this with a `ValueError` rather than hand it back
+  silently — including {py:func}`~aigverse.abc.gia.stats`, which would otherwise describe
+  a network the caller never built.
+
+Give the register an explicit reset with `set_register`, or use the classic namespace,
+which transfers the same network unchanged.
+:::
+
+A 4-bit LFSR makes the `1` case easy to check directly, instead of taking the claim above
+on trust: it has no primary inputs, so its whole output comes from the reset state alone,
+and a seed that didn't survive the round trip through ABC would show up immediately as an
+all-zero sequence instead of the LFSR's full 15-state cycle.
+
+```{code-cell} ipython3
+from aigverse.algorithms import simulate_sequential
+
+lfsr = SequentialAig()
+
+state = [lfsr.create_ro() for _ in range(4)]
+feedback = lfsr.create_xor(state[3], state[2])
+
+lfsr.create_po(state[3])
+
+lfsr.create_ri(feedback)
+for bit in range(3):
+    lfsr.create_ri(state[bit])
+
+for bit in range(4):
+    register = AigRegister()
+    register.init = 1 if bit == 0 else 0
+    lfsr.set_register(bit, register)
+
+
+def run(ntk):
+    return "".join(str(int(cycle[0])) for cycle in simulate_sequential(ntk, 15).outputs)
+
+
+def resets(ntk):
+    return [ntk.register_at(i).init for i in range(ntk.num_registers)]
+
+
+through_classic = abc.dc2(lfsr)
+through_gia = abc.gia.dc2(lfsr)
+
+print(f"reference    {run(lfsr):>15}   resets {resets(lfsr)}")
+print(f"classic      {run(through_classic):>15}   resets {resets(through_classic)}")
+print(f"gia          {run(through_gia):>15}   resets {resets(through_gia)}")
+```
+
+The `gia` result reports a reset of `0` on every register but still produces the same
+sequence: the complement got pushed into the logic instead of being dropped. The undefined
+case can't be re-encoded the same way — modelling an unknown value takes an extra input and
+register, not just a rewritten logic cone — which is why `gia` refuses it rather than
+reshaping the network to fit.
+
 ## Type preservation and limitations
 
 The returned network has the same type as the input: an
-{py:class}`~aigverse.networks.Aig` yields an `Aig`, and a
+{py:class}`~aigverse.networks.Aig` yields an `Aig`, a
 {py:class}`~aigverse.networks.NamedAig` yields a `NamedAig` with its input and output
-names carried through ABC.
+names carried through ABC, and a {py:class}`~aigverse.networks.SequentialAig` yields a
+`SequentialAig` with its registers intact.
+
+What the guards protect is the transfer, not the script. ABC reshaping a network without
+being asked — `&read` turning an undefined reset into an extra input and register — is
+refused, while a command that reshapes it deliberately is carried out: `run_script(ntk,
+"comb")` flattens every register into a primary input and output pair and hands back a
+`SequentialAig` with none left, because that is what `comb` is for.
 
 :::{warning}
 The bridge transfers AIGs and nothing else, so technology mapping and $k$-LUT mapping are
@@ -273,13 +420,6 @@ out of reach. A command such as `map` or `if -K 6` runs happily inside ABC, but 
 netlist it leaves behind cannot be written as AIGER, and the call raises rather than
 quietly handing back something unmapped. Mapping support needs cell and $k$-LUT network
 types in `aigverse` first.
-:::
-
-:::{warning}
-{py:class}`~aigverse.networks.SequentialAig` is rejected with a `TypeError` rather than
-being silently flattened into extra primary inputs and outputs. Sequential support
-requires writing registers to AIGER and reading ABC's sequential output back, neither of
-which is available yet.
 :::
 
 Each call starts an ABC process and transfers the network through temporary AIGER files,

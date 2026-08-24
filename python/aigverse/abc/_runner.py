@@ -132,29 +132,53 @@ def resolve_binary(binary: str | os.PathLike[str] | None) -> Path:
 
 
 def check_supported(ntk: Aig) -> None:
-    """Rejects network types the bridge cannot round-trip.
+    """Rejects anything that is not an AIG.
 
     Args:
         ntk: The network handed to the bridge.
 
     Raises:
-        TypeError: If ``ntk`` is a ``SequentialAig`` or not an ``Aig`` at all.
+        TypeError: If ``ntk`` is not an ``Aig``.
     """
-    # SequentialAig must be tested first: it is registered as a subclass of Aig
-    # on the C++ side, so an isinstance check against Aig would accept it and
-    # the registers would be silently flattened into extra PI/PO pairs.
-    if isinstance(ntk, SequentialAig):
-        msg = (
-            "SequentialAig is not supported by the ABC bridge yet. Writing "
-            "registers to AIGER requires sequential write_aiger support in "
-            "mockturtle, and reading ABC's sequential output back requires "
-            "handling AIGER 1.9 bad-state properties in mockturtle's reader. "
-            "Pass a combinational Aig instead."
-        )
-        raise TypeError(msg)
     if not isinstance(ntk, Aig):
         msg = f"expected an Aig, got {type(ntk).__name__}"
         raise TypeError(msg)
+
+
+def check_gia_supported(ntk: Aig) -> None:
+    """Rejects networks the GIA store would silently reshape.
+
+    ABC's ``&read`` rewrites a flip-flop whose reset is neither 0 nor 1 -- it
+    reports *Converted 0 1-valued FFs and 1 DC-valued FFs* and models the
+    undefined value with an extra primary input, an extra register, and three AND
+    nodes. The result would come back with a different interface than it went in
+    with, so the network is refused before ABC is started. The classic store
+    carries the same network across untouched.
+
+    A reset of 1 is converted too, by complementing the flip-flop, but that costs
+    no input and no register and leaves an equivalent network, so it is allowed
+    through -- it comes back with a reset of 0.
+
+    Args:
+        ntk: The network handed to a ``&``-space command.
+
+    Raises:
+        ValueError: If ``ntk`` has a register whose reset value is undefined.
+    """
+    if not isinstance(ntk, SequentialAig):
+        return
+
+    for index in range(ntk.num_registers):
+        # mockturtle's `register_init`: 0 and 1 are the defined resets, while
+        # `dont_care` (2) and `unknown` (3) both mean "no reset value".
+        if ntk.register_at(index).init not in {0, 1}:
+            msg = (
+                f"register {index} has no defined reset value, which ABC's GIA store cannot "
+                "represent: `&read` would model it with an extra primary input and register. "
+                "Set an explicit reset of 0 or 1 with `set_register`, or use the classic "
+                "namespace, which transfers the network unchanged."
+            )
+            raise ValueError(msg)
 
 
 def run_commands(
@@ -269,7 +293,8 @@ def run_script(
     a read command, the given commands, and a write command, and the result is
     read back. The returned network has the same type as ``ntk``: an ``Aig``
     yields an ``Aig``, a ``NamedAig`` yields a ``NamedAig`` with its input and
-    output names preserved.
+    output names preserved, and a ``SequentialAig`` yields a ``SequentialAig``
+    with its registers and their reset values intact.
 
     ABC keeps two independent network stores, and a command only ever sees the
     one it belongs to. By default the network is loaded with ``read_aiger`` into
@@ -287,7 +312,7 @@ def run_script(
     the wrappers in this module or :data:`~aigverse.abc.SCRIPTS`.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         commands: A single ``;``-separated ABC command string, or a sequence of
             individual commands.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
@@ -309,8 +334,9 @@ def run_script(
         The optimized network, of the same type as ``ntk``.
 
     Raises:
-        TypeError: If ``ntk`` is a ``SequentialAig`` or not an ``Aig`` at all.
-        ValueError: If no command was given.
+        TypeError: If ``ntk`` is not an ``Aig``.
+        ValueError: If no command was given, or if ``gia`` is set and ``ntk`` has
+            a register whose reset value is undefined.
         AbcNotFoundError: If no ABC executable could be located.
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or produced no usable output.
@@ -318,9 +344,16 @@ def run_script(
     # Guard before resolving the binary, so an unsupported network type reports
     # that rather than "ABC not found" on a machine without ABC.
     check_supported(ntk)
+    if gia:
+        check_gia_supported(ntk)
     command = _join(commands)
 
-    from ..io import read_aiger_into_aig, write_aiger
+    from ..io import read_aiger_into_aig, read_aiger_into_sequential_aig, write_aiger
+
+    # SequentialAig must be tested before Aig: it is registered as a subclass on
+    # the C++ side, so an `isinstance` check against Aig would accept it and pick
+    # the combinational reader, which does not preserve registers.
+    sequential = isinstance(ntk, SequentialAig)
 
     with tempfile.TemporaryDirectory(prefix="aigverse-abc-") as tmpdir:
         directory = Path(tmpdir)
@@ -352,13 +385,15 @@ def run_script(
             raise AbcExecutionError(msg, binary=executable, command=script, output=output)
 
         try:
-            result = read_aiger_into_aig(result_path)
+            reader = read_aiger_into_sequential_aig if sequential else read_aiger_into_aig
+            result = reader(result_path)
         except RuntimeError as exc:
             msg = f"could not read the network ABC produced: {exc}"
             raise AbcExecutionError(msg, binary=executable, command=script, output=output) from exc
 
-    # read_aiger_into_aig always yields a NamedAig; narrow it back to the input
-    # type so the bridge is type-preserving.
-    if isinstance(ntk, NamedAig):
+    # read_aiger_into_sequential_aig already yields a SequentialAig, and
+    # read_aiger_into_aig yields a NamedAig; narrow the latter back to a plain Aig
+    # when that is what came in, so the bridge is type-preserving.
+    if sequential or isinstance(ntk, NamedAig):
         return cast("AigT", result)
     return cast("AigT", Aig(result))

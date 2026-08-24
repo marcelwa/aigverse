@@ -32,6 +32,7 @@ void write_aiger(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 }
 
 // Explicit instantiations
+template void write_aiger<aigverse::sequential_aig>(nanobind::module_& m);
 template void write_aiger<aigverse::named_aig>(nanobind::module_& m);
 template void write_aiger<aigverse::aig>(nanobind::module_& m);
 
@@ -43,6 +44,7 @@ void bind_write_aiger(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage
     // order, and a NamedAig casts to `const aig&` through registered inheritance
     // already in the first pass. Registering the plain AIG first would therefore
     // swallow every NamedAig and silently drop its symbol table.
+    detail::write_aiger<aigverse::sequential_aig>(m);
     detail::write_aiger<aigverse::named_aig>(m);
     detail::write_aiger<aigverse::aig>(m);
 }
