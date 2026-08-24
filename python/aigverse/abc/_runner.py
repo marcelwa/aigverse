@@ -349,8 +349,8 @@ def run_script(
     command = join_commands(commands)
 
     # Resolved once, up front: discovery walks PATH, and the error paths below need
-    # the same executable that actually ran -- re-resolving afterwards would report
-    # a binary that disappeared mid-run instead of the result ABC produced.
+    # the same executable that actually ran. Re-resolving afterwards would discard a
+    # successful result whenever the binary disappeared while ABC was running.
     executable = resolve_binary(binary)
 
     from ..io import read_aiger_into_aig, read_aiger_into_sequential_aig, write_aiger
