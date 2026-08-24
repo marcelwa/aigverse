@@ -556,7 +556,7 @@ The docs can then be found in the `docs/_build` directory.
 ## Releasing
 
 Releases are cut from `main` and published from the GitHub Releases UI.
-Publishing a release is what ships the package: the `release: published` event triggers the `publish_to_pypi` job in `.github/workflows/aigverse-pypi-deployment.yml`, which uploads the sdist and the wheels to PyPI via trusted publishing, with build provenance attestation.
+Publishing a release is what ships the package: the `release: published` event triggers the `publish-to-pypi` job in `.github/workflows/cd.yml`, which uploads the sdist and the wheels to PyPI via trusted publishing, with build provenance attestation.
 Pushing a tag on its own publishes nothing.
 
 There is no version number to bump anywhere.

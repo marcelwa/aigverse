@@ -61,7 +61,7 @@
       customType: "regex",
       description: "Update the ABC revision the integration tests build",
       managerFilePatterns: [
-        ".github/workflows/aigverse-abc-tests.yml",
+        ".github/workflows/abc-tests.yml",
         ".readthedocs.yaml"
       ],
       matchStrings: [

@@ -1,89 +1,35 @@
-# this file is heavily based on https://github.com/cda-tum/mqt-workflows/blob/main/.github/workflows/reusable-python-ci.yml
-
-name: 🐍 • CI
+name: 🐍 • Tests
 
 on:
-  merge_group:
-  push:
-    branches: ["main"]
-    paths:
-      - "src/aigverse/**"
-      - "test/**"
-      - "**/*.py"
-      - "**/*.pyi"
-      - "**/*.hpp"
-      - "**/*.cpp"
-      - "**/*.cmake"
-      - "**/CMakeLists.txt"
-      - "libs/**"
-      - "pyproject.toml"
-      - "uv.lock"
-      - ".github/workflows/aigverse-python-tests.yml"
-  pull_request:
-    branches: ["main"]
-    paths:
-      - "src/aigverse/**"
-      - "test/**"
-      - "**/*.py"
-      - "**/*.pyi"
-      - "**/*.hpp"
-      - "**/*.cpp"
-      - "**/*.cmake"
-      - "**/CMakeLists.txt"
-      - "libs/**"
-      - "pyproject.toml"
-      - "uv.lock"
-      - ".github/workflows/aigverse-python-tests.yml"
+  workflow_call:
+    inputs:
+      runs-on:
+        description: The runner to execute on
+        required: true
+        type: string
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-python-tests-${{ inputs.runs-on }}
+  cancel-in-progress: true
 
 permissions: {}
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  lint:
-    name: 🚨 Lint
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read # required to check out the repository
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
-        with:
-          enable-cache: true
-          save-cache: ${{ github.ref == 'refs/heads/main' }}
-
-      - name: Run ty
-        run: uvx prek run -a ty
-
-      - name: Check if stub files are up to date
-        run: |
-          uvx nox -s stubs
-          if [[ -n "$(git status --porcelain python)" ]]; then
-            echo "Stub files are not up to date. Please run 'nox -s stubs' and commit the changes."
-            git --no-pager diff python
-            exit 1
-          fi
-
-      - name: Run check-sdist
-        run: uvx check-sdist --inject-junk
-
   python-tests:
-    name: 🐍 ${{ matrix.runs-on }}
-    runs-on: ${{ matrix.runs-on }}
+    name: 🐍 ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 90
     permissions:
       contents: read # required to check out the repository
-    strategy:
-      fail-fast: false
-      matrix:
-        runs-on: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-2025]
+
+    # `nox -s tests` builds the extension once per supported interpreter, which is what
+    # separates this job from the wheel matrix: `[tool.cibuildwheel] build = "cp310-*"`
+    # produces a single abi3 wheel and therefore only ever exercises Python 3.10.
     steps:
       - name: Clone Repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -95,7 +41,7 @@ jobs:
         name: Setup ccache
         uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
         with:
-          key: "${{matrix.runs-on}}-aigverse"
+          key: "${{ inputs.runs-on }}-aigverse"
           save: true
           max-size: 10G
 
@@ -109,7 +55,6 @@ jobs:
 
       - if: runner.os == 'Windows'
         name: Build with Ninja so that the compiler cache is used
-        shell: bash
         run: |
           echo "CMAKE_GENERATOR=Ninja" >> "$GITHUB_ENV"
           echo "SCCACHE_DIR=$GITHUB_WORKSPACE/.sccache" >> "$GITHUB_ENV"
@@ -125,8 +70,8 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .sccache
-          key: sccache-${{ matrix.runs-on }}-aigverse-${{ github.run_id }}
-          restore-keys: sccache-${{ matrix.runs-on }}-aigverse-
+          key: sccache-${{ inputs.runs-on }}-aigverse-${{ github.run_id }}
+          restore-keys: sccache-${{ inputs.runs-on }}-aigverse-
 
       - if: runner.os == 'Linux'
         name: Setup mold

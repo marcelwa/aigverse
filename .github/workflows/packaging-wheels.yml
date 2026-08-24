@@ -1,0 +1,69 @@
+name: 🛞 • Wheels
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: The runner to execute on
+        required: true
+        type: string
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-packaging-wheels-${{ inputs.runs-on }}
+  cancel-in-progress: true
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  packaging-wheels:
+    name: 🛞 ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 90
+    permissions:
+      contents: read # required to check out the repository
+
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # `vcs-versioning` derives the version from the tag history
+          persist-credentials: false
+
+      - name: Set up MSVC development environment (Windows only)
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+
+      # No compiler cache here, deliberately. Wheels compile against nanobind
+      # headers inside uv's build-isolation environment, a directory named
+      # randomly per run (`/tmp/build-env-r57r75a3`, then `/tmp/build-env-sjkp5_7v`),
+      # so no compilation ever repeats. Disabling isolation does not help either:
+      # cibuildwheel's own build venv is randomised the same way. Measured on all
+      # four platforms with a restored cache present: 145 requests, 0 hits.
+      #
+      # A cache action here was also harmful, sharing a key with the test matrix
+      # while producing disjoint objects, so each run evicted the other's.
+
+      - if: runner.os == 'Linux'
+        name: Setup mold
+        uses: rui314/setup-mold@7e4f20ad28a2e8ca6fd0892ccf72e2abb706b9c3 # v1
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: false
+
+      # `[tool.cibuildwheel] test-command` runs pytest against the wheel it just built, so
+      # this is also what proves the shipped artifact imports and works on each platform.
+      - name: Build wheels
+        uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e # v3.3
+
+      - name: Upload wheel as an artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cibw-wheels-${{ inputs.runs-on }}
+          path: wheelhouse/*.whl
+          overwrite: true
