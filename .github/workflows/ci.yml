@@ -28,7 +28,7 @@ jobs:
   change-detection:
     name: 🔍 Change
     permissions:
-      contents: read # required to check out the repository
+      pull-requests: read # required by dorny/paths-filter to list the pull request's files
     uses: ./.github/workflows/change-detection.yml
 
   # `nox -s tests` and `nox -s minimums` across every supported interpreter. The caller
@@ -161,7 +161,7 @@ jobs:
         # `re-actors/alls-green` fails on any skip that `allowed-skips` did not predict — a
         # job skipped because an upstream job died still fails the guard. A hand-rolled
         # `contains(needs.*.result, 'failure')` would silently pass on lost coverage.
-        uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
+        uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
           allowed-skips: >-
             ${{ !fromJSON(needs.change-detection.outputs.run-python-tests)

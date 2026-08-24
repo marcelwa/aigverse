@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-slim
     timeout-minutes: 5
     permissions:
-      contents: read # required to check out the repository and diff against the base ref
+      pull-requests: read # required by dorny/paths-filter to list the pull request's files
     outputs:
       run-python-tests: >-
         ${{ github.event_name != 'pull_request'
@@ -81,15 +81,9 @@ jobs:
         || steps.filter.outputs.run-workflows == 'true' }}
 
     steps:
-      # Checked out so that the filters resolve against `git diff` rather than the REST
-      # API, whose changed-file listing stops at 300 entries and would throw on a large
-      # pull request instead of degrading.
-      - name: Clone Repository
-        if: github.event_name == 'pull_request'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
+      # No checkout: given a token, the action lists the pull request's files over the
+      # REST API rather than diffing a working tree, so there is nothing for one to do.
+      #
       # Unlike GitHub's own `on: paths:`, the filter document here is parsed as YAML by
       # the action, so the shared path groups can be anchors instead of copy-paste.
       - name: Determine which parts of the pipeline are affected
