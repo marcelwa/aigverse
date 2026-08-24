@@ -67,7 +67,7 @@ def _find_error(output: str) -> str | None:
     return None
 
 
-def _join(commands: str | Sequence[str]) -> str:
+def join_commands(commands: str | Sequence[str]) -> str:
     """Normalizes user-supplied ABC commands into a single command string.
 
     Args:
@@ -218,7 +218,7 @@ def run_commands(
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error.
     """
-    command = _join(commands)
+    command = join_commands(commands)
     executable = resolve_binary(binary)
 
     if cwd is None:
@@ -346,7 +346,12 @@ def run_script(
     check_supported(ntk)
     if gia:
         check_gia_supported(ntk)
-    command = _join(commands)
+    command = join_commands(commands)
+
+    # Resolved once, up front: discovery walks PATH, and the error paths below need
+    # the same executable that actually ran -- re-resolving afterwards would report
+    # a binary that disappeared mid-run instead of the result ABC produced.
+    executable = resolve_binary(binary)
 
     from ..io import read_aiger_into_aig, read_aiger_into_sequential_aig, write_aiger
 
@@ -372,24 +377,23 @@ def run_script(
             timeout=timeout,
             use_init_file=use_init_file,
             cwd=directory,
-            binary=binary,
+            binary=executable,
         )
 
         if verbose:
             print(output)  # ruff: ignore[print]
 
-        executable = str(resolve_binary(binary))
         result_path = directory / _OUTPUT_FILE
         if not result_path.is_file() or result_path.stat().st_size == 0:
             msg = "ABC produced no output network"
-            raise AbcExecutionError(msg, binary=executable, command=script, output=output)
+            raise AbcExecutionError(msg, binary=str(executable), command=script, output=output)
 
         try:
             reader = read_aiger_into_sequential_aig if sequential else read_aiger_into_aig
             result = reader(result_path)
         except RuntimeError as exc:
             msg = f"could not read the network ABC produced: {exc}"
-            raise AbcExecutionError(msg, binary=executable, command=script, output=output) from exc
+            raise AbcExecutionError(msg, binary=str(executable), command=script, output=output) from exc
 
     # read_aiger_into_sequential_aig already yields a SequentialAig, and
     # read_aiger_into_aig yields a NamedAig; narrow the latter back to a plain Aig

@@ -42,8 +42,9 @@ from __future__ import annotations
 import tempfile
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
+from ._batch import run_many as _base_run_many
 from ._errors import AbcExecutionError, AbcTimeoutError
 from ._options import check_option
 from ._runner import AigT, budgeted_timeout, check_gia_supported, check_supported, resolve_binary, run_commands
@@ -52,9 +53,11 @@ from ._stats import AbcStats, collect_stats
 
 if TYPE_CHECKING:
     import os
-    from collections.abc import Sequence
+    from collections.abc import Iterable, Sequence
+    from typing import Literal
 
     from ..networks import Aig
+    from ._errors import AbcError
 
 __all__ = [
     "CecStatus",
@@ -64,6 +67,7 @@ __all__ = [
     "deepsyn",
     "fraig",
     "resub",
+    "run_many",
     "run_script",
     "stats",
     "syn2",
@@ -830,5 +834,102 @@ def run_script(
         use_init_file=use_init_file,
         gia=True,
         verbose=verbose,
+        binary=binary,
+    )
+
+
+@overload
+def run_many(
+    networks: Iterable[AigT],
+    commands: str | Sequence[str],
+    *,
+    jobs: int | None = ...,
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+    return_exceptions: Literal[False] = False,
+) -> list[AigT]: ...
+
+
+@overload
+def run_many(
+    networks: Iterable[AigT],
+    commands: str | Sequence[str],
+    *,
+    jobs: int | None = ...,
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+    return_exceptions: Literal[True],
+) -> list[AigT | AbcError]: ...
+
+
+def run_many(
+    networks: Iterable[AigT],
+    commands: str | Sequence[str],
+    *,
+    jobs: int | None = None,
+    timeout: float | None = None,
+    use_init_file: bool = False,
+    binary: str | os.PathLike[str] | None = None,
+    return_exceptions: bool = False,
+) -> list[AigT] | list[AigT | AbcError]:
+    """Runs arbitrary ``&``-space commands over many networks, in parallel.
+
+    The GIA counterpart of :func:`~aigverse.abc.run_many`: every network is
+    transferred with ``&read``/``&write`` so that ``&``-prefixed commands operate
+    on it directly. Equivalent to calling that function with ``gia=True``.
+
+    Args:
+        networks: The networks to optimize. Consumed in full before any work starts.
+        commands: A single ``;``-separated ABC command string, or a sequence of
+            individual commands. The same script runs on every network.
+        jobs: How many ABC processes to keep running at once. ``None`` (default)
+            uses the number of CPUs available to this process, capped at the number
+            of networks; ``1`` runs inline without a thread pool.
+        timeout: Seconds to wait for ABC to terminate, **per network** rather than
+            for the batch as a whole, or ``None`` for no limit.
+        use_init_file: If ``False`` (default), ABC is invoked with ``-s`` so that
+            no ``abc.rc`` is read.
+        binary: Overrides the resolved ABC executable for this call only. It is
+            resolved once for the whole batch.
+        return_exceptions: If ``True``, each failing network yields its
+            :exc:`AbcError` in place of a result instead of aborting the batch.
+
+    Returns:
+        The optimized networks, in input order, each of the same type as its input
+        -- with :exc:`AbcError` instances in place of the failures when
+        ``return_exceptions`` is set.
+
+    Raises:
+        TypeError: If any element of ``networks`` is not an ``Aig``.
+        ValueError: If ``jobs`` is below 1, if no command was given, or if a
+            network has a register whose reset value is undefined.
+        AbcNotFoundError: If no ABC executable could be located.
+        AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds for
+            some network and ``return_exceptions`` is not set.
+        AbcExecutionError: If ABC reported an error for some network and
+            ``return_exceptions`` is not set.
+    """
+    # Split rather than forwarded: `return_exceptions` is a plain bool here, which
+    # matches neither of the batch function's literal overloads.
+    if return_exceptions:
+        return _base_run_many(
+            networks,
+            commands,
+            jobs=jobs,
+            timeout=timeout,
+            use_init_file=use_init_file,
+            gia=True,
+            binary=binary,
+            return_exceptions=True,
+        )
+    return _base_run_many(
+        networks,
+        commands,
+        jobs=jobs,
+        timeout=timeout,
+        use_init_file=use_init_file,
+        gia=True,
         binary=binary,
     )
