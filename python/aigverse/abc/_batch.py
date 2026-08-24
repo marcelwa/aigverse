@@ -77,6 +77,22 @@ def run_many(
 ) -> list[AigT | AbcError]: ...
 
 
+# For a caller whose `return_exceptions` is decided at runtime, which neither literal
+# overload above can match.
+@overload
+def run_many(
+    networks: Iterable[AigT],
+    commands: str | Sequence[str],
+    *,
+    jobs: int | None = ...,
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    gia: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+    return_exceptions: bool,
+) -> list[AigT] | list[AigT | AbcError]: ...
+
+
 def run_many(
     networks: Iterable[AigT],
     commands: str | Sequence[str],

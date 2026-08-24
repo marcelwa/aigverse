@@ -138,8 +138,8 @@ def test_non_aig_is_rejected_either_way(
     """
     hide_abc(monkeypatch)
     with pytest.raises(TypeError, match="expected an Aig"):
-        run_many(
-            [and_aig, "not a network"],  # ty: ignore[invalid-argument-type]
+        run_many(  # ty: ignore[no-matching-overload]
+            [and_aig, "not a network"],
             "balance",
             return_exceptions=return_exceptions,
         )
