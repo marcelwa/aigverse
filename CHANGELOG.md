@@ -10,6 +10,12 @@ releases may include breaking changes.
 
 ## [Unreleased]
 
+### Changed
+
+- ⚡️ Release the GIL in the `io` bindings, so reading and writing networks
+  overlaps across threads instead of serializing against every other worker
+  ([#477]) ([**@marcelwa**])
+
 ## [0.1.5] - 2026-08-24
 
 ### Added
@@ -201,6 +207,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#477]: https://github.com/marcelwa/aigverse/pull/477
 [#463]: https://github.com/marcelwa/aigverse/pull/463
 [#458]: https://github.com/marcelwa/aigverse/pull/458
 [#457]: https://github.com/marcelwa/aigverse/pull/457

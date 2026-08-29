@@ -21,6 +21,11 @@ void write_dot(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
+    // No GIL release here, unlike the other writers. `write_dot` takes the network
+    // by const reference but is not read-only: its default drawer lazily builds a
+    // `depth_view` over it, and that both registers an event on the network's shared
+    // storage and stamps `visited` flags across its node array. Two threads writing
+    // the same network corrupt the heap.
     m.def(
         "write_dot", [](const Ntk& ntk, const std::filesystem::path& filename)
         { mockturtle::write_dot(ntk, filename.string()); }, nb::arg("ntk"), nb::arg("filename"),

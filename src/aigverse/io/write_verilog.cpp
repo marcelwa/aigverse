@@ -28,7 +28,8 @@ void write_verilog(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 
     Args:
         ntk: The network to serialize.
-        filename: Destination path for the Verilog file.)pb");
+        filename: Destination path for the Verilog file.)pb",
+        nb::call_guard<nb::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG
