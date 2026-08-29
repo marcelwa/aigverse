@@ -9,7 +9,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner)
 #include <mockturtle/traits.hpp>
-#include <nanobind/make_iterator.h>  // NOLINT(misc-include-cleaner)
+#include <nanobind/make_iterator.h>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>  // NOLINT(misc-include-cleaner)
 #include <nanobind/stl/vector.h>  // NOLINT(misc-include-cleaner)
@@ -96,7 +96,7 @@ Returns:
 
         ;
 
-    nb::implicitly_convertible<nb::tuple, Edge>();  // NOLINT(misc-include-cleaner)
+    nb::implicitly_convertible<nb::tuple, Edge>();
 
     /**
      * Edge list.
@@ -193,7 +193,7 @@ Raises:
 
         ;
 
-    nb::implicitly_convertible<nb::list, EdgeList>();  // NOLINT(misc-include-cleaner)
+    nb::implicitly_convertible<nb::list, EdgeList>();
 }
 
 // Explicit instantiation for AIG

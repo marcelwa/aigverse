@@ -32,7 +32,7 @@ Args:
 
 Returns:
     A cleaned network with dangling structures removed.)pb",
-        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::call_guard<nb::gil_scoped_release>());
 }
 
 template void cleanup<aigverse::aig>(nanobind::module_& m);
