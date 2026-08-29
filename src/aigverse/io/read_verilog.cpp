@@ -56,7 +56,7 @@ Returns:
 
 Raises:
     RuntimeError: If parsing the Verilog file fails.)pb",
-        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::call_guard<nb::gil_scoped_release>());
 }
 
 // Explicit instantiation for named AIG

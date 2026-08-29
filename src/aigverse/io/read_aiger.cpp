@@ -121,7 +121,7 @@ Raises:
     RuntimeError: If parsing the AIGER file fails{})pb",
                     latch_clause)
             .c_str(),
-        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::call_guard<nb::gil_scoped_release>());
 
     m.def(
         fmt::format("read_ascii_aiger_into_{}", network_name).c_str(),

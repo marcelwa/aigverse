@@ -29,7 +29,7 @@ void write_dot(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
     Args:
         ntk: The network to serialize.
         filename: Destination path for the DOT file.)pb",
-        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::call_guard<nb::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG
