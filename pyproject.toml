@@ -221,7 +221,10 @@ isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "python/aigverse/__init__.py" = ["RUF067"]
-"test/**" = ["T20", "ANN", "D", "INP001", "S301", "S403"]
+# the autouse fixtures reset process-global state -- the ABC binary/rc override
+# and the benchmark cache override -- that has to be cleared for every test, not
+# only the ones that opt in
+"test/**" = ["T20", "ANN", "D", "INP001", "S301", "S403", "pytest-fixture-autouse"]
 "docs/**" = ["T20", "ERA001", "INP001"]
 # standalone PEP 723 scripts: they print their findings and are not a package
 "examples/**" = ["T20", "INP001"]
