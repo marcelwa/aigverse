@@ -118,9 +118,8 @@ def run_many(
     results)`` is always valid. Every result is held at once regardless of ``jobs``,
     which is the memory a whole corpus costs.
 
-    Expect a speedup below the number of cores. A batch is as slow as its slowest
-    network, and the AIGER transfer at each end of a run holds the GIL, so only the
-    ABC processes themselves overlap.
+    Expect a speedup below the number of cores: a batch is as slow as its slowest
+    network.
 
     Args:
         networks: The networks to optimize. Consumed in full before any work starts.

@@ -261,10 +261,10 @@ worker holds a whole ABC in flight. `timeout` is a budget **per network**, not f
 as a whole. {py:func}`~aigverse.abc.gia.run_many` is the same thing through the `&`-space
 transfer.
 
-Expect a speedup below the number of cores. A batch is only as fast as its slowest network,
-and the AIGER transfer at each end of a run holds the GIL, so it is the ABC processes that
-overlap rather than the whole call. The recipe study below drops from 20 to 8 seconds on
-sixteen cores — about 2.5x for its 400 runs.
+Expect a speedup below the number of cores, because a batch is only as fast as its slowest
+network. The AIGER transfer bracketing each run is not the limit: it is under 2% of a
+`run_script` call on designs of every size, and it releases the GIL. The recipe study below
+drops from about 24 to under 9 seconds on sixteen cores — roughly 2.8x for its 400 runs.
 
 The wrappers take one network each, but every script they run is reachable as commands:
 {py:func}`~aigverse.abc.expand_script` hands out the canonical ones, and a command with
