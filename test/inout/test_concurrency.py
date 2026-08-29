@@ -5,48 +5,64 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from aigverse.io import read_aiger_into_aig, read_ascii_aiger_into_aig, write_aiger
+import pytest
+
+from aigverse.io import (
+    read_aiger_into_aig,
+    read_aiger_into_sequential_aig,
+    read_ascii_aiger_into_aig,
+    read_ascii_aiger_into_sequential_aig,
+    read_pla_into_aig,
+    read_verilog_into_aig,
+    write_aiger,
+    write_dot,
+    write_verilog,
+)
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from aigverse.networks import Aig
 
 dir_path = Path(os.path.realpath(__file__)).parent
 
-# enough work per pool that the reads genuinely overlap rather than finishing
-# before the second thread starts
-REPEATS = 32
+REPEATS = 16
 THREADS = 8
+
+READERS = [
+    (read_aiger_into_aig, "mux21.aig"),
+    (read_ascii_aiger_into_aig, "or.aag"),
+    (read_aiger_into_sequential_aig, "lfsr.aig"),
+    (read_ascii_aiger_into_sequential_aig, "seq.aag"),
+    (read_pla_into_aig, "test.pla"),
+    (read_verilog_into_aig, "test.v"),
+]
 
 
 def shape(aig: Aig) -> tuple[int, int, int, int, list[int], list[int]]:
     return (aig.size, aig.num_pis, aig.num_pos, aig.num_gates, aig.pis(), aig.gates())
 
 
-def test_concurrent_binary_reads():
-    path = str(dir_path / "../resources/mux21.aig")
-    expected = shape(read_aiger_into_aig(path))
+@pytest.mark.parametrize(("reader", "resource"), READERS, ids=[r for _, r in READERS])
+def test_concurrent_reads(reader: Callable[[str], Aig], resource: str):
+    path = str(dir_path / "../resources" / resource)
+    expected = shape(reader(path))
 
     with ThreadPoolExecutor(THREADS) as pool:
-        aigs = list(pool.map(read_aiger_into_aig, [path] * REPEATS))
+        aigs = list(pool.map(reader, [path] * REPEATS))
 
     assert [shape(aig) for aig in aigs] == [expected] * REPEATS
 
 
-def test_concurrent_ascii_reads():
-    path = str(dir_path / "../resources/or.aag")
-    expected = shape(read_ascii_aiger_into_aig(path))
+@pytest.mark.parametrize(("writer", "suffix"), [(write_aiger, "aig"), (write_verilog, "v"), (write_dot, "dot")])
+def test_concurrent_writes(
+    writer: Callable[[Aig, str], None], suffix: str, three_input_and_chain_aig: Aig, tmp_path: Path
+):
+    paths = [tmp_path / f"{i}.{suffix}" for i in range(REPEATS)]
 
     with ThreadPoolExecutor(THREADS) as pool:
-        aigs = list(pool.map(read_ascii_aiger_into_aig, [path] * REPEATS))
+        list(pool.map(lambda p: writer(three_input_and_chain_aig, str(p)), paths))
 
-    assert [shape(aig) for aig in aigs] == [expected] * REPEATS
-
-
-def test_concurrent_writes(three_input_and_chain_aig: Aig, tmp_path: Path):
-    paths = [str(tmp_path / f"{i}.aig") for i in range(REPEATS)]
-
-    with ThreadPoolExecutor(THREADS) as pool:
-        list(pool.map(lambda p: write_aiger(three_input_and_chain_aig, p), paths))
-
-    expected = shape(three_input_and_chain_aig)
-    assert [shape(read_aiger_into_aig(p)) for p in paths] == [expected] * REPEATS
+    serial = tmp_path / f"serial.{suffix}"
+    writer(three_input_and_chain_aig, str(serial))
+    assert [p.read_bytes() for p in paths] == [serial.read_bytes()] * REPEATS

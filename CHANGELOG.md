@@ -12,8 +12,8 @@ releases may include breaking changes.
 
 ### Changed
 
-- ⚡️ Release the GIL in the `io` bindings, so AIGER, PLA, Verilog and DOT reads
-  and writes overlap across threads instead of serializing against each other
+- ⚡️ Release the GIL in the `io` bindings, so reading and writing networks
+  overlaps across threads instead of serializing against every other worker
   ([#477]) ([**@marcelwa**])
 
 ## [0.1.5] - 2026-08-24
