@@ -101,6 +101,53 @@ closest shared `conftest.py`.
 `machine_learning.md`) and are built with Sphinx + MyST/myst-nb; code blocks in the docs are executed at build time,
 so they double as up-to-date examples.
 
+## Code
+
+Write the smallest diff that solves the problem. The ladder is adapted from
+[ponytail](https://github.com/DietrichGebert/ponytail).
+
+Read the task and the code it touches, trace the real flow end to end, then stop at the first rung that holds:
+
+1. Does this need to exist? A speculative need is no need. Skip it, say so in one line.
+2. Does `aigverse` already have it? Reuse the helper, fixture, or binding pattern a few files over. Re-implementing
+   what already exists is the most common slop.
+3. Does mockturtle, kitty, or lorina do it? Bind theirs rather than writing the algorithm here.
+4. Does the standard library do it? Use it.
+5. Does the build or the binding layer cover it? A CMake option, a nanobind argument annotation, or a
+   `pyproject.toml` setting beats application code.
+6. Can it be one line? Write one line.
+7. Only then: the minimum code that works.
+
+The ladder shortens the solution, never the reading. A small diff in the wrong place is not a lazy win, it is a
+second bug. Fix the root cause, not the symptom: grep every caller of the function you touch and fix the shared
+function once, rather than adding a guard per caller.
+
+- No abstraction nobody asked for — no interface with one implementation, no option for a value that never changes.
+- No scaffolding for a future caller. Deletion over addition. Boring over clever. Fewest files.
+- Two options of the same size? Take the one that is correct at the edges. The goal is less code, not a flimsier
+  algorithm.
+- Ship the small version and question the rest in the same breath: "Did X; Y covers the rest. Say so if you need
+  full X." Don't stall on a question you can default.
+- Mark a deliberate simplification with a known ceiling — an O(n²) scan, a naive heuristic — in one comment naming
+  the ceiling and the upgrade path.
+
+Cutting one of these is a defect, not minimalism:
+
+- Input validation at the Python/C++ boundary, and error handling that prevents a silent wrong answer.
+- Anything the task explicitly asked for. If the user wants the full version after you argue for the small one,
+  build it and stop re-arguing.
+- What the repo mandates: Google-style docstrings, regenerated stubs, `CHANGELOG.md` entry, test layout.
+- The check. Non-trivial logic — a branch, a loop, a parser, a lifetime — leaves behind one runnable test under
+  `test/` that fails if the logic breaks. Match the existing test style and add the case, not a suite. A one-line
+  change needs no test.
+
+Code first, then at most three lines: what you skipped, and when to add it. If the explanation outruns the code,
+delete the explanation — a paragraph defending a simplification is complexity smuggled back in as prose. A report,
+walkthrough, or review the user asked for is not padding; give that in full.
+
+A subagent inherits none of this. Any subagent that plans, writes, or reviews code gets this section in its prompt,
+or the absolute path to this file.
+
 ## Code Style
 
 ### Python (Ruff + Google-style docstrings)
@@ -164,22 +211,38 @@ Prefix every commit subject and PR title with a plain [gitmoji](https://gitmoji.
 `🐛`, `📝`) — not the `:shortcode:` text form. See [gitmoji.dev](https://gitmoji.dev) for the full list; a few
 common ones: `✨` new feature, `🐛` bug fix, `📝` docs, `♻️` refactor, `⬆️` dependency bump.
 
-A changelog entry carries the same gitmoji, one sentence, and closes with the pull request reference and every
-contributing author — `- 📝 Add a visualization page to the documentation ([#419]) ([**@marcelwa**])`. Define the
-two links at the bottom of `CHANGELOG.md`, in the `PR links` and `Contributor` blocks. Within a category the newest
-entry goes first. Routine Renovate and pre-commit.ci bumps are left out entirely; a user-observable dependency
-change from one of those bots (e.g. a runtime dependency version bump) still gets an entry, but without a
-contributor link, since the bot isn't one.
+A changelog entry carries the same gitmoji, one sentence of user-visible effect, and closes with the pull request
+reference and every contributing author — `- 📝 Add a visualization page to the documentation ([#419])
+([**@marcelwa**])`. Define the two links at the bottom of `CHANGELOG.md`, in the `PR links` and `Contributor` blocks.
+Within a category the newest entry goes first. Routine Renovate and pre-commit.ci bumps are left out entirely; a
+user-observable dependency change from one of those bots (e.g. a runtime dependency version bump) still gets an entry,
+but without a contributor link, since the bot isn't one.
+
+### PR and issue bodies
+
+One paragraph, three sentences at most: why the change was needed, what it does, and the one thing a reviewer needs
+in order to read the diff. Six lines is the ceiling — the title carries the _what_, the body carries only what the
+title and the diff cannot. Go longer only for a section the PR template mandates, a decision a reviewer cannot infer
+from the diff, or a measurement that makes a claim checkable.
+
+Keep out of a PR body: a restatement of the issue, a file-by-file walk through the diff, a list of tests by name, a
+log of every design decision considered, a closing summary. That detail belongs in the commit messages, attached to
+the code it explains. Length reads as padding, not thoroughness. An issue body takes the same shape — the symptom,
+what you observed, how to reproduce it — and a review comment or a findings report gets a line or two per defect,
+then stops.
+
+Never hard-wrap prose typed into GitHub: one line per paragraph, per list item, and per table row, and let GitHub
+reflow it. The wrap this repo's Markdown files use belongs to files in a tree, not to a web textarea.
 
 ## Boundaries
 
-- **Always:** run `uvx nox -s lint` and `uvx nox -s tests-3.12` before considering a change complete; regenerate
-  stubs (`uvx nox -s stubs`) after touching any `bindings.cpp`; add/update tests under `test/` for behavior changes;
-  update `CHANGELOG.md` for user-facing changes. Only touch `UPGRADING.md` for **breaking** changes — i.e. ones that
-  require users to change their own code to keep working (renamed/removed APIs, changed defaults, moved modules).
-  A user-facing but non-breaking addition (a new function, an added optional parameter) belongs in `CHANGELOG.md`
-  only, not `UPGRADING.md`. Prefix commit messages and PR titles with a plain gitmoji character (see
-  [Commit & PR Conventions](#commit--pr-conventions)).
+- **Always:** write the smallest diff that solves the problem (see [Code](#code)); run `uvx nox -s lint` and `uvx nox
+-s tests-3.12` before considering a change complete; regenerate stubs (`uvx nox -s stubs`) after touching any
+  `bindings.cpp`; add/update tests under `test/` for behavior changes; update `CHANGELOG.md` for user-facing changes.
+  Only touch `UPGRADING.md` for **breaking** changes — i.e. ones that require users to change their own code to keep
+  working (renamed/removed APIs, changed defaults, moved modules). A user-facing but non-breaking addition (a new
+  function, an added optional parameter) belongs in `CHANGELOG.md` only, not `UPGRADING.md`. Prefix commit messages
+  and PR titles with a plain gitmoji character (see [Commit & PR Conventions](#commit--pr-conventions)).
 - **Ask first:** before adding new dependencies to `pyproject.toml`; before major architectural changes to the C++
   core; before modifying CI workflows in `.github/workflows/`.
 - **Never:** hand-edit `.pyi` stub files or `python/aigverse/_version.py` (both generated); remove failing tests
