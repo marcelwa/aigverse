@@ -55,7 +55,8 @@ Returns:
     The parsed network instance.
 
 Raises:
-    RuntimeError: If parsing the Verilog file fails.)pb");
+    RuntimeError: If parsing the Verilog file fails.)pb",
+        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
 }
 
 // Explicit instantiation for named AIG
