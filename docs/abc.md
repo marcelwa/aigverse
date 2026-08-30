@@ -230,6 +230,46 @@ if abc.gia.cec(aig, optimized) is abc.CecStatus.EQUIVALENT:
     print("proven equivalent")
 ```
 
+## Running many networks at once
+
+Optimizing a corpus is the workload this bridge exists for, and the runs are independent:
+every call already gets its own temporary directory, its own working directory and its own
+`abc.history`. {py:func}`~aigverse.abc.run_many` runs one script over many networks on all
+cores, and hands the results back in input order:
+
+```{code-cell} ipython3
+from aigverse.generators import carry_lookahead_adder
+
+designs = [carry_lookahead_adder(width) for width in (4, 8, 16)]
+optimized = abc.run_many(designs, abc.expand_script("resyn2"))
+
+for before, after in zip(designs, optimized):
+    print(f"{before.num_gates:4d} -> {after.num_gates:4d} AND gates")
+```
+
+One script over many networks, so a cross product of recipes and designs is one call per
+recipe:
+
+```python
+for name, script in recipes.items():
+    rows[name] = abc.run_many(designs, script)
+```
+
+`jobs` caps how many ABC processes run at once and defaults to the number of CPUs available
+to the process. On large designs it is memory rather than CPU that limits it, since every
+worker holds a whole ABC in flight. `timeout` is a budget **per network**, not for the batch
+as a whole. {py:func}`~aigverse.abc.gia.run_many` is the same thing through the `&`-space
+transfer.
+
+Expect a speedup below the number of cores, because a batch is only as fast as its slowest
+network. The AIGER transfer bracketing each run is not the limit: it is under 2% of a
+`run_script` call on designs of every size, and it releases the GIL. The recipe study below
+drops from about 24 to under 9 seconds on sixteen cores — roughly 2.8x for its 400 runs.
+
+The wrappers take one network each, but every script they run is reachable as commands:
+{py:func}`~aigverse.abc.expand_script` hands out the canonical ones, and a command with
+options — `abc.rewrite(aig, zero_cost=True)` — is `"rewrite -z"` written out.
+
 ## What ABC thinks of a network
 
 {py:func}`~aigverse.abc.stats` and {py:func}`~aigverse.abc.gia.stats` run ABC's
@@ -423,8 +463,9 @@ types in `aigverse` first.
 :::
 
 Each call starts an ABC process and transfers the network through temporary AIGER files,
-which costs roughly 20 ms of overhead per call — negligible for batch work, but worth
-keeping in mind in a tight optimization loop.
+which costs roughly 20 ms of overhead per call — negligible next to a real script, but worth
+keeping in mind in a tight optimization loop. Independent calls belong in
+[one batch](#running-many-networks-at-once) rather than a loop.
 
 ## When things go wrong
 
@@ -447,6 +488,21 @@ The hierarchy is small: {py:exc}`~aigverse.abc.AbcNotFoundError` when no usable 
 could be located, {py:exc}`~aigverse.abc.AbcTimeoutError` when ABC outlived its `timeout`,
 and {py:exc}`~aigverse.abc.AbcExecutionError` for everything else ABC did wrong. All three
 derive from {py:exc}`~aigverse.abc.AbcError`.
+
+A batch fails the same way by default, which loses the whole sweep to one bad design. Pass
+`return_exceptions=True` and each failure comes back in its network's place instead, still
+carrying the `output` that explains it:
+
+```{code-cell} ipython3
+results = abc.run_many(designs, "no_such_command", return_exceptions=True)
+
+for design, result in zip(designs, results):
+    verdict = "failed" if isinstance(result, abc.AbcError) else f"{result.num_gates} gates"
+    print(f"{design.num_gates:4d} AND gates -> {verdict}")
+```
+
+That covers ABC failures only. A network of the wrong type or a script with no commands in
+it is a fault in the call rather than a per-design failure, and is raised either way.
 
 Options are validated in Python before ABC is started, so a value ABC would reject comes
 back as a `ValueError` naming the keyword you wrote rather than as an ABC message:
@@ -485,8 +541,9 @@ balancing — `rewrite`, `refactor`, `resub` and `balance` — can be applied in
 orders, and every one of them is run on each design. Same transformations, the same
 number of them, different sequence: the order alone moves the final AND count by several
 percent, and the best order is not the same one twice. Each ordering goes to ABC as a
-single script through {py:func}`~aigverse.abc.run_script` rather than as one call per
-command, which is equivalent but avoids a process and an AIGER round-trip per step.
+single script rather than as one call per command, which is equivalent but avoids a process
+and an AIGER round-trip per step, and every design runs that ordering at the same time
+through {py:func}`~aigverse.abc.run_many`.
 
 **Do the two command families trade off?** The classic scripts are plotted against their
 `&`-space counterparts on the area–depth plane. On many designs the smallest and the
@@ -512,7 +569,7 @@ repository:
 
 ```console
 uv run examples/abc_recipe_study.py --quick   # four small designs, for a smoke test
-uv run examples/abc_recipe_study.py           # the default ten-design set, ~18 s of ABC time
+uv run examples/abc_recipe_study.py           # the default ten-design set
 uv run examples/abc_recipe_study.py --all     # the whole EPFL suite, hyp and div included (slow)
 ```
 
@@ -522,10 +579,12 @@ uses something not yet released.
 
 `--rounds` sets how often each schedule is repeated — two by default, so an ordering
 spends eight commands against `resyn2`'s ten — `--benchmarks` takes an explicit list of
-designs, and `--output` / `--csv` redirect the figure and the tables.
+designs, `--jobs` caps how many ABC processes run at once, and `--output` / `--csv` redirect
+the figure and the tables.
 
 `--verify` equivalence-checks every single result with
-{py:func}`~aigverse.algorithms.equivalence_checking` under a conflict limit, and aborts
+{py:func}`~aigverse.algorithms.equivalence_checking` under a conflict limit, which makes the
+study SAT-bound and hides most of the parallel speedup. It aborts
 the study if any optimization turns out not to be equivalence-preserving: that would be a
 bug in ABC or in the bridge, and every number the study prints rests on it not happening.
 A check that exhausts its conflict budget is reported as undecided rather than counted as
