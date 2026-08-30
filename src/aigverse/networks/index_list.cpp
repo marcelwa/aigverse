@@ -153,7 +153,7 @@ Returns:
                     const auto& v = il.raw();
                     if (i >= v.size())
                     {
-                        throw nb::index_error("index out of range");  // NOLINT(misc-include-cleaner)
+                        throw nb::index_error("index out of range");
                     }
                     return v[i];
                 },
@@ -175,7 +175,7 @@ Raises:
                     auto v = il.raw();
                     if (i >= v.size())
                     {
-                        throw nb::index_error("index out of range");  // NOLINT(misc-include-cleaner)
+                        throw nb::index_error("index out of range");
                     }
                     v[i] = value;
                     il   = IndexList(v);  // reconstruct the index list with the new vector

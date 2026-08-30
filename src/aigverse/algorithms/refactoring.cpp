@@ -85,7 +85,7 @@ Returns:
 
 Raises:
     RuntimeError: If refactoring fails in the underlying synthesis engine.)pb",
-        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::call_guard<nb::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG
