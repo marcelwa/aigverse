@@ -569,7 +569,7 @@ repository:
 
 ```console
 uv run examples/abc_recipe_study.py --quick   # four small designs, for a smoke test
-uv run examples/abc_recipe_study.py           # the default ten-design set, ~8 s on sixteen cores
+uv run examples/abc_recipe_study.py           # the default ten-design set
 uv run examples/abc_recipe_study.py --all     # the whole EPFL suite, hyp and div included (slow)
 ```
 

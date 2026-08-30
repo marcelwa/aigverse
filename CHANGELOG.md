@@ -12,18 +12,15 @@ releases may include breaking changes.
 
 ### Added
 
-- ✨ Add `run_many` to the `aigverse.abc` bridge, which runs one ABC script over many
-  networks at once, one process per network across all cores, and with
-  `return_exceptions=True` hands back each failure in its network's place instead of
-  losing the batch to the first bad design ([#467]) ([**@marcelwa**])
+- ✨ Add `run_many` to the `aigverse.abc` bridge, running one ABC script over many
+  networks in parallel and reporting each failure in place instead of losing the
+  batch to the first bad design ([#467]) ([**@marcelwa**])
 
 ### Changed
 
-- ⚡️ Run `examples/abc_recipe_study.py`'s sweep as one batch per recipe rather than one
-  ABC call at a time, and give it a `--jobs` flag. Its 400 runs over the default design
-  set drop from about 24 s to under 9 s on sixteen cores, with every measurement
-  unchanged. Its CSV loses the `seconds` column, which a concurrent run cannot measure
-  per item ([#467]) ([**@marcelwa**])
+- ⚡️ Run `examples/abc_recipe_study.py`'s sweep as one batch per recipe instead of one
+  ABC call at a time, with a new `--jobs` flag. Its CSV loses the `seconds` column,
+  which a concurrent run cannot measure per item ([#467]) ([**@marcelwa**])
 - ⚡️ Release the GIL in the `generators` bindings, so random and structured
   network construction overlaps across threads instead of blocking every other
   worker ([#478]) ([**@marcelwa**])
@@ -33,9 +30,9 @@ releases may include breaking changes.
 
 ### Fixed
 
-- 🐛 Look the ABC executable up on `PATH` once per `run_script` call instead of twice. The
-  second lookup ran after ABC had already finished, purely to name the binary in an error,
-  so a binary that disappeared mid-run discarded a successful result ([#467])
+- 🐛 Look the ABC executable up on `PATH` once per `run_script` call instead of twice.
+  The second lookup ran after ABC finished purely to name the binary in an error, so a
+  binary that disappeared mid-run discarded a successful result ([#467])
   ([**@marcelwa**])
 
 ## [0.1.5] - 2026-08-24
