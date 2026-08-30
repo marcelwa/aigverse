@@ -78,7 +78,8 @@ Args:
     try_both_polarities: Whether both output polarities are explored.
     consider_inverter_cost: Whether inverter cost is included in optimization.
     verbose: Whether to print verbose progress output.
-    inplace: Whether to mutate ``ntk`` in place.
+    inplace: Whether to mutate ``ntk`` in place. A network being transformed in place
+        must not be shared with another thread.
 
 Returns:
     The refactored network if ``inplace`` is ``False``. Otherwise ``None``.

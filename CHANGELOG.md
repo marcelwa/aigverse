@@ -30,6 +30,10 @@ releases may include breaking changes.
 
 ### Fixed
 
+- 🐛 Stop `equivalence_checking`, `aig_cut_rewriting`, `balancing`, and `cleanup_dangling`
+  from returning silently wrong results when several threads call them on one shared
+  network. Each wrote traversal state into the caller's network through a mockturtle view
+  while the GIL was released ([#483]) ([**@marcelwa**])
 - 🐛 Look the ABC executable up on `PATH` once per `run_script` call instead of twice.
   The second lookup ran after ABC finished purely to name the binary in an error, so a
   binary that disappeared mid-run discarded a successful result ([#467])
@@ -226,6 +230,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#483]: https://github.com/marcelwa/aigverse/pull/483
 [#481]: https://github.com/marcelwa/aigverse/pull/481
 [#467]: https://github.com/marcelwa/aigverse/pull/467
 [#478]: https://github.com/marcelwa/aigverse/pull/478
