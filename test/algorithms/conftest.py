@@ -4,10 +4,24 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from aigverse.generators import random_aig
 from aigverse.networks import Aig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+
+@pytest.fixture
+def race_prone_aig() -> Aig:
+    """Create a network large enough for a traversal to lose a race in.
+
+    The three-gate fixtures are too small to expose one: their traversals finish
+    before another thread can interleave with them (#481).
+
+    Returns:
+        A 600-gate random AIG network.
+    """
+    return random_aig(num_pis=10, num_gates=600, seed=42)
 
 
 @pytest.fixture

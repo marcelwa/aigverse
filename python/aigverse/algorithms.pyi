@@ -70,7 +70,8 @@ def sop_refactoring(
         try_both_polarities: Whether both output polarities are explored.
         consider_inverter_cost: Whether inverter cost is included in optimization.
         verbose: Whether to print verbose progress output.
-        inplace: Whether to mutate ``ntk`` in place.
+        inplace: Whether to mutate ``ntk`` in place. A network being transformed in place
+            must not be shared with another thread.
 
     Returns:
         The refactored network if ``inplace`` is ``False``. Otherwise ``None``.
@@ -106,7 +107,8 @@ def aig_resubstitution(
         use_dont_cares: Whether to use don't-care information.
         window_size: Window size used for don't-care computation.
         preserve_depth: Whether replacements must preserve depth.
-        inplace: Whether to mutate ``ntk`` in place.
+        inplace: Whether to mutate ``ntk`` in place. A network being transformed in place
+            must not be shared with another thread.
 
     Returns:
         The optimized network if ``inplace`` is ``False``. Otherwise ``None``.
