@@ -66,7 +66,7 @@ Args:
 
 Returns:
     The optimized network if ``inplace`` is ``False``. Otherwise ``None``.)pb",
-        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::call_guard<nb::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG

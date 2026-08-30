@@ -11,9 +11,9 @@
 #include <kitty/hash.hpp>
 #include <kitty/operations.hpp>
 #include <kitty/print.hpp>
-#include <nanobind/make_iterator.h>  // NOLINT(misc-include-cleaner)
+#include <nanobind/make_iterator.h>
 #include <nanobind/nanobind.h>
-#include <nanobind/operators.h>   // NOLINT(misc-include-cleaner)
+#include <nanobind/operators.h>
 #include <nanobind/stl/string.h>  // NOLINT(misc-include-cleaner)
 #include <nanobind/stl/vector.h>  // NOLINT(misc-include-cleaner)
 
@@ -150,7 +150,7 @@ Args:
                 }
                 if (index < 0 || static_cast<uint64_t>(index) >= self.num_bits())
                 {
-                    throw nb::index_error("index out of range");  // NOLINT(misc-include-cleaner)
+                    throw nb::index_error("index out of range");
                 }
 
                 return kitty::get_bit(self, static_cast<uint64_t>(index));
@@ -176,7 +176,7 @@ Raises:
                 }
                 if (index < 0 || static_cast<uint64_t>(index) >= self.num_bits())
                 {
-                    throw nb::index_error("index out of range");  // NOLINT(misc-include-cleaner)
+                    throw nb::index_error("index out of range");
                 }
                 if (value)
                 {
@@ -204,7 +204,7 @@ Raises:
                                          detail::truth_table_bit_iterator(self, 0),
                                          detail::truth_table_bit_iterator(self, self.num_bits()));
             },
-            R"pb(Returns an iterator over all bits.)pb", nb::keep_alive<0, 1>())  // NOLINT(misc-include-cleaner)
+            R"pb(Returns an iterator over all bits.)pb", nb::keep_alive<0, 1>())
 
         // Method bindings
         .def("num_vars", &aigverse::truth_table::num_vars, R"pb(Returns the number of variables.)pb")
@@ -277,7 +277,7 @@ Raises:
             {
                 if (index >= self.num_bits())
                 {
-                    throw nb::index_error("index out of range");  // NOLINT(misc-include-cleaner)
+                    throw nb::index_error("index out of range");
                 }
                 kitty::set_bit(self, index);
             },
@@ -295,7 +295,7 @@ Raises:
             {
                 if (index >= self.num_bits())
                 {
-                    throw nb::index_error("index out of range");  // NOLINT(misc-include-cleaner)
+                    throw nb::index_error("index out of range");
                 }
                 return static_cast<bool>(kitty::get_bit(self, index));
             },
@@ -316,7 +316,7 @@ Raises:
             {
                 if (index >= self.num_bits())
                 {
-                    throw nb::index_error("index out of range");  // NOLINT(misc-include-cleaner)
+                    throw nb::index_error("index out of range");
                 }
                 kitty::clear_bit(self, index);
             },
@@ -334,7 +334,7 @@ Raises:
             {
                 if (index >= self.num_bits())
                 {
-                    throw nb::index_error("index out of range");  // NOLINT(misc-include-cleaner)
+                    throw nb::index_error("index out of range");
                 }
                 kitty::flip_bit(self, index);
             },

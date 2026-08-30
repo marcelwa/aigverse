@@ -68,7 +68,7 @@ Args:
 
 Returns:
     A rewritten network.)pb",
-        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::call_guard<nb::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG
