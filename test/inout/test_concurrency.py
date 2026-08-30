@@ -15,7 +15,6 @@ from aigverse.io import (
     read_pla_into_aig,
     read_verilog_into_aig,
     write_aiger,
-    write_verilog,
 )
 
 if TYPE_CHECKING:
@@ -53,9 +52,10 @@ def test_concurrent_reads(reader: Callable[[str], Aig], resource: str):
     assert [shape(aig) for aig in aigs] == [expected] * REPEATS
 
 
-# write_dot is absent by design: its drawer mutates the network's shared storage, so
-# its binding keeps the GIL. See the comment in src/aigverse/io/write_dot.cpp.
-@pytest.mark.parametrize(("writer", "suffix"), [(write_aiger, "aig"), (write_verilog, "v")])
+# write_aiger is the only writer here by design. write_dot and write_verilog build a
+# mockturtle view over the caller's network, so their bindings keep the GIL; see the
+# comment in src/aigverse/io/write_dot.cpp.
+@pytest.mark.parametrize(("writer", "suffix"), [(write_aiger, "aig")])
 def test_concurrent_writes(
     writer: Callable[[Aig, str], None], suffix: str, three_input_and_chain_aig: Aig, tmp_path: Path
 ):

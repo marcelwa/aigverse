@@ -24,9 +24,9 @@ releases may include breaking changes.
 - ⚡️ Release the GIL in the `generators` bindings, so random and structured
   network construction overlaps across threads instead of blocking every other
   worker ([#478]) ([**@marcelwa**])
-- ⚡️ Release the GIL in the `io` bindings, so reading and writing networks
+- ⚡️ Release the GIL in the `io` bindings, so reading networks and writing AIGER
   overlaps across threads instead of serializing against every other worker
-  ([#477]) ([**@marcelwa**])
+  ([#477], [#481]) ([**@marcelwa**])
 
 ### Fixed
 
@@ -226,6 +226,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#481]: https://github.com/marcelwa/aigverse/pull/481
 [#467]: https://github.com/marcelwa/aigverse/pull/467
 [#478]: https://github.com/marcelwa/aigverse/pull/478
 [#477]: https://github.com/marcelwa/aigverse/pull/477
