@@ -31,6 +31,53 @@ function(add_aigverse_python_binding target_name)
   if(ARG_MODULE_NAME)
     set_target_properties(${target_name} PROPERTIES OUTPUT_NAME
                                                     ${ARG_MODULE_NAME})
+    set(module_name ${ARG_MODULE_NAME})
+  else()
+    set(module_name ${target_name})
+  endif()
+
+  # Keep the statically linked dependencies local. nanobind attaches
+  # `--exclude-libs`, `-ffunction-sections`/`-fdata-sections` and
+  # `--gc-sections` to the nanobind library target as PUBLIC options, and a
+  # split-mode extension links no such target, so it inherits none of them.
+  # Without this block every module re-exports the internals of the static
+  # libraries it embeds -- five copies of mockturtle's `abc::exorcism`, mutable
+  # globals included, which the dynamic linker is then free to interpose across
+  # modules.
+  if(APPLE)
+    target_link_options(${target_name} PRIVATE
+                        "LINKER:-exported_symbol,_PyInit_${module_name}")
+
+    # Apple's x86-64 ABI compares RTTI by pointer, so nanobind's exception type
+    # information has to stay exported for an exception to cross a module
+    # boundary. Its arm64 ABI compares the type names instead.
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+      target_link_options(
+        ${target_name}
+        PRIVATE
+        "LINKER:-exported_symbol,__ZTIN8nanobind4abi112python_errorE"
+        "LINKER:-exported_symbol,__ZTSN8nanobind4abi112python_errorE"
+        "LINKER:-exported_symbol,__ZTIN8nanobind4abi117builtin_exceptionE"
+        "LINKER:-exported_symbol,__ZTSN8nanobind4abi117builtin_exceptionE")
+    endif()
+  elseif(UNIX)
+    target_link_options(${target_name} PRIVATE "LINKER:--exclude-libs,ALL")
+
+    # Section garbage collection needs the per-function and per-data sections to
+    # collect; nanobind's own `-Os` does not emit them.
+    target_compile_options(
+      ${target_name}
+      PRIVATE
+        "$<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>,$<CONFIG:RelWithDebInfo>>:-ffunction-sections;-fdata-sections>"
+    )
+    target_link_options(
+      ${target_name}
+      PRIVATE
+      "$<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>,$<CONFIG:RelWithDebInfo>>:LINKER:--gc-sections>"
+    )
+  elseif(WIN32)
+    set_target_properties(${target_name} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS
+                                                    OFF)
   endif()
 
   target_link_libraries(
