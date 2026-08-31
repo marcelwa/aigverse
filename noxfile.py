@@ -75,6 +75,8 @@ def cpp_lint(session: nox.Session) -> None:
 
     if shutil.which("cmake") is None:
         session.install("cmake")
+    if shutil.which("ninja") is None:
+        session.install("ninja")
     session.install("--group", "cpp-lint")
 
     root = Path(__file__).parent.resolve()
@@ -88,6 +90,11 @@ def cpp_lint(session: nox.Session) -> None:
         str(build_dir),
         "-S",
         str(root),
+        # only the Makefile and Ninja generators honor `CMAKE_EXPORT_COMPILE_COMMANDS`, and
+        # the default is neither of them on Windows, where clang-tidy would then analyze
+        # every file without the flags it is built with
+        "-G",
+        "Ninja",
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
         f"-DPython_EXECUTABLE={Path(session.bin) / 'python'}",
         external=True,
