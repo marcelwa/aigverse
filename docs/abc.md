@@ -67,6 +67,23 @@ print(f"{aig.num_gates} -> {result.num_gates} AND gates")
 Their options are exposed as keyword arguments rather than as ABC switches:
 `abc.rewrite(aig, zero_cost=True)` or `abc.resub(aig, max_cut_size=12)`.
 
+Every wrapper also builds its command without running it, which is what lets a
+parameterized command go anywhere a command string goes:
+
+```{code-cell} ipython3
+print(abc.rewrite.cmd(zero_cost=True))
+print(abc.resub.cmd(max_cut_size=12))
+```
+
+A schedule is then a list of commands, and the whole list runs in one ABC process:
+
+```{code-cell} ipython3
+schedule = [abc.balance.cmd(), abc.rewrite.cmd(zero_cost=True), abc.refactor.cmd()]
+result = abc.run_script(aig, schedule)
+
+print(f"{aig.num_gates} -> {result.num_gates} AND gates")
+```
+
 {py:obj}`~aigverse.abc.orchestrate` is a fifth: instead of running rewriting,
 refactoring and resubstitution one after another, it interleaves them and picks per node
 which to apply — a whole schedule in a single command.
@@ -267,8 +284,20 @@ network. The AIGER transfer bracketing each run is not the limit: it is under 2%
 drops from about 24 to under 9 seconds on sixteen cores — roughly 2.8x for its 400 runs.
 
 The wrappers take one network each, but every script they run is reachable as commands:
-{py:func}`~aigverse.abc.expand_script` hands out the canonical ones, and a command with
-options — `abc.rewrite(aig, zero_cost=True)` — is `"rewrite -z"` written out.
+{py:func}`~aigverse.abc.expand_script` hands out the canonical ones, and `cmd()` builds a
+parameterized one, so a whole corpus gets it in a single call:
+
+```{code-cell} ipython3
+recipe = [abc.balance.cmd(), abc.rewrite.cmd(zero_cost=True), abc.refactor.cmd()]
+optimized = abc.run_many(designs, recipe)
+
+for before, after in zip(designs, optimized):
+    print(f"{before.num_gates:4d} -> {after.num_gates:4d} AND gates")
+```
+
+A {py:class}`~aigverse.abc.Command` carries no store affinity, though: the `&`-space ones
+belong to {py:func}`~aigverse.abc.gia.run_many`, and handing them to the classic
+{py:func}`~aigverse.abc.run_many` fails with _there is no AIG_.
 
 ## What ABC thinks of a network
 
