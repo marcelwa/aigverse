@@ -283,22 +283,26 @@ def test_high_effort_out_of_range_options_are_rejected(build: Callable[[], Comma
 
 
 def test_a_command_is_hashable_and_compares_by_its_text() -> None:
-    """A study keys its rows by command, which needs equality and hashing."""
+    """A command is frozen, so it can key a table of results and two builds of the
+    same options are the same command.
+    """
     assert rewrite.cmd(zero_cost=True) == rewrite.cmd(zero_cost=True)
     assert rewrite.cmd(zero_cost=True) != rewrite.cmd()
     assert {rewrite.cmd(zero_cost=True): "row"}[Command("rewrite -z")] == "row"
 
 
-@requires_posix
 @pytest.mark.parametrize(
     ("call", "build"),
     [
+        (lambda ntk, exe: balance(ntk, duplicate=True, binary=exe), lambda: balance.cmd(duplicate=True)),
         (lambda ntk, exe: rewrite(ntk, zero_cost=True, binary=exe), lambda: rewrite.cmd(zero_cost=True)),
+        (lambda ntk, exe: refactor(ntk, max_support=12, binary=exe), lambda: refactor.cmd(max_support=12)),
         (lambda ntk, exe: resub(ntk, max_cut_size=12, binary=exe), lambda: resub.cmd(max_cut_size=12)),
         (lambda ntk, exe: orchestrate(ntk, odc_levels=2, binary=exe), lambda: orchestrate.cmd(odc_levels=2)),
     ],
-    ids=["rewrite", "resub", "orchestrate"],
+    ids=["balance", "rewrite", "refactor", "resub", "orchestrate"],
 )
+@requires_posix
 def test_a_call_issues_the_command_it_builds(
     call: Callable[[Aig, Path], object],
     build: Callable[[], Command],
@@ -320,25 +324,66 @@ def test_a_call_issues_the_command_it_builds(
     assert f"; {build()}; " in script
 
 
+@pytest.mark.parametrize(
+    ("call", "build"),
+    [
+        (lambda ntk, exe: gia.balance(ntk, max_fanout=64, binary=exe), lambda: gia.balance.cmd(max_fanout=64)),
+        (lambda ntk, exe: gia.resub(ntk, max_inserts=2, binary=exe), lambda: gia.resub.cmd(max_inserts=2)),
+        (lambda ntk, exe: gia.dc2(ntk, update_levels=False, binary=exe), lambda: gia.dc2.cmd(update_levels=False)),
+        (lambda ntk, exe: gia.syn2(ntk, delay_relaxation=0, binary=exe), lambda: gia.syn2.cmd(delay_relaxation=0)),
+        (lambda ntk, exe: gia.syn3(ntk, binary=exe), gia.syn3.cmd),
+        (lambda ntk, exe: gia.syn4(ntk, binary=exe), gia.syn4.cmd),
+        (lambda ntk, exe: gia.fraig(ntk, conflict_limit=100, binary=exe), lambda: gia.fraig.cmd(conflict_limit=100)),
+        (lambda ntk, exe: gia.deepsyn(ntk, seed=7, binary=exe), lambda: gia.deepsyn.cmd(seed=7)),
+        (
+            lambda ntk, exe: gia.transduction(ntk, fanin_sort=2, binary=exe),
+            lambda: gia.transduction.cmd(fanin_sort=2),
+        ),
+        (lambda ntk, exe: gia.transtoch(ntk, restarts=2, binary=exe), lambda: gia.transtoch.cmd(restarts=2)),
+    ],
+    ids=["balance", "resub", "dc2", "syn2", "syn3", "syn4", "fraig", "deepsyn", "transduction", "transtoch"],
+)
 @requires_posix
 def test_a_gia_call_issues_its_command_through_the_gia_transfer(
+    call: Callable[[Aig, Path], object],
+    build: Callable[[], Command],
     and_aig: Aig,
     fake_abc: Callable[[str], Path],
 ) -> None:
-    """A `&`-space call must reach ABC through `&read`/`&write`.
+    """A `&`-space call must send what it built, and reach ABC through `&read`.
 
     Against the classic store the command would silently see nothing.
 
     Args:
+        call: Invokes the wrapper under test with a network and a binary.
+        build: Builds the command the same options are expected to produce.
         and_aig: A minimal two-input AND network.
         fake_abc: Factory for the stand-in ABC executable.
     """
     shim = fake_abc(_FAILING)
-    script = _command_for(lambda: gia.syn2(and_aig, delay_relaxation=0, binary=shim))
+    script = _command_for(lambda: call(and_aig, shim))
 
-    assert f"; {gia.syn2.cmd(delay_relaxation=0)}; " in script
+    assert f"; {build()}; " in script
     # Not anchored to the start: a resource file registered via AIGVERSE_ABC_RC
     # prepends a `source` step to what ABC is actually asked to run.
     assert "&read in.aig" in script
     assert "read_aiger" not in script
     assert script.endswith("&write out.aig")
+
+
+def test_a_call_rejects_an_out_of_range_option_before_it_needs_abc(
+    and_aig: Aig,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A bad option must be a `ValueError` even where no ABC is installed, which
+    only holds while the call builds its command before resolving a binary.
+
+    Args:
+        and_aig: A minimal two-input AND network.
+        monkeypatch: Used to hide any installed ABC.
+    """
+    monkeypatch.delenv("AIGVERSE_ABC", raising=False)
+    monkeypatch.setenv("PATH", "")
+
+    with pytest.raises(ValueError, match="max_support must be between 1 and 15"):
+        refactor(and_aig, max_support=0)
