@@ -147,9 +147,8 @@ ATOMS: Mapping[str, abc.Command] = MappingProxyType({
 })
 
 #: The canonical `abc.rc` scripts, plus ABC's own `orchestrate`, for reference
-#: against the brute-forced orders. The canonical ones are option-less, so
-#: `abc.expand_script` hands out exactly what the `abc.resyn2`-style wrappers run,
-#: and a whole design set goes to `abc.run_many` in one call.
+#: against the brute-forced orders. `abc.expand_script` hands the canonical ones
+#: out as commands, so a whole design set goes to `abc.run_many` in one call.
 CLASSIC_SCRIPTS: Mapping[str, tuple[str | abc.Command, ...]] = MappingProxyType({
     "resyn": abc.expand_script("resyn"),
     "resyn2": abc.expand_script("resyn2"),

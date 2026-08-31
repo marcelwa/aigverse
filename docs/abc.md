@@ -49,7 +49,8 @@ installation where no `abc.rc` is found, and they silently mean something else o
 where a user has customized that file. `aigverse` sidesteps both problems by shipping the
 expansions itself and running ABC with `-s`, so a script means the same thing on every
 machine. The exact expansion of each script is available in
-{py:data}`~aigverse.abc.SCRIPTS`.
+{py:data}`~aigverse.abc.SCRIPTS`, and {py:func}`~aigverse.abc.expand_script` hands it out
+as commands — these scripts take no options, so they need no builder of their own.
 
 ## Individual commands
 
