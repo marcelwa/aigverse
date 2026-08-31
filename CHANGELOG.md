@@ -12,6 +12,8 @@ releases may include breaking changes.
 
 ### Added
 
+- 📝 Add an ABC example to the README, showing how to run one of ABC's optimization
+  scripts on a network and check the result for equivalence ([#489]) ([**@marcelwa**])
 - 👷 Add a `cpp-lint` nox session that reproduces the `🚨 Clang-Tidy` check locally, running
   the same `cpp-linter` invocation CI runs over the files that differ from `origin/main`
   ([#488]) ([**@marcelwa**])
@@ -33,6 +35,9 @@ releases may include breaking changes.
 
 ### Fixed
 
+- 📝 Correct the README's Stable ABI floor, which is 3.10 rather than 3.12 since split
+  mode, and drop its claim of free-threading support, which is deferred to Python 3.15
+  ([#489]) ([**@marcelwa**])
 - 🐛 Stop `equivalence_checking`, `aig_cut_rewriting`, `balancing`, and `cleanup_dangling`
   from returning silently wrong results when several threads call them on one shared
   network. Each wrote traversal state into the caller's network through a mockturtle view
@@ -233,6 +238,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#489]: https://github.com/marcelwa/aigverse/pull/489
 [#488]: https://github.com/marcelwa/aigverse/pull/488
 [#483]: https://github.com/marcelwa/aigverse/pull/483
 [#481]: https://github.com/marcelwa/aigverse/pull/481
