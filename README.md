@@ -338,7 +338,7 @@ from aigverse.generators import carry_lookahead_adder
 
 aig = carry_lookahead_adder(16)
 
-# Run ABC's `resyn2` script; a *new* network of the same type is returned
+# Returns a new network; the input is left untouched
 optimized = abc.resyn2(aig)
 
 print(f"{aig.num_gates} -> {optimized.num_gates} AND gates")
