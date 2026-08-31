@@ -345,10 +345,9 @@ print(f"{aig.num_gates} -> {optimized.num_gates} AND gates")
 print(f"Equivalent: {equivalence_checking(aig, optimized)}")
 ```
 
-Alongside the named scripts (`resyn`, `resyn2`, `resyn3`, `compress`, `compress2`, `resyn2rs`, `compress2rs`, and
-`dc2`) there are individual commands such as `abc.balance` and `abc.resub`, ABC9's `&`-space under `abc.gia`, and
-`abc.run_many` for running one script over many networks in parallel. See the
-[ABC documentation](https://aigverse.readthedocs.io/en/latest/abc.html) for details.
+The other named scripts (`resyn`, `resyn3`, `compress`, `compress2`, `resyn2rs`, `compress2rs`, and `dc2`) work the
+same way, as do the individual commands `abc.balance`, `abc.rewrite`, `abc.refactor`, and `abc.resub`. See the
+[ABC documentation](https://aigverse.readthedocs.io/en/latest/abc.html) for the full set.
 
 ### 📄 File Format Support
 
