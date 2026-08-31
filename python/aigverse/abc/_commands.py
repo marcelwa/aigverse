@@ -20,7 +20,7 @@ that ``preserve_levels=False`` reads as what it does.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from ._options import check_option
 from ._runner import AigT, Command, run_script
@@ -28,10 +28,21 @@ from ._runner import AigT, Command, run_script
 if TYPE_CHECKING:
     import os
 
-__all__ = ["balance", "orchestrate", "refactor", "resub", "rewrite"]
+__all__ = [
+    "Balance",
+    "Orchestrate",
+    "Refactor",
+    "Resub",
+    "Rewrite",
+    "balance",
+    "orchestrate",
+    "refactor",
+    "resub",
+    "rewrite",
+]
 
 
-class _Balance:
+class Balance:
     """Runs ABC's ``balance`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -106,10 +117,10 @@ class _Balance:
 
 
 #: Runs ABC's ``balance`` command on a network, or builds it as a command.
-balance = _Balance()
+balance: Final[Balance] = Balance()
 
 
-class _Rewrite:
+class Rewrite:
     """Runs ABC's ``rewrite`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -163,10 +174,10 @@ class _Rewrite:
 
 
 #: Runs ABC's ``rewrite`` command on a network, or builds it as a command.
-rewrite = _Rewrite()
+rewrite: Final[Rewrite] = Rewrite()
 
 
-class _Refactor:
+class Refactor:
     """Runs ABC's ``refactor`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -258,10 +269,10 @@ class _Refactor:
 
 
 #: Runs ABC's ``refactor`` command on a network, or builds it as a command.
-refactor = _Refactor()
+refactor: Final[Refactor] = Refactor()
 
 
-class _Resub:
+class Resub:
     """Runs ABC's ``resub`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -375,10 +386,10 @@ class _Resub:
 
 
 #: Runs ABC's ``resub`` command on a network, or builds it as a command.
-resub = _Resub()
+resub: Final[Resub] = Resub()
 
 
-class _Orchestrate:
+class Orchestrate:
     """Runs ABC's ``orchestrate`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -490,4 +501,4 @@ class _Orchestrate:
 
 
 #: Runs ABC's ``orchestrate`` command on a network, or builds it as a command.
-orchestrate = _Orchestrate()
+orchestrate: Final[Orchestrate] = Orchestrate()

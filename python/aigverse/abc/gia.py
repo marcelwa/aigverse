@@ -42,7 +42,7 @@ from __future__ import annotations
 import tempfile
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, Final, overload
 
 from ._batch import run_many as _base_run_many
 from ._errors import AbcExecutionError, AbcTimeoutError
@@ -68,7 +68,17 @@ if TYPE_CHECKING:
     from ._errors import AbcError
 
 __all__ = [
+    "Balance",
     "CecStatus",
+    "Dc2",
+    "Deepsyn",
+    "Fraig",
+    "Resub",
+    "Syn2",
+    "Syn3",
+    "Syn4",
+    "Transduction",
+    "Transtoch",
     "balance",
     "cec",
     "dc2",
@@ -146,7 +156,7 @@ def _run(
     return _base_run_script(ntk, command, timeout=timeout, gia=True, verbose=verbose, binary=binary)
 
 
-class _Balance:
+class Balance:
     """Runs ABC's ``&b`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -233,10 +243,10 @@ class _Balance:
 
 
 #: Runs ABC's ``&b`` command on a network, or builds it as a command.
-balance = _Balance()
+balance: Final[Balance] = Balance()
 
 
-class _Resub:
+class Resub:
     """Runs ABC's ``&resub`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -316,10 +326,10 @@ class _Resub:
 
 
 #: Runs ABC's ``&resub`` command on a network, or builds it as a command.
-resub = _Resub()
+resub: Final[Resub] = Resub()
 
 
-class _Dc2:
+class Dc2:
     """Runs ABC's ``&dc2`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -365,10 +375,10 @@ class _Dc2:
 
 
 #: Runs ABC's ``&dc2`` command on a network, or builds it as a command.
-dc2 = _Dc2()
+dc2: Final[Dc2] = Dc2()
 
 
-class _Syn2:
+class Syn2:
     """Runs ABC's ``&syn2`` script on a network, or builds it as a command."""
 
     @staticmethod
@@ -469,10 +479,10 @@ class _Syn2:
 
 
 #: Runs ABC's ``&syn2`` script on a network, or builds it as a command.
-syn2 = _Syn2()
+syn2: Final[Syn2] = Syn2()
 
 
-class _Syn3:
+class Syn3:
     """Runs ABC's ``&syn3`` script on a network, or builds it as a command."""
 
     @staticmethod
@@ -514,10 +524,10 @@ class _Syn3:
 
 
 #: Runs ABC's ``&syn3`` script on a network, or builds it as a command.
-syn3 = _Syn3()
+syn3: Final[Syn3] = Syn3()
 
 
-class _Syn4:
+class Syn4:
     """Runs ABC's ``&syn4`` script on a network, or builds it as a command."""
 
     @staticmethod
@@ -559,10 +569,10 @@ class _Syn4:
 
 
 #: Runs ABC's ``&syn4`` script on a network, or builds it as a command.
-syn4 = _Syn4()
+syn4: Final[Syn4] = Syn4()
 
 
-class _Fraig:
+class Fraig:
     """Runs ABC's ``&fraig`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -626,10 +636,10 @@ class _Fraig:
 
 
 #: Runs ABC's ``&fraig`` command on a network, or builds it as a command.
-fraig = _Fraig()
+fraig: Final[Fraig] = Fraig()
 
 
-class _Deepsyn:
+class Deepsyn:
     """Runs ABC's ``&deepsyn`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -647,7 +657,9 @@ class _Deepsyn:
 
         Unlike the single-pass commands, ``timeout`` is a switch here: it is the
         budget ABC enforces itself (``-T``), so it belongs to the command and
-        survives into a batch.
+        survives into a batch. What does not survive is the process backstop that
+        :obj:`deepsyn` adds on top of it, so give a batch a ``timeout`` of its own
+        for the case where ABC ignores its own budget.
 
         Args:
             timeout: Seconds ABC may spend searching (ABC's ``-T``), or ``None`` for
@@ -755,10 +767,10 @@ class _Deepsyn:
 
 
 #: Runs ABC's ``&deepsyn`` command on a network, or builds it as a command.
-deepsyn = _Deepsyn()
+deepsyn: Final[Deepsyn] = Deepsyn()
 
 
-class _Transduction:
+class Transduction:
     """Runs ABC's ``&transduction`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -902,10 +914,10 @@ class _Transduction:
 
 
 #: Runs ABC's ``&transduction`` command on a network, or builds it as a command.
-transduction = _Transduction()
+transduction: Final[Transduction] = Transduction()
 
 
-class _Transtoch:
+class Transtoch:
     """Runs ABC's ``&transtoch`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -1066,7 +1078,7 @@ class _Transtoch:
 
 
 #: Runs ABC's ``&transtoch`` command on a network, or builds it as a command.
-transtoch = _Transtoch()
+transtoch: Final[Transtoch] = Transtoch()
 
 
 def cec(
