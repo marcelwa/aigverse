@@ -36,6 +36,9 @@ jobs:
 
       - name: Set up MSVC development environment (Windows only)
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          # Defaults to x64; windows-11-arm needs telling explicitly.
+          arch: ${{ runner.arch == 'ARM64' && 'arm64' || 'x64' }}
 
       # No compiler cache here, deliberately. Wheels compile against nanobind
       # headers inside uv's build-isolation environment, a directory named

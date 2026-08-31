@@ -52,6 +52,9 @@ jobs:
       - if: runner.os == 'Windows'
         name: Set up the MSVC development environment
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          # Defaults to x64; windows-11-arm needs telling explicitly.
+          arch: ${{ runner.arch == 'ARM64' && 'arm64' || 'x64' }}
 
       - if: runner.os == 'Windows'
         name: Build with Ninja so that the compiler cache is used
@@ -87,6 +90,15 @@ jobs:
         name: Install sccache
         run: uv tool install sccache
 
+      # torch ships neither a win_arm64 wheel nor an sdist, and numpy's win_arm64 wheels
+      # start at 3.11, so `--full` (which installs torch) and Python 3.10 are both
+      # unusable on this runner. `nox -p` narrows the interpreter matrix; the runs
+      # below skip `--full` and explicitly exclude `torch` alongside `network` so the
+      # uninstalled dependency's tests are never collected.
+      - if: inputs.runs-on == 'windows-11-arm'
+        name: Restrict interpreters on Windows ARM64
+        run: echo "NOX_PYTHON=-p 3.11 3.12 3.13 3.14" >> "$GITHUB_ENV"
+
       # The declared floors are only a claim until something installs them, so
       # resolve every direct dependency down to its minimum and run the suite
       # against that. This shares the matrix rather than sitting in a job of its
@@ -97,12 +109,22 @@ jobs:
       # `--full` installs the optional groups and selects every marker; the
       # matrix narrows it back to exclude the network tests, which download
       # circuits and run in their own workflow so that a hiccup at github.com
-      # cannot redden an unrelated matrix.
-      - name: ⬇️ Test the lowest supported dependency versions
+      # cannot redden an unrelated matrix. Skipped on windows-11-arm, see above.
+      - if: inputs.runs-on != 'windows-11-arm'
+        name: ⬇️ Test the lowest supported dependency versions
         run: uvx nox -s minimums --verbose -- --full -m "not network"
 
-      - name: 🐍 Test
+      - if: inputs.runs-on == 'windows-11-arm'
+        name: ⬇️ Test the lowest supported dependency versions (Windows ARM64)
+        run: uvx nox -s minimums ${NOX_PYTHON} --verbose -- -m "not network and not torch"
+
+      - if: inputs.runs-on != 'windows-11-arm'
+        name: 🐍 Test
         run: uvx nox -s tests --verbose -- --full -m "not network"
+
+      - if: inputs.runs-on == 'windows-11-arm'
+        name: 🐍 Test (Windows ARM64)
+        run: uvx nox -s tests ${NOX_PYTHON} --verbose -- -m "not network and not torch"
 
       # A hit rate is a fact; a step duration is a guess about one. The other
       # platforms get this from ccache-action's post step. `--show-stats` is left

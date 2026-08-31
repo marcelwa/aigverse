@@ -167,6 +167,16 @@ select = "cp310-*"
 inherit.repair-wheel-command = "append"
 repair-wheel-command = "uvx abi3audit --strict --report {wheel}"
 
+# torch ships neither a win_arm64 wheel nor an sdist, and numpy's win_arm64 wheels
+# only start at cp311 -- both are unusable against the cp310 wheel this project
+# builds, so the full test suite can't install here. A plain import is the only
+# check available; nox's own matrix covers this platform for cp311+ instead.
+[[tool.cibuildwheel.overrides]]
+select = "cp310-win_arm64"
+test-groups = []
+test-sources = []
+test-command = 'python -c "import aigverse"'
+
 
 [tool.uv]
 required-version = ">=0.5.20"

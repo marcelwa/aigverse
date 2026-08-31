@@ -55,6 +55,13 @@ jobs:
           enable-cache: true
           save-cache: ${{ github.ref == 'refs/heads/main' }}
 
+      # numpy's win_arm64 wheels start at 3.11 (`adapters` is a hard dependency of the
+      # `test` group `nox -s tests` installs regardless of marker), so 3.10 has no
+      # installable numpy on this runner.
+      - if: inputs.runs-on == 'windows-11-arm'
+        name: Restrict interpreters on Windows ARM64
+        run: echo "NOX_PYTHON=-p 3.11 3.12 3.13 3.14" >> "$GITHUB_ENV"
+
       # `nox -s tests` covers every supported Python version. The loader is pure
       # Python, and the cache path it builds is the sort of thing that differs
       # between platforms, so both axes are worth the matrix.
@@ -62,4 +69,4 @@ jobs:
       # Deliberately no pre-seeded benchmark cache: exercising the real download
       # path is the entire point of this job.
       - name: 📊 Test the benchmark loader
-        run: uvx nox -s tests --verbose -- -m network
+        run: uvx nox -s tests ${NOX_PYTHON:-} --verbose -- -m network
