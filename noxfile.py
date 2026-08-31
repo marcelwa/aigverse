@@ -58,6 +58,75 @@ def lint(session: nox.Session) -> None:
     session.run("prek", "run", "--all-files", *session.posargs, external=True)
 
 
+@nox.session(name="cpp-lint", reuse_venv=True, venv_backend="uv")
+def cpp_lint(session: nox.Session) -> None:
+    """Run Clang-Tidy the way the `🚨 Clang-Tidy` check runs it.
+
+    Lints the files that differ from `origin/main`, which is the slice CI lints. Pass a
+    revision to diff against that instead, or `--all` to lint every C++ file in the repo.
+
+    Every line of each selected file is analyzed, so a clean run here cannot be followed
+    by a finding in those files on CI.
+    """
+    all_files = session.posargs == ["--all"]
+    if not all_files and (len(session.posargs) > 1 or (session.posargs and session.posargs[0].startswith("-"))):
+        session.error("pass --all or at most one diff base")
+    diff_base = session.posargs[0] if session.posargs else "origin/main"
+
+    if shutil.which("cmake") is None:
+        session.install("cmake")
+    session.install("--group", "cpp-lint")
+
+    root = Path(__file__).parent.resolve()
+    build_dir = root / "build" / "cpp-lint"
+    # kept absolute (not simplified to a relative path) for the reason
+    # `.github/workflows/cpp-linter.yml` gives: CMake caches this value and nanobind's
+    # build-time custom commands may invoke it from other working directories
+    session.run(
+        "cmake",
+        "-B",
+        str(build_dir),
+        "-S",
+        str(root),
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+        f"-DPython_EXECUTABLE={Path(session.bin) / 'python'}",
+        external=True,
+    )
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # `cpp-linter` reports its verdict the way the action reads it -- as a
+        # `checks-failed` line in the file `GITHUB_OUTPUT` names -- and exits 0 either way.
+        # The findings themselves only ever reach the step summary, so route that to a file
+        # and print it; without it the run reports a count and nothing to act on.
+        output = Path(temp_dir) / "github-output"
+        output.touch()
+        summary = Path(temp_dir) / "summary.md"
+        session.run(
+            "cpp-linter",
+            "--style=",
+            "--tidy-checks=",
+            f"--version={session.bin}",
+            f"--database={build_dir}",
+            "--ignore=build|libs/*|docs/*",
+            f"--extra-arg=-I{root / 'include'}",
+            f"--extra-arg=-I{root / 'src' / 'aigverse'}",
+            f"--files-changed-only={'false' if all_files else 'true'}",
+            *(() if all_files else (f"--diff-base={diff_base}",)),
+            "--lines-changed-only=false",
+            "--thread-comments=false",
+            "--step-summary=true",
+            f"--summary-output-file={summary}",
+            "--file-annotations=false",
+            "--jobs=0",
+            "--verbosity=info",
+            env={"GITHUB_OUTPUT": str(output)},
+        )
+        results = dict(line.split("=", 1) for line in output.read_text().splitlines())
+        if int(results["checks-failed"]) != 0:
+            print(summary.read_text())
+            session.error(f"Clang-Tidy reported {results['checks-failed']} finding(s)")
+
+
 # Wheels built during this nox invocation, keyed by (group, wheel tag). Memoized
 # per process, so a stale wheel from an earlier invocation cannot be picked up.
 _BUILT_WHEELS: dict[tuple[str, str], Path] = {}
