@@ -12,6 +12,9 @@ releases may include breaking changes.
 
 ### Added
 
+- 👷 Add a `cpp-lint` nox session that reproduces the `🚨 Clang-Tidy` check locally, running
+  the same `cpp-linter` invocation CI runs over the files that differ from `origin/main`
+  ([#488]) ([**@marcelwa**])
 - ✨ Add `run_many` to the `aigverse.abc` bridge, running one ABC script over many
   networks in parallel and reporting each failure in place instead of losing the
   batch to the first bad design ([#467]) ([**@marcelwa**])
@@ -230,6 +233,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#488]: https://github.com/marcelwa/aigverse/pull/488
 [#483]: https://github.com/marcelwa/aigverse/pull/483
 [#481]: https://github.com/marcelwa/aigverse/pull/481
 [#467]: https://github.com/marcelwa/aigverse/pull/467

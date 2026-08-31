@@ -182,6 +182,16 @@ Due to technical limitations, the workflow can only post pull request comments i
 If you are working on a fork, you can still see the clang-tidy results either in the GitHub Actions logs,
 on the workflow summary page, or in the "Files changed" tab of the pull request.
 
+To get that report before pushing, the `cpp-lint` nox session runs the very same check locally.
+
+```console
+$ nox -s cpp-lint
+```
+
+It configures a compilation database and analyzes the C++ files that differ from `origin/main` -- the slice CI analyzes -- printing every finding and failing if there is one.
+Pass a revision to diff against that instead of `origin/main`, or `--all` to analyze every C++ file in the repository.
+clang-tidy itself comes from a PyPI wheel pinned to the version the workflow uses, so the session needs no system-wide LLVM installation.
+
 ## Working on the Python project
 
 We use [nanobind](https://nanobind.readthedocs.io/en/latest/) to expose large parts of the C++ library mockturtle to Python.
