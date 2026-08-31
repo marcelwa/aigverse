@@ -47,7 +47,15 @@ from typing import TYPE_CHECKING, overload
 from ._batch import run_many as _base_run_many
 from ._errors import AbcExecutionError, AbcTimeoutError
 from ._options import check_option
-from ._runner import AigT, budgeted_timeout, check_gia_supported, check_supported, resolve_binary, run_commands
+from ._runner import (
+    AigT,
+    Command,
+    budgeted_timeout,
+    check_gia_supported,
+    check_supported,
+    resolve_binary,
+    run_commands,
+)
 from ._runner import run_script as _base_run_script
 from ._stats import AbcStats, collect_stats
 
@@ -117,7 +125,7 @@ class CecStatus(Enum):
 
 def _run(
     ntk: AigT,
-    command: str,
+    command: Command,
     *,
     timeout: float | None,
     verbose: bool,
@@ -138,530 +146,927 @@ def _run(
     return _base_run_script(ntk, command, timeout=timeout, gia=True, verbose=verbose, binary=binary)
 
 
-def balance(
-    ntk: AigT,
-    *,
-    delay_only: bool = False,
-    and_only: bool = False,
-    strict_area: bool = False,
-    max_fanout: int | None = None,
-    timeout: float | None = None,
-    verbose: bool = False,
-    binary: str | os.PathLike[str] | None = None,
-) -> AigT:
-    """Runs ABC's ``&b`` command on a network.
-
-    The ``&``-space counterpart of :func:`~aigverse.abc.balance`. Unlike the
-    classic command it understands XOR and MUX structures, so it can restructure
-    where the classic one only re-associates AND trees.
-
-    Args:
-        ntk: The network to optimize.
-        delay_only: If ``True``, balance for delay without regard to area.
-        and_only: If ``True``, use only AND nodes instead of AND/XOR/MUX.
-        strict_area: If ``True``, control area strictly while balancing for
-            delay. Only has an effect together with ``delay_only``.
-        max_fanout: Fanout count above which a divisor is skipped (ABC's ``-N``,
-            at least 0), or ``None`` for ABC's default. Lowering it keeps the
-            command away from high-fanout nodes.
-        timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
-        verbose: If ``True``, print everything ABC wrote.
-        binary: Overrides the resolved ABC executable for this call only.
-
-    Returns:
-        The optimized network, of the same type as ``ntk``.
-
-    Raises:
-        ValueError: If ``max_fanout`` is outside the range ABC accepts.
-    """
-    command = "&b"
-    if max_fanout is not None:
-        check_option("&b", "N", max_fanout, name="max_fanout")
-        command += f" -N {max_fanout}"
-    if delay_only:
-        command += " -d"
-    if and_only:
-        command += " -a"
-    if strict_area:
-        command += " -s"
-    return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
-
-
-def resub(
-    ntk: AigT,
-    *,
-    max_inserts: int | None = None,
-    max_support: int | None = None,
-    max_divisors: int | None = None,
-    timeout: float | None = None,
-    verbose: bool = False,
-    binary: str | os.PathLike[str] | None = None,
-) -> AigT:
-    """Runs ABC's ``&resub`` command on a network.
-
-    The ``&``-space counterpart of :func:`~aigverse.abc.resub`.
-
-    Args:
-        ntk: The network to optimize.
-        max_inserts: Limit on the number of nodes added (ABC's ``-N``, at least
-            0), or ``None`` for ABC's default.
-        max_support: Limit on the support size (ABC's ``-S``, at least 1), or
-            ``None`` for ABC's default.
-        max_divisors: Limit on the divisor count (ABC's ``-D``, at least 1), or
-            ``None`` for ABC's default.
-        timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
-        verbose: If ``True``, print everything ABC wrote.
-        binary: Overrides the resolved ABC executable for this call only.
-
-    Returns:
-        The optimized network, of the same type as ``ntk``.
-
-    Raises:
-        ValueError: If a limit is outside the range ABC accepts.
-    """
-    command = "&resub"
-    for switch, value, name in (
-        ("N", max_inserts, "max_inserts"),
-        ("S", max_support, "max_support"),
-        ("D", max_divisors, "max_divisors"),
-    ):
-        if value is None:
-            continue
-        check_option("&resub", switch, value, name=name)
-        command += f" -{switch} {value}"
-    return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
-
-
-def dc2(
-    ntk: AigT,
-    *,
-    update_levels: bool = True,
-    timeout: float | None = None,
-    verbose: bool = False,
-    binary: str | os.PathLike[str] | None = None,
-) -> AigT:
-    """Runs ABC's ``&dc2`` command on a network.
-
-    Heavy rewriting, and the closest ``&``-space equivalent of
-    :func:`~aigverse.abc.rewrite` and :func:`~aigverse.abc.refactor` -- neither of
-    which has a direct ``&`` counterpart.
-
-    Args:
-        ntk: The network to optimize.
-        update_levels: If ``True`` (ABC's default), track levels while rewriting.
-        timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
-        verbose: If ``True``, print everything ABC wrote.
-        binary: Overrides the resolved ABC executable for this call only.
-
-    Returns:
-        The optimized network, of the same type as ``ntk``.
-    """
-    command = "&dc2" if update_levels else "&dc2 -l"
-    return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
-
-
-def syn2(
-    ntk: AigT,
-    *,
-    delay_relaxation: int | None = None,
-    cut_minimization: bool = False,
-    delay_optimization: bool = False,
-    coarsen: bool = True,
-    old_algorithm: bool = False,
-    timeout: float | None = None,
-    verbose: bool = False,
-    binary: str | os.PathLike[str] | None = None,
-) -> AigT:
-    """Runs ABC's ``&syn2`` script on a network.
-
-    The lightest of the three ``&`` synthesis scripts.
-
-    .. warning::
-        These scripts buy depth with area, and they spend it whether or not there
-        is depth to be had. On a design where they find none, the AND count grows
-        and nothing comes back for it -- a 16-bit carry-lookahead adder goes from
-        186 gates to 698 under ``&syn2`` here. That is ABC behaving as designed,
-        not a failure; compare the result before keeping it.
-
-    Args:
-        ntk: The network to optimize.
-        delay_relaxation: Delay relaxation ratio (ABC's ``-R``, at least 0), or
-            ``None`` for ABC's default of 20. Higher values allow more delay in
-            exchange for area.
-        cut_minimization: If ``True``, enable cut minimization.
-        delay_optimization: If ``True``, run the additional delay optimization.
-        coarsen: If ``True`` (ABC's default), coarsen the subject graph before
-            mapping, which gives the mapper larger cuts to work with.
-        old_algorithm: If ``True``, use ABC's previous implementation instead of
-            the current one.
-        timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
-        verbose: If ``True``, print everything ABC wrote.
-        binary: Overrides the resolved ABC executable for this call only.
-
-    Returns:
-        The optimized network, of the same type as ``ntk``.
-
-    Raises:
-        ValueError: If ``delay_relaxation`` is outside the range ABC accepts.
-    """
-    command = "&syn2"
-    if delay_relaxation is not None:
-        check_option("&syn2", "R", delay_relaxation, name="delay_relaxation")
-        command += f" -R {delay_relaxation}"
-    if old_algorithm:
-        command += " -a"
-    if not coarsen:
-        command += " -k"
-    if cut_minimization:
-        command += " -m"
-    if delay_optimization:
-        command += " -d"
-    return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
-
-
-def syn3(
-    ntk: AigT,
-    *,
-    timeout: float | None = None,
-    verbose: bool = False,
-    binary: str | os.PathLike[str] | None = None,
-) -> AigT:
-    """Runs ABC's ``&syn3`` script on a network.
-
-    A different restructuring schedule from :func:`syn2`; which of the two wins is
-    design-dependent, so both are worth trying.
-
-    .. warning::
-        Like :func:`syn2`, this trades area for depth and will grow the network on
-        designs where there is no depth to recover.
-
-    Args:
-        ntk: The network to optimize.
-        timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
-        verbose: If ``True``, print everything ABC wrote.
-        binary: Overrides the resolved ABC executable for this call only.
-
-    Returns:
-        The optimized network, of the same type as ``ntk``.
-    """
-    return _run(ntk, "&syn3", timeout=timeout, verbose=verbose, binary=binary)
-
-
-def syn4(
-    ntk: AigT,
-    *,
-    timeout: float | None = None,
-    verbose: bool = False,
-    binary: str | os.PathLike[str] | None = None,
-) -> AigT:
-    """Runs ABC's ``&syn4`` script on a network.
-
-    The most aggressive of the three, and the one that spends the most area to
-    buy depth.
-
-    .. warning::
-        Like :func:`syn2`, this trades area for depth, and it spends the most of
-        the three. Expect the AND count to grow, sometimes considerably.
-
-    Args:
-        ntk: The network to optimize.
-        timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
-        verbose: If ``True``, print everything ABC wrote.
-        binary: Overrides the resolved ABC executable for this call only.
-
-    Returns:
-        The optimized network, of the same type as ``ntk``.
-    """
-    return _run(ntk, "&syn4", timeout=timeout, verbose=verbose, binary=binary)
-
-
-def fraig(
-    ntk: AigT,
-    *,
-    conflict_limit: int | None = None,
-    timeout: float | None = None,
-    verbose: bool = False,
-    binary: str | os.PathLike[str] | None = None,
-) -> AigT:
-    """Runs ABC's ``&fraig`` command on a network.
-
-    Combinational SAT sweeping: proves internal nodes functionally equivalent and
-    merges them. This removes redundancy that no amount of structural rewriting
-    can see, which makes it a good final pass -- and a good one to run *between*
-    two structural scripts that each introduced their own duplicates.
-
-    Args:
-        ntk: The network to optimize.
-        conflict_limit: Maximum SAT conflicts per node (ABC's ``-C``, at least 0),
-            or ``None`` for ABC's default. Lower values bound the runtime on hard
-            instances at the cost of missing some merges. It is the only one of
-            ``&fraig``'s two dozen switches wrapped here; the rest tune the SAT
-            sweeper internally and are reachable through :func:`run_script`.
-        timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
-        verbose: If ``True``, print everything ABC wrote.
-        binary: Overrides the resolved ABC executable for this call only.
-
-    Returns:
-        The optimized network, of the same type as ``ntk``.
-
-    Raises:
-        ValueError: If ``conflict_limit`` is outside the range ABC accepts.
-    """
-    command = "&fraig"
-    if conflict_limit is not None:
-        check_option("&fraig", "C", conflict_limit, name="conflict_limit")
-        command += f" -C {conflict_limit}"
-    return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
-
-
-def deepsyn(
-    ntk: AigT,
-    *,
-    timeout: float | None = None,
-    iterations: int | None = None,
-    patience: int | None = None,
-    stop_at_nodes: int | None = None,
-    seed: int | None = None,
-    two_input_luts: bool = False,
-    optimize: bool = False,
-    verbose: bool = False,
-    binary: str | os.PathLike[str] | None = None,
-) -> AigT:
-    """Runs ABC's ``&deepsyn`` command on a network.
-
-    A search rather than a pass: it repeatedly restructures the network with
-    randomized parameters and keeps whatever came out smallest. That makes it the
-    strongest thing in this module and also the slowest, and it means two runs
-    with different ``seed`` values can give different results.
-
-    Give it a budget. Unlike the single-pass commands, ``timeout`` here is handed
-    to ABC as its own internal limit, so ABC stops cleanly and returns the best
-    result it has found rather than being killed with nothing to show.
-
-    ABC's ``-c`` switch, which computes structural choices, is deliberately not
-    exposed: it leaves an AIG *with choices* in the GIA store, which ``&write``
-    cannot serialize -- ABC aborts on an internal assertion rather than reporting
-    an error, so the result could never come back across the bridge.
-
-    Args:
-        ntk: The network to optimize.
-        timeout: Seconds ABC may spend searching (ABC's ``-T``), or ``None`` for
-            no limit. Strongly recommended.
-        iterations: Number of search iterations (ABC's ``-I``, at least 1), or
-            ``None`` for ABC's default of 1.
-        patience: Number of steps without improvement after which the search
-            gives up (ABC's ``-J``, at least 1), or ``None`` for ABC's default,
-            which is effectively unlimited.
-        stop_at_nodes: Stop once the network is this small (ABC's ``-A``), or
-            ``None`` for no such limit.
-        seed: Random seed (ABC's ``-S``, 0 to 100), or ``None`` for ABC's default.
-        two_input_luts: If ``True``, search over two-input LUTs.
-        optimize: If ``True``, enable ABC's additional optimization step.
-        verbose: If ``True``, print everything ABC wrote.
-        binary: Overrides the resolved ABC executable for this call only.
-
-    Returns:
-        The optimized network, of the same type as ``ntk``.
-
-    Raises:
-        ValueError: If an option is outside the range ABC accepts.
-    """
-    command = "&deepsyn"
-    # switches in ABC's own order, with the budget handed over as `-T` so that
-    # ABC stops on its own terms and keeps the best result it has found
-    for switch, value, name in (
-        ("I", iterations, "iterations"),
-        ("J", patience, "patience"),
-        ("T", None if timeout is None else int(timeout), "timeout"),
-        ("A", stop_at_nodes, "stop_at_nodes"),
-        ("S", seed, "seed"),
-    ):
-        if value is None:
-            continue
-        check_option("&deepsyn", switch, value, name=name)
-        command += f" -{switch} {value}"
-    if two_input_luts:
-        command += " -t"
-    if optimize:
-        command += " -o"
-    return _run(ntk, command, timeout=budgeted_timeout(timeout), verbose=verbose, binary=binary)
-
-
-def transduction(
-    ntk: AigT,
-    *,
-    transduction_type: int | None = None,
-    fanin_sort: int | None = None,
-    script_parameters: int | None = None,
-    seed: int | None = None,
-    randomize_seed: int | None = None,
-    truth_tables: bool = False,
-    mspf: bool = False,
-    preserve_levels: bool = False,
-    timeout: float | None = None,
-    verbose: bool = False,
-    binary: str | os.PathLike[str] | None = None,
-) -> AigT:
-    """Runs ABC's ``&transduction`` command on a network.
-
-    Transduction reasons about permissible functions node by node, so it finds
-    redundancy that structural rewriting cannot. It is BDD-based and its cost
-    grows steeply with the network, so it is realistically limited to small
-    designs -- treat a few thousand AND nodes as the upper end and pass a
-    ``timeout``.
-
-    ABC offers no internal budget for this command, so ``timeout`` kills the
-    process and yields nothing.
-
-    Contributed to ABC by Yukio Miyasaka.
-
-    Args:
-        ntk: The network to optimize.
-        transduction_type: Which variant to run (ABC's ``-T``, 0 to 8), or
-            ``None`` for ABC's default of 1 (``Resub``). Types 6 to 8 are the
-            repeat scripts and are considerably more expensive.
-        fanin_sort: Order in which fanins are visited (ABC's ``-S``, 0 to 4), or
-            ``None`` for ABC's default of 0 (topological). The order decides which
-            of several valid reductions is found first.
-        script_parameters: Parameters for the repeat scripts (ABC's ``-P``, at
-            least 0), or ``None`` for ABC's default of 0. Only meaningful for
-            ``transduction_type`` 6 to 8.
-        seed: Seed used to shuffle the inputs (ABC's ``-I``), or ``None`` not to
-            shuffle. Different seeds explore different results.
-        randomize_seed: Seed from which *all* parameters are drawn at random
-            (ABC's ``-R``), or ``None`` to use the parameters as given. Setting it
-            overrides the individual choices above.
-        truth_tables: If ``True``, reason with truth tables instead of BDDs, which
-            is faster on small functions and infeasible on wide ones.
-        mspf: If ``True``, use maximum set of permissible functions instead of
-            compatible ones. Stronger and more expensive.
-        preserve_levels: If ``True``, do not increase the depth. ABC's default
-            here is ``False``, unlike the classic commands.
-        timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
-        verbose: If ``True``, print everything ABC wrote.
-        binary: Overrides the resolved ABC executable for this call only.
-
-    Returns:
-        The optimized network, of the same type as ``ntk``.
-
-    Raises:
-        ValueError: If an option is outside the range ABC accepts.
-    """
-    # -V 0 silences the progress report, which is on by default and would
-    # otherwise be mistaken for something having gone wrong.
-    command = "&transduction -V 0"
-    if transduction_type is not None:
-        check_option("&transduction", "T", transduction_type, name="transduction_type")
-        command += f" -T {transduction_type}"
-    for switch, value, name in (
-        ("S", fanin_sort, "fanin_sort"),
-        ("I", seed, "seed"),
-        ("P", script_parameters, "script_parameters"),
-        ("R", randomize_seed, "randomize_seed"),
-    ):
-        if value is None:
-            continue
-        check_option("&transduction", switch, value, name=name)
-        command += f" -{switch} {value}"
-    if truth_tables:
-        command += " -t"
-    if mspf:
-        command += " -m"
-    if preserve_levels:
-        command += " -l"
-    return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
-
-
-def transtoch(
-    ntk: AigT,
-    *,
-    restarts: int | None = None,
-    hops: int | None = None,
-    seed: int | None = None,
-    threads: int | None = None,
-    mspf: bool = True,
-    resub_shared: bool = True,
-    reset_hops_on_improvement: bool = True,
-    drf_hop: bool = False,
-    drf_iterate: bool = False,
-    truth_tables: bool = False,
-    start_from_smallest: bool = False,
-    start_from_given: bool = False,
-    timeout: float | None = None,
-    verbose: bool = False,
-    binary: str | os.PathLike[str] | None = None,
-) -> AigT:
-    """Runs ABC's ``&transtoch`` command on a network.
-
-    Stochastic transduction: it runs :func:`transduction` repeatedly with
-    randomized parameters and keeps the best result. The most expensive command
-    in this module by a wide margin, and only practical on genuinely small
-    designs. Always pass a ``timeout``.
-
-    ABC offers no internal budget for this command either, so ``timeout`` kills
-    the process and yields nothing. Bound the work with ``restarts`` as well.
-
-    Contributed to ABC by Yukio Miyasaka.
-
-    Args:
-        ntk: The network to optimize.
-        restarts: Number of restarts (ABC's ``-N``), or ``None`` for ABC's
-            default. Each restart costs a full transduction run.
-        hops: Perturbation steps between restarts (ABC's ``-M``), or ``None`` for
-            ABC's default of 10.
-        seed: Random seed (ABC's ``-R``), or ``None`` for ABC's default.
-        threads: Worker threads (ABC's ``-P``, at least 1), or ``None`` for ABC's
-            default of 1.
-        mspf: If ``True`` (ABC's default here), use maximum sets of permissible
-            functions rather than compatible ones.
-        resub_shared: If ``True`` (ABC's default here), use the ``ResubShared``
-            transduction variant.
-        reset_hops_on_improvement: If ``True`` (ABC's default here), reset the hop
-            counter whenever a new minimum is found, so a productive direction is
-            followed further.
-        drf_hop: If ``True``, perturb with ``drf -z`` instead of
-            ``if; mfs2; strash``.
-        drf_iterate: If ``True``, iterate with ``drf -z`` instead of ``&dc2``.
-        truth_tables: If ``True``, reason with truth tables instead of BDDs.
-        start_from_smallest: If ``True``, restart from the smallest network found
-            so far rather than from the last one.
-        start_from_given: If ``True``, restart from the network as given rather
-            than from an intermediate result.
-        timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
-        verbose: If ``True``, print everything ABC wrote.
-        binary: Overrides the resolved ABC executable for this call only.
-
-    Returns:
-        The optimized network, of the same type as ``ntk``.
-
-    Raises:
-        ValueError: If an option is outside the range ABC accepts.
-    """
-    command = "&transtoch -V 0"
-    for switch, value, name in (
-        ("N", restarts, "restarts"),
-        ("M", hops, "hops"),
-        ("R", seed, "seed"),
-        ("P", threads, "threads"),
-    ):
-        if value is None:
-            continue
-        check_option("&transtoch", switch, value, name=name)
-        command += f" -{switch} {value}"
-    # the first three toggle a default of "on"
-    for switch, enabled in (
-        ("m", not mspf),
-        ("g", not resub_shared),
-        ("r", not reset_hops_on_improvement),
-        ("z", drf_hop),
-        ("f", drf_iterate),
-        ("t", truth_tables),
-        ("s", start_from_smallest),
-        ("o", start_from_given),
-    ):
-        if enabled:
-            command += f" -{switch}"
-    return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
+class _Balance:
+    """Runs ABC's ``&b`` command on a network, or builds it as a command."""
+
+    @staticmethod
+    def cmd(
+        *,
+        delay_only: bool = False,
+        and_only: bool = False,
+        strict_area: bool = False,
+        max_fanout: int | None = None,
+    ) -> Command:
+        """Builds ABC's ``&b`` command without running it.
+
+        Args:
+            delay_only: If ``True``, balance for delay without regard to area.
+            and_only: If ``True``, use only AND nodes instead of AND/XOR/MUX.
+            strict_area: If ``True``, control area strictly while balancing for
+                delay. Only has an effect together with ``delay_only``.
+            max_fanout: Fanout count above which a divisor is skipped (ABC's ``-N``,
+                at least 0), or ``None`` for ABC's default. Lowering it keeps the
+                command away from high-fanout nodes.
+
+        Returns:
+            The command, ready for :obj:`run_script` or :obj:`run_many`.
+
+        Raises:
+            ValueError: If ``max_fanout`` is outside the range ABC accepts.
+        """
+        command = "&b"
+        if max_fanout is not None:
+            check_option("&b", "N", max_fanout, name="max_fanout")
+            command += f" -N {max_fanout}"
+        if delay_only:
+            command += " -d"
+        if and_only:
+            command += " -a"
+        if strict_area:
+            command += " -s"
+        return Command(command)
+
+    def __call__(
+        self,
+        ntk: AigT,
+        *,
+        delay_only: bool = False,
+        and_only: bool = False,
+        strict_area: bool = False,
+        max_fanout: int | None = None,
+        timeout: float | None = None,
+        verbose: bool = False,
+        binary: str | os.PathLike[str] | None = None,
+    ) -> AigT:
+        """Runs ABC's ``&b`` command on a network.
+
+        The ``&``-space counterpart of :obj:`~aigverse.abc.balance`. Unlike the
+        classic command it understands XOR and MUX structures, so it can restructure
+        where the classic one only re-associates AND trees.
+
+        Args:
+            ntk: The network to optimize.
+            delay_only: If ``True``, balance for delay without regard to area.
+            and_only: If ``True``, use only AND nodes instead of AND/XOR/MUX.
+            strict_area: If ``True``, control area strictly while balancing for
+                delay. Only has an effect together with ``delay_only``.
+            max_fanout: Fanout count above which a divisor is skipped (ABC's ``-N``,
+                at least 0), or ``None`` for ABC's default. Lowering it keeps the
+                command away from high-fanout nodes.
+            timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
+            verbose: If ``True``, print everything ABC wrote.
+            binary: Overrides the resolved ABC executable for this call only.
+
+        Returns:
+            The optimized network, of the same type as ``ntk``.
+
+        Raises:
+            ValueError: If ``max_fanout`` is outside the range ABC accepts.
+        """
+        command = self.cmd(
+            delay_only=delay_only,
+            and_only=and_only,
+            strict_area=strict_area,
+            max_fanout=max_fanout,
+        )
+        return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
+
+
+#: Runs ABC's ``&b`` command on a network, or builds it as a command.
+balance = _Balance()
+
+
+class _Resub:
+    """Runs ABC's ``&resub`` command on a network, or builds it as a command."""
+
+    @staticmethod
+    def cmd(
+        *,
+        max_inserts: int | None = None,
+        max_support: int | None = None,
+        max_divisors: int | None = None,
+    ) -> Command:
+        """Builds ABC's ``&resub`` command without running it.
+
+        Args:
+            max_inserts: Limit on the number of nodes added (ABC's ``-N``, at least
+                0), or ``None`` for ABC's default.
+            max_support: Limit on the support size (ABC's ``-S``, at least 1), or
+                ``None`` for ABC's default.
+            max_divisors: Limit on the divisor count (ABC's ``-D``, at least 1), or
+                ``None`` for ABC's default.
+
+        Returns:
+            The command, ready for :obj:`run_script` or :obj:`run_many`.
+
+        Raises:
+            ValueError: If a limit is outside the range ABC accepts.
+        """
+        command = "&resub"
+        for switch, value, name in (
+            ("N", max_inserts, "max_inserts"),
+            ("S", max_support, "max_support"),
+            ("D", max_divisors, "max_divisors"),
+        ):
+            if value is None:
+                continue
+            check_option("&resub", switch, value, name=name)
+            command += f" -{switch} {value}"
+        return Command(command)
+
+    def __call__(
+        self,
+        ntk: AigT,
+        *,
+        max_inserts: int | None = None,
+        max_support: int | None = None,
+        max_divisors: int | None = None,
+        timeout: float | None = None,
+        verbose: bool = False,
+        binary: str | os.PathLike[str] | None = None,
+    ) -> AigT:
+        """Runs ABC's ``&resub`` command on a network.
+
+        The ``&``-space counterpart of :obj:`~aigverse.abc.resub`.
+
+        Args:
+            ntk: The network to optimize.
+            max_inserts: Limit on the number of nodes added (ABC's ``-N``, at least
+                0), or ``None`` for ABC's default.
+            max_support: Limit on the support size (ABC's ``-S``, at least 1), or
+                ``None`` for ABC's default.
+            max_divisors: Limit on the divisor count (ABC's ``-D``, at least 1), or
+                ``None`` for ABC's default.
+            timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
+            verbose: If ``True``, print everything ABC wrote.
+            binary: Overrides the resolved ABC executable for this call only.
+
+        Returns:
+            The optimized network, of the same type as ``ntk``.
+
+        Raises:
+            ValueError: If a limit is outside the range ABC accepts.
+        """
+        command = self.cmd(
+            max_inserts=max_inserts,
+            max_support=max_support,
+            max_divisors=max_divisors,
+        )
+        return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
+
+
+#: Runs ABC's ``&resub`` command on a network, or builds it as a command.
+resub = _Resub()
+
+
+class _Dc2:
+    """Runs ABC's ``&dc2`` command on a network, or builds it as a command."""
+
+    @staticmethod
+    def cmd(*, update_levels: bool = True) -> Command:
+        """Builds ABC's ``&dc2`` command without running it.
+
+        Args:
+            update_levels: If ``True`` (ABC's default), track levels while rewriting.
+
+        Returns:
+            The command, ready for :obj:`run_script` or :obj:`run_many`.
+        """
+        command = "&dc2" if update_levels else "&dc2 -l"
+        return Command(command)
+
+    def __call__(
+        self,
+        ntk: AigT,
+        *,
+        update_levels: bool = True,
+        timeout: float | None = None,
+        verbose: bool = False,
+        binary: str | os.PathLike[str] | None = None,
+    ) -> AigT:
+        """Runs ABC's ``&dc2`` command on a network.
+
+        Heavy rewriting, and the closest ``&``-space equivalent of
+        :obj:`~aigverse.abc.rewrite` and :obj:`~aigverse.abc.refactor` -- neither of
+        which has a direct ``&`` counterpart.
+
+        Args:
+            ntk: The network to optimize.
+            update_levels: If ``True`` (ABC's default), track levels while rewriting.
+            timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
+            verbose: If ``True``, print everything ABC wrote.
+            binary: Overrides the resolved ABC executable for this call only.
+
+        Returns:
+            The optimized network, of the same type as ``ntk``.
+        """
+        command = self.cmd(update_levels=update_levels)
+        return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
+
+
+#: Runs ABC's ``&dc2`` command on a network, or builds it as a command.
+dc2 = _Dc2()
+
+
+class _Syn2:
+    """Runs ABC's ``&syn2`` script on a network, or builds it as a command."""
+
+    @staticmethod
+    def cmd(
+        *,
+        delay_relaxation: int | None = None,
+        cut_minimization: bool = False,
+        delay_optimization: bool = False,
+        coarsen: bool = True,
+        old_algorithm: bool = False,
+    ) -> Command:
+        """Builds ABC's ``&syn2`` command without running it.
+
+        Args:
+            delay_relaxation: Delay relaxation ratio (ABC's ``-R``, at least 0), or
+                ``None`` for ABC's default of 20. Higher values allow more delay in
+                exchange for area.
+            cut_minimization: If ``True``, enable cut minimization.
+            delay_optimization: If ``True``, run the additional delay optimization.
+            coarsen: If ``True`` (ABC's default), coarsen the subject graph before
+                mapping, which gives the mapper larger cuts to work with.
+            old_algorithm: If ``True``, use ABC's previous implementation instead of
+                the current one.
+
+        Returns:
+            The command, ready for :obj:`run_script` or :obj:`run_many`.
+
+        Raises:
+            ValueError: If ``delay_relaxation`` is outside the range ABC accepts.
+        """
+        command = "&syn2"
+        if delay_relaxation is not None:
+            check_option("&syn2", "R", delay_relaxation, name="delay_relaxation")
+            command += f" -R {delay_relaxation}"
+        if old_algorithm:
+            command += " -a"
+        if not coarsen:
+            command += " -k"
+        if cut_minimization:
+            command += " -m"
+        if delay_optimization:
+            command += " -d"
+        return Command(command)
+
+    def __call__(
+        self,
+        ntk: AigT,
+        *,
+        delay_relaxation: int | None = None,
+        cut_minimization: bool = False,
+        delay_optimization: bool = False,
+        coarsen: bool = True,
+        old_algorithm: bool = False,
+        timeout: float | None = None,
+        verbose: bool = False,
+        binary: str | os.PathLike[str] | None = None,
+    ) -> AigT:
+        """Runs ABC's ``&syn2`` script on a network.
+
+        The lightest of the three ``&`` synthesis scripts.
+
+        .. warning::
+            These scripts buy depth with area, and they spend it whether or not there
+            is depth to be had. On a design where they find none, the AND count grows
+            and nothing comes back for it -- a 16-bit carry-lookahead adder goes from
+            186 gates to 698 under ``&syn2`` here. That is ABC behaving as designed,
+            not a failure; compare the result before keeping it.
+
+        Args:
+            ntk: The network to optimize.
+            delay_relaxation: Delay relaxation ratio (ABC's ``-R``, at least 0), or
+                ``None`` for ABC's default of 20. Higher values allow more delay in
+                exchange for area.
+            cut_minimization: If ``True``, enable cut minimization.
+            delay_optimization: If ``True``, run the additional delay optimization.
+            coarsen: If ``True`` (ABC's default), coarsen the subject graph before
+                mapping, which gives the mapper larger cuts to work with.
+            old_algorithm: If ``True``, use ABC's previous implementation instead of
+                the current one.
+            timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
+            verbose: If ``True``, print everything ABC wrote.
+            binary: Overrides the resolved ABC executable for this call only.
+
+        Returns:
+            The optimized network, of the same type as ``ntk``.
+
+        Raises:
+            ValueError: If ``delay_relaxation`` is outside the range ABC accepts.
+        """
+        command = self.cmd(
+            delay_relaxation=delay_relaxation,
+            cut_minimization=cut_minimization,
+            delay_optimization=delay_optimization,
+            coarsen=coarsen,
+            old_algorithm=old_algorithm,
+        )
+        return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
+
+
+#: Runs ABC's ``&syn2`` script on a network, or builds it as a command.
+syn2 = _Syn2()
+
+
+class _Syn3:
+    """Runs ABC's ``&syn3`` script on a network, or builds it as a command."""
+
+    @staticmethod
+    def cmd() -> Command:
+        """Builds ABC's ``&syn3`` command without running it.
+
+        Returns:
+            The command, ready for :obj:`run_script` or :obj:`run_many`.
+        """
+        return Command("&syn3")
+
+    def __call__(
+        self,
+        ntk: AigT,
+        *,
+        timeout: float | None = None,
+        verbose: bool = False,
+        binary: str | os.PathLike[str] | None = None,
+    ) -> AigT:
+        """Runs ABC's ``&syn3`` script on a network.
+
+        A different restructuring schedule from :obj:`syn2`; which of the two wins is
+        design-dependent, so both are worth trying.
+
+        .. warning::
+            Like :obj:`syn2`, this trades area for depth and will grow the network on
+            designs where there is no depth to recover.
+
+        Args:
+            ntk: The network to optimize.
+            timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
+            verbose: If ``True``, print everything ABC wrote.
+            binary: Overrides the resolved ABC executable for this call only.
+
+        Returns:
+            The optimized network, of the same type as ``ntk``.
+        """
+        return _run(ntk, self.cmd(), timeout=timeout, verbose=verbose, binary=binary)
+
+
+#: Runs ABC's ``&syn3`` script on a network, or builds it as a command.
+syn3 = _Syn3()
+
+
+class _Syn4:
+    """Runs ABC's ``&syn4`` script on a network, or builds it as a command."""
+
+    @staticmethod
+    def cmd() -> Command:
+        """Builds ABC's ``&syn4`` command without running it.
+
+        Returns:
+            The command, ready for :obj:`run_script` or :obj:`run_many`.
+        """
+        return Command("&syn4")
+
+    def __call__(
+        self,
+        ntk: AigT,
+        *,
+        timeout: float | None = None,
+        verbose: bool = False,
+        binary: str | os.PathLike[str] | None = None,
+    ) -> AigT:
+        """Runs ABC's ``&syn4`` script on a network.
+
+        The most aggressive of the three, and the one that spends the most area to
+        buy depth.
+
+        .. warning::
+            Like :obj:`syn2`, this trades area for depth, and it spends the most of
+            the three. Expect the AND count to grow, sometimes considerably.
+
+        Args:
+            ntk: The network to optimize.
+            timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
+            verbose: If ``True``, print everything ABC wrote.
+            binary: Overrides the resolved ABC executable for this call only.
+
+        Returns:
+            The optimized network, of the same type as ``ntk``.
+        """
+        return _run(ntk, self.cmd(), timeout=timeout, verbose=verbose, binary=binary)
+
+
+#: Runs ABC's ``&syn4`` script on a network, or builds it as a command.
+syn4 = _Syn4()
+
+
+class _Fraig:
+    """Runs ABC's ``&fraig`` command on a network, or builds it as a command."""
+
+    @staticmethod
+    def cmd(*, conflict_limit: int | None = None) -> Command:
+        """Builds ABC's ``&fraig`` command without running it.
+
+        Args:
+            conflict_limit: Maximum SAT conflicts per node (ABC's ``-C``, at least 0),
+                or ``None`` for ABC's default. Lower values bound the runtime on hard
+                instances at the cost of missing some merges. It is the only one of
+                ``&fraig``'s two dozen switches wrapped here; the rest tune the SAT
+                sweeper internally and are reachable through :func:`run_script`.
+
+        Returns:
+            The command, ready for :obj:`run_script` or :obj:`run_many`.
+
+        Raises:
+            ValueError: If ``conflict_limit`` is outside the range ABC accepts.
+        """
+        command = "&fraig"
+        if conflict_limit is not None:
+            check_option("&fraig", "C", conflict_limit, name="conflict_limit")
+            command += f" -C {conflict_limit}"
+        return Command(command)
+
+    def __call__(
+        self,
+        ntk: AigT,
+        *,
+        conflict_limit: int | None = None,
+        timeout: float | None = None,
+        verbose: bool = False,
+        binary: str | os.PathLike[str] | None = None,
+    ) -> AigT:
+        """Runs ABC's ``&fraig`` command on a network.
+
+        Combinational SAT sweeping: proves internal nodes functionally equivalent and
+        merges them. This removes redundancy that no amount of structural rewriting
+        can see, which makes it a good final pass -- and a good one to run *between*
+        two structural scripts that each introduced their own duplicates.
+
+        Args:
+            ntk: The network to optimize.
+            conflict_limit: Maximum SAT conflicts per node (ABC's ``-C``, at least 0),
+                or ``None`` for ABC's default. Lower values bound the runtime on hard
+                instances at the cost of missing some merges. It is the only one of
+                ``&fraig``'s two dozen switches wrapped here; the rest tune the SAT
+                sweeper internally and are reachable through :func:`run_script`.
+            timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
+            verbose: If ``True``, print everything ABC wrote.
+            binary: Overrides the resolved ABC executable for this call only.
+
+        Returns:
+            The optimized network, of the same type as ``ntk``.
+
+        Raises:
+            ValueError: If ``conflict_limit`` is outside the range ABC accepts.
+        """
+        command = self.cmd(conflict_limit=conflict_limit)
+        return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
+
+
+#: Runs ABC's ``&fraig`` command on a network, or builds it as a command.
+fraig = _Fraig()
+
+
+class _Deepsyn:
+    """Runs ABC's ``&deepsyn`` command on a network, or builds it as a command."""
+
+    @staticmethod
+    def cmd(
+        *,
+        timeout: float | None = None,
+        iterations: int | None = None,
+        patience: int | None = None,
+        stop_at_nodes: int | None = None,
+        seed: int | None = None,
+        two_input_luts: bool = False,
+        optimize: bool = False,
+    ) -> Command:
+        """Builds ABC's ``&deepsyn`` command without running it.
+
+        Unlike the single-pass commands, ``timeout`` is a switch here: it is the
+        budget ABC enforces itself (``-T``), so it belongs to the command and
+        survives into a batch.
+
+        Args:
+            timeout: Seconds ABC may spend searching (ABC's ``-T``), or ``None`` for
+                no limit. Strongly recommended.
+            iterations: Number of search iterations (ABC's ``-I``, at least 1), or
+                ``None`` for ABC's default of 1.
+            patience: Number of steps without improvement after which the search
+                gives up (ABC's ``-J``, at least 1), or ``None`` for ABC's default,
+                which is effectively unlimited.
+            stop_at_nodes: Stop once the network is this small (ABC's ``-A``), or
+                ``None`` for no such limit.
+            seed: Random seed (ABC's ``-S``, 0 to 100), or ``None`` for ABC's default.
+            two_input_luts: If ``True``, search over two-input LUTs.
+            optimize: If ``True``, enable ABC's additional optimization step.
+
+        Returns:
+            The command, ready for :obj:`run_script` or :obj:`run_many`.
+
+        Raises:
+            ValueError: If an option is outside the range ABC accepts.
+        """
+        command = "&deepsyn"
+        # switches in ABC's own order, with the budget handed over as `-T` so that
+        # ABC stops on its own terms and keeps the best result it has found
+        for switch, value, name in (
+            ("I", iterations, "iterations"),
+            ("J", patience, "patience"),
+            ("T", None if timeout is None else int(timeout), "timeout"),
+            ("A", stop_at_nodes, "stop_at_nodes"),
+            ("S", seed, "seed"),
+        ):
+            if value is None:
+                continue
+            check_option("&deepsyn", switch, value, name=name)
+            command += f" -{switch} {value}"
+        if two_input_luts:
+            command += " -t"
+        if optimize:
+            command += " -o"
+        return Command(command)
+
+    def __call__(
+        self,
+        ntk: AigT,
+        *,
+        timeout: float | None = None,
+        iterations: int | None = None,
+        patience: int | None = None,
+        stop_at_nodes: int | None = None,
+        seed: int | None = None,
+        two_input_luts: bool = False,
+        optimize: bool = False,
+        verbose: bool = False,
+        binary: str | os.PathLike[str] | None = None,
+    ) -> AigT:
+        """Runs ABC's ``&deepsyn`` command on a network.
+
+        A search rather than a pass: it repeatedly restructures the network with
+        randomized parameters and keeps whatever came out smallest. That makes it the
+        strongest thing in this module and also the slowest, and it means two runs
+        with different ``seed`` values can give different results.
+
+        Give it a budget. Unlike the single-pass commands, ``timeout`` here is handed
+        to ABC as its own internal limit, so ABC stops cleanly and returns the best
+        result it has found rather than being killed with nothing to show.
+
+        ABC's ``-c`` switch, which computes structural choices, is deliberately not
+        exposed: it leaves an AIG *with choices* in the GIA store, which ``&write``
+        cannot serialize -- ABC aborts on an internal assertion rather than reporting
+        an error, so the result could never come back across the bridge.
+
+        Args:
+            ntk: The network to optimize.
+            timeout: Seconds ABC may spend searching (ABC's ``-T``), or ``None`` for
+                no limit. Strongly recommended.
+            iterations: Number of search iterations (ABC's ``-I``, at least 1), or
+                ``None`` for ABC's default of 1.
+            patience: Number of steps without improvement after which the search
+                gives up (ABC's ``-J``, at least 1), or ``None`` for ABC's default,
+                which is effectively unlimited.
+            stop_at_nodes: Stop once the network is this small (ABC's ``-A``), or
+                ``None`` for no such limit.
+            seed: Random seed (ABC's ``-S``, 0 to 100), or ``None`` for ABC's default.
+            two_input_luts: If ``True``, search over two-input LUTs.
+            optimize: If ``True``, enable ABC's additional optimization step.
+            verbose: If ``True``, print everything ABC wrote.
+            binary: Overrides the resolved ABC executable for this call only.
+
+        Returns:
+            The optimized network, of the same type as ``ntk``.
+
+        Raises:
+            ValueError: If an option is outside the range ABC accepts.
+        """
+        command = self.cmd(
+            timeout=timeout,
+            iterations=iterations,
+            patience=patience,
+            stop_at_nodes=stop_at_nodes,
+            seed=seed,
+            two_input_luts=two_input_luts,
+            optimize=optimize,
+        )
+        return _run(ntk, command, timeout=budgeted_timeout(timeout), verbose=verbose, binary=binary)
+
+
+#: Runs ABC's ``&deepsyn`` command on a network, or builds it as a command.
+deepsyn = _Deepsyn()
+
+
+class _Transduction:
+    """Runs ABC's ``&transduction`` command on a network, or builds it as a command."""
+
+    @staticmethod
+    def cmd(
+        *,
+        transduction_type: int | None = None,
+        fanin_sort: int | None = None,
+        script_parameters: int | None = None,
+        seed: int | None = None,
+        randomize_seed: int | None = None,
+        truth_tables: bool = False,
+        mspf: bool = False,
+        preserve_levels: bool = False,
+    ) -> Command:
+        """Builds ABC's ``&transduction`` command without running it.
+
+        Args:
+            transduction_type: Which variant to run (ABC's ``-T``, 0 to 8), or
+                ``None`` for ABC's default of 1 (``Resub``). Types 6 to 8 are the
+                repeat scripts and are considerably more expensive.
+            fanin_sort: Order in which fanins are visited (ABC's ``-S``, 0 to 4), or
+                ``None`` for ABC's default of 0 (topological). The order decides which
+                of several valid reductions is found first.
+            script_parameters: Parameters for the repeat scripts (ABC's ``-P``, at
+                least 0), or ``None`` for ABC's default of 0. Only meaningful for
+                ``transduction_type`` 6 to 8.
+            seed: Seed used to shuffle the inputs (ABC's ``-I``), or ``None`` not to
+                shuffle. Different seeds explore different results.
+            randomize_seed: Seed from which *all* parameters are drawn at random
+                (ABC's ``-R``), or ``None`` to use the parameters as given. Setting it
+                overrides the individual choices above.
+            truth_tables: If ``True``, reason with truth tables instead of BDDs, which
+                is faster on small functions and infeasible on wide ones.
+            mspf: If ``True``, use maximum set of permissible functions instead of
+                compatible ones. Stronger and more expensive.
+            preserve_levels: If ``True``, do not increase the depth. ABC's default
+                here is ``False``, unlike the classic commands.
+
+        Returns:
+            The command, ready for :obj:`run_script` or :obj:`run_many`.
+
+        Raises:
+            ValueError: If an option is outside the range ABC accepts.
+        """
+        # -V 0 silences the progress report, which is on by default and would
+        # otherwise be mistaken for something having gone wrong.
+        command = "&transduction -V 0"
+        if transduction_type is not None:
+            check_option("&transduction", "T", transduction_type, name="transduction_type")
+            command += f" -T {transduction_type}"
+        for switch, value, name in (
+            ("S", fanin_sort, "fanin_sort"),
+            ("I", seed, "seed"),
+            ("P", script_parameters, "script_parameters"),
+            ("R", randomize_seed, "randomize_seed"),
+        ):
+            if value is None:
+                continue
+            check_option("&transduction", switch, value, name=name)
+            command += f" -{switch} {value}"
+        if truth_tables:
+            command += " -t"
+        if mspf:
+            command += " -m"
+        if preserve_levels:
+            command += " -l"
+        return Command(command)
+
+    def __call__(
+        self,
+        ntk: AigT,
+        *,
+        transduction_type: int | None = None,
+        fanin_sort: int | None = None,
+        script_parameters: int | None = None,
+        seed: int | None = None,
+        randomize_seed: int | None = None,
+        truth_tables: bool = False,
+        mspf: bool = False,
+        preserve_levels: bool = False,
+        timeout: float | None = None,
+        verbose: bool = False,
+        binary: str | os.PathLike[str] | None = None,
+    ) -> AigT:
+        """Runs ABC's ``&transduction`` command on a network.
+
+        Transduction reasons about permissible functions node by node, so it finds
+        redundancy that structural rewriting cannot. It is BDD-based and its cost
+        grows steeply with the network, so it is realistically limited to small
+        designs -- treat a few thousand AND nodes as the upper end and pass a
+        ``timeout``.
+
+        ABC offers no internal budget for this command, so ``timeout`` kills the
+        process and yields nothing.
+
+        Contributed to ABC by Yukio Miyasaka.
+
+        Args:
+            ntk: The network to optimize.
+            transduction_type: Which variant to run (ABC's ``-T``, 0 to 8), or
+                ``None`` for ABC's default of 1 (``Resub``). Types 6 to 8 are the
+                repeat scripts and are considerably more expensive.
+            fanin_sort: Order in which fanins are visited (ABC's ``-S``, 0 to 4), or
+                ``None`` for ABC's default of 0 (topological). The order decides which
+                of several valid reductions is found first.
+            script_parameters: Parameters for the repeat scripts (ABC's ``-P``, at
+                least 0), or ``None`` for ABC's default of 0. Only meaningful for
+                ``transduction_type`` 6 to 8.
+            seed: Seed used to shuffle the inputs (ABC's ``-I``), or ``None`` not to
+                shuffle. Different seeds explore different results.
+            randomize_seed: Seed from which *all* parameters are drawn at random
+                (ABC's ``-R``), or ``None`` to use the parameters as given. Setting it
+                overrides the individual choices above.
+            truth_tables: If ``True``, reason with truth tables instead of BDDs, which
+                is faster on small functions and infeasible on wide ones.
+            mspf: If ``True``, use maximum set of permissible functions instead of
+                compatible ones. Stronger and more expensive.
+            preserve_levels: If ``True``, do not increase the depth. ABC's default
+                here is ``False``, unlike the classic commands.
+            timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
+            verbose: If ``True``, print everything ABC wrote.
+            binary: Overrides the resolved ABC executable for this call only.
+
+        Returns:
+            The optimized network, of the same type as ``ntk``.
+
+        Raises:
+            ValueError: If an option is outside the range ABC accepts.
+        """
+        command = self.cmd(
+            transduction_type=transduction_type,
+            fanin_sort=fanin_sort,
+            script_parameters=script_parameters,
+            seed=seed,
+            randomize_seed=randomize_seed,
+            truth_tables=truth_tables,
+            mspf=mspf,
+            preserve_levels=preserve_levels,
+        )
+        return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
+
+
+#: Runs ABC's ``&transduction`` command on a network, or builds it as a command.
+transduction = _Transduction()
+
+
+class _Transtoch:
+    """Runs ABC's ``&transtoch`` command on a network, or builds it as a command."""
+
+    @staticmethod
+    def cmd(
+        *,
+        restarts: int | None = None,
+        hops: int | None = None,
+        seed: int | None = None,
+        threads: int | None = None,
+        mspf: bool = True,
+        resub_shared: bool = True,
+        reset_hops_on_improvement: bool = True,
+        drf_hop: bool = False,
+        drf_iterate: bool = False,
+        truth_tables: bool = False,
+        start_from_smallest: bool = False,
+        start_from_given: bool = False,
+    ) -> Command:
+        """Builds ABC's ``&transtoch`` command without running it.
+
+        Args:
+            restarts: Number of restarts (ABC's ``-N``), or ``None`` for ABC's
+                default. Each restart costs a full transduction run.
+            hops: Perturbation steps between restarts (ABC's ``-M``), or ``None`` for
+                ABC's default of 10.
+            seed: Random seed (ABC's ``-R``), or ``None`` for ABC's default.
+            threads: Worker threads (ABC's ``-P``, at least 1), or ``None`` for ABC's
+                default of 1.
+            mspf: If ``True`` (ABC's default here), use maximum sets of permissible
+                functions rather than compatible ones.
+            resub_shared: If ``True`` (ABC's default here), use the ``ResubShared``
+                transduction variant.
+            reset_hops_on_improvement: If ``True`` (ABC's default here), reset the hop
+                counter whenever a new minimum is found, so a productive direction is
+                followed further.
+            drf_hop: If ``True``, perturb with ``drf -z`` instead of
+                ``if; mfs2; strash``.
+            drf_iterate: If ``True``, iterate with ``drf -z`` instead of ``&dc2``.
+            truth_tables: If ``True``, reason with truth tables instead of BDDs.
+            start_from_smallest: If ``True``, restart from the smallest network found
+                so far rather than from the last one.
+            start_from_given: If ``True``, restart from the network as given rather
+                than from an intermediate result.
+
+        Returns:
+            The command, ready for :obj:`run_script` or :obj:`run_many`.
+
+        Raises:
+            ValueError: If an option is outside the range ABC accepts.
+        """
+        command = "&transtoch -V 0"
+        for switch, value, name in (
+            ("N", restarts, "restarts"),
+            ("M", hops, "hops"),
+            ("R", seed, "seed"),
+            ("P", threads, "threads"),
+        ):
+            if value is None:
+                continue
+            check_option("&transtoch", switch, value, name=name)
+            command += f" -{switch} {value}"
+        # the first three toggle a default of "on"
+        for switch, enabled in (
+            ("m", not mspf),
+            ("g", not resub_shared),
+            ("r", not reset_hops_on_improvement),
+            ("z", drf_hop),
+            ("f", drf_iterate),
+            ("t", truth_tables),
+            ("s", start_from_smallest),
+            ("o", start_from_given),
+        ):
+            if enabled:
+                command += f" -{switch}"
+        return Command(command)
+
+    def __call__(
+        self,
+        ntk: AigT,
+        *,
+        restarts: int | None = None,
+        hops: int | None = None,
+        seed: int | None = None,
+        threads: int | None = None,
+        mspf: bool = True,
+        resub_shared: bool = True,
+        reset_hops_on_improvement: bool = True,
+        drf_hop: bool = False,
+        drf_iterate: bool = False,
+        truth_tables: bool = False,
+        start_from_smallest: bool = False,
+        start_from_given: bool = False,
+        timeout: float | None = None,
+        verbose: bool = False,
+        binary: str | os.PathLike[str] | None = None,
+    ) -> AigT:
+        """Runs ABC's ``&transtoch`` command on a network.
+
+        Stochastic transduction: it runs :obj:`transduction` repeatedly with
+        randomized parameters and keeps the best result. The most expensive command
+        in this module by a wide margin, and only practical on genuinely small
+        designs. Always pass a ``timeout``.
+
+        ABC offers no internal budget for this command either, so ``timeout`` kills
+        the process and yields nothing. Bound the work with ``restarts`` as well.
+
+        Contributed to ABC by Yukio Miyasaka.
+
+        Args:
+            ntk: The network to optimize.
+            restarts: Number of restarts (ABC's ``-N``), or ``None`` for ABC's
+                default. Each restart costs a full transduction run.
+            hops: Perturbation steps between restarts (ABC's ``-M``), or ``None`` for
+                ABC's default of 10.
+            seed: Random seed (ABC's ``-R``), or ``None`` for ABC's default.
+            threads: Worker threads (ABC's ``-P``, at least 1), or ``None`` for ABC's
+                default of 1.
+            mspf: If ``True`` (ABC's default here), use maximum sets of permissible
+                functions rather than compatible ones.
+            resub_shared: If ``True`` (ABC's default here), use the ``ResubShared``
+                transduction variant.
+            reset_hops_on_improvement: If ``True`` (ABC's default here), reset the hop
+                counter whenever a new minimum is found, so a productive direction is
+                followed further.
+            drf_hop: If ``True``, perturb with ``drf -z`` instead of
+                ``if; mfs2; strash``.
+            drf_iterate: If ``True``, iterate with ``drf -z`` instead of ``&dc2``.
+            truth_tables: If ``True``, reason with truth tables instead of BDDs.
+            start_from_smallest: If ``True``, restart from the smallest network found
+                so far rather than from the last one.
+            start_from_given: If ``True``, restart from the network as given rather
+                than from an intermediate result.
+            timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
+            verbose: If ``True``, print everything ABC wrote.
+            binary: Overrides the resolved ABC executable for this call only.
+
+        Returns:
+            The optimized network, of the same type as ``ntk``.
+
+        Raises:
+            ValueError: If an option is outside the range ABC accepts.
+        """
+        command = self.cmd(
+            restarts=restarts,
+            hops=hops,
+            seed=seed,
+            threads=threads,
+            mspf=mspf,
+            resub_shared=resub_shared,
+            reset_hops_on_improvement=reset_hops_on_improvement,
+            drf_hop=drf_hop,
+            drf_iterate=drf_iterate,
+            truth_tables=truth_tables,
+            start_from_smallest=start_from_smallest,
+            start_from_given=start_from_given,
+        )
+        return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
+
+
+#: Runs ABC's ``&transtoch`` command on a network, or builds it as a command.
+transtoch = _Transtoch()
 
 
 def cec(
@@ -793,7 +1198,7 @@ def stats(
 
 def run_script(
     ntk: AigT,
-    commands: str | Sequence[str],
+    commands: str | Command | Sequence[str | Command],
     *,
     timeout: float | None = None,
     use_init_file: bool = False,
@@ -808,8 +1213,8 @@ def run_script(
 
     Args:
         ntk: The network to optimize.
-        commands: A single ``;``-separated ABC command string, or a sequence of
-            individual commands.
+        commands: A single ``;``-separated ABC command string, a
+            :class:`~aigverse.abc.Command`, or a sequence of individual commands.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         use_init_file: If ``False`` (default), ABC is invoked with ``-s`` so that
             no ``abc.rc`` is read.
@@ -841,7 +1246,7 @@ def run_script(
 @overload
 def run_many(
     networks: Iterable[AigT],
-    commands: str | Sequence[str],
+    commands: str | Command | Sequence[str | Command],
     *,
     jobs: int | None = ...,
     timeout: float | None = ...,
@@ -854,7 +1259,7 @@ def run_many(
 @overload
 def run_many(
     networks: Iterable[AigT],
-    commands: str | Sequence[str],
+    commands: str | Command | Sequence[str | Command],
     *,
     jobs: int | None = ...,
     timeout: float | None = ...,
@@ -869,7 +1274,7 @@ def run_many(
 @overload
 def run_many(
     networks: Iterable[AigT],
-    commands: str | Sequence[str],
+    commands: str | Command | Sequence[str | Command],
     *,
     jobs: int | None = ...,
     timeout: float | None = ...,
@@ -881,7 +1286,7 @@ def run_many(
 
 def run_many(
     networks: Iterable[AigT],
-    commands: str | Sequence[str],
+    commands: str | Command | Sequence[str | Command],
     *,
     jobs: int | None = None,
     timeout: float | None = None,
@@ -897,8 +1302,9 @@ def run_many(
 
     Args:
         networks: The networks to optimize. Consumed in full before any work starts.
-        commands: A single ``;``-separated ABC command string, or a sequence of
-            individual commands. The same script runs on every network.
+        commands: A single ``;``-separated ABC command string, a
+            :class:`~aigverse.abc.Command`, or a sequence of individual commands.
+            The same script runs on every network.
         jobs: How many ABC processes to keep running at once. ``None`` (default)
             uses the number of CPUs available to this process, capped at the number
             of networks; ``1`` runs inline without a thread pool.

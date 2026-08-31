@@ -5,6 +5,7 @@ from __future__ import annotations
 import shlex
 import subprocess
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, TypeVar, cast
 
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     import os
     from collections.abc import Sequence
 
-__all__ = ["run_commands", "run_script"]
+__all__ = ["Command", "run_commands", "run_script"]
 
 AigT = TypeVar("AigT", bound=Aig)
 
@@ -67,12 +68,35 @@ def _find_error(output: str) -> str | None:
     return None
 
 
-def join_commands(commands: str | Sequence[str]) -> str:
+@dataclass(frozen=True)
+class Command:
+    """One ABC command with its switches, built without being run.
+
+    Every wrapper's ``cmd()`` returns one of these, e.g.
+    ``abc.rewrite.cmd(zero_cost=True)``. It renders as the command ABC takes, and
+    :func:`run_script`, :func:`run_commands` and
+    :func:`~aigverse.abc.run_many` accept it wherever they accept a command
+    string -- a whole script is a sequence of them.
+    """
+
+    #: The command as ABC takes it, e.g. ``"rewrite -z"``.
+    text: str
+
+    def __str__(self) -> str:
+        """Renders the command in ABC's own syntax.
+
+        Returns:
+            The command as ABC takes it.
+        """
+        return self.text
+
+
+def join_commands(commands: str | Command | Sequence[str | Command]) -> str:
     """Normalizes user-supplied ABC commands into a single command string.
 
     Args:
-        commands: A single ``;``-separated command string, or a sequence of
-            individual commands.
+        commands: A single ``;``-separated command string, a :class:`Command`, or
+            a sequence of individual commands.
 
     Returns:
         The commands as one ``;``-separated string.
@@ -80,7 +104,7 @@ def join_commands(commands: str | Sequence[str]) -> str:
     Raises:
         ValueError: If no command was given, or a command contains a NUL byte.
     """
-    joined = commands if isinstance(commands, str) else "; ".join(commands)
+    joined = str(commands) if isinstance(commands, (str, Command)) else "; ".join(str(command) for command in commands)
     if not joined.strip():
         msg = "no ABC commands given"
         raise ValueError(msg)
@@ -182,7 +206,7 @@ def check_gia_supported(ntk: Aig) -> None:
 
 
 def run_commands(
-    commands: str | Sequence[str],
+    commands: str | Command | Sequence[str | Command],
     *,
     timeout: float | None = None,
     use_init_file: bool = False,
@@ -195,8 +219,8 @@ def run_commands(
     ``version`` or ``print_stats`` on files the caller manages themselves.
 
     Args:
-        commands: A single ``;``-separated command string, or a sequence of
-            individual commands.
+        commands: A single ``;``-separated command string, a :class:`Command`,
+            or a sequence of individual commands.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         use_init_file: If ``False`` (default), ABC is invoked with ``-s`` so that
             no ``abc.rc`` is read and behaviour does not depend on the local
@@ -279,7 +303,7 @@ def run_commands(
 
 def run_script(
     ntk: AigT,
-    commands: str | Sequence[str],
+    commands: str | Command | Sequence[str | Command],
     *,
     timeout: float | None = None,
     use_init_file: bool = False,
@@ -313,8 +337,8 @@ def run_script(
 
     Args:
         ntk: The network to optimize.
-        commands: A single ``;``-separated ABC command string, or a sequence of
-            individual commands.
+        commands: A single ``;``-separated ABC command string, a
+            :class:`Command`, or a sequence of individual commands.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         use_init_file: If ``False`` (default), ABC is invoked with ``-s`` so that
             no ``abc.rc`` is read and results do not depend on the local install.

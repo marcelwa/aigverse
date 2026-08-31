@@ -67,7 +67,7 @@ print(f"{aig.num_gates} -> {result.num_gates} AND gates")
 Their options are exposed as keyword arguments rather than as ABC switches:
 `abc.rewrite(aig, zero_cost=True)` or `abc.resub(aig, max_cut_size=12)`.
 
-{py:func}`~aigverse.abc.orchestrate` is a fifth: instead of running rewriting,
+{py:obj}`~aigverse.abc.orchestrate` is a fifth: instead of running rewriting,
 refactoring and resubstitution one after another, it interleaves them and picks per node
 which to apply — a whole schedule in a single command.
 
@@ -125,10 +125,10 @@ print(f"abc.dc2:     {abc.dc2(aig).num_gates} gates")       # ABC's `dc2`
 print(f"abc.gia.dc2: {abc.gia.dc2(aig).num_gates} gates")   # ABC's `&dc2`
 ```
 
-It holds {py:func}`~aigverse.abc.gia.balance` (`&b`), {py:func}`~aigverse.abc.gia.resub`,
-{py:func}`~aigverse.abc.gia.dc2`, {py:func}`~aigverse.abc.gia.syn2`,
-{py:func}`~aigverse.abc.gia.syn3`, {py:func}`~aigverse.abc.gia.syn4` and
-{py:func}`~aigverse.abc.gia.fraig`, plus the high-effort searches below,
+It holds {py:obj}`~aigverse.abc.gia.balance` (`&b`), {py:obj}`~aigverse.abc.gia.resub`,
+{py:obj}`~aigverse.abc.gia.dc2`, {py:obj}`~aigverse.abc.gia.syn2`,
+{py:obj}`~aigverse.abc.gia.syn3`, {py:obj}`~aigverse.abc.gia.syn4` and
+{py:obj}`~aigverse.abc.gia.fraig`, plus the high-effort searches below,
 {py:func}`~aigverse.abc.gia.cec`, {py:func}`~aigverse.abc.gia.stats`, and
 {py:func}`~aigverse.abc.gia.run_script` for anything not wrapped.
 
@@ -159,7 +159,7 @@ area. On the adder it does neither — it adds gates and leaves the depth alone,
 `resyn2` wins outright. Neither family dominates, so measure on your own designs instead
 of assuming.
 
-{py:func}`~aigverse.abc.gia.fraig` is the odd one out and worth knowing about: it is
+{py:obj}`~aigverse.abc.gia.fraig` is the odd one out and worth knowing about: it is
 combinational SAT sweeping, which merges nodes that are functionally equivalent but
 structurally different. No amount of rewriting finds those, which makes it a useful pass
 _between_ two structural scripts that each introduced their own duplicates.
@@ -168,13 +168,13 @@ _between_ two structural scripts that each introduced their own duplicates.
 
 Three more `&` commands are searches rather than passes, and are priced accordingly:
 
-- {py:func}`~aigverse.abc.gia.deepsyn` repeatedly restructures with randomized parameters
+- {py:obj}`~aigverse.abc.gia.deepsyn` repeatedly restructures with randomized parameters
   and keeps the smallest result. Different `seed` values can give different results, so it
   is worth running more than once.
-- {py:func}`~aigverse.abc.gia.transduction` reasons about permissible functions per node
+- {py:obj}`~aigverse.abc.gia.transduction` reasons about permissible functions per node
   and finds redundancy structural rewriting cannot. It is BDD-based, so its cost climbs
   steeply with size.
-- {py:func}`~aigverse.abc.gia.transtoch` is stochastic transduction — transduction run
+- {py:obj}`~aigverse.abc.gia.transtoch` is stochastic transduction — transduction run
   repeatedly with randomized parameters. It is the most expensive thing here by a wide
   margin.
 

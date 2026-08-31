@@ -15,6 +15,8 @@ if TYPE_CHECKING:
     from concurrent.futures import Future
     from typing import Literal
 
+    from ._runner import Command
+
 __all__ = ["run_many"]
 
 
@@ -52,7 +54,7 @@ def _attribute(exc: BaseException, index: int) -> None:
 @overload
 def run_many(
     networks: Iterable[AigT],
-    commands: str | Sequence[str],
+    commands: str | Command | Sequence[str | Command],
     *,
     jobs: int | None = ...,
     timeout: float | None = ...,
@@ -66,7 +68,7 @@ def run_many(
 @overload
 def run_many(
     networks: Iterable[AigT],
-    commands: str | Sequence[str],
+    commands: str | Command | Sequence[str | Command],
     *,
     jobs: int | None = ...,
     timeout: float | None = ...,
@@ -82,7 +84,7 @@ def run_many(
 @overload
 def run_many(
     networks: Iterable[AigT],
-    commands: str | Sequence[str],
+    commands: str | Command | Sequence[str | Command],
     *,
     jobs: int | None = ...,
     timeout: float | None = ...,
@@ -95,7 +97,7 @@ def run_many(
 
 def run_many(
     networks: Iterable[AigT],
-    commands: str | Sequence[str],
+    commands: str | Command | Sequence[str | Command],
     *,
     jobs: int | None = None,
     timeout: float | None = None,
@@ -123,10 +125,11 @@ def run_many(
 
     Args:
         networks: The networks to optimize. Consumed in full before any work starts.
-        commands: A single ``;``-separated ABC command string, or a sequence of
-            individual commands. The same script runs on every network. The
-            canonical scripts are reachable through
-            :func:`~aigverse.abc.expand_script`.
+        commands: A single ``;``-separated ABC command string, a
+            :class:`~aigverse.abc.Command`, or a sequence of individual commands.
+            The same script runs on every network. The canonical scripts are
+            reachable through :func:`~aigverse.abc.expand_script`, and a
+            parameterized one through each wrapper's ``cmd()``.
         jobs: How many ABC processes to keep running at once. ``None`` (default)
             uses the number of CPUs available to this process, capped at the number
             of networks; ``1`` runs inline without a thread pool. On large designs
