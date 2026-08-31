@@ -153,6 +153,12 @@ test-sources = ["test/"]
 # the -m here replaces the one in [tool.pytest] addopts rather than adding to it,
 # so the network exclusion has to be repeated or wheel CI would download circuits
 test-command = 'pytest test/ -m "(torch or not torch) and not network"'
+# nanobind-backend, a runtime dependency the extension resolves at import time, has
+# no cp310 win_arm64 wheel yet (cp311+ does), so testing the wheel with the cp310
+# interpreter cibuildwheel selects for it can never install. Users on cp311+ are
+# unaffected -- their interpreter's own nanobind-backend wheel is what gets picked
+# at install time, regardless of the abi3 tag this wheel was built with.
+test-skip = "cp310-win_arm64"
 
 
 [tool.cibuildwheel.macos]
@@ -166,16 +172,6 @@ repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --ignore-existin
 select = "cp310-*"
 inherit.repair-wheel-command = "append"
 repair-wheel-command = "uvx abi3audit --strict --report {wheel}"
-
-# torch ships neither a win_arm64 wheel nor an sdist, and numpy's win_arm64 wheels
-# only start at cp311 -- both are unusable against the cp310 wheel this project
-# builds, so the full test suite can't install here. A plain import is the only
-# check available; nox's own matrix covers this platform for cp311+ instead.
-[[tool.cibuildwheel.overrides]]
-select = "cp310-win_arm64"
-test-groups = []
-test-sources = []
-test-command = 'python -c "import aigverse"'
 
 
 [tool.uv]

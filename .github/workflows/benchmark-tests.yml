@@ -55,12 +55,12 @@ jobs:
           enable-cache: true
           save-cache: ${{ github.ref == 'refs/heads/main' }}
 
-      # numpy's win_arm64 wheels start at 3.11 (`adapters` is a hard dependency of the
-      # `test` group `nox -s tests` installs regardless of marker), so 3.10 has no
-      # installable numpy on this runner.
+      # numpy's win_arm64 wheels start at 3.11, but python-build-standalone has no
+      # native win_arm64 3.11 build -- uv falls back to an x64 one, which then fails
+      # to link against the arm64 extension -- so both 3.10 and 3.11 drop out here.
       - if: inputs.runs-on == 'windows-11-arm'
         name: Restrict interpreters on Windows ARM64
-        run: echo "NOX_PYTHON=-p 3.11 3.12 3.13 3.14" >> "$GITHUB_ENV"
+        run: echo "NOX_PYTHON=-p 3.12 3.13 3.14" >> "$GITHUB_ENV"
 
       # `nox -s tests` covers every supported Python version. The loader is pure
       # Python, and the cache path it builds is the sort of thing that differs
