@@ -63,9 +63,9 @@ synthesis backends.
 
 ## 📦 Installation
 
-`aigverse` is available via PyPI for all major operating systems and supports all active Python versions,
-with [Stable ABI](https://docs.python.org/3/c-api/stable.html) for 3.12+ and
-[free-threading](https://docs.python.org/3/howto/free-threading-python.html) support for 3.14+.
+`aigverse` is available via PyPI for all major operating systems, with a single
+[Stable ABI](https://docs.python.org/3/c-api/stable.html) wheel per platform that covers every supported Python from
+3.10 up. Free-threaded interpreters are not supported yet, pending the stable ABI that Python 3.15 brings them.
 
 ```bash
 pip install aigverse
@@ -323,6 +323,32 @@ if equiv:
 else:
     print("AIGs are NOT equivalent!")
 ```
+
+### 🅰️ ABC Integration
+
+`aigverse` can hand networks to [ABC](https://github.com/berkeley-abc/abc) and read the result back, so ABC's
+optimization scripts are available as ordinary Python functions. No ABC is bundled: the bridge drives an executable you
+already have installed, found on `PATH` as `abc`, or pointed at with the `AIGVERSE_ABC` environment variable or
+`abc.set_abc_binary()`. Importing the module always succeeds, so use `abc.is_available()` to check before calling.
+
+```python
+from aigverse import abc
+from aigverse.algorithms import equivalence_checking
+from aigverse.generators import carry_lookahead_adder
+
+aig = carry_lookahead_adder(16)
+
+# Run ABC's `resyn2` script; a *new* network of the same type is returned
+optimized = abc.resyn2(aig)
+
+print(f"{aig.num_gates} -> {optimized.num_gates} AND gates")
+print(f"Equivalent: {equivalence_checking(aig, optimized)}")
+```
+
+Alongside the named scripts (`resyn`, `resyn2`, `resyn3`, `compress`, `compress2`, `resyn2rs`, `compress2rs`, and
+`dc2`) there are individual commands such as `abc.balance` and `abc.resub`, ABC9's `&`-space under `abc.gia`, and
+`abc.run_many` for running one script over many networks in parallel. See the
+[ABC documentation](https://aigverse.readthedocs.io/en/latest/abc.html) for details.
 
 ### 📄 File Format Support
 
