@@ -9,6 +9,7 @@ raised error.
 
 from __future__ import annotations
 
+import inspect
 import sys
 from typing import TYPE_CHECKING
 
@@ -387,3 +388,44 @@ def test_a_call_rejects_an_out_of_range_option_before_it_needs_abc(
 
     with pytest.raises(ValueError, match="max_support must be between 1 and 15"):
         refactor(and_aig, max_support=0)
+
+
+_WRAPPERS = {
+    "balance": balance,
+    "rewrite": rewrite,
+    "refactor": refactor,
+    "resub": resub,
+    "orchestrate": orchestrate,
+    "gia.balance": gia.balance,
+    "gia.resub": gia.resub,
+    "gia.dc2": gia.dc2,
+    "gia.syn2": gia.syn2,
+    "gia.syn3": gia.syn3,
+    "gia.syn4": gia.syn4,
+    "gia.fraig": gia.fraig,
+    "gia.deepsyn": gia.deepsyn,
+    "gia.transduction": gia.transduction,
+    "gia.transtoch": gia.transtoch,
+}
+
+
+@pytest.mark.parametrize("wrapper", _WRAPPERS.values(), ids=_WRAPPERS)
+def test_a_call_offers_exactly_the_options_its_command_builds(wrapper: object) -> None:
+    """A call forwards its options to `cmd()` by hand, so the two signatures must
+    agree, apart from the network and the run parameters, or an option added to one
+    side is silently unreachable from the other.
+
+    Args:
+        wrapper: The wrapper under test.
+    """
+    assert callable(wrapper)
+    call = inspect.signature(wrapper).parameters
+    build = inspect.signature(wrapper.cmd).parameters  # ty: ignore[unresolved-attribute]
+
+    forwarded = set(call) - {"ntk", "verbose", "binary"}
+    # deepsyn's `timeout` is an ABC switch; everywhere else it is the run limit
+    if "timeout" not in build:
+        forwarded.discard("timeout")
+    assert set(build) == forwarded
+    for name, parameter in build.items():
+        assert parameter.default == call[name].default, name

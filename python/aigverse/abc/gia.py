@@ -242,8 +242,8 @@ class Balance:
         return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``&b`` command on a network, or builds it as a command.
 balance: Final[Balance] = Balance()
+"""Runs ABC's ``&b`` command on a network, or builds it as a command; see :class:`Balance`."""
 
 
 class Resub:
@@ -325,8 +325,8 @@ class Resub:
         return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``&resub`` command on a network, or builds it as a command.
 resub: Final[Resub] = Resub()
+"""Runs ABC's ``&resub`` command on a network, or builds it as a command; see :class:`Resub`."""
 
 
 class Dc2:
@@ -374,8 +374,8 @@ class Dc2:
         return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``&dc2`` command on a network, or builds it as a command.
 dc2: Final[Dc2] = Dc2()
+"""Runs ABC's ``&dc2`` command on a network, or builds it as a command; see :class:`Dc2`."""
 
 
 class Syn2:
@@ -478,8 +478,8 @@ class Syn2:
         return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``&syn2`` script on a network, or builds it as a command.
 syn2: Final[Syn2] = Syn2()
+"""Runs ABC's ``&syn2`` script on a network, or builds it as a command; see :class:`Syn2`."""
 
 
 class Syn3:
@@ -523,8 +523,8 @@ class Syn3:
         return _run(ntk, self.cmd(), timeout=timeout, verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``&syn3`` script on a network, or builds it as a command.
 syn3: Final[Syn3] = Syn3()
+"""Runs ABC's ``&syn3`` script on a network, or builds it as a command; see :class:`Syn3`."""
 
 
 class Syn4:
@@ -568,8 +568,8 @@ class Syn4:
         return _run(ntk, self.cmd(), timeout=timeout, verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``&syn4`` script on a network, or builds it as a command.
 syn4: Final[Syn4] = Syn4()
+"""Runs ABC's ``&syn4`` script on a network, or builds it as a command; see :class:`Syn4`."""
 
 
 class Fraig:
@@ -635,8 +635,8 @@ class Fraig:
         return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``&fraig`` command on a network, or builds it as a command.
 fraig: Final[Fraig] = Fraig()
+"""Runs ABC's ``&fraig`` command on a network, or builds it as a command; see :class:`Fraig`."""
 
 
 class Deepsyn:
@@ -766,8 +766,8 @@ class Deepsyn:
         return _run(ntk, command, timeout=budgeted_timeout(timeout), verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``&deepsyn`` command on a network, or builds it as a command.
 deepsyn: Final[Deepsyn] = Deepsyn()
+"""Runs ABC's ``&deepsyn`` command on a network, or builds it as a command; see :class:`Deepsyn`."""
 
 
 class Transduction:
@@ -913,8 +913,8 @@ class Transduction:
         return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``&transduction`` command on a network, or builds it as a command.
 transduction: Final[Transduction] = Transduction()
+"""Runs ABC's ``&transduction`` command on a network, or builds it as a command; see :class:`Transduction`."""
 
 
 class Transtoch:
@@ -1077,8 +1077,8 @@ class Transtoch:
         return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``&transtoch`` command on a network, or builds it as a command.
 transtoch: Final[Transtoch] = Transtoch()
+"""Runs ABC's ``&transtoch`` command on a network, or builds it as a command; see :class:`Transtoch`."""
 
 
 def cec(

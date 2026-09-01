@@ -12,7 +12,15 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from aigverse.abc import AbcExecutionError, AbcTimeoutError, abc_version, run_script, set_abc_binary
+from aigverse.abc import (
+    AbcExecutionError,
+    AbcTimeoutError,
+    Command,
+    abc_version,
+    run_commands,
+    run_script,
+    set_abc_binary,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -39,6 +47,19 @@ def test_happy_path_round_trips(and_aig: Aig, fake_abc: Callable[[str], Path]) -
     assert result.num_pis == and_aig.num_pis
     assert result.num_pos == and_aig.num_pos
     assert result.num_gates == and_aig.num_gates
+
+
+@requires_posix
+def test_a_bare_command_object_is_taken_as_its_text(and_aig: Aig, fake_abc: Callable[[str], Path]) -> None:
+    """`run_script` and `run_commands` take a single `Command`, not only a sequence."""
+    shim = fake_abc("print(\"** cmd error: unknown command 'nope'\")\nsys.exit(0)")
+    with pytest.raises(AbcExecutionError, match="unknown command") as excinfo:
+        run_script(and_aig, Command("nope -z"), binary=shim)
+    assert "; nope -z; " in excinfo.value.command
+
+    with pytest.raises(AbcExecutionError, match="unknown command") as excinfo:
+        run_commands(Command("nope -z"), binary=shim)
+    assert excinfo.value.command == "nope -z"
 
 
 @requires_posix

@@ -116,8 +116,8 @@ class Balance:
         return run_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``balance`` command on a network, or builds it as a command.
 balance: Final[Balance] = Balance()
+"""Runs ABC's ``balance`` command on a network, or builds it as a command; see :class:`Balance`."""
 
 
 class Rewrite:
@@ -173,8 +173,8 @@ class Rewrite:
         return run_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``rewrite`` command on a network, or builds it as a command.
 rewrite: Final[Rewrite] = Rewrite()
+"""Runs ABC's ``rewrite`` command on a network, or builds it as a command; see :class:`Rewrite`."""
 
 
 class Refactor:
@@ -268,8 +268,8 @@ class Refactor:
         return run_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``refactor`` command on a network, or builds it as a command.
 refactor: Final[Refactor] = Refactor()
+"""Runs ABC's ``refactor`` command on a network, or builds it as a command; see :class:`Refactor`."""
 
 
 class Resub:
@@ -385,8 +385,8 @@ class Resub:
         return run_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``resub`` command on a network, or builds it as a command.
 resub: Final[Resub] = Resub()
+"""Runs ABC's ``resub`` command on a network, or builds it as a command; see :class:`Resub`."""
 
 
 class Orchestrate:
@@ -500,5 +500,5 @@ class Orchestrate:
         return run_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
-#: Runs ABC's ``orchestrate`` command on a network, or builds it as a command.
 orchestrate: Final[Orchestrate] = Orchestrate()
+"""Runs ABC's ``orchestrate`` command on a network, or builds it as a command; see :class:`Orchestrate`."""
