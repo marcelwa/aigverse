@@ -91,22 +91,23 @@ jobs:
         run: uv tool install sccache
 
       # torch ships neither a win_arm64 wheel nor an sdist, so `--full` (which installs
-      # it) is unusable here. python-build-standalone has no native win_arm64 3.11
-      # build either -- uv falls back to an x64 one, which then fails to link against
-      # the arm64 extension -- so 3.11 drops out of the matrix too. `nox -p` narrows
-      # the interpreter matrix; the runs below skip `--full` and explicitly exclude
-      # `torch` alongside `network` so the uninstalled dependency's tests are never
-      # collected.
+      # it) is unusable here; the runs below skip it and explicitly exclude `torch`
+      # alongside `network` so the uninstalled dependency's tests are never collected.
       #
-      # `minimums` narrows further still, to 3.14 alone: numpy's win_arm64 wheels only
-      # start at 2.3.0, which is the floor for 3.14 (`adapters` in pyproject.toml) but
-      # not for 3.12/3.13, so those would fall back to a from-source numpy build --
-      # which itself fails here, as Git's own `link.exe` shadows MSVC's on this image.
+      # uv downloads an emulated x86_64 interpreter on Windows ARM64 unless the native
+      # one is requested by name, and an x64 3.11 cannot load the arm64 extension, so
+      # install it explicitly. 3.10 has no native build at all and drops out.
+      #
+      # `minimums` narrows further, to 3.14 alone: numpy's win_arm64 wheels start at
+      # 2.3.0, and only the 3.14 floor (2.3.2, `adapters` in pyproject.toml) clears
+      # that. The lower floors would fall back to a from-source numpy build, which
+      # itself fails here, as Git's own `link.exe` shadows MSVC's on this image.
       - if: inputs.runs-on == 'windows-11-arm'
         name: Restrict interpreters on Windows ARM64
         run: |
+          uv python install cpython-3.11-windows-aarch64-none
           {
-            echo "NOX_PYTHON_TESTS=-p 3.12 3.13 3.14"
+            echo "NOX_PYTHON_TESTS=-p 3.11 3.12 3.13 3.14"
             echo "NOX_PYTHON_MINIMUMS=-p 3.14"
           } >> "$GITHUB_ENV"
 

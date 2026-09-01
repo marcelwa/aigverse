@@ -153,12 +153,6 @@ test-sources = ["test/"]
 # the -m here replaces the one in [tool.pytest] addopts rather than adding to it,
 # so the network exclusion has to be repeated or wheel CI would download circuits
 test-command = 'pytest test/ -m "(torch or not torch) and not network"'
-# nanobind-backend, a runtime dependency the extension resolves at import time, has
-# no cp310 win_arm64 wheel yet (cp311+ does), so testing the wheel with the cp310
-# interpreter cibuildwheel selects for it can never install. Users on cp311+ are
-# unaffected -- their interpreter's own nanobind-backend wheel is what gets picked
-# at install time, regardless of the abi3 tag this wheel was built with.
-test-skip = "cp310-win_arm64"
 
 
 [tool.cibuildwheel.macos]
@@ -168,10 +162,17 @@ environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 before-build = "uv pip install delvewheel>=1.11.2"
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --ignore-existing"
 
+# every abi3 wheel: cp310 everywhere, cp311 on Windows ARM64 (see packaging-wheels.yml)
 [[tool.cibuildwheel.overrides]]
-select = "cp310-*"
+select = "cp310-* cp311-win_arm64"
 inherit.repair-wheel-command = "append"
 repair-wheel-command = "uvx abi3audit --strict --report {wheel}"
+
+# torch publishes no win_arm64 wheel, so the wheel's own test run does without it
+[[tool.cibuildwheel.overrides]]
+select = "*-win_arm64"
+test-groups = ["test"]
+test-command = 'pytest test/ -m "not torch and not network"'
 
 
 [tool.uv]

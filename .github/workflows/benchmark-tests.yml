@@ -55,12 +55,14 @@ jobs:
           enable-cache: true
           save-cache: ${{ github.ref == 'refs/heads/main' }}
 
-      # numpy's win_arm64 wheels start at 3.11, but python-build-standalone has no
-      # native win_arm64 3.11 build -- uv falls back to an x64 one, which then fails
-      # to link against the arm64 extension -- so both 3.10 and 3.11 drop out here.
+      # numpy's win_arm64 wheels start at 3.11, and uv downloads an emulated x86_64
+      # interpreter on Windows ARM64 unless the native one is requested by name, so
+      # 3.10 drops out and 3.11 is installed explicitly.
       - if: inputs.runs-on == 'windows-11-arm'
         name: Restrict interpreters on Windows ARM64
-        run: echo "NOX_PYTHON=-p 3.12 3.13 3.14" >> "$GITHUB_ENV"
+        run: |
+          uv python install cpython-3.11-windows-aarch64-none
+          echo "NOX_PYTHON=-p 3.11 3.12 3.13 3.14" >> "$GITHUB_ENV"
 
       # `nox -s tests` covers every supported Python version. The loader is pure
       # Python, and the cache path it builds is the sort of thing that differs
