@@ -37,9 +37,20 @@ from ._binary import (
     set_abc_binary,
     set_abc_rc,
 )
-from ._commands import balance, orchestrate, refactor, resub, rewrite
+from ._commands import (
+    Balance,
+    Orchestrate,
+    Refactor,
+    Resub,
+    Rewrite,
+    balance,
+    orchestrate,
+    refactor,
+    resub,
+    rewrite,
+)
 from ._errors import AbcError, AbcExecutionError, AbcNotFoundError, AbcTimeoutError
-from ._runner import run_commands, run_script
+from ._runner import Command, CommandWrapper, run_commands, run_script
 from ._scripts import SCRIPTS, expand_script
 from ._stats import AbcStats, stats
 from ._wrappers import (
@@ -63,7 +74,14 @@ __all__ = [
     "AbcNotFoundError",
     "AbcStats",
     "AbcTimeoutError",
+    "Balance",
     "CecStatus",
+    "Command",
+    "CommandWrapper",
+    "Orchestrate",
+    "Refactor",
+    "Resub",
+    "Rewrite",
     "abc_binary",
     "abc_rc",
     "abc_version",

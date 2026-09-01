@@ -49,7 +49,8 @@ installation where no `abc.rc` is found, and they silently mean something else o
 where a user has customized that file. `aigverse` sidesteps both problems by shipping the
 expansions itself and running ABC with `-s`, so a script means the same thing on every
 machine. The exact expansion of each script is available in
-{py:data}`~aigverse.abc.SCRIPTS`.
+{py:data}`~aigverse.abc.SCRIPTS`, and {py:func}`~aigverse.abc.expand_script` hands it out
+as commands — these scripts take no options, so they need no builder of their own.
 
 ## Individual commands
 
@@ -67,7 +68,24 @@ print(f"{aig.num_gates} -> {result.num_gates} AND gates")
 Their options are exposed as keyword arguments rather than as ABC switches:
 `abc.rewrite(aig, zero_cost=True)` or `abc.resub(aig, max_cut_size=12)`.
 
-{py:func}`~aigverse.abc.orchestrate` is a fifth: instead of running rewriting,
+Every wrapper also builds its command without running it, which is what lets a
+parameterized command go anywhere a command string goes:
+
+```{code-cell} ipython3
+print(abc.rewrite.cmd(zero_cost=True))
+print(abc.resub.cmd(max_cut_size=12))
+```
+
+A schedule is then a list of commands, and the whole list runs in one ABC process:
+
+```{code-cell} ipython3
+schedule = [abc.balance.cmd(), abc.rewrite.cmd(zero_cost=True), abc.refactor.cmd()]
+result = abc.run_script(aig, schedule)
+
+print(f"{aig.num_gates} -> {result.num_gates} AND gates")
+```
+
+{py:obj}`~aigverse.abc.orchestrate` is a fifth: instead of running rewriting,
 refactoring and resubstitution one after another, it interleaves them and picks per node
 which to apply — a whole schedule in a single command.
 
@@ -125,10 +143,10 @@ print(f"abc.dc2:     {abc.dc2(aig).num_gates} gates")       # ABC's `dc2`
 print(f"abc.gia.dc2: {abc.gia.dc2(aig).num_gates} gates")   # ABC's `&dc2`
 ```
 
-It holds {py:func}`~aigverse.abc.gia.balance` (`&b`), {py:func}`~aigverse.abc.gia.resub`,
-{py:func}`~aigverse.abc.gia.dc2`, {py:func}`~aigverse.abc.gia.syn2`,
-{py:func}`~aigverse.abc.gia.syn3`, {py:func}`~aigverse.abc.gia.syn4` and
-{py:func}`~aigverse.abc.gia.fraig`, plus the high-effort searches below,
+It holds {py:obj}`~aigverse.abc.gia.balance` (`&b`), {py:obj}`~aigverse.abc.gia.resub`,
+{py:obj}`~aigverse.abc.gia.dc2`, {py:obj}`~aigverse.abc.gia.syn2`,
+{py:obj}`~aigverse.abc.gia.syn3`, {py:obj}`~aigverse.abc.gia.syn4` and
+{py:obj}`~aigverse.abc.gia.fraig`, plus the high-effort searches below,
 {py:func}`~aigverse.abc.gia.cec`, {py:func}`~aigverse.abc.gia.stats`, and
 {py:func}`~aigverse.abc.gia.run_script` for anything not wrapped.
 
@@ -159,7 +177,7 @@ area. On the adder it does neither — it adds gates and leaves the depth alone,
 `resyn2` wins outright. Neither family dominates, so measure on your own designs instead
 of assuming.
 
-{py:func}`~aigverse.abc.gia.fraig` is the odd one out and worth knowing about: it is
+{py:obj}`~aigverse.abc.gia.fraig` is the odd one out and worth knowing about: it is
 combinational SAT sweeping, which merges nodes that are functionally equivalent but
 structurally different. No amount of rewriting finds those, which makes it a useful pass
 _between_ two structural scripts that each introduced their own duplicates.
@@ -168,13 +186,13 @@ _between_ two structural scripts that each introduced their own duplicates.
 
 Three more `&` commands are searches rather than passes, and are priced accordingly:
 
-- {py:func}`~aigverse.abc.gia.deepsyn` repeatedly restructures with randomized parameters
+- {py:obj}`~aigverse.abc.gia.deepsyn` repeatedly restructures with randomized parameters
   and keeps the smallest result. Different `seed` values can give different results, so it
   is worth running more than once.
-- {py:func}`~aigverse.abc.gia.transduction` reasons about permissible functions per node
+- {py:obj}`~aigverse.abc.gia.transduction` reasons about permissible functions per node
   and finds redundancy structural rewriting cannot. It is BDD-based, so its cost climbs
   steeply with size.
-- {py:func}`~aigverse.abc.gia.transtoch` is stochastic transduction — transduction run
+- {py:obj}`~aigverse.abc.gia.transtoch` is stochastic transduction — transduction run
   repeatedly with randomized parameters. It is the most expensive thing here by a wide
   margin.
 
@@ -267,8 +285,20 @@ network. The AIGER transfer bracketing each run is not the limit: it is under 2%
 drops from about 24 to under 9 seconds on sixteen cores — roughly 2.8x for its 400 runs.
 
 The wrappers take one network each, but every script they run is reachable as commands:
-{py:func}`~aigverse.abc.expand_script` hands out the canonical ones, and a command with
-options — `abc.rewrite(aig, zero_cost=True)` — is `"rewrite -z"` written out.
+{py:func}`~aigverse.abc.expand_script` hands out the canonical ones, and `cmd()` builds a
+parameterized one, so a whole corpus gets it in a single call:
+
+```{code-cell} ipython3
+recipe = [abc.balance.cmd(), abc.rewrite.cmd(zero_cost=True), abc.refactor.cmd()]
+optimized = abc.run_many(designs, recipe)
+
+for before, after in zip(designs, optimized):
+    print(f"{before.num_gates:4d} -> {after.num_gates:4d} AND gates")
+```
+
+A {py:class}`~aigverse.abc.Command` carries no store affinity, though: the `&`-space ones
+belong to {py:func}`~aigverse.abc.gia.run_many`, and handing them to the classic
+{py:func}`~aigverse.abc.run_many` fails with _there is no AIG_.
 
 ## What ABC thinks of a network
 
