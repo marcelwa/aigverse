@@ -59,7 +59,8 @@ def test_a_bare_command_object_is_taken_as_its_text(and_aig: Aig, fake_abc: Call
 
     with pytest.raises(AbcExecutionError, match="unknown command") as excinfo:
         run_commands(Command("nope -z"), binary=shim)
-    assert excinfo.value.command == "nope -z"
+    # a resource file registered via AIGVERSE_ABC_RC prepends a `source` step
+    assert excinfo.value.command.endswith("nope -z")
 
 
 @requires_posix
