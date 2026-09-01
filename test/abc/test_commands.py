@@ -18,6 +18,7 @@ import pytest
 from aigverse.abc import (
     AbcExecutionError,
     Command,
+    CommandWrapper,
     balance,
     gia,
     orchestrate,
@@ -429,3 +430,16 @@ def test_a_call_offers_exactly_the_options_its_command_builds(wrapper: object) -
     assert set(build) == forwarded
     for name, parameter in build.items():
         assert parameter.default == call[name].default, name
+
+
+@pytest.mark.parametrize("name", _WRAPPERS)
+def test_a_wrapper_reprs_as_its_public_name(name: str) -> None:
+    """A wrapper shows up in a traceback or a recipe table by the name it is reached
+    by, not by an object address.
+
+    Args:
+        name: The wrapper's name below `aigverse.abc`.
+    """
+    wrapper = _WRAPPERS[name]
+    assert isinstance(wrapper, CommandWrapper)
+    assert repr(wrapper) == f"aigverse.abc.{name}"

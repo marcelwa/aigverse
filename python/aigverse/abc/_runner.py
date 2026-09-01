@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     import os
     from collections.abc import Sequence
 
-__all__ = ["Command", "run_commands", "run_script"]
+__all__ = ["Command", "CommandWrapper", "run_commands", "run_script"]
 
 AigT = TypeVar("AigT", bound=Aig)
 
@@ -89,6 +89,24 @@ class Command:
             The command as ABC takes it.
         """
         return self.text
+
+
+class CommandWrapper:
+    """What every wrapper is: callable on a network, with a ``cmd()`` that only builds.
+
+    ``abc.rewrite`` and its siblings are module-level instances of one subclass each,
+    so a subclass's lowercased name is the instance's public name, which is what
+    ``repr()`` shows in place of an object address.
+    """
+
+    def __repr__(self) -> str:
+        """Renders the wrapper as the public name it is reached by.
+
+        Returns:
+            The dotted name, e.g. ``aigverse.abc.rewrite`` or ``aigverse.abc.gia.dc2``.
+        """
+        module = type(self).__module__.removesuffix("._commands")
+        return f"{module}.{type(self).__name__.lower()}"
 
 
 def join_commands(commands: str | Command | Sequence[str | Command]) -> str:

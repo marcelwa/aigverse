@@ -50,6 +50,7 @@ from ._options import check_option
 from ._runner import (
     AigT,
     Command,
+    CommandWrapper,
     budgeted_timeout,
     check_gia_supported,
     check_supported,
@@ -156,7 +157,7 @@ def _run(
     return _base_run_script(ntk, command, timeout=timeout, gia=True, verbose=verbose, binary=binary)
 
 
-class Balance:
+class Balance(CommandWrapper):
     """Runs ABC's ``&b`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -246,7 +247,7 @@ balance: Final[Balance] = Balance()
 """Runs ABC's ``&b`` command on a network, or builds it as a command; see :class:`Balance`."""
 
 
-class Resub:
+class Resub(CommandWrapper):
     """Runs ABC's ``&resub`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -329,7 +330,7 @@ resub: Final[Resub] = Resub()
 """Runs ABC's ``&resub`` command on a network, or builds it as a command; see :class:`Resub`."""
 
 
-class Dc2:
+class Dc2(CommandWrapper):
     """Runs ABC's ``&dc2`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -378,7 +379,7 @@ dc2: Final[Dc2] = Dc2()
 """Runs ABC's ``&dc2`` command on a network, or builds it as a command; see :class:`Dc2`."""
 
 
-class Syn2:
+class Syn2(CommandWrapper):
     """Runs ABC's ``&syn2`` script on a network, or builds it as a command."""
 
     @staticmethod
@@ -482,7 +483,7 @@ syn2: Final[Syn2] = Syn2()
 """Runs ABC's ``&syn2`` script on a network, or builds it as a command; see :class:`Syn2`."""
 
 
-class Syn3:
+class Syn3(CommandWrapper):
     """Runs ABC's ``&syn3`` script on a network, or builds it as a command."""
 
     @staticmethod
@@ -527,7 +528,7 @@ syn3: Final[Syn3] = Syn3()
 """Runs ABC's ``&syn3`` script on a network, or builds it as a command; see :class:`Syn3`."""
 
 
-class Syn4:
+class Syn4(CommandWrapper):
     """Runs ABC's ``&syn4`` script on a network, or builds it as a command."""
 
     @staticmethod
@@ -572,7 +573,7 @@ syn4: Final[Syn4] = Syn4()
 """Runs ABC's ``&syn4`` script on a network, or builds it as a command; see :class:`Syn4`."""
 
 
-class Fraig:
+class Fraig(CommandWrapper):
     """Runs ABC's ``&fraig`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -639,7 +640,7 @@ fraig: Final[Fraig] = Fraig()
 """Runs ABC's ``&fraig`` command on a network, or builds it as a command; see :class:`Fraig`."""
 
 
-class Deepsyn:
+class Deepsyn(CommandWrapper):
     """Runs ABC's ``&deepsyn`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -770,7 +771,7 @@ deepsyn: Final[Deepsyn] = Deepsyn()
 """Runs ABC's ``&deepsyn`` command on a network, or builds it as a command; see :class:`Deepsyn`."""
 
 
-class Transduction:
+class Transduction(CommandWrapper):
     """Runs ABC's ``&transduction`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -917,7 +918,7 @@ transduction: Final[Transduction] = Transduction()
 """Runs ABC's ``&transduction`` command on a network, or builds it as a command; see :class:`Transduction`."""
 
 
-class Transtoch:
+class Transtoch(CommandWrapper):
     """Runs ABC's ``&transtoch`` command on a network, or builds it as a command."""
 
     @staticmethod

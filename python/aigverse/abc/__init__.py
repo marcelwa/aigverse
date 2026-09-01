@@ -50,7 +50,7 @@ from ._commands import (
     rewrite,
 )
 from ._errors import AbcError, AbcExecutionError, AbcNotFoundError, AbcTimeoutError
-from ._runner import Command, run_commands, run_script
+from ._runner import Command, CommandWrapper, run_commands, run_script
 from ._scripts import SCRIPTS, expand_script
 from ._stats import AbcStats, stats
 from ._wrappers import (
@@ -77,6 +77,7 @@ __all__ = [
     "Balance",
     "CecStatus",
     "Command",
+    "CommandWrapper",
     "Orchestrate",
     "Refactor",
     "Resub",

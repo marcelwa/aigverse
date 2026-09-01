@@ -23,7 +23,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Final
 
 from ._options import check_option
-from ._runner import AigT, Command, run_script
+from ._runner import AigT, Command, CommandWrapper, run_script
 
 if TYPE_CHECKING:
     import os
@@ -42,7 +42,7 @@ __all__ = [
 ]
 
 
-class Balance:
+class Balance(CommandWrapper):
     """Runs ABC's ``balance`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -120,7 +120,7 @@ balance: Final[Balance] = Balance()
 """Runs ABC's ``balance`` command on a network, or builds it as a command; see :class:`Balance`."""
 
 
-class Rewrite:
+class Rewrite(CommandWrapper):
     """Runs ABC's ``rewrite`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -177,7 +177,7 @@ rewrite: Final[Rewrite] = Rewrite()
 """Runs ABC's ``rewrite`` command on a network, or builds it as a command; see :class:`Rewrite`."""
 
 
-class Refactor:
+class Refactor(CommandWrapper):
     """Runs ABC's ``refactor`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -272,7 +272,7 @@ refactor: Final[Refactor] = Refactor()
 """Runs ABC's ``refactor`` command on a network, or builds it as a command; see :class:`Refactor`."""
 
 
-class Resub:
+class Resub(CommandWrapper):
     """Runs ABC's ``resub`` command on a network, or builds it as a command."""
 
     @staticmethod
@@ -389,7 +389,7 @@ resub: Final[Resub] = Resub()
 """Runs ABC's ``resub`` command on a network, or builds it as a command; see :class:`Resub`."""
 
 
-class Orchestrate:
+class Orchestrate(CommandWrapper):
     """Runs ABC's ``orchestrate`` command on a network, or builds it as a command."""
 
     @staticmethod

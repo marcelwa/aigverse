@@ -93,6 +93,8 @@ nitpick_ignore = [
     ("py:class", "aigverse.abc._errors.AbcError"),
     # and for the `Command` the wrappers build, documented at `aigverse.abc.Command`.
     ("py:class", "aigverse.abc._runner.Command"),
+    # and for the wrappers' base, documented at `aigverse.abc.CommandWrapper`.
+    ("py:class", "aigverse.abc._runner.CommandWrapper"),
 ]
 
 # -- Options for {MyST}NB ----------------------------------------------------
