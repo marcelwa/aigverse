@@ -36,16 +36,18 @@ function(add_aigverse_python_binding target_name)
     set(module_name ${target_name})
   endif()
 
-  # Keep the statically linked dependencies local: a split-mode extension links
-  # no nanobind target and inherits none of its symbol hiding or section
-  # collection.
+  # Keep the embedded static libraries' symbols local. nanobind hides only the
+  # module's own (`CXX_VISIBILITY_PRESET hidden`); mockturtle's and ABC's
+  # archives keep default visibility, so each extension re-exported them for the
+  # dynamic linker to interpose across all five. Ported from scpd.
   if(APPLE)
     target_link_options(${target_name} PRIVATE
                         "LINKER:-exported_symbol,_PyInit_${module_name}")
   elseif(UNIX)
     target_link_options(${target_name} PRIVATE "LINKER:--exclude-libs,ALL")
 
-    # `--gc-sections` collects nothing without these; nanobind emits only `-Os`.
+    # `--gc-sections` collects nothing without these. A linked build inherited
+    # both from `nanobind-static`; split mode links no nanobind target.
     target_compile_options(
       ${target_name}
       PRIVATE
@@ -56,9 +58,6 @@ function(add_aigverse_python_binding target_name)
       PRIVATE
       "$<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>,$<CONFIG:RelWithDebInfo>>:LINKER:--gc-sections>"
     )
-  elseif(WIN32)
-    set_target_properties(${target_name} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS
-                                                    OFF)
   endif()
 
   target_link_libraries(
