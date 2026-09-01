@@ -22,6 +22,8 @@ releases may include breaking changes.
 
 ### Changed
 
+- 🔧 Stop the extensions from re-exporting the internals of the static libraries they
+  embed ([#490]) ([**@marcelwa**])
 - ⚡️ Run `examples/abc_recipe_study.py`'s sweep as one batch per recipe instead of one
   ABC call at a time, with a new `--jobs` flag. Its CSV loses the `seconds` column,
   which a concurrent run cannot measure per item ([#467]) ([**@marcelwa**])
@@ -235,6 +237,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#490]: https://github.com/marcelwa/aigverse/pull/490
 [#489]: https://github.com/marcelwa/aigverse/pull/489
 [#488]: https://github.com/marcelwa/aigverse/pull/488
 [#483]: https://github.com/marcelwa/aigverse/pull/483
