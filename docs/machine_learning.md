@@ -140,6 +140,12 @@ as [PyTorch](https://docs.pytorch.org/docs/stable/dlpack.html),
 [TensorFlow](https://www.tensorflow.org/api_docs/python/tf/experimental/dlpack/from_dlpack), etc., through
 `from_dlpack`.
 
+:::{note}
+PyTorch publishes no `win_arm64` wheels, so the `torch` snippets below cannot run on Windows on ARM. The DLPack export
+itself is unaffected — consume it with [NumPy](https://numpy.org/doc/stable/reference/generated/numpy.from_dlpack.html)
+instead, as shown at the end of this section.
+:::
+
 Encoding and `dtype` mapping:
 
 - Edge encoding (`edge_attr`):
