@@ -44,7 +44,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-2025]
+        runs-on:
+          [
+            ubuntu-24.04,
+            ubuntu-24.04-arm,
+            macos-15,
+            windows-2025,
+            windows-11-arm,
+          ]
     uses: ./.github/workflows/python-tests.yml
     with:
       runs-on: ${{ matrix.runs-on }}
@@ -75,7 +82,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-2025]
+        runs-on:
+          [
+            ubuntu-24.04,
+            ubuntu-24.04-arm,
+            macos-15,
+            windows-2025,
+            windows-11-arm,
+          ]
     uses: ./.github/workflows/benchmark-tests.yml
     with:
       runs-on: ${{ matrix.runs-on }}
@@ -123,7 +137,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-2025]
+        runs-on:
+          [
+            ubuntu-24.04,
+            ubuntu-24.04-arm,
+            macos-15,
+            windows-2025,
+            windows-11-arm,
+          ]
     uses: ./.github/workflows/packaging-wheels.yml
     with:
       runs-on: ${{ matrix.runs-on }}

@@ -162,10 +162,17 @@ environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 before-build = "uv pip install delvewheel>=1.11.2"
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --ignore-existing"
 
+# every abi3 wheel: cp310 everywhere, cp311 on Windows ARM64 (see packaging-wheels.yml)
 [[tool.cibuildwheel.overrides]]
-select = "cp310-*"
+select = "cp310-* cp311-win_arm64"
 inherit.repair-wheel-command = "append"
 repair-wheel-command = "uvx abi3audit --strict --report {wheel}"
+
+# torch publishes no win_arm64 wheel, so the wheel's own test run does without it
+[[tool.cibuildwheel.overrides]]
+select = "*-win_arm64"
+test-groups = ["test"]
+test-command = 'pytest test/ -m "not torch and not network"'
 
 
 [tool.uv]
