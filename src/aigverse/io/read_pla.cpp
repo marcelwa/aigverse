@@ -53,7 +53,8 @@ Returns:
     The parsed network instance.
 
 Raises:
-    RuntimeError: If parsing the PLA file fails.)pb");  // NOLINT(misc-include-cleaner)
+    RuntimeError: If parsing the PLA file fails.)pb",
+        nb::call_guard<nb::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG

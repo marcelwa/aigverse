@@ -10,6 +10,42 @@ releases may include breaking changes.
 
 ## [Unreleased]
 
+### Added
+
+- 📝 Add an ABC example to the README ([#489]) ([**@marcelwa**])
+- 👷 Add a `cpp-lint` nox session that reproduces the `🚨 Clang-Tidy` check locally, running
+  the same `cpp-linter` invocation CI runs over the files that differ from `origin/main`
+  ([#488]) ([**@marcelwa**])
+- ✨ Add `run_many` to the `aigverse.abc` bridge, running one ABC script over many
+  networks in parallel and reporting each failure in place instead of losing the
+  batch to the first bad design ([#467]) ([**@marcelwa**])
+
+### Changed
+
+- 🔧 Stop the extensions from re-exporting the internals of the static libraries they
+  embed ([#490]) ([**@marcelwa**])
+- ⚡️ Run `examples/abc_recipe_study.py`'s sweep as one batch per recipe instead of one
+  ABC call at a time, with a new `--jobs` flag. Its CSV loses the `seconds` column,
+  which a concurrent run cannot measure per item ([#467]) ([**@marcelwa**])
+- ⚡️ Release the GIL in the `generators` bindings, so random and structured
+  network construction overlaps across threads instead of blocking every other
+  worker ([#478]) ([**@marcelwa**])
+- ⚡️ Release the GIL in the `io` bindings, so reading networks and writing AIGER
+  overlaps across threads instead of serializing against every other worker
+  ([#477], [#481]) ([**@marcelwa**])
+
+### Fixed
+
+- 📝 Correct the README's Stable ABI and free-threading claims ([#489]) ([**@marcelwa**])
+- 🐛 Stop `equivalence_checking`, `aig_cut_rewriting`, `balancing`, and `cleanup_dangling`
+  from returning silently wrong results when several threads call them on one shared
+  network. Each wrote traversal state into the caller's network through a mockturtle view
+  while the GIL was released ([#483]) ([**@marcelwa**])
+- 🐛 Look the ABC executable up on `PATH` once per `run_script` call instead of twice.
+  The second lookup ran after ABC finished purely to name the binary in an error, so a
+  binary that disappeared mid-run discarded a successful result ([#467])
+  ([**@marcelwa**])
+
 ## [0.1.5] - 2026-08-24
 
 ### Added
@@ -201,6 +237,14 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#490]: https://github.com/marcelwa/aigverse/pull/490
+[#489]: https://github.com/marcelwa/aigverse/pull/489
+[#488]: https://github.com/marcelwa/aigverse/pull/488
+[#483]: https://github.com/marcelwa/aigverse/pull/483
+[#481]: https://github.com/marcelwa/aigverse/pull/481
+[#467]: https://github.com/marcelwa/aigverse/pull/467
+[#478]: https://github.com/marcelwa/aigverse/pull/478
+[#477]: https://github.com/marcelwa/aigverse/pull/477
 [#463]: https://github.com/marcelwa/aigverse/pull/463
 [#458]: https://github.com/marcelwa/aigverse/pull/458
 [#457]: https://github.com/marcelwa/aigverse/pull/457

@@ -89,6 +89,8 @@ nitpick_ignore = [
     # `gia.stats` returns the `AbcStats` documented at `aigverse.abc.AbcStats`,
     # but autoapi stringifies the annotation to the defining private module.
     ("py:class", "aigverse.abc._stats.AbcStats"),
+    # the same for `run_many`'s `AbcError`, documented at `aigverse.abc.AbcError`.
+    ("py:class", "aigverse.abc._errors.AbcError"),
 ]
 
 # -- Options for {MyST}NB ----------------------------------------------------

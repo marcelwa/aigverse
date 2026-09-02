@@ -116,7 +116,7 @@ Returns:
 
 Raises:
     ValueError: If an assignment in ``stimulus`` does not have one value per primary input.)pb",
-        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::call_guard<nb::gil_scoped_release>());
 }
 
 // Explicit instantiation for the sequential AIG

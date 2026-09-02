@@ -66,7 +66,8 @@ Returns:
 
 Raises:
     ValueError: If ``bitwidth`` is not greater than ``0``.
-)pb");
+)pb",
+        nb::call_guard<nb::gil_scoped_release>());
 
     m.def(
         "binary_decoder",
@@ -106,7 +107,8 @@ Returns:
 
 Raises:
     ValueError: If ``num_select_bits`` is not greater than ``0``.
-)pb");
+)pb",
+        nb::call_guard<nb::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIGs

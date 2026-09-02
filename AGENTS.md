@@ -20,6 +20,17 @@ uvx nox -s lint
 Runs the full `prek` hook set (ruff, ty, clang-format, cmake-format, typos, etc.). To run a single hook or file
 directly instead: `uvx prek run --all-files` or `uvx prek run <hook-id> --files <path>`.
 
+### Clang-Tidy (C++ static analysis)
+
+```console
+uvx nox -s cpp-lint              # the C++ files that differ from origin/main — the slice the `🚨 Clang-Tidy` check lints
+uvx nox -s cpp-lint -- HEAD~3    # diff against that revision instead
+uvx nox -s cpp-lint -- --all     # every C++ file in the repo
+```
+
+Runs the same `cpp-linter` invocation `.github/workflows/cpp-linter.yml` runs, prints the findings, and fails on them.
+Not part of `lint`; it needs a CMake configure, so it costs minutes rather than seconds.
+
 ### Python tests
 
 ```console

@@ -25,6 +25,7 @@ Example:
 from __future__ import annotations
 
 from . import gia
+from ._batch import run_many
 from ._binary import (
     ABC_ENV_VAR,
     ABC_RC_ENV_VAR,
@@ -84,6 +85,7 @@ __all__ = [
     "resyn3",
     "rewrite",
     "run_commands",
+    "run_many",
     "run_script",
     "set_abc_binary",
     "set_abc_rc",

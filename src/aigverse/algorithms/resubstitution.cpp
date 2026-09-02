@@ -62,11 +62,12 @@ Args:
     use_dont_cares: Whether to use don't-care information.
     window_size: Window size used for don't-care computation.
     preserve_depth: Whether replacements must preserve depth.
-    inplace: Whether to mutate ``ntk`` in place.
+    inplace: Whether to mutate ``ntk`` in place. A network being transformed in place
+        must not be shared with another thread.
 
 Returns:
     The optimized network if ``inplace`` is ``False``. Otherwise ``None``.)pb",
-        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::call_guard<nb::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG

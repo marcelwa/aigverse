@@ -273,6 +273,15 @@ build = [
     "vcs-versioning~=2.3.0",
     "nanobind~=3.0.0",
 ]
+cpp-lint = [
+    # `nox -s cpp-lint` configures the project to get a compilation database, so it needs
+    # what a configure needs. `cpp-linter` is the package `cpp-linter-action` runs, and
+    # `clang-tidy` is the wheel that ships the binary -- pinned together so a local run
+    # reports what `.github/workflows/cpp-linter.yml` reports. Bump them with the action.
+    { include-group = "build" },
+    "clang-tidy==21.1.6",
+    "cpp-linter==1.13.0",
+]
 adapters = [
     "networkx>=3.0.0",
     # 1.23.0 is the project's own floor; the marked ones raise it to the lowest

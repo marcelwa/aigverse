@@ -60,7 +60,8 @@ Returns:
 Raises:
     ValueError: If ``num_pis`` or ``num_gates`` is ``0``.
     TypeError: If ``num_pis`` or ``num_gates`` cannot be converted to ``uint32``.
-)pb");
+)pb",
+          nb::call_guard<nb::gil_scoped_release>());
 }
 
 }  // namespace detail

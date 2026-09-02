@@ -78,14 +78,15 @@ Args:
     try_both_polarities: Whether both output polarities are explored.
     consider_inverter_cost: Whether inverter cost is included in optimization.
     verbose: Whether to print verbose progress output.
-    inplace: Whether to mutate ``ntk`` in place.
+    inplace: Whether to mutate ``ntk`` in place. A network being transformed in place
+        must not be shared with another thread.
 
 Returns:
     The refactored network if ``inplace`` is ``False``. Otherwise ``None``.
 
 Raises:
     RuntimeError: If refactoring fails in the underlying synthesis engine.)pb",
-        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::call_guard<nb::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG

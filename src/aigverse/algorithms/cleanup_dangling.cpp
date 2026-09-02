@@ -18,6 +18,10 @@ void cleanup(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
+    // No GIL release here. `cleanup_dangling` builds a `topo_view` over the caller's network, which writes into that
+    // network's storage; see `transform_helpers.hpp` for the rule. The other three view-building bindings run on a
+    // clone instead and keep their guard, but this call is a single pass: a clone costs 75% of it at 10k gates and
+    // 3.7x at 1k, against a threaded gain that is 2.36x at 10k and 0.87x at 1k (#482).
     m.def(
         "cleanup_dangling",
         [](const Ntk& ntk, const bool remove_dangling_pis = false, const bool remove_redundant_pos = false) -> Ntk
@@ -31,8 +35,7 @@ Args:
     remove_redundant_pos: Whether to remove redundant primary outputs.
 
 Returns:
-    A cleaned network with dangling structures removed.)pb",
-        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+    A cleaned network with dangling structures removed.)pb");
 }
 
 template void cleanup<aigverse::aig>(nanobind::module_& m);
