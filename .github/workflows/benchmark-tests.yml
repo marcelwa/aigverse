@@ -71,4 +71,6 @@ jobs:
       # Deliberately no pre-seeded benchmark cache: exercising the real download
       # path is the entire point of this job.
       - name: 📊 Test the benchmark loader
-        run: uvx nox -s tests ${NOX_PYTHON:-} --verbose -- -m network
+        run: |
+          # shellcheck disable=SC2086  # word-split into separate -p / version args
+          uvx nox -s tests ${NOX_PYTHON:-} --verbose -- -m network

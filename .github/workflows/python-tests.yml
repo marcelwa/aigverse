@@ -128,7 +128,9 @@ jobs:
 
       - if: inputs.runs-on == 'windows-11-arm'
         name: ⬇️ Test the lowest supported dependency versions (Windows ARM64)
-        run: uvx nox -s minimums ${NOX_PYTHON_MINIMUMS} --verbose -- -m "not network and not torch"
+        run: |
+          # shellcheck disable=SC2086  # word-split into separate -p / version args
+          uvx nox -s minimums ${NOX_PYTHON_MINIMUMS} --verbose -- -m "not network and not torch"
 
       - if: inputs.runs-on != 'windows-11-arm'
         name: 🐍 Test
@@ -136,7 +138,9 @@ jobs:
 
       - if: inputs.runs-on == 'windows-11-arm'
         name: 🐍 Test (Windows ARM64)
-        run: uvx nox -s tests ${NOX_PYTHON_TESTS} --verbose -- -m "not network and not torch"
+        run: |
+          # shellcheck disable=SC2086  # word-split into separate -p / version args
+          uvx nox -s tests ${NOX_PYTHON_TESTS} --verbose -- -m "not network and not torch"
 
       # A hit rate is a fact; a step duration is a guess about one. The other
       # platforms get this from ccache-action's post step. `--show-stats` is left

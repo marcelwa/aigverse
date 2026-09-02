@@ -44,7 +44,7 @@ jobs:
       # win_arm64 wheel, so a cp310 build's test run could never install. cp311
       # builds the same `cp310-abi3` wheel (`wheel.py-api` in pyproject.toml) and
       # can test it.
-      - if: runner.arch == 'ARM64'
+      - if: runner.arch == 'ARM64' && runner.os == 'Windows'
         name: Build with CPython 3.11 on Windows ARM64
         run: echo "CIBW_BUILD=cp311-*" >> "$GITHUB_ENV"
 
