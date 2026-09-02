@@ -9,6 +9,7 @@ void bind_resubstitution(nanobind::module_& m);
 void bind_rewriting(nanobind::module_& m);
 void bind_balancing(nanobind::module_& m);
 void bind_simulation(nanobind::module_& m);
+void bind_sequential_simulation(nanobind::module_& m);
 }  // namespace aigverse
 
 NB_MODULE(algorithms, m)
@@ -23,4 +24,5 @@ NB_MODULE(algorithms, m)
     aigverse::bind_rewriting(m);
     aigverse::bind_balancing(m);
     aigverse::bind_simulation(m);
+    aigverse::bind_sequential_simulation(m);
 }

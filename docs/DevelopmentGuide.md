@@ -14,7 +14,6 @@ Ready to contribute to the project? This guide will get you started.
 
    ```console
    $ git clone git@github.com:your_name_here/aigverse.git
-   $ git submodule update --init --recursive
    ```
 
    :::
@@ -24,7 +23,6 @@ Ready to contribute to the project? This guide will get you started.
 
    ```console
    $ git clone git@github.com/marcelwa/aigverse.git
-   $ git submodule update --init --recursive
    ```
 
    :::
@@ -183,6 +181,16 @@ Our CI pipeline will also run clang-tidy over the changes in your pull request a
 Due to technical limitations, the workflow can only post pull request comments if the changes are not coming from a fork.
 If you are working on a fork, you can still see the clang-tidy results either in the GitHub Actions logs,
 on the workflow summary page, or in the "Files changed" tab of the pull request.
+
+To get that report before pushing, the `cpp-lint` nox session runs the very same check locally.
+
+```console
+$ nox -s cpp-lint
+```
+
+It configures a compilation database and analyzes the C++ files that differ from `origin/main` -- the slice CI analyzes -- printing every finding and failing if there is one.
+Pass a revision to diff against that instead of `origin/main`, or `--all` to analyze every C++ file in the repository.
+clang-tidy itself comes from a PyPI wheel pinned to the version the workflow uses, so the session needs no system-wide LLVM installation.
 
 ## Working on the Python project
 
@@ -380,6 +388,23 @@ This ensures that the project can still be built and the tests pass with the min
 $ nox -s minimums
 ```
 
+:::{note}
+By default, both `tests` and `minimums` skip what is expensive or fragile: the `torch` group is not installed, and the
+tests marked `torch` and `network` are deselected.
+That keeps a local run cheap and offline, at the cost of exercising less than CI does.
+
+Pass `--full` to run everything, installing every optional dependency group and selecting every marker:
+
+```console
+$ nox -s tests -- --full
+$ nox -s minimums -- --full
+```
+
+CI runs `--full -m "not network"` in the test matrix, keeping the circuit downloads in their own workflow so that a
+hiccup at GitHub cannot redden an unrelated run.
+A plain local run is therefore not enough to conclude that a change to the `torch` floors is sound.
+:::
+
 ### Test Fixtures and Markers
 
 The test suite uses layered `pytest` fixtures to keep test setup reusable and localized:
@@ -400,6 +425,8 @@ Useful marker filters include:
 - `generators`
 - `adapters`
 - `tts`
+- `torch` (deselected by default; needs the `torch` group, see `--full` above)
+- `network` (deselected by default; downloads benchmark circuits)
 
 Run a marker subset on a specific Python version with:
 
@@ -535,3 +562,29 @@ If you don't want to use `nox`, you can also build the documentation directly us
 
 The docs can then be found in the `docs/_build` directory.
 :::
+
+## Releasing
+
+Releases are cut from `main` and published from the GitHub Releases UI.
+Publishing a release is what ships the package: the `release: published` event triggers the `publish-to-pypi` job in `.github/workflows/cd.yml`, which uploads the sdist and the wheels to PyPI via trusted publishing, with build provenance attestation.
+Pushing a tag on its own publishes nothing.
+
+There is no version number to bump anywhere.
+`pyproject.toml` declares `dynamic = ["version"]`, and `vcs-versioning` derives the version from the git tag at build time into the generated `python/aigverse/_version.py`.
+The tag is the single source of truth.
+
+1. **Land everything intended for the release on `main`, and label it.**
+   Release Drafter (`.github/release-drafter.yml`) sorts pull requests into the release notes by label, so an unlabeled pull request ends up uncategorized.
+   Build and CI work needs the `tooling` label to show up under `🔧 Tooling, Build & CI`; `build_system` and `testing` alone are not enough, because Renovate applies those to its pinned-revision bumps.
+   Routine Renovate and pre-commit.ci bumps are collapsed into a single `⬆️ Dependencies` block at the bottom, so they need no special handling.
+
+2. **Open a release-preparation pull request**, labeled `release-prep` so that it excludes itself from the notes.
+   In `CHANGELOG.md`, rename the `## [Unreleased]` heading to `## [X.Y.Z] - <release date>`, add a fresh, empty `## [Unreleased]` heading above it, and update the link references at the bottom: point `[unreleased]` at `compare/vX.Y.Z...HEAD` and add `[X.Y.Z]` pointing at `releases/tag/vX.Y.Z`.
+   Only touch `UPGRADING.md` if the release contains breaking changes.
+
+3. **Merge it.**
+   Release Drafter keeps a draft release up to date on every push to `main`, so the notes for the next release already exist.
+
+4. **Publish the draft.**
+   Open it under [Releases](https://github.com/marcelwa/aigverse/releases), check that the resolved version and the `vX.Y.Z` tag are correct — the version resolver increments the patch level unless a pull request in the release carries a `minor` or `major` label — and set the body to the `[X.Y.Z]` section of `CHANGELOG.md`.
+   Make sure the release targets `main`, then publish it and watch the `🐍 • Packaging` workflow deploy to PyPI.

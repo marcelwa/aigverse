@@ -65,7 +65,8 @@ Returns:
 
 Raises:
     ValueError: If ``bitwidth`` is not greater than ``0``.
-)pb");
+)pb",
+        nb::call_guard<nb::gil_scoped_release>());
 
     m.def(
         "carry_lookahead_adder",
@@ -110,7 +111,8 @@ Returns:
 
 Raises:
     ValueError: If ``bitwidth`` is not greater than ``0``.
-)pb");
+)pb",
+        nb::call_guard<nb::gil_scoped_release>());
 
     m.def(
         "ripple_carry_multiplier",
@@ -153,7 +155,8 @@ Returns:
 
 Raises:
     ValueError: If ``bitwidth`` is not greater than ``0``.
-)pb");
+)pb",
+        nb::call_guard<nb::gil_scoped_release>());
 
     m.def(
         "sideways_sum_adder",
@@ -193,7 +196,8 @@ Returns:
 
 Raises:
     ValueError: If ``bitwidth`` is not greater than ``0``.
-)pb");
+)pb",
+        nb::call_guard<nb::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIGs

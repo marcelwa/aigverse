@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING
 import pytest
 
 from aigverse import abc
-from aigverse.algorithms import equivalence_checking
+from aigverse.algorithms import equivalence_checking, simulate_sequential
 from aigverse.generators import ripple_carry_multiplier
-from aigverse.networks import Aig, DepthAig, NamedAig
+from aigverse.networks import Aig, DepthAig, NamedAig, SequentialAig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -397,3 +397,207 @@ def test_a_non_executable_binary_override_is_reported_as_not_found(and_aig: AigT
 
     with pytest.raises(abc.AbcNotFoundError, match="not executable"):
         abc.resyn2(and_aig, binary=not_executable)
+
+
+def test_sequential_aig_keeps_registers_and_type(sequential_aig: Callable[..., SequentialAig]) -> None:
+    """Registers, their reset values, and the network type survive ABC.
+
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig(0, 1)
+
+    result = abc.resyn2(ntk)
+
+    assert type(result) is SequentialAig
+    assert result.num_pis == ntk.num_pis
+    assert result.num_pos == ntk.num_pos
+    assert result.num_registers == ntk.num_registers
+    assert result.register_at(0).init == 0
+    assert result.register_at(1).init == 1
+
+
+def test_sequential_aig_with_undefined_reset(sequential_aig: Callable[..., SequentialAig]) -> None:
+    """A register left at its default reset must not come back as zero-initialized.
+
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig()
+
+    assert ntk.register_at(0).init not in {0, 1}
+
+    result = abc.resyn2(ntk)
+
+    assert result.num_registers == 1
+    # mockturtle's `register_init` spells "no reset value" two ways: `unknown`
+    # (3), which `register_t` defaults to, and `dont_care` (2), which the AIGER
+    # reader reports for a latch whose reset is omitted. Compare on the property
+    # both share, as `register_init::is_defined` does, not on either value.
+    assert result.register_at(0).init not in {0, 1}
+
+
+@pytest.mark.parametrize("init", [0, 1], ids=["reset-zero", "reset-one"])
+def test_a_defined_reset_keeps_the_interface_in_the_gia_store(
+    init: int, sequential_aig: Callable[..., SequentialAig]
+) -> None:
+    """A defined reset keeps the network's shape in the `&` space.
+
+    This is the guarantee the guard protects: `&read` leaves the interface alone
+    for a reset of 0 or 1, and only an undefined one costs an input and a
+    register.
+
+    Args:
+        init: The register's reset value.
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig(init)
+
+    result = abc.gia.dc2(ntk)
+
+    assert type(result) is SequentialAig
+    assert result.num_pis == ntk.num_pis
+    assert result.num_pos == ntk.num_pos
+    assert result.num_registers == ntk.num_registers
+
+
+def test_the_gia_store_normalizes_a_one_valued_reset(sequential_aig: Callable[..., SequentialAig]) -> None:
+    """A reset of 1 comes back as 0, which is a re-encoding and not a loss.
+
+    `&read` reports "Converted 1 1-valued FFs" and complements the flip-flop, so
+    the network still computes the same sequence with a reset of 0. Unlike the
+    don't-care case it costs no input and no register, so it is carried rather
+    than refused -- but the reset value itself does not survive the `&` space, and
+    the classic namespace is the one that keeps it.
+
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig(1)
+
+    assert abc.gia.dc2(ntk).register_at(0).init == 0
+    assert abc.dc2(ntk).register_at(0).init == 1
+
+
+def test_the_gia_store_refuses_an_undefined_reset(sequential_aig: Callable[..., SequentialAig]) -> None:
+    """The interface-changing case is refused rather than silently reshaped.
+
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig()
+
+    assert ntk.register_at(0).init not in {0, 1}
+
+    with pytest.raises(ValueError, match="no defined reset value"):
+        abc.gia.dc2(ntk)
+
+    # The classic store carries the very same network across unchanged.
+    assert abc.dc2(ntk).num_registers == ntk.num_registers
+
+
+def test_a_sequential_round_trip_preserves_behavior(lfsr: Callable[..., SequentialAig]) -> None:
+    """The registers surviving is not the claim; the circuit still running is.
+
+    Every other sequential test here counts registers and reads reset values back.
+    This one runs the design: a 4-bit LFSR walks all fifteen of its non-zero states
+    off its reset value alone, so a round trip that damaged either the logic or the
+    seed would collapse the output to a constant rather than change a count.
+
+    Args:
+        lfsr: Builds the network.
+    """
+    ntk = lfsr()
+    before = simulate_sequential(ntk, 15)
+
+    after = simulate_sequential(abc.resyn2(ntk), 15)
+
+    assert after.outputs == before.outputs
+    assert after.states == before.states
+    # a maximal-length sequence, so the seed really did take effect
+    assert len({tuple(state) for state in before.states[:-1]}) == 15
+
+
+def test_the_gia_reset_conversion_is_a_re_encoding_not_a_loss(
+    lfsr: Callable[..., SequentialAig],
+) -> None:
+    """`&read` complements a one-valued flip-flop; the design is unchanged by it.
+
+    This is the one claim in the bridge that a count cannot check. The reset value
+    genuinely does not survive the `&` space -- it comes back as 0 -- so the only
+    evidence that nothing was lost is that the network still produces the same
+    sequence from its own reset state.
+
+    Args:
+        lfsr: Builds the network.
+    """
+    ntk = lfsr()
+    reference = simulate_sequential(ntk, 15)
+
+    assert ntk.register_at(0).init == 1
+
+    through_gia = abc.gia.dc2(ntk)
+
+    # the reset value itself is gone
+    assert [through_gia.register_at(i).init for i in range(through_gia.num_registers)] == [0, 0, 0, 0]
+
+    # the behavior it encoded is not
+    assert simulate_sequential(through_gia, 15).outputs == reference.outputs
+
+
+def test_the_classic_store_keeps_both_the_reset_and_the_behavior(
+    lfsr: Callable[..., SequentialAig],
+) -> None:
+    """What the `&` space re-encodes, the classic namespace carries as it is.
+
+    Args:
+        lfsr: Builds the network.
+    """
+    ntk = lfsr()
+    reference = simulate_sequential(ntk, 15)
+
+    through_classic = abc.dc2(ntk)
+
+    assert [through_classic.register_at(i).init for i in range(through_classic.num_registers)] == [1, 0, 0, 0]
+    assert simulate_sequential(through_classic, 15).outputs == reference.outputs
+
+
+def test_a_sequential_optimization_is_equivalence_preserving(
+    sequential_aig: Callable[..., SequentialAig],
+) -> None:
+    """The register boundary may not move, so a combinational check is the right one.
+
+    `equivalence_checking` compares the register outputs as inputs, which is exactly
+    what an optimization that is not allowed to touch the registers must preserve.
+
+    Args:
+        sequential_aig: Builds the network.
+    """
+    ntk = sequential_aig(0, 1, 0)
+
+    for script in ("resyn2", "compress2rs", "dc2"):
+        result = getattr(abc, script)(ntk)
+
+        assert result.num_registers == ntk.num_registers
+        assert equivalence_checking(ntk, result)
+
+
+def test_a_requested_reshape_is_not_refused(lfsr: Callable[..., SequentialAig]) -> None:
+    """The guards are about ABC reshaping a network unasked, not about `comb`.
+
+    `comb` flattens the registers into primary input and output pairs, which is a
+    different interface than went in -- but the caller asked for exactly that, so
+    it is carried out rather than refused. The `gia` guard exists because `&read`
+    does the same thing without being asked.
+
+    Args:
+        lfsr: Builds the network.
+    """
+    ntk = lfsr()
+
+    result = abc.run_script(ntk, "comb")
+
+    assert type(result) is SequentialAig
+    assert result.num_registers == 0
+    assert result.num_pis == ntk.num_pis + ntk.num_registers
+    assert result.num_pos == ntk.num_pos + ntk.num_registers

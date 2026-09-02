@@ -69,6 +69,8 @@ benchmarks
 abc
 machine_learning
 visualization
+CHANGELOG
+UPGRADING
 ```
 
 ````{only} not latex

@@ -38,7 +38,7 @@ def resyn(
     Errors are reported the same way as by :func:`run_script`.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
         binary: Overrides the resolved ABC executable for this call only.
@@ -65,7 +65,7 @@ def resyn2(
     Errors are reported the same way as by :func:`run_script`.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
         binary: Overrides the resolved ABC executable for this call only.
@@ -92,7 +92,7 @@ def resyn3(
     Errors are reported the same way as by :func:`run_script`.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
         binary: Overrides the resolved ABC executable for this call only.
@@ -120,7 +120,7 @@ def compress(
     Errors are reported the same way as by :func:`run_script`.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
         binary: Overrides the resolved ABC executable for this call only.
@@ -148,7 +148,7 @@ def compress2(
     Errors are reported the same way as by :func:`run_script`.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
         binary: Overrides the resolved ABC executable for this call only.
@@ -175,7 +175,7 @@ def resyn2rs(
     Errors are reported the same way as by :func:`run_script`.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
         binary: Overrides the resolved ABC executable for this call only.
@@ -203,7 +203,7 @@ def compress2rs(
     Errors are reported the same way as by :func:`run_script`.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
         binary: Overrides the resolved ABC executable for this call only.
@@ -230,7 +230,7 @@ def dc2(
     Errors are reported the same way as by :func:`run_script`.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
         binary: Overrides the resolved ABC executable for this call only.

@@ -26,6 +26,15 @@ multiplier, ``&syn4`` trades 84 gates at 16 levels for 168 gates at 13 levels --
 depth the classic scripts cannot reach on that design. On a 16-bit carry-lookahead
 adder the same command buys nothing: it grows the network and leaves the depth
 where it was, while ``resyn2`` beats it on both counts. Neither family dominates.
+
+The ``&`` space is also stricter than the classic one about register reset
+values. ``&read`` accepts only a reset of 0 literally: it converts a 1-valued
+flip-flop by complementing it, which is an equivalent network that comes back
+with a reset of 0, and it models an *undefined* reset with an extra primary
+input, an extra register, and three AND nodes -- a network with a different
+interface than it went in with. The first is carried, the second is refused with
+a ``ValueError`` by every function here. The classic store keeps either reset
+value as it is.
 """
 
 from __future__ import annotations
@@ -33,19 +42,22 @@ from __future__ import annotations
 import tempfile
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
+from ._batch import run_many as _base_run_many
 from ._errors import AbcExecutionError, AbcTimeoutError
 from ._options import check_option
-from ._runner import AigT, budgeted_timeout, check_supported, resolve_binary, run_commands
+from ._runner import AigT, budgeted_timeout, check_gia_supported, check_supported, resolve_binary, run_commands
 from ._runner import run_script as _base_run_script
 from ._stats import AbcStats, collect_stats
 
 if TYPE_CHECKING:
     import os
-    from collections.abc import Sequence
+    from collections.abc import Iterable, Sequence
+    from typing import Literal
 
     from ..networks import Aig
+    from ._errors import AbcError
 
 __all__ = [
     "CecStatus",
@@ -55,6 +67,7 @@ __all__ = [
     "deepsyn",
     "fraig",
     "resub",
+    "run_many",
     "run_script",
     "stats",
     "syn2",
@@ -113,7 +126,7 @@ def _run(
     """Runs a single ``&``-space command through the GIA transfer path.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         command: The assembled ABC command.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
@@ -143,7 +156,7 @@ def balance(
     where the classic one only re-associates AND trees.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         delay_only: If ``True``, balance for delay without regard to area.
         and_only: If ``True``, use only AND nodes instead of AND/XOR/MUX.
         strict_area: If ``True``, control area strictly while balancing for
@@ -189,7 +202,7 @@ def resub(
     The ``&``-space counterpart of :func:`~aigverse.abc.resub`.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         max_inserts: Limit on the number of nodes added (ABC's ``-N``, at least
             0), or ``None`` for ABC's default.
         max_support: Limit on the support size (ABC's ``-S``, at least 1), or
@@ -234,7 +247,7 @@ def dc2(
     which has a direct ``&`` counterpart.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         update_levels: If ``True`` (ABC's default), track levels while rewriting.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
@@ -271,7 +284,7 @@ def syn2(
         not a failure; compare the result before keeping it.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         delay_relaxation: Delay relaxation ratio (ABC's ``-R``, at least 0), or
             ``None`` for ABC's default of 20. Higher values allow more delay in
             exchange for area.
@@ -323,7 +336,7 @@ def syn3(
         designs where there is no depth to recover.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
         binary: Overrides the resolved ABC executable for this call only.
@@ -351,7 +364,7 @@ def syn4(
         the three. Expect the AND count to grow, sometimes considerably.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         verbose: If ``True``, print everything ABC wrote.
         binary: Overrides the resolved ABC executable for this call only.
@@ -378,7 +391,7 @@ def fraig(
     two structural scripts that each introduced their own duplicates.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         conflict_limit: Maximum SAT conflicts per node (ABC's ``-C``, at least 0),
             or ``None`` for ABC's default. Lower values bound the runtime on hard
             instances at the cost of missing some merges. It is the only one of
@@ -431,7 +444,7 @@ def deepsyn(
     an error, so the result could never come back across the bridge.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         timeout: Seconds ABC may spend searching (ABC's ``-T``), or ``None`` for
             no limit. Strongly recommended.
         iterations: Number of search iterations (ABC's ``-I``, at least 1), or
@@ -503,7 +516,7 @@ def transduction(
     Contributed to ABC by Yukio Miyasaka.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         transduction_type: Which variant to run (ABC's ``-T``, 0 to 8), or
             ``None`` for ABC's default of 1 (``Resub``). Types 6 to 8 are the
             repeat scripts and are considerably more expensive.
@@ -591,7 +604,7 @@ def transtoch(
     Contributed to ABC by Yukio Miyasaka.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         restarts: Number of restarts (ABC's ``-N``), or ``None`` for ABC's
             default. Each restart costs a full transduction run.
         hops: Perturbation steps between restarts (ABC's ``-M``), or ``None`` for
@@ -690,13 +703,16 @@ def cec(
         The outcome of the check.
 
     Raises:
-        TypeError: If either argument is a ``SequentialAig`` or not an ``Aig``.
-        ValueError: If an option is outside the range ABC accepts.
+        TypeError: If either argument is not an ``Aig``.
+        ValueError: If an option is outside the range ABC accepts, or if either
+            argument has a register whose reset value is undefined.
         AbcNotFoundError: If no ABC executable could be located.
         AbcExecutionError: If ABC failed outright.
     """
     check_supported(ntk)
     check_supported(other)
+    check_gia_supported(ntk)
+    check_gia_supported(other)
 
     command = "&cec"
     if conflict_limit is not None:
@@ -756,7 +772,7 @@ def stats(
         was handed over. See :func:`~aigverse.abc.stats` for the details.
 
     Args:
-        ntk: The combinational network to measure.
+        ntk: The network to measure.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         binary: Overrides the resolved ABC executable for this call only.
 
@@ -764,14 +780,15 @@ def stats(
         What ABC reports about the network.
 
     Raises:
-        TypeError: If ``ntk`` is a ``SequentialAig`` or not an ``Aig`` at all.
+        TypeError: If ``ntk`` is not an ``Aig``.
+        ValueError: If ``ntk`` has a register whose reset value is undefined.
         AbcNotFoundError: If no ABC executable could be located.
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or printed nothing usable.
     """
     # -x suppresses the colour codes; the parser strips them anyway, but this
     # keeps `raw` readable for anyone printing it.
-    return collect_stats(ntk, "&read", "&ps -x", timeout=timeout, binary=binary)
+    return collect_stats(ntk, "&ps -x", gia=True, timeout=timeout, binary=binary)
 
 
 def run_script(
@@ -790,7 +807,7 @@ def run_script(
     on it directly. Equivalent to calling that function with ``gia=True``.
 
     Args:
-        ntk: The combinational network to optimize.
+        ntk: The network to optimize.
         commands: A single ``;``-separated ABC command string, or a sequence of
             individual commands.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
@@ -803,8 +820,9 @@ def run_script(
         The optimized network, of the same type as ``ntk``.
 
     Raises:
-        TypeError: If ``ntk`` is a ``SequentialAig`` or not an ``Aig`` at all.
-        ValueError: If no command was given.
+        TypeError: If ``ntk`` is not an ``Aig``.
+        ValueError: If no command was given, or if ``ntk`` has a register whose
+            reset value is undefined.
         AbcNotFoundError: If no ABC executable could be located.
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or produced no usable output.
@@ -817,4 +835,104 @@ def run_script(
         gia=True,
         verbose=verbose,
         binary=binary,
+    )
+
+
+@overload
+def run_many(
+    networks: Iterable[AigT],
+    commands: str | Sequence[str],
+    *,
+    jobs: int | None = ...,
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+    return_exceptions: Literal[False] = False,
+) -> list[AigT]: ...
+
+
+@overload
+def run_many(
+    networks: Iterable[AigT],
+    commands: str | Sequence[str],
+    *,
+    jobs: int | None = ...,
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+    return_exceptions: Literal[True],
+) -> list[AigT | AbcError]: ...
+
+
+# For a caller whose `return_exceptions` is decided at runtime. mypy and pyright
+# expand a `bool` into its two literals and match the overloads above; `ty` does not.
+@overload
+def run_many(
+    networks: Iterable[AigT],
+    commands: str | Sequence[str],
+    *,
+    jobs: int | None = ...,
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+    return_exceptions: bool,
+) -> list[AigT] | list[AigT | AbcError]: ...
+
+
+def run_many(
+    networks: Iterable[AigT],
+    commands: str | Sequence[str],
+    *,
+    jobs: int | None = None,
+    timeout: float | None = None,
+    use_init_file: bool = False,
+    binary: str | os.PathLike[str] | None = None,
+    return_exceptions: bool = False,
+) -> list[AigT] | list[AigT | AbcError]:
+    """Runs arbitrary ``&``-space commands over many networks, in parallel.
+
+    The GIA counterpart of :func:`~aigverse.abc.run_many`: every network is
+    transferred with ``&read``/``&write`` so that ``&``-prefixed commands operate
+    on it directly. Equivalent to calling that function with ``gia=True``.
+
+    Args:
+        networks: The networks to optimize. Consumed in full before any work starts.
+        commands: A single ``;``-separated ABC command string, or a sequence of
+            individual commands. The same script runs on every network.
+        jobs: How many ABC processes to keep running at once. ``None`` (default)
+            uses the number of CPUs available to this process, capped at the number
+            of networks; ``1`` runs inline without a thread pool.
+        timeout: Seconds to wait for ABC to terminate, **per network** rather than
+            for the batch as a whole, or ``None`` for no limit.
+        use_init_file: If ``False`` (default), ABC is invoked with ``-s`` so that
+            no ``abc.rc`` is read.
+        binary: Overrides the resolved ABC executable for this call only. It is
+            resolved once for the whole batch.
+        return_exceptions: If ``True``, each failing network yields its
+            :exc:`~aigverse.abc.AbcError` in place of a result instead of aborting the batch.
+
+    Returns:
+        The optimized networks, in input order, each of the same type as its input
+        -- with :exc:`~aigverse.abc.AbcError` instances in place of the failures when
+        ``return_exceptions`` is set.
+
+    Raises:
+        TypeError: If any element of ``networks`` is not an ``Aig``.
+        ValueError: If ``jobs`` is below 1, if no command was given, or if a
+            network has a register whose reset value is undefined.
+        AbcNotFoundError: If no ABC executable could be located.
+        AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds for
+            some network and ``return_exceptions`` is not set.
+        AbcExecutionError: If ABC reported an error for some network and
+            ``return_exceptions`` is not set.
+    """
+    return _base_run_many(
+        networks,
+        commands,
+        jobs=jobs,
+        timeout=timeout,
+        use_init_file=use_init_file,
+        gia=True,
+        binary=binary,
+        return_exceptions=return_exceptions,
     )

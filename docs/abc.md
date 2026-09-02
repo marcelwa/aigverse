@@ -230,6 +230,46 @@ if abc.gia.cec(aig, optimized) is abc.CecStatus.EQUIVALENT:
     print("proven equivalent")
 ```
 
+## Running many networks at once
+
+Optimizing a corpus is the workload this bridge exists for, and the runs are independent:
+every call already gets its own temporary directory, its own working directory and its own
+`abc.history`. {py:func}`~aigverse.abc.run_many` runs one script over many networks on all
+cores, and hands the results back in input order:
+
+```{code-cell} ipython3
+from aigverse.generators import carry_lookahead_adder
+
+designs = [carry_lookahead_adder(width) for width in (4, 8, 16)]
+optimized = abc.run_many(designs, abc.expand_script("resyn2"))
+
+for before, after in zip(designs, optimized):
+    print(f"{before.num_gates:4d} -> {after.num_gates:4d} AND gates")
+```
+
+One script over many networks, so a cross product of recipes and designs is one call per
+recipe:
+
+```python
+for name, script in recipes.items():
+    rows[name] = abc.run_many(designs, script)
+```
+
+`jobs` caps how many ABC processes run at once and defaults to the number of CPUs available
+to the process. On large designs it is memory rather than CPU that limits it, since every
+worker holds a whole ABC in flight. `timeout` is a budget **per network**, not for the batch
+as a whole. {py:func}`~aigverse.abc.gia.run_many` is the same thing through the `&`-space
+transfer.
+
+Expect a speedup below the number of cores, because a batch is only as fast as its slowest
+network. The AIGER transfer bracketing each run is not the limit: it is under 2% of a
+`run_script` call on designs of every size, and it releases the GIL. The recipe study below
+drops from about 24 to under 9 seconds on sixteen cores — roughly 2.8x for its 400 runs.
+
+The wrappers take one network each, but every script they run is reachable as commands:
+{py:func}`~aigverse.abc.expand_script` hands out the canonical ones, and a command with
+options — `abc.rewrite(aig, zero_cost=True)` — is `"rewrite -z"` written out.
+
 ## What ABC thinks of a network
 
 {py:func}`~aigverse.abc.stats` and {py:func}`~aigverse.abc.gia.stats` run ABC's
@@ -260,12 +300,159 @@ describe the network you hold and `stats()` to describe what ABC worked on, and 
 mix the two in one benchmark table.
 :::
 
+## Sequential networks
+
+{py:class}`~aigverse.networks.SequentialAig` crosses the bridge like any other network, and
+its registers cross with it. Here is an 8-bit accumulator — a ripple-carry adder whose sum
+feeds back into the state register:
+
+```{code-cell} ipython3
+from aigverse.networks import AigRegister, SequentialAig
+
+
+def accumulator(width: int = 8) -> SequentialAig:
+    """Builds an accumulator: `state <- state + data` on every cycle."""
+    ntk = SequentialAig()
+
+    data = [ntk.create_pi() for _ in range(width)]
+    state = [ntk.create_ro() for _ in range(width)]
+
+    carry = ntk.get_constant(False)
+    total = []
+    for a, b in zip(state, data, strict=True):
+        total.append(ntk.create_xor3(a, b, carry))
+        carry = ntk.create_maj(a, b, carry)
+
+    # Primary outputs go in before register inputs: both are combinational outputs
+    # of the same network, and `po_at` / `ri_at` slice that one list by position.
+    for bit in total:
+        ntk.create_po(bit)
+    for bit in total:
+        ntk.create_ri(bit)
+
+    for index in range(width):
+        register = AigRegister()
+        register.init = 0
+        ntk.set_register(index, register)
+
+    return ntk
+
+
+acc = accumulator()
+print(f"{acc.num_pis} PIs, {acc.num_pos} POs, {acc.num_registers} registers, {acc.num_gates} AND gates")
+```
+
+Every script accepts it, and the registers come out the other side untouched:
+
+```{code-cell} ipython3
+for script in ("resyn", "resyn2", "resyn2rs", "compress2rs", "dc2"):
+    result = getattr(abc, script)(acc)
+    print(
+        f"{script:12s} {acc.num_gates:>3} -> {result.num_gates:<3} AND gates, "
+        f"{result.num_registers} registers, back as a {type(result).__name__}"
+    )
+```
+
+Roughly a third of the logic goes, with all eight registers still in place — and both
+equivalence checkers agree it is the same circuit.
+{py:func}`~aigverse.algorithms.equivalence_checking` compares the register outputs as
+inputs, which is the right check for an optimization that is not allowed to move the
+register boundary:
+
+```{code-cell} ipython3
+best = abc.compress2rs(acc)
+
+print("equivalence_checking:", equivalence_checking(acc, best))
+print("gia.cec:             ", abc.gia.cec(acc, best))
+```
+
+:::{note}
+The registers travel as AIGER latches; ABC switches to the extended AIGER 1.9 encoding
+whenever one has a non-zero reset value, which is handled transparently.
+
+The type is checked before the base class, deliberately: `SequentialAig` is registered as
+an `Aig` subclass on the C++ side, so the result has to be read back with the sequential
+reader. {py:func}`~aigverse.io.read_aiger_into_aig` refuses a latched file outright rather
+than flatten it, so getting this wrong would raise rather than quietly return a network
+short of its registers.
+:::
+
+:::{warning}
+The classic namespace carries a reset of `0` or `1` across unchanged. ABC's `&read`
+accepts only `0` literally, and rewrites the other two cases:
+
+- a **`1`** reset is converted by complementing the flip-flop. The network is equivalent
+  and keeps its interface, but comes back with a reset of `0`.
+- an **undefined** reset is modelled with an extra primary input, an extra register, and
+  three AND nodes, so the network would come back with a different interface than it went
+  in with. The `gia` namespace refuses this with a `ValueError` rather than hand it back
+  silently — including {py:func}`~aigverse.abc.gia.stats`, which would otherwise describe
+  a network the caller never built.
+
+Give the register an explicit reset with `set_register`, or use the classic namespace,
+which transfers the same network unchanged.
+:::
+
+A 4-bit LFSR makes the `1` case easy to check directly, instead of taking the claim above
+on trust: it has no primary inputs, so its whole output comes from the reset state alone,
+and a seed that didn't survive the round trip through ABC would show up immediately as an
+all-zero sequence instead of the LFSR's full 15-state cycle.
+
+```{code-cell} ipython3
+from aigverse.algorithms import simulate_sequential
+
+lfsr = SequentialAig()
+
+state = [lfsr.create_ro() for _ in range(4)]
+feedback = lfsr.create_xor(state[3], state[2])
+
+lfsr.create_po(state[3])
+
+lfsr.create_ri(feedback)
+for bit in range(3):
+    lfsr.create_ri(state[bit])
+
+for bit in range(4):
+    register = AigRegister()
+    register.init = 1 if bit == 0 else 0
+    lfsr.set_register(bit, register)
+
+
+def run(ntk):
+    return "".join(str(int(cycle[0])) for cycle in simulate_sequential(ntk, 15).outputs)
+
+
+def resets(ntk):
+    return [ntk.register_at(i).init for i in range(ntk.num_registers)]
+
+
+through_classic = abc.dc2(lfsr)
+through_gia = abc.gia.dc2(lfsr)
+
+print(f"reference    {run(lfsr):>15}   resets {resets(lfsr)}")
+print(f"classic      {run(through_classic):>15}   resets {resets(through_classic)}")
+print(f"gia          {run(through_gia):>15}   resets {resets(through_gia)}")
+```
+
+The `gia` result reports a reset of `0` on every register but still produces the same
+sequence: the complement got pushed into the logic instead of being dropped. The undefined
+case can't be re-encoded the same way — modelling an unknown value takes an extra input and
+register, not just a rewritten logic cone — which is why `gia` refuses it rather than
+reshaping the network to fit.
+
 ## Type preservation and limitations
 
 The returned network has the same type as the input: an
-{py:class}`~aigverse.networks.Aig` yields an `Aig`, and a
+{py:class}`~aigverse.networks.Aig` yields an `Aig`, a
 {py:class}`~aigverse.networks.NamedAig` yields a `NamedAig` with its input and output
-names carried through ABC.
+names carried through ABC, and a {py:class}`~aigverse.networks.SequentialAig` yields a
+`SequentialAig` with its registers intact.
+
+What the guards protect is the transfer, not the script. ABC reshaping a network without
+being asked — `&read` turning an undefined reset into an extra input and register — is
+refused, while a command that reshapes it deliberately is carried out: `run_script(ntk,
+"comb")` flattens every register into a primary input and output pair and hands back a
+`SequentialAig` with none left, because that is what `comb` is for.
 
 :::{warning}
 The bridge transfers AIGs and nothing else, so technology mapping and $k$-LUT mapping are
@@ -275,16 +462,10 @@ quietly handing back something unmapped. Mapping support needs cell and $k$-LUT 
 types in `aigverse` first.
 :::
 
-:::{warning}
-{py:class}`~aigverse.networks.SequentialAig` is rejected with a `TypeError` rather than
-being silently flattened into extra primary inputs and outputs. Sequential support
-requires writing registers to AIGER and reading ABC's sequential output back, neither of
-which is available yet.
-:::
-
 Each call starts an ABC process and transfers the network through temporary AIGER files,
-which costs roughly 20 ms of overhead per call — negligible for batch work, but worth
-keeping in mind in a tight optimization loop.
+which costs roughly 20 ms of overhead per call — negligible next to a real script, but worth
+keeping in mind in a tight optimization loop. Independent calls belong in
+[one batch](#running-many-networks-at-once) rather than a loop.
 
 ## When things go wrong
 
@@ -308,6 +489,21 @@ could be located, {py:exc}`~aigverse.abc.AbcTimeoutError` when ABC outlived its 
 and {py:exc}`~aigverse.abc.AbcExecutionError` for everything else ABC did wrong. All three
 derive from {py:exc}`~aigverse.abc.AbcError`.
 
+A batch fails the same way by default, which loses the whole sweep to one bad design. Pass
+`return_exceptions=True` and each failure comes back in its network's place instead, still
+carrying the `output` that explains it:
+
+```{code-cell} ipython3
+results = abc.run_many(designs, "no_such_command", return_exceptions=True)
+
+for design, result in zip(designs, results):
+    verdict = "failed" if isinstance(result, abc.AbcError) else f"{result.num_gates} gates"
+    print(f"{design.num_gates:4d} AND gates -> {verdict}")
+```
+
+That covers ABC failures only. A network of the wrong type or a script with no commands in
+it is a fault in the call rather than a per-design failure, and is raised either way.
+
 Options are validated in Python before ABC is started, so a value ABC would reject comes
 back as a `ValueError` naming the keyword you wrote rather than as an ABC message:
 
@@ -329,6 +525,70 @@ so an upstream change is caught rather than guessed at. A few bounds ABC enforce
 documenting — `refactor` refuses a support above 15 while printing no range at all — are
 recorded with the evidence for them.
 :::
+
+## A worked study
+
+[`examples/abc_recipe_study.py`](https://github.com/marcelwa/aigverse/blob/main/examples/abc_recipe_study.py)
+puts the bridge through a real experiment, and doubles as a template for running your own:
+
+> **Is there one best ABC recipe, or does the right one depend on the design?**
+
+It loads part of the [EPFL benchmark suite](https://github.com/lsils/benchmarks) with
+{py:func}`~aigverse.benchmarks.epfl` and asks three questions of it.
+
+**Does the order of operations matter?** Rewriting, refactoring, resubstitution and
+balancing — `rewrite`, `refactor`, `resub` and `balance` — can be applied in any of 24
+orders, and every one of them is run on each design. Same transformations, the same
+number of them, different sequence: the order alone moves the final AND count by several
+percent, and the best order is not the same one twice. Each ordering goes to ABC as a
+single script rather than as one call per command, which is equivalent but avoids a process
+and an AIGER round-trip per step, and every design runs that ordering at the same time
+through {py:func}`~aigverse.abc.run_many`.
+
+**Do the two command families trade off?** The classic scripts are plotted against their
+`&`-space counterparts on the area–depth plane. On many designs the smallest and the
+shallowest results come from _different_ families, so committing to one up front gives up
+an objective — the same point the multiplier and the adder make above, here on ten
+designs.
+
+**Is optimizability predictable?** A cheap structural feature of the input is correlated
+against how much the best script managed to remove. This one is an analysis of the data
+the previous question produced rather than a third run over ABC.
+
+It writes `abc_recipe_study.png`, a four-panel figure; `abc_recipe_study.csv` with every
+raw measurement; and `abc_recipe_study_headline.csv` with the summary statistics — and
+prints its findings as it goes.
+
+### Running it
+
+The script is standalone: it declares its own dependencies inline with
+[PEP 723](https://peps.python.org/pep-0723/), so [`uv`](https://docs.astral.sh/uv/) runs
+it with no setup beyond an ABC binary. It is not part of the `aigverse` package and ships
+in neither the wheel nor the source distribution, so take it from a checkout of the
+repository:
+
+```console
+uv run examples/abc_recipe_study.py --quick   # four small designs, for a smoke test
+uv run examples/abc_recipe_study.py           # the default ten-design set
+uv run examples/abc_recipe_study.py --all     # the whole EPFL suite, hyp and div included (slow)
+```
+
+Those resolve `aigverse` from PyPI; `uv run --with-editable . examples/abc_recipe_study.py`
+runs against the checkout you are sitting in instead, which is what you want when a script
+uses something not yet released.
+
+`--rounds` sets how often each schedule is repeated — two by default, so an ordering
+spends eight commands against `resyn2`'s ten — `--benchmarks` takes an explicit list of
+designs, `--jobs` caps how many ABC processes run at once, and `--output` / `--csv` redirect
+the figure and the tables.
+
+`--verify` equivalence-checks every single result with
+{py:func}`~aigverse.algorithms.equivalence_checking` under a conflict limit, which makes the
+study SAT-bound and hides most of the parallel speedup. It aborts
+the study if any optimization turns out not to be equivalence-preserving: that would be a
+bug in ABC or in the bridge, and every number the study prints rests on it not happening.
+A check that exhausts its conflict budget is reported as undecided rather than counted as
+a pass.
 
 ## Keeping the scripts in sync
 

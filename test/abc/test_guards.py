@@ -2,32 +2,37 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from aigverse.abc import run_script
 from aigverse.networks import Aig, NamedAig, SequentialAig
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
-def test_sequential_aig_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
-    """SequentialAig must be refused rather than silently flattened.
 
-    It is registered as a subclass of Aig on the C++ side, so without an explicit
-    guard nanobind up-casts it and the registers degrade into extra PI/PO pairs.
-    The check must also run before the binary is resolved, so the message is
-    accurate on a machine without ABC -- hence the emptied PATH.
+def test_sequential_aig_is_accepted(
+    monkeypatch: pytest.MonkeyPatch, sequential_aig: Callable[..., SequentialAig]
+) -> None:
+    """SequentialAig must reach ABC rather than being refused or flattened.
+
+    It is registered as a subclass of Aig on the C++ side, so it has to be
+    dispatched explicitly; with no ABC present the call still fails, but on
+    discovery rather than on type.
+
+    Args:
+        monkeypatch: Used to hide any installed ABC.
+        sequential_aig: Builds the network.
     """
+    from aigverse.abc import AbcNotFoundError
+
     monkeypatch.delenv("AIGVERSE_ABC", raising=False)
     monkeypatch.setenv("PATH", "")
 
-    ntk = SequentialAig()
-    a = ntk.create_pi()
-    ro = ntk.create_ro()
-    g = ntk.create_and(a, ro)
-    ntk.create_po(g)
-    ntk.create_ri(g)
-
-    with pytest.raises(TypeError, match="SequentialAig is not supported"):
-        run_script(ntk, "balance")
+    with pytest.raises(AbcNotFoundError):
+        run_script(sequential_aig(0), "balance")
 
 
 def test_non_network_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 .ccache/
+.sccache/
 cmake-build-*
 
 # Distribution / packaging
@@ -140,7 +141,7 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# setuptools_scm
+# vcs-versioning
 python/aigverse/_version.py
 
 # SKBuild cache dir
@@ -222,6 +223,8 @@ Thumbs.db
 # Experiment files
 *.json
 *.csv
+# what the standalone scripts under examples/ write into the working directory
+abc_recipe_study.png
 
 # Coverage files
 lcov.info

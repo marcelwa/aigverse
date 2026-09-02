@@ -1,5 +1,6 @@
 """Provides synthesis and optimization algorithms for logic network types."""
 
+from collections.abc import Sequence
 from typing import Literal
 
 import aigverse.networks
@@ -69,7 +70,8 @@ def sop_refactoring(
         try_both_polarities: Whether both output polarities are explored.
         consider_inverter_cost: Whether inverter cost is included in optimization.
         verbose: Whether to print verbose progress output.
-        inplace: Whether to mutate ``ntk`` in place.
+        inplace: Whether to mutate ``ntk`` in place. A network being transformed in place
+            must not be shared with another thread.
 
     Returns:
         The refactored network if ``inplace`` is ``False``. Otherwise ``None``.
@@ -105,7 +107,8 @@ def aig_resubstitution(
         use_dont_cares: Whether to use don't-care information.
         window_size: Window size used for don't-care computation.
         preserve_depth: Whether replacements must preserve depth.
-        inplace: Whether to mutate ``ntk`` in place.
+        inplace: Whether to mutate ``ntk`` in place. A network being transformed in place
+            must not be shared with another thread.
 
     Returns:
         The optimized network if ``inplace`` is ``False``. Otherwise ``None``.
@@ -199,4 +202,71 @@ def simulate_nodes(ntk: aigverse.networks.Aig) -> dict[int, aigverse.utils.Truth
 
     Raises:
         MemoryError: If the truth tables cannot be allocated due to memory limits.
+    """
+
+class SequentialSimulationResult:
+    """Represents the outcome of simulating a sequential network over several clock cycles.
+
+    Both traces are indexed by clock cycle first: ``outputs[cycle][index]`` is the value primary
+    output ``index`` took in that cycle, and ``states[cycle][index]`` the value register ``index``
+    held while that cycle was evaluated.
+
+    ``states`` is one entry longer than ``outputs``, because simulating ``n`` cycles crosses
+    ``n + 1`` state boundaries. The first is the reset state the run started from and the last is
+    the state it ended in.
+    """
+
+    @property
+    def outputs(self) -> list[list[bool]]:
+        """Primary output values, one list per clock cycle."""
+
+    @property
+    def states(self) -> list[list[bool]]:
+        """Register values, one list per state boundary."""
+
+    @property
+    def num_cycles(self) -> int:
+        """Number of clock cycles simulated."""
+
+    @property
+    def reset_state(self) -> list[bool]:
+        """The state the registers were reset to."""
+
+    @property
+    def final_state(self) -> list[bool]:
+        """The state the registers held after the last cycle."""
+
+    def __len__(self) -> int: ...
+
+def simulate_sequential(
+    ntk: aigverse.networks.SequentialAig,
+    num_cycles: int,
+    stimulus: Sequence[Sequence[bool]] = [],
+    undefined_reset_value: bool = False,
+) -> SequentialSimulationResult:
+    """Simulates a sequential network over a number of clock cycles.
+
+    Every register starts at its reset value, the combinational logic is evaluated once per
+    cycle, the primary outputs are recorded, and the register inputs are latched into the
+    register outputs for the next cycle.
+
+    This is what distinguishes it from :func:`~aigverse.algorithms.simulate`, which evaluates
+    the combinational logic exactly once and has no notion of a register.
+
+    Args:
+        ntk: The sequential network to simulate.
+        num_cycles: Number of clock cycles to run.
+        stimulus: Primary input assignments, one list of ``ntk.num_pis`` values per clock cycle.
+            Cycles past the end of the stimulus repeat its last assignment, so a single
+            assignment holds for the whole run. Defaults to holding every primary input at
+            ``False``, which is all a design without primary inputs needs.
+        undefined_reset_value: Value a register starts at when its reset value is undefined,
+            which is what a register defaults to and what an AIGER latch with a
+            nondeterministic reset reads back as.
+
+    Returns:
+        The primary output values and the register values, per clock cycle.
+
+    Raises:
+        ValueError: If an assignment in ``stimulus`` does not have one value per primary input.
     """

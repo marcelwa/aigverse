@@ -1,0 +1,67 @@
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+categories:
+  # Categories render in the order they are defined, so the changes a reader
+  # cares about come first and the bot bumps sit at the bottom, collapsed.
+  - title: "✨ Features and Enhancements"
+    when:
+      labels:
+        - "enhancement"
+        - "refactoring"
+        - "performance"
+  - title: "🐛 Bug Fixes"
+    when:
+      labels:
+        - "bug"
+        - "small fix"
+  - title: "📝 Documentation"
+    when:
+      labels:
+        - "documentation"
+  # Deliberately matched on `tooling` alone. Renovate's custom managers label
+  # the pinned-revision bumps `build_system` (mockturtle) and `testing` (ABC),
+  # so matching those here would list every such bump twice -- once here and
+  # once under Dependencies. A pull request can match several categories, and
+  # `exclusive` only suppresses *later* ones, which cannot help a category that
+  # renders last. Human build and CI work carries `tooling`.
+  - title: "🔧 Tooling, Build & CI"
+    when:
+      labels:
+        - "tooling"
+  - title: "⬆️ Dependencies"
+    collapse-after: 5
+    when:
+      labels:
+        - "dependencies"
+        - "github_actions"
+        - "pre-commit"
+  - type: "pre-exclude"
+    when:
+      labels:
+        - "skip-changelog"
+        - "release-prep"
+  - type: "version-resolver"
+    semver-increment: "major"
+    when:
+      label: "major"
+  - type: "version-resolver"
+    semver-increment: "minor"
+    when:
+      label: "minor"
+  - type: "version-resolver"
+    semver-increment: "patch"
+    when:
+      label: "patch"
+  - type: "version-resolver"
+    semver-increment: "patch"
+change-template: "- $TITLE ([#$NUMBER]($URL)) (**@$AUTHOR**)"
+change-title-escapes: '\<*_&'
+
+template: |
+  ## 👀 What Changed
+
+  _Please refer to the [changelog](https://github.com/$OWNER/$REPOSITORY/blob/main/CHANGELOG.md) and the [upgrade guide](https://github.com/$OWNER/$REPOSITORY/blob/main/UPGRADING.md) for a structured overview of the changes._
+
+  $CHANGES
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION

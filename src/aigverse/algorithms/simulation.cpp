@@ -42,7 +42,6 @@ void simulation(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
             {
                 return mockturtle::simulate<kitty::dynamic_truth_table>(
                     ntk,
-                    // NOLINTNEXTLINE
                     mockturtle::default_simulator<kitty::dynamic_truth_table>{static_cast<unsigned>(ntk.num_pis())});
             }
             catch (const std::bad_alloc&)
@@ -62,7 +61,7 @@ Returns:
 
 Raises:
     MemoryError: If the truth tables cannot be allocated due to memory limits.)pb",
-        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::call_guard<nb::gil_scoped_release>());
 
     m.def(
         "simulate_nodes",
@@ -78,7 +77,6 @@ Raises:
             {
                 const auto n_map = mockturtle::simulate_nodes<kitty::dynamic_truth_table>(
                     ntk,
-                    // NOLINTNEXTLINE
                     mockturtle::default_simulator<kitty::dynamic_truth_table>{static_cast<unsigned>(ntk.num_pis())});
 
                 std::unordered_map<mockturtle::node<Ntk>, kitty::dynamic_truth_table> node_to_tt{};
@@ -104,7 +102,7 @@ Returns:
 
 Raises:
     MemoryError: If the truth tables cannot be allocated due to memory limits.)pb",
-        nb::call_guard<nb::gil_scoped_release>());  // NOLINT(misc-include-cleaner)
+        nb::call_guard<nb::gil_scoped_release>());
 }
 
 // Explicit instantiation for AIG

@@ -181,3 +181,42 @@ def test_read_ascii_aiger_constant_outputs(tmp_path: Path) -> None:
     assert saig.num_pis == 0
     assert saig.num_pos == 2
     assert saig.num_gates == 0
+
+
+def test_ascii_aiger_with_latches_is_refused_by_the_combinational_reader() -> None:
+    """A latched file must not be flattened into extra primary input/output pairs.
+
+    mockturtle's reader turns each latch into a primary input and its next-state
+    function into a primary output, which is lossless but is a different circuit
+    than the file describes. Point the caller at the sequential reader instead.
+    """
+    path = str(dir_path / "../resources/seq.aag")
+
+    with pytest.raises(RuntimeError, match="sequential network with 1 latch"):
+        read_ascii_aiger_into_aig(path)
+
+    # the sequential reader takes the very same file
+    saig = read_ascii_aiger_into_sequential_aig(path)
+    assert saig.num_registers == 1
+    assert saig.num_pis == 2
+    assert saig.num_pos == 2
+
+
+def test_binary_aiger_with_latches_is_refused_by_the_combinational_reader() -> None:
+    """The binary reader guards too.
+
+    `lfsr.aig` is a 4-bit LFSR: no primary inputs, four latches, and every literal
+    reached through a latch output. Reading it as a combinational network used to
+    segfault the interpreter, because the reader skipped the latch outputs and then
+    indexed past the end of its own signal vector.
+    """
+    path = str(dir_path / "../resources/lfsr.aig")
+
+    with pytest.raises(RuntimeError, match="read_aiger_into_sequential_aig"):
+        read_aiger_into_aig(path)
+
+    saig = read_aiger_into_sequential_aig(path)
+    assert saig.num_registers == 4
+    assert saig.num_pis == 0
+    assert saig.num_pos == 1
+    assert saig.register_at(0).init == 1

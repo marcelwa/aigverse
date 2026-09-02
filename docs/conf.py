@@ -9,28 +9,13 @@
 
 from __future__ import annotations
 
-import warnings
 from importlib import metadata
-from pathlib import Path
-
-ROOT = Path(__file__).parent.parent.resolve()
-
 
 try:
-    from aigverse import __version__ as version
-except ModuleNotFoundError:
-    try:
-        version = metadata.version("aigverse")
-    except ModuleNotFoundError:
-        msg = (
-            "Package should be installed to produce documentation! "
-            "Assuming a modern git archive was used for version discovery."
-        )
-        warnings.warn(msg, stacklevel=1)
-
-        from setuptools_scm import get_version
-
-        version = get_version(root=str(ROOT), fallback_root=ROOT)
+    version = metadata.version("aigverse")
+except metadata.PackageNotFoundError:
+    msg = "aigverse must be installed to build the documentation"
+    raise ModuleNotFoundError(msg) from None
 
 # Filter git details from version
 release = version.split("+")[0]
@@ -104,6 +89,8 @@ nitpick_ignore = [
     # `gia.stats` returns the `AbcStats` documented at `aigverse.abc.AbcStats`,
     # but autoapi stringifies the annotation to the defining private module.
     ("py:class", "aigverse.abc._stats.AbcStats"),
+    # the same for `run_many`'s `AbcError`, documented at `aigverse.abc.AbcError`.
+    ("py:class", "aigverse.abc._errors.AbcError"),
 ]
 
 # -- Options for {MyST}NB ----------------------------------------------------

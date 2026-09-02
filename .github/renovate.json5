@@ -61,7 +61,7 @@
       customType: "regex",
       description: "Update the ABC revision the integration tests build",
       managerFilePatterns: [
-        ".github/workflows/aigverse-abc-tests.yml",
+        ".github/workflows/abc-tests.yml",
         ".readthedocs.yaml"
       ],
       matchStrings: [
@@ -171,13 +171,6 @@
         "patch"
       ],
       automerge: true
-    },
-    {
-      description: "2026.07.20 crashes validate-pyproject with UnboundLocalError on any [tool.uv] table; unpin once fixed upstream (see GalacticDynamics/quax-blocks#55)",
-      matchPackageNames: [
-        "henryiii/validate-pyproject-schema-store"
-      ],
-      allowedVersions: "<= 2026.07.17"
     }
   ]
 }

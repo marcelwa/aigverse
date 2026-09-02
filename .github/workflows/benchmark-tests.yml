@@ -6,43 +6,32 @@ name: 📊 • Benchmarks
 # place they actually run.
 
 on:
-  merge_group:
-  push:
-    branches: ["main"]
-    paths:
-      - "python/aigverse/benchmarks/**"
-      - "test/benchmarks/**"
-      - "test/conftest.py"
-      - "noxfile.py"
-      - "pyproject.toml"
-      - ".github/workflows/aigverse-benchmark-tests.yml"
-  pull_request:
-    branches: ["main"]
-    paths:
-      # GitHub Actions does not support YAML anchors, so this repeats the list above
-      - "python/aigverse/benchmarks/**"
-      - "test/benchmarks/**"
-      - "test/conftest.py"
-      - "noxfile.py"
-      - "pyproject.toml"
-      - ".github/workflows/aigverse-benchmark-tests.yml"
+  workflow_call:
+    inputs:
+      runs-on:
+        description: The runner to execute on
+        required: true
+        type: string
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-benchmark-tests-${{ inputs.runs-on }}
+  cancel-in-progress: true
 
 permissions: {}
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
 
 jobs:
   benchmark-tests:
-    name: 📊 ${{ matrix.runs-on }}
-    runs-on: ${{ matrix.runs-on }}
+    name: 📊 ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 60
     permissions:
       contents: read # required to check out the repository
-    strategy:
-      fail-fast: false
-      matrix:
-        runs-on: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-2025]
+
     steps:
       - name: Clone Repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -52,16 +41,16 @@ jobs:
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
         with:
-          key: "${{ matrix.runs-on }}-aigverse"
+          key: "${{ inputs.runs-on }}-aigverse"
           save: ${{ github.ref == 'refs/heads/main' }}
           max-size: 10G
 
       - if: runner.os == 'Linux'
         name: Setup mold
-        uses: rui314/setup-mold@9c9c13bf4c3f1adef0cc596abc155580bcb04444 # v1
+        uses: rui314/setup-mold@7e4f20ad28a2e8ca6fd0892ccf72e2abb706b9c3 # v1
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
           save-cache: ${{ github.ref == 'refs/heads/main' }}

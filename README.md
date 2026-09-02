@@ -1,6 +1,6 @@
 # aigverse: A Python Library for Logic Networks, Synthesis, and Optimization
 
-[![CI](https://img.shields.io/github/actions/workflow/status/marcelwa/aigverse/aigverse-python-tests.yml?label=CI&logo=github&style=flat-square)](https://github.com/marcelwa/aigverse/actions/workflows/aigverse-python-tests.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/marcelwa/aigverse/ci.yml?label=CI&logo=github&style=flat-square)](https://github.com/marcelwa/aigverse/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/readthedocs/aigverse?label=Docs&logo=readthedocs&style=flat-square)](https://aigverse.readthedocs.io/)
 [![PyPI](https://img.shields.io/static/v1?label=PyPI&message=aigverse&logo=pypi&color=informational&style=flat-square)](https://pypi.org/project/aigverse/)
 [![Python](https://img.shields.io/static/v1?label=Python&message=3.10%2B&logo=python&color=3776AB&style=flat-square)](https://www.python.org/downloads/)
@@ -63,9 +63,9 @@ synthesis backends.
 
 ## 📦 Installation
 
-`aigverse` is available via PyPI for all major operating systems and supports all active Python versions,
-with [Stable ABI](https://docs.python.org/3/c-api/stable.html) for 3.12+ and
-[free-threading](https://docs.python.org/3/howto/free-threading-python.html) support for 3.14+.
+`aigverse` is available via PyPI for all major operating systems, with a single
+[Stable ABI](https://docs.python.org/3/c-api/stable.html) wheel per platform that covers every supported Python from
+3.10 up. Free-threaded interpreters are not supported yet, pending the stable ABI that Python 3.15 brings them.
 
 ```bash
 pip install aigverse
@@ -323,6 +323,31 @@ if equiv:
 else:
     print("AIGs are NOT equivalent!")
 ```
+
+### 🅰️ ABC Integration
+
+`aigverse` can hand networks to [ABC](https://github.com/berkeley-abc/abc) and read the result back, so ABC's
+optimization scripts are available as ordinary Python functions. No ABC is bundled: the bridge drives an executable you
+already have installed, found on `PATH` as `abc`, or pointed at with the `AIGVERSE_ABC` environment variable or
+`abc.set_abc_binary()`. Importing the module always succeeds, so use `abc.is_available()` to check before calling.
+
+```python
+from aigverse import abc
+from aigverse.algorithms import equivalence_checking
+from aigverse.generators import carry_lookahead_adder
+
+aig = carry_lookahead_adder(16)
+
+# Returns a new network; the input is left untouched
+optimized = abc.resyn2(aig)
+
+print(f"{aig.num_gates} -> {optimized.num_gates} AND gates")
+print(f"Equivalent: {equivalence_checking(aig, optimized)}")
+```
+
+The other named scripts (`resyn`, `resyn3`, `compress`, `compress2`, `resyn2rs`, `compress2rs`, and `dc2`) work the
+same way, as do the individual commands `abc.balance`, `abc.rewrite`, `abc.refactor`, and `abc.resub`. See the
+[ABC documentation](https://aigverse.readthedocs.io/en/latest/abc.html) for the full set.
 
 ### 📄 File Format Support
 

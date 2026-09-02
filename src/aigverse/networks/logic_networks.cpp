@@ -601,7 +601,7 @@ Returns:
                     // ntk is uninitialized memory provided by nanobind; must construct in-place
                     construct_at(&ntk, std::move(restored));
                 }
-                catch (const nb::cast_error& e)  // NOLINT(misc-include-cleaner)
+                catch (const nb::cast_error& e)
                 {
                     const auto message = fmt::format("Invalid state: expected an index list. {}", e.what());
                     throw nb::value_error(message.c_str());
