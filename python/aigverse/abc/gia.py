@@ -343,8 +343,7 @@ class Dc2(CommandWrapper):
         Returns:
             The command, ready for :obj:`run_script` or :obj:`run_many`.
         """
-        command = "&dc2" if update_levels else "&dc2 -l"
-        return Command(command)
+        return Command("&dc2" if update_levels else "&dc2 -l")
 
     def __call__(
         self,

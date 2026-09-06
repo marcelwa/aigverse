@@ -15,7 +15,7 @@ from ._errors import AbcExecutionError, AbcTimeoutError
 
 if TYPE_CHECKING:
     import os
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
 
 __all__ = ["Command", "CommandWrapper", "run_commands", "run_script"]
 
@@ -97,6 +97,13 @@ class CommandWrapper:
     ``abc.rewrite`` and its siblings are module-level instances of one subclass each,
     so a subclass's lowercased name is the instance's public name, which is what
     ``repr()`` shows in place of an object address.
+    """
+
+    cmd: Callable[..., Command]
+    """Builds the wrapper's command without running it.
+
+    Each wrapper declares its own options here; its ``__call__`` takes the same
+    ones plus the run parameters.
     """
 
     def __repr__(self) -> str:

@@ -411,7 +411,7 @@ _WRAPPERS = {
 
 
 @pytest.mark.parametrize("wrapper", _WRAPPERS.values(), ids=_WRAPPERS)
-def test_a_call_offers_exactly_the_options_its_command_builds(wrapper: object) -> None:
+def test_a_call_offers_exactly_the_options_its_command_builds(wrapper: CommandWrapper) -> None:
     """A call forwards its options to `cmd()` by hand, so the two signatures must
     agree, apart from the network and the run parameters, or an option added to one
     side is silently unreachable from the other.
@@ -421,7 +421,7 @@ def test_a_call_offers_exactly_the_options_its_command_builds(wrapper: object) -
     """
     assert callable(wrapper)
     call = inspect.signature(wrapper).parameters
-    build = inspect.signature(wrapper.cmd).parameters  # ty: ignore[unresolved-attribute]
+    build = inspect.signature(wrapper.cmd).parameters
 
     forwarded = set(call) - {"ntk", "verbose", "binary"}
     # deepsyn's `timeout` is an ABC switch; everywhere else it is the run limit
