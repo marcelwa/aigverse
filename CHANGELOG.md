@@ -12,6 +12,10 @@ releases may include breaking changes.
 
 ### Added
 
+- ✨ Expose each ABC command wrapper's switch translation as `.cmd(...)`, which builds
+  the `abc.Command` the wrapper would run instead of running it, so a parameterized
+  command reaches `run_script` and `run_many` as itself rather than as a hand-written
+  switch string ([#486]) ([**@marcelwa**])
 - 📝 Add an ABC example to the README ([#489]) ([**@marcelwa**])
 - 👷 Add a `cpp-lint` nox session that reproduces the `🚨 Clang-Tidy` check locally, running
   the same `cpp-linter` invocation CI runs over the files that differ from `origin/main`
@@ -240,6 +244,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 [#490]: https://github.com/marcelwa/aigverse/pull/490
 [#489]: https://github.com/marcelwa/aigverse/pull/489
 [#488]: https://github.com/marcelwa/aigverse/pull/488
+[#486]: https://github.com/marcelwa/aigverse/pull/486
 [#483]: https://github.com/marcelwa/aigverse/pull/483
 [#481]: https://github.com/marcelwa/aigverse/pull/481
 [#467]: https://github.com/marcelwa/aigverse/pull/467

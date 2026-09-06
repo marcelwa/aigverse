@@ -29,6 +29,9 @@ repos:
         priority: 0
       - id: check-docstring-first
         priority: 0
+        # the wrapper instances carry attribute docstrings, which autoapi renders
+        # and this hook mistakes for a second module docstring
+        exclude: ^python/aigverse/abc/(_commands|gia)\.py$
       - id: check-merge-conflict
         priority: 0
       - id: check-symlinks
