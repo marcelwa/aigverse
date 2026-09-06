@@ -16,6 +16,7 @@ releases may include breaking changes.
   the `abc.Command` the wrapper would run instead of running it, so a parameterized
   command reaches `run_script` and `run_many` as itself rather than as a hand-written
   switch string ([#486]) ([**@marcelwa**])
+- 📝 Add an ABC example to the README ([#489]) ([**@marcelwa**])
 - 👷 Add a `cpp-lint` nox session that reproduces the `🚨 Clang-Tidy` check locally, running
   the same `cpp-linter` invocation CI runs over the files that differ from `origin/main`
   ([#488]) ([**@marcelwa**])
@@ -25,6 +26,8 @@ releases may include breaking changes.
 
 ### Changed
 
+- 🔧 Stop the extensions from re-exporting the internals of the static libraries they
+  embed ([#490]) ([**@marcelwa**])
 - ⚡️ Run `examples/abc_recipe_study.py`'s sweep as one batch per recipe instead of one
   ABC call at a time, with a new `--jobs` flag. Its CSV loses the `seconds` column,
   which a concurrent run cannot measure per item ([#467]) ([**@marcelwa**])
@@ -37,6 +40,7 @@ releases may include breaking changes.
 
 ### Fixed
 
+- 📝 Correct the README's Stable ABI and free-threading claims ([#489]) ([**@marcelwa**])
 - 🐛 Stop `equivalence_checking`, `aig_cut_rewriting`, `balancing`, and `cleanup_dangling`
   from returning silently wrong results when several threads call them on one shared
   network. Each wrote traversal state into the caller's network through a mockturtle view
@@ -237,10 +241,12 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#490]: https://github.com/marcelwa/aigverse/pull/490
+[#489]: https://github.com/marcelwa/aigverse/pull/489
 [#488]: https://github.com/marcelwa/aigverse/pull/488
+[#486]: https://github.com/marcelwa/aigverse/pull/486
 [#483]: https://github.com/marcelwa/aigverse/pull/483
 [#481]: https://github.com/marcelwa/aigverse/pull/481
-[#486]: https://github.com/marcelwa/aigverse/pull/486
 [#467]: https://github.com/marcelwa/aigverse/pull/467
 [#478]: https://github.com/marcelwa/aigverse/pull/478
 [#477]: https://github.com/marcelwa/aigverse/pull/477

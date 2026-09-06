@@ -31,6 +31,33 @@ function(add_aigverse_python_binding target_name)
   if(ARG_MODULE_NAME)
     set_target_properties(${target_name} PROPERTIES OUTPUT_NAME
                                                     ${ARG_MODULE_NAME})
+    set(module_name ${ARG_MODULE_NAME})
+  else()
+    set(module_name ${target_name})
+  endif()
+
+  # Keep the embedded static libraries' symbols local. nanobind hides only the
+  # module's own (`CXX_VISIBILITY_PRESET hidden`); mockturtle's and ABC's
+  # archives keep default visibility, so each extension re-exported them for the
+  # dynamic linker to interpose across all five. Ported from scpd.
+  if(APPLE)
+    target_link_options(${target_name} PRIVATE
+                        "LINKER:-exported_symbol,_PyInit_${module_name}")
+  elseif(UNIX)
+    target_link_options(${target_name} PRIVATE "LINKER:--exclude-libs,ALL")
+
+    # `--gc-sections` collects nothing without these. A linked build inherited
+    # both from `nanobind-static`; split mode links no nanobind target.
+    target_compile_options(
+      ${target_name}
+      PRIVATE
+        "$<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>,$<CONFIG:RelWithDebInfo>>:-ffunction-sections;-fdata-sections>"
+    )
+    target_link_options(
+      ${target_name}
+      PRIVATE
+      "$<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>,$<CONFIG:RelWithDebInfo>>:LINKER:--gc-sections>"
+    )
   endif()
 
   target_link_libraries(

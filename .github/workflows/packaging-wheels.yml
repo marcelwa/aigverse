@@ -36,6 +36,17 @@ jobs:
 
       - name: Set up MSVC development environment (Windows only)
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          # Defaults to x64; windows-11-arm needs telling explicitly.
+          arch: ${{ runner.arch == 'ARM64' && 'arm64' || 'x64' }}
+
+      # nanobind-backend, which the wheel needs at import time, has no cp310
+      # win_arm64 wheel, so a cp310 build's test run could never install. cp311
+      # builds the same `cp310-abi3` wheel (`wheel.py-api` in pyproject.toml) and
+      # can test it.
+      - if: runner.arch == 'ARM64' && runner.os == 'Windows'
+        name: Build with CPython 3.11 on Windows ARM64
+        run: echo "CIBW_BUILD=cp311-*" >> "$GITHUB_ENV"
 
       # No compiler cache here, deliberately. Wheels compile against nanobind
       # headers inside uv's build-isolation environment, a directory named
