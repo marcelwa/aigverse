@@ -279,7 +279,7 @@ cpp-lint = [
     # `clang-tidy` is the wheel that ships the binary -- pinned together so a local run
     # reports what `.github/workflows/cpp-linter.yml` reports. Bump them with the action.
     { include-group = "build" },
-    "clang-tidy==21.1.6",
+    "clang-tidy==22.1.8",
     "cpp-linter==1.13.0",
 ]
 adapters = [
