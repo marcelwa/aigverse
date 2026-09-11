@@ -61,7 +61,7 @@ function(add_aigverse_python_binding target_name)
   endif()
 
   target_link_libraries(
-    ${target_name} PRIVATE aigverse::mockturtle aigverse::aigverse_options
+    ${target_name} PRIVATE mockturtle::mockturtle aigverse::aigverse_options
                            aigverse::aigverse_warnings)
 
   target_include_directories(${target_name} PRIVATE "${PROJECT_SOURCE_DIR}/src")

@@ -2,6 +2,12 @@
 
 This document describes breaking changes and how to upgrade.
 
+## Unreleased
+
+Building from source requires CMake 3.25 or newer. Custom mockturtle source overrides must provide
+the `mockturtle::mockturtle`, `mockturtle::sat`, and `mockturtle::esop` targets.
+The Python API is unchanged.
+
 ## 0.1.0
 
 The `aigverse` library has been refactored into multiple extension modules to improve organization and scalability. If

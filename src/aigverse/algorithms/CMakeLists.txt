@@ -14,6 +14,9 @@ add_aigverse_python_binding(
   INSTALL_DIR
   .)
 
+target_link_libraries(aigverse-algorithms PRIVATE mockturtle::sat
+                                                  mockturtle::esop)
+
 if(SKBUILD_STATE STREQUAL "editable")
   install(
     FILES ${PROJECT_SOURCE_DIR}/python/aigverse/algorithms.pyi

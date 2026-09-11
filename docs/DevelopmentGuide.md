@@ -108,7 +108,11 @@ Ready to contribute to the project? This guide will get you started.
 
 ## Working on the bindings (C++)
 
-Building the project requires a C++ compiler supporting _C++17_ and CMake with a minimum version of _3.23_.
+Building the project requires a C++ compiler supporting _C++17_ and CMake with a minimum version of _3.25_.
+
+The extensions link to `mockturtle::mockturtle`; only the algorithms extension also links to
+`mockturtle::sat` and `mockturtle::esop`. mockturtle supplies position-independent backend archives.
+Use `-DFETCHCONTENT_SOURCE_DIR_MOCKTURTLE=/path/to/mockturtle` to test a local checkout with these targets.
 Our CI pipeline on GitHub continuously tests the library under Windows, macOS, and Linux.
 
 ### Configure and Build

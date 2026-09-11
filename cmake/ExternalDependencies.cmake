@@ -42,7 +42,7 @@ find_package(nanobind CONFIG REQUIRED PATHS "${nanobind_ROOT}" NO_DEFAULT_PATH)
 
 # Fetch mockturtle library
 set(MOCKTURTLE_REV
-    "59e5b71f6d346ec04116478f045143abbedb32d8"
+    "5d62f61b75e0ed28f8fb867a22ff1732f0e983b5"
     CACHE STRING "mockturtle identifier (tag, branch or commit hash)")
 set(MOCKTURTLE_REPO_OWNER
     "marcelwa"
@@ -58,9 +58,7 @@ set(MOCKTURTLE_BUILD_EXPERIMENTS
 set(MOCKTURTLE_BUILD_TESTS
     OFF
     CACHE BOOL "" FORCE)
-# Ensure all static libraries built by mockturtle are position-independent This
-# is required for linking into Python extension modules (shared libraries)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(MOCKTURTLE_INSTALL OFF)
 
 message(
   STATUS
@@ -74,6 +72,3 @@ FetchContent_Declare(
   GIT_SUBMODULES_RECURSE TRUE)
 
 FetchContent_MakeAvailable(mockturtle)
-
-# Create alias for mockturtle
-add_library(aigverse::mockturtle ALIAS mockturtle)
