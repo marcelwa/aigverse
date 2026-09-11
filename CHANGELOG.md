@@ -22,6 +22,9 @@ releases may include breaking changes.
 
 ### Changed
 
+- ♻️ Link compiled mockturtle backends only to the algorithms extension and require CMake 3.25
+  for source builds ([#500]) ([**@marcelwa**])
+
 - 🔧 Stop the extensions from re-exporting the internals of the static libraries they
   embed ([#490]) ([**@marcelwa**])
 - ⚡️ Run `examples/abc_recipe_study.py`'s sweep as one batch per recipe instead of one
@@ -237,6 +240,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#500]: https://github.com/marcelwa/aigverse/pull/500
 [#490]: https://github.com/marcelwa/aigverse/pull/490
 [#489]: https://github.com/marcelwa/aigverse/pull/489
 [#488]: https://github.com/marcelwa/aigverse/pull/488
