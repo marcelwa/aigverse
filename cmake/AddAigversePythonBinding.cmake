@@ -36,10 +36,8 @@ function(add_aigverse_python_binding target_name)
     set(module_name ${target_name})
   endif()
 
-  # Keep the embedded static libraries' symbols local. nanobind hides only the
-  # module's own (`CXX_VISIBILITY_PRESET hidden`); mockturtle's and ABC's
-  # archives keep default visibility, so each extension re-exported them for the
-  # dynamic linker to interpose across all five. Ported from scpd.
+  # Keep embedded static-library symbols local across all five extensions, even
+  # when a dependency is built without hidden visibility.
   if(APPLE)
     target_link_options(${target_name} PRIVATE
                         "LINKER:-exported_symbol,_PyInit_${module_name}")
