@@ -145,14 +145,14 @@ adapters = [
 build = [
     { name = "nanobind", specifier = "~=3.0.0" },
     { name = "scikit-build-core", specifier = "~=1.0.3" },
-    { name = "vcs-versioning", specifier = "~=2.3.0" },
+    { name = "vcs-versioning", specifier = "~=2.4.0" },
 ]
 cpp-lint = [
     { name = "clang-tidy", specifier = "==22.1.8" },
     { name = "cpp-linter", specifier = "==1.13.0" },
     { name = "nanobind", specifier = "~=3.0.0" },
     { name = "scikit-build-core", specifier = "~=1.0.3" },
-    { name = "vcs-versioning", specifier = "~=2.3.0" },
+    { name = "vcs-versioning", specifier = "~=2.4.0" },
 ]
 dev = [
     { name = "matplotlib", specifier = ">=3.8" },
@@ -168,7 +168,7 @@ dev = [
     { name = "pytest-sugar", specifier = ">=1.1.1" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
     { name = "scikit-build-core", specifier = "~=1.0.3" },
-    { name = "vcs-versioning", specifier = "~=2.3.0" },
+    { name = "vcs-versioning", specifier = "~=2.4.0" },
 ]
 docs = [
     { name = "furo", specifier = ">=2024.8.6" },
@@ -4025,16 +4025,16 @@ wheels = [
 
 [[package]]
 name = "vcs-versioning"
-version = "2.3.4"
+version = "2.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
     { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a0/00/c883501b0c55b7d0ec33e67813e9a38563ea84bfecebce9b3347fa52d845/vcs_versioning-2.3.4.tar.gz", hash = "sha256:f3443da15a34a32755b04324e33c6166add300c7661f45902225190c9337f711", size = 149647, upload-time = "2026-09-03T13:04:31.205Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f5/58/81416f7801a139099c4b950dbb2f7ee25c91dc6f7d46b4e09bb197da53b5/vcs_versioning-2.4.0.tar.gz", hash = "sha256:cc4b66c02ae4cfb51e843910024f7142464c3391bb1f7e04608578b45046891b", size = 160078, upload-time = "2026-09-13T14:11:33.046Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a0/30/cbf2883ee604dc83ff510516ae05e93b17bfcb4d18279ae12905e13f49da/vcs_versioning-2.3.4-py3-none-any.whl", hash = "sha256:076afa0e12a42a23faba92bcb62cb016c1ce38051ceee1f302de1e2676a68bbc", size = 115414, upload-time = "2026-09-03T13:04:29.925Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/e7/01c03c7bf28e353812dccc22d3b9629ea71c88edd64c8452601ecc64b189/vcs_versioning-2.4.0-py3-none-any.whl", hash = "sha256:874a70bcd196b956a105852074554f498554d75399904fb1024002af79ad396c", size = 120412, upload-time = "2026-09-13T14:11:31.704Z" },
 ]
 
 [[package]]

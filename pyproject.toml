@@ -1,7 +1,7 @@
 [build-system]
 requires = [
     "scikit-build-core~=1.0.3",
-    "vcs-versioning~=2.3.0",
+    "vcs-versioning~=2.4.0",
     "nanobind~=3.0.0",
 ]
 build-backend = "scikit_build_core.build"
@@ -270,7 +270,7 @@ ignore = [
 [dependency-groups]
 build = [
     "scikit-build-core~=1.0.3",
-    "vcs-versioning~=2.3.0",
+    "vcs-versioning~=2.4.0",
     "nanobind~=3.0.0",
 ]
 cpp-lint = [
