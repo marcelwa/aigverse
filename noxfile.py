@@ -260,7 +260,7 @@ def _run_tests(
 
     env = {"UV_PROJECT_ENVIRONMENT": session.virtualenv.location}
 
-    if shutil.which("cmake") is None and shutil.which("cmake3") is None:
+    if shutil.which("cmake") is None:
         session.install("cmake")
     if shutil.which("ninja") is None:
         session.install("ninja")
