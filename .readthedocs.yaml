@@ -6,7 +6,7 @@ version: 2
 # not fit alongside it. See the pre_build job below.
 
 build:
-  os: ubuntu-24.04
+  os: ubuntu-26.04
   tools:
     python: "3.12"
   apt_packages:
@@ -31,10 +31,8 @@ build:
       - asdf global uv latest
       # Build the same ABC revision the integration tests use, so that the examples
       # on the ABC documentation page are executed for real rather than shown inert.
-      # berkeley-abc is packaged for Ubuntu 22.04 only and not for the 24.04 image
-      # used here, and Read the Docs offers no build cache, so ABC is compiled. The
-      # post_checkout job above already skips the whole build unless the commit
-      # touches the documentation, so this cost is only paid when the docs change.
+      # Read the Docs offers no build cache. The post_checkout job skips the build
+      # unless the commit touches the documentation.
       #
       # This is the single most expensive step of the build, so it is trimmed where
       # that is free: ABC defaults to `OPTFLAGS = -g -O`, and the debug information

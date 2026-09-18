@@ -26,7 +26,8 @@ releases may include breaking changes.
 
 ### Changed
 
-- 👷 Run native Linux CI jobs on Ubuntu 26.04 with the runner's default compiler ([**@marcelwa**])
+- 👷 Run native Linux CI and Read the Docs on Ubuntu 26.04 with the runner's default
+  compiler ([#513]) ([**@marcelwa**])
 
 - 🔧 Stop the extensions from re-exporting the internals of the static libraries they
   embed ([#490]) ([**@marcelwa**])
@@ -242,6 +243,8 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 [0.1.0]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.0
 
 <!-- PR links -->
+
+[#513]: https://github.com/marcelwa/aigverse/pull/513
 
 [#490]: https://github.com/marcelwa/aigverse/pull/490
 [#489]: https://github.com/marcelwa/aigverse/pull/489
