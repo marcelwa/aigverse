@@ -245,7 +245,6 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 <!-- PR links -->
 
 [#513]: https://github.com/marcelwa/aigverse/pull/513
-
 [#490]: https://github.com/marcelwa/aigverse/pull/490
 [#489]: https://github.com/marcelwa/aigverse/pull/489
 [#488]: https://github.com/marcelwa/aigverse/pull/488
