@@ -26,6 +26,8 @@ releases may include breaking changes.
 
 ### Changed
 
+- 👷 Run native Linux CI jobs on Ubuntu 26.04 with the runner's default compiler ([**@marcelwa**])
+
 - 🔧 Stop the extensions from re-exporting the internals of the static libraries they
   embed ([#490]) ([**@marcelwa**])
 - ⚡️ Run `examples/abc_recipe_study.py`'s sweep as one batch per recipe instead of one

@@ -31,8 +31,8 @@ jobs:
       matrix:
         runs-on:
           [
-            ubuntu-24.04,
-            ubuntu-24.04-arm,
+            ubuntu-26.04,
+            ubuntu-26.04-arm,
             macos-15,
             windows-2025,
             windows-11-arm,
@@ -44,7 +44,7 @@ jobs:
   publish-to-pypi:
     name: 🚀 Publish to PyPI
     needs: [packaging-sdist, packaging-wheels]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     # `workflow_dispatch` builds the artifacts above as a dry run and stops here, so the
     # release path can be exercised without publishing anything.
