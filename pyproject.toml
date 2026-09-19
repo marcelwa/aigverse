@@ -1,7 +1,7 @@
 [build-system]
 build-backend = "scikit_build_core.build"
 requires = [
-    "nanobind~=3.0.0",
+    "nanobind~=3.1.0",
     "scikit-build-core~=1.0.3",
     "vcs-versioning~=2.4.0",
 ]
@@ -119,7 +119,7 @@ adapters = [
     "numpy>=2.3.2; python_version>='3.14'",
 ]
 build = [
-    "nanobind~=3.0.0",
+    "nanobind~=3.1.0",
     "scikit-build-core~=1.0.3",
     "vcs-versioning~=2.4.0",
 ]
