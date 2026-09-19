@@ -16,7 +16,7 @@ defaults:
 jobs:
   cpp-linter:
     name: 🚨 Clang-Tidy
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     permissions:
       contents: read # required to check out the repository
@@ -64,7 +64,7 @@ jobs:
           thread-comments: ${{ ((github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork) && 'update') || 'false' }}
           ignore: "build|libs/*|docs/*"
           extra-args: "-I${{ github.workspace }}/include -I${{ github.workspace }}/src/aigverse"
-          version: "21"
+          version: "22"
           files-changed-only: true
 
       - if: steps.linter.outputs.checks-failed > 0

@@ -26,6 +26,9 @@ releases may include breaking changes.
 
 ### Changed
 
+- 👷 Run native Linux CI and Read the Docs on Ubuntu 26.04 with the runner's default
+  compiler ([#513]) ([**@marcelwa**])
+
 - 🔧 Stop the extensions from re-exporting the internals of the static libraries they
   embed ([#490]) ([**@marcelwa**])
 - ⚡️ Run `examples/abc_recipe_study.py`'s sweep as one batch per recipe instead of one
@@ -241,6 +244,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#513]: https://github.com/marcelwa/aigverse/pull/513
 [#490]: https://github.com/marcelwa/aigverse/pull/490
 [#489]: https://github.com/marcelwa/aigverse/pull/489
 [#488]: https://github.com/marcelwa/aigverse/pull/488

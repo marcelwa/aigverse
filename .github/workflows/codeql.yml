@@ -16,7 +16,7 @@ defaults:
 jobs:
   analyze:
     name: ${{ matrix.emoji }} Analysis
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       actions: read # required by github/codeql-action/init to check the workflow run
@@ -52,7 +52,7 @@ jobs:
         if: matrix.language == 'cpp'
         uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
         with:
-          key: "ubuntu-24.04-aigverse"
+          key: "ubuntu-26.04-aigverse"
           save: false
           max-size: 10G
 
