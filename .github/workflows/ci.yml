@@ -34,7 +34,7 @@ jobs:
   # `nox -s tests` and `nox -s minimums` across every supported interpreter. The caller
   # job's name is the group its checks appear under, so it stays a short label and
   # deliberately does not mention the matrix — GitHub appends the entry itself, and the
-  # called job spells it out: `🐍 Test (ubuntu-24.04) / 🐍 ubuntu-24.04`.
+  # called job spells it out: `🐍 Test (ubuntu-26.04) / 🐍 ubuntu-26.04`.
   python-tests:
     name: 🐍 Test
     permissions:
@@ -46,8 +46,8 @@ jobs:
       matrix:
         runs-on:
           [
-            ubuntu-24.04,
-            ubuntu-24.04-arm,
+            ubuntu-26.04,
+            ubuntu-26.04-arm,
             macos-15,
             windows-2025,
             windows-11-arm,
@@ -84,8 +84,8 @@ jobs:
       matrix:
         runs-on:
           [
-            ubuntu-24.04,
-            ubuntu-24.04-arm,
+            ubuntu-26.04,
+            ubuntu-26.04-arm,
             macos-15,
             windows-2025,
             windows-11-arm,
@@ -105,7 +105,7 @@ jobs:
       matrix:
         # Windows is deliberately absent: ABC has no supported MSVC build, and
         # users on Windows bring their own binary, so there is nothing to install.
-        runs-on: [ubuntu-24.04, macos-15]
+        runs-on: [ubuntu-26.04, macos-15]
     uses: ./.github/workflows/abc-tests.yml
     with:
       runs-on: ${{ matrix.runs-on }}
@@ -139,8 +139,8 @@ jobs:
       matrix:
         runs-on:
           [
-            ubuntu-24.04,
-            ubuntu-24.04-arm,
+            ubuntu-26.04,
+            ubuntu-26.04-arm,
             macos-15,
             windows-2025,
             windows-11-arm,
