@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 nox.needs_version = ">=2025.10.16"
 nox.options.default_venv_backend = "uv"
 
-PYTHON_ALL_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14"]
+PYTHON_ALL_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
 
 if os.environ.get("CI", None):
     nox.options.error_on_missing_interpreters = True
@@ -279,7 +279,10 @@ def _run_tests(
         # test matrix narrows it back with `--full -m "not network"`: those tests
         # download circuits, and a hiccup at GitHub must not redden the whole
         # matrix, so they keep their own workflow.
-        only_group_args += ["--only-group", "torch"]
+        if session.python != "3.15":
+            # torch has no wheels for cp315 yet; the torch-marked tests guard
+            # themselves with pytest.importorskip and skip cleanly without it.
+            only_group_args += ["--only-group", "torch"]
         pytest_run_args = [*pytest_run_args, "-m", ""]
     session.run(
         "uv",
