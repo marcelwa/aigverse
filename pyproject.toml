@@ -130,7 +130,7 @@ cpp-lint = [
     # reports what `.github/workflows/cpp-linter.yml` reports. Bump them with the action.
     { include-group = "build" },
     "clang-tidy==22.1.8",
-    "cpp-linter==1.14.0",
+    "cpp-linter==1.14.1",
 ]
 examples = [
     # what the standalone PEP 723 scripts under examples/ declare inline. Kept in
