@@ -3,7 +3,7 @@ build-backend = "scikit_build_core.build"
 requires = [
     "nanobind~=3.1.0",
     "scikit-build-core~=1.1.0",
-    "vcs-versioning~=2.4.0",
+    "vcs-versioning~=2.5.0",
 ]
 
 [project]
@@ -121,7 +121,7 @@ adapters = [
 build = [
     "nanobind~=3.1.0",
     "scikit-build-core~=1.1.0",
-    "vcs-versioning~=2.4.0",
+    "vcs-versioning~=2.5.0",
 ]
 cpp-lint = [
     # `nox -s cpp-lint` configures the project to get a compilation database, so it needs
