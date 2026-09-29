@@ -264,6 +264,8 @@ docstring-code-format = true
 # the bridge's tests run the configured ABC themselves, and pin behavior of the
 # private helpers the public wrappers are thin over
 "test/abc/*.py" = [ "PLC2701", "S603" ]
+# The export check runs the resolved nm executable on imported extension paths.
+"test/test_extension_exports.py" = [ "S603" ]
 "*.pyi" = [ "A003", "D418", "N999", "PYI002", "PYI021" ]
 "*.ipynb" = [
     "D",    # pydocstyle
