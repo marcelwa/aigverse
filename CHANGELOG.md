@@ -44,7 +44,7 @@ releases may include breaking changes.
 ### Fixed
 
 - 🐛 Hide C++ implementation symbols from Linux extensions while preserving
-  nanobind's shared exception ABI ([#PR]) ([**@marcelwa**])
+  nanobind's shared exception ABI ([#531]) ([**@marcelwa**])
 - 📝 Correct the README's Stable ABI and free-threading claims ([#489]) ([**@marcelwa**])
 - 🐛 Stop `equivalence_checking`, `aig_cut_rewriting`, `balancing`, and `cleanup_dangling`
   from returning silently wrong results when several threads call them on one shared
@@ -246,7 +246,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
-[#PR]: https://github.com/marcelwa/aigverse/pull/PR
+[#531]: https://github.com/marcelwa/aigverse/pull/531
 [#513]: https://github.com/marcelwa/aigverse/pull/513
 [#490]: https://github.com/marcelwa/aigverse/pull/490
 [#489]: https://github.com/marcelwa/aigverse/pull/489
