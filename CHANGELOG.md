@@ -26,6 +26,8 @@ releases may include breaking changes.
 
 ### Changed
 
+- 🔧 Drop the global `CMAKE_POSITION_INDEPENDENT_CODE` override; mockturtle now builds its
+  own archives as position-independent code ([#501]) ([**@marcelwa**])
 - 👷 Run native Linux CI and Read the Docs on Ubuntu 26.04 with the runner's default
   compiler ([#513]) ([**@marcelwa**])
 
@@ -246,6 +248,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#501]: https://github.com/marcelwa/aigverse/pull/501
 [#531]: https://github.com/marcelwa/aigverse/pull/531
 [#513]: https://github.com/marcelwa/aigverse/pull/513
 [#490]: https://github.com/marcelwa/aigverse/pull/490
