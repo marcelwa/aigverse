@@ -134,24 +134,22 @@ CONFLICT_LIMIT: Final = 100_000
 # fail rather than quietly reshape the experiment. Insertion order is meaningful
 # here too -- it fixes the column order of the rank heatmap.
 
-#: The four atomic transformations every canonical script is built from, as the ABC
-#: commands they issue. `abc.balance`, `abc.rewrite`, `abc.refactor` and `abc.resub`
-#: are the same commands with default options, but calling them one at a time costs
-#: one ABC process and one AIGER round-trip *each*; handing the whole schedule to
-#: ABC runs it in a single process instead. One schedule then goes out across every
+#: The four atomic transformations every canonical script is built from, as the
+#: commands their wrappers build. Calling the wrappers one at a time would cost one
+#: ABC process and one AIGER round-trip *each*; handing the whole schedule to ABC
+#: runs it in a single process instead. One schedule then goes out across every
 #: design at once through `abc.run_many`.
-ATOMS: Mapping[str, str] = MappingProxyType({
-    "b": "balance",
-    "rw": "rewrite",
-    "rf": "refactor",
-    "rs": "resub",
+ATOMS: Mapping[str, abc.Command] = MappingProxyType({
+    "b": abc.balance.cmd(),
+    "rw": abc.rewrite.cmd(),
+    "rf": abc.refactor.cmd(),
+    "rs": abc.resub.cmd(),
 })
 
 #: The canonical `abc.rc` scripts, plus ABC's own `orchestrate`, for reference
-#: against the brute-forced orders. Held as the commands they issue rather than as
-#: the `abc.resyn2`-style wrappers, so a whole design set goes to `abc.run_many` in
-#: one call; at default options every one of those wrappers issues exactly this.
-CLASSIC_SCRIPTS: Mapping[str, tuple[str, ...]] = MappingProxyType({
+#: against the brute-forced orders. `abc.expand_script` hands the canonical ones
+#: out as commands, so a whole design set goes to `abc.run_many` in one call.
+CLASSIC_SCRIPTS: Mapping[str, tuple[str | abc.Command, ...]] = MappingProxyType({
     "resyn": abc.expand_script("resyn"),
     "resyn2": abc.expand_script("resyn2"),
     "resyn3": abc.expand_script("resyn3"),
@@ -160,19 +158,19 @@ CLASSIC_SCRIPTS: Mapping[str, tuple[str, ...]] = MappingProxyType({
     "resyn2rs": abc.expand_script("resyn2rs"),
     "compress2rs": abc.expand_script("compress2rs"),
     "dc2": abc.expand_script("dc2"),
-    "orchestrate": ("orchestrate",),
+    "orchestrate": (abc.orchestrate.cmd(),),
 })
 
 #: The &-space counterparts. `&fraig` is SAT sweeping rather than restructuring, and
 #: is included because it removes redundancy the others structurally cannot see.
-GIA_SCRIPTS: Mapping[str, tuple[str, ...]] = MappingProxyType({
-    "&b": ("&b",),
-    "&resub": ("&resub",),
-    "&dc2": ("&dc2",),
-    "&syn2": ("&syn2",),
-    "&syn3": ("&syn3",),
-    "&syn4": ("&syn4",),
-    "&fraig": ("&fraig",),
+GIA_SCRIPTS: Mapping[str, tuple[abc.Command, ...]] = MappingProxyType({
+    "&b": (abc.gia.balance.cmd(),),
+    "&resub": (abc.gia.resub.cmd(),),
+    "&dc2": (abc.gia.dc2.cmd(),),
+    "&syn2": (abc.gia.syn2.cmd(),),
+    "&syn3": (abc.gia.syn3.cmd(),),
+    "&syn4": (abc.gia.syn4.cmd(),),
+    "&fraig": (abc.gia.fraig.cmd(),),
 })
 
 
@@ -305,7 +303,7 @@ def run_batch(
     experiment: str,
     recipe: str,
     family: str,
-    commands: tuple[str, ...],
+    commands: tuple[str | abc.Command, ...],
     *,
     gia: bool,
     jobs: int | None,
@@ -416,7 +414,7 @@ def check(bench: Benchmark, optimized: Aig, recipe: str) -> str:
     return "equivalent"
 
 
-def commands_for(order: Sequence[str], rounds: int) -> tuple[str, ...]:
+def commands_for(order: Sequence[str], rounds: int) -> tuple[abc.Command, ...]:
     """Expand a schedule of atomic transformations into ABC commands.
 
     The whole schedule goes to ABC as one script, so it costs a single process and
@@ -877,7 +875,7 @@ def _plot_order_spread(ax: Axes, benchmarks: list[Benchmark], rounds: int) -> No
     # label both marks with their own budget: the star is not drawn at the same
     # effort as the dots, and a reader comparing them needs to be told so
     ax.set_title(
-        f"A  All {math.factorial(len(ATOMS))} orders of {'/'.join(ATOMS.values())}, "
+        f"A  All {math.factorial(len(ATOMS))} orders of {'/'.join(str(atom) for atom in ATOMS.values())}, "
         f"{rounds} round{'' if rounds == 1 else 's'}\n"
         f"dot = one ordering ({issued} commands) \u00b7 "
         f"red star = {REFERENCE_SCRIPT} ({reference_length} commands)",

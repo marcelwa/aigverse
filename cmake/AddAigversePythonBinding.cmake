@@ -46,6 +46,18 @@ function(add_aigverse_python_binding target_name)
   elseif(UNIX)
     target_link_options(${target_name} PRIVATE "LINKER:--exclude-libs,ALL")
 
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+      # --exclude-libs does not hide symbols from the module's own objects. Keep
+      # only the entry point and nanobind's shared exception ABI visible.
+      set(export_map "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/aigverse.exports.map")
+      target_link_options(${target_name} PRIVATE
+                          "LINKER:--version-script,${export_map}")
+      set_property(
+        TARGET ${target_name}
+        APPEND
+        PROPERTY LINK_DEPENDS "${export_map}")
+    endif()
+
     # `--gc-sections` collects nothing without these. A linked build inherited
     # both from `nanobind-static`; split mode links no nanobind target.
     target_compile_options(

@@ -260,7 +260,7 @@ def _run_tests(
 
     env = {"UV_PROJECT_ENVIRONMENT": session.virtualenv.location}
 
-    if shutil.which("cmake") is None and shutil.which("cmake3") is None:
+    if shutil.which("cmake") is None:
         session.install("cmake")
     if shutil.which("ninja") is None:
         session.install("ninja")
@@ -413,7 +413,7 @@ def docs(session: nox.Session) -> None:
             "ABC page are executed. Install it and put it on PATH, or point AIGVERSE_ABC at "
             "it. For example:\n"
             "  - from source: `git clone https://github.com/berkeley-abc/abc && make -C abc`\n"
-            "  - Ubuntu 22.04: `sudo apt install berkeley-abc`\n"
+            "  - Ubuntu: `sudo apt install berkeley-abc`\n"
             "  - bundled: any `abc` from Yosys or oss-cad-suite\n"
         )
 

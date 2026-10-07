@@ -29,6 +29,9 @@ repos:
         priority: 0
       - id: check-docstring-first
         priority: 0
+        # the wrapper instances carry attribute docstrings, which autoapi renders
+        # and this hook mistakes for a second module docstring
+        exclude: ^python/aigverse/abc/(_commands|gia)\.py$
       - id: check-merge-conflict
         priority: 0
       - id: check-symlinks
@@ -60,7 +63,7 @@ repos:
 
   # Check for spelling
   - repo: https://github.com/crate-ci/typos
-    rev: v1.50.1
+    rev: v1.50.3
     hooks:
       - id: typos
         priority: 0
@@ -85,7 +88,7 @@ repos:
 
   # clang-format the C++ part of the code base
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v23.1.0
+    rev: v23.1.2
     hooks:
       - id: clang-format
         types_or: [c++, c]
@@ -94,14 +97,14 @@ repos:
 
   # Ensure uv lock file is up-to-date
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.12.10
+    rev: 0.12.23
     hooks:
       - id: uv-lock
         priority: 0
 
   # Python linting using ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.6
+    rev: v0.16.10
     hooks:
       - id: ruff-format
         priority: 1
@@ -111,7 +114,7 @@ repos:
 
   # Check Python types with ty
   - repo: https://github.com/astral-sh/ty-pre-commit
-    rev: v0.0.78
+    rev: v0.0.84
     hooks:
       - id: ty
         args: [--only-dev]
@@ -139,15 +142,22 @@ repos:
 
   # Format configuration files with prettier
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.9.6
+    rev: v3.9.9
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
         priority: 1
 
+  # Format the pyproject.toml file
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: v2.30.0
+    hooks:
+      - id: pyproject-fmt
+        priority: 1
+
   # Check JSON schemata
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.38.0
+    rev: 0.38.2
     hooks:
       - id: check-github-workflows
         priority: 0
@@ -159,7 +169,7 @@ repos:
 
   # Check the pyproject.toml file
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2026.09.04
+    rev: 2026.10.02
     hooks:
       - id: validate-pyproject
         priority: 0
