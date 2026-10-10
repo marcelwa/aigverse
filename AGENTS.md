@@ -34,7 +34,7 @@ Not part of `lint`; it needs a CMake configure, so it costs minutes rather than 
 ### Python tests
 
 ```console
-uvx nox -s tests              # all supported Python versions (3.10-3.14), builds the C++ extension first
+uvx nox -s tests              # all supported Python versions (3.10-3.15), builds the C++ extension first
 uvx nox -s tests-3.12         # a single Python version — much faster iteration
 uvx nox -s tests-3.12 -- test/algorithms/test_simulation.py   # a single file
 uvx nox -s tests-3.12 -- -m algorithms                        # a marker subset (see markers below)
