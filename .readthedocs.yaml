@@ -38,7 +38,7 @@ build:
       # that is free: ABC defaults to `OPTFLAGS = -g -O`, and the debug information
       # costs roughly 15% of the compile for something no documentation build ever
       # reads. The examples here are small enough that ABC's own speed is irrelevant.
-      - ABC_REV=ab2139ee0c418f54136deb4e8e89eeea3b87efc8
+      - ABC_REV=74d7c53fb56c86fda0b9f75f10e71a80a9afafac
         && git clone --filter=blob:none https://github.com/berkeley-abc/abc.git "$HOME/abc"
         && git -C "$HOME/abc" checkout --detach "$ABC_REV"
         && make -C "$HOME/abc" -j"$(nproc)" ABC_USE_NO_READLINE=1 OPTFLAGS=-O
