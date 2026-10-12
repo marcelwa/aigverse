@@ -123,6 +123,10 @@ build = [
     "scikit-build-core~=1.1.0",
     "vcs-versioning~=2.6.0",
 ]
+coverage = [
+    "gcovr>=8",
+    "pytest-cov>=7",
+]
 cpp-lint = [
     # `nox -s cpp-lint` configures the project to get a compilation database, so it needs
     # what a configure needs. `cpp-linter` is the package `cpp-linter-action` runs, and
@@ -212,7 +216,7 @@ build-frontend = "build[uv]"
 # so the network exclusion has to be repeated or wheel CI would download circuits
 test-command = 'pytest test/ -m "(torch or not torch) and not network"'
 test-groups = [ "test", "torch" ]
-test-sources = [ "test/" ]
+test-sources = [ "test/", "noxfile.py" ]
 
 [tool.cibuildwheel.macos]
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
@@ -355,6 +359,14 @@ markers = [
 minversion = "9.0"
 strict = true
 testpaths = [ "test/" ]
+
+[tool.coverage.run]
+source = [ "aigverse" ]
+omit = [ "*/aigverse/_version.py" ]
+branch = true
+
+[tool.coverage.paths]
+source = [ "python/aigverse", "*/site-packages/aigverse" ]
 
 [[tool.dynamic-metadata]]
 provider = "vcs_versioning"

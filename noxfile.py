@@ -12,6 +12,7 @@ import contextlib
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -189,7 +190,7 @@ def _build_or_reuse_wheel(
 
     Args:
         session: The nox session requesting the wheel.
-        group: Which family of sessions this belongs to, `tests` or `minimums`.
+        group: Which family of sessions this belongs to, `tests`, `minimums`, or `coverage`.
         env: Environment to run `uv` with.
         install_args: Extra `uv` arguments, used to pin resolution.
 
@@ -239,7 +240,7 @@ def _run_tests(
 
     Args:
         session: The nox session to install into and run in.
-        group: Which family of sessions this belongs to, `tests` or `minimums`.
+        group: Which family of sessions this belongs to, `tests`, `minimums`, or `coverage`.
             Wheels are shared between sessions of the same group and tag.
         install_args: Extra arguments forwarded to every `uv` invocation, used to
             pin resolution for the minimums session.
@@ -376,6 +377,42 @@ def _find_abc() -> str | None:
 def tests(session: nox.Session) -> None:
     """Run the test suite."""
     _run_tests(session, group="tests")
+
+
+@nox.session(reuse_venv=True, python="3.12", default=False)
+def coverage(session: nox.Session) -> None:
+    """Measure Python and native coverage on Linux with GCC."""
+    if sys.platform != "linux":
+        session.error("Native coverage requires Linux and GCC.")
+    build_dir = Path(__file__).parent.resolve() / "build" / "coverage"
+    build_dir.mkdir(parents=True, exist_ok=True)
+    for counter in build_dir.rglob("*.gcda"):
+        counter.unlink()
+    session.env.update(
+        SKBUILD_BUILD_DIR=str(build_dir),
+        SKBUILD_CMAKE_BUILD_TYPE="Debug",
+        SKBUILD_CMAKE_DEFINE="AIGVERSE_ENABLE_COVERAGE=ON",
+    )
+    session.install("--group", "coverage")
+    _run_tests(
+        session,
+        group="coverage",
+        pytest_run_args=[
+            "-n0",
+            "--cov",
+            "--cov-config=pyproject.toml",
+            "--cov-report=term-missing",
+            f"--cov-report=xml:{build_dir / 'python.xml'}",
+        ],
+    )
+    session.run(
+        "gcovr",
+        "--root=.",
+        "--filter=src/aigverse/",
+        "--include-internal-functions",
+        f"--xml={build_dir / 'cpp.xml'}",
+        str(build_dir),
+    )
 
 
 @nox.session(reuse_venv=True, venv_backend="uv", python=PYTHON_ALL_VERSIONS, default=True)

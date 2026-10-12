@@ -18,6 +18,9 @@ on:
       run-python-linter:
         description: Whether to type check the Python sources and verify the stubs
         value: ${{ jobs.change-detection.outputs.run-python-linter || false }}
+      run-coverage:
+        description: Whether to measure Python and native coverage
+        value: ${{ jobs.change-detection.outputs.run-coverage || false }}
       run-benchmark-tests:
         description: Whether to exercise the EPFL benchmark downloader
         value: ${{ jobs.change-detection.outputs.run-benchmark-tests || false }}
@@ -61,6 +64,9 @@ jobs:
       run-python-linter: >-
         ${{ github.event_name != 'pull_request'
         || steps.filter.outputs.run-python-linter == 'true' }}
+      run-coverage: >-
+        ${{ github.event_name != 'pull_request'
+        || steps.filter.outputs.run-coverage == 'true' }}
       run-benchmark-tests: >-
         ${{ github.event_name != 'pull_request'
         || steps.filter.outputs.run-benchmark-tests == 'true' }}
@@ -122,6 +128,15 @@ jobs:
               - ".github/workflows/ci.yml"
               - ".github/workflows/change-detection.yml"
               - ".github/workflows/python-linter.yml"
+
+            run-coverage:
+              - *extension
+              - *package
+              - "test/**"
+              - ".github/codecov.yml"
+              - ".github/workflows/ci.yml"
+              - ".github/workflows/change-detection.yml"
+              - ".github/workflows/coverage.yml"
 
             # The loader is pure Python, but it is exercised through an installed
             # aigverse, so the extension is in scope as well.

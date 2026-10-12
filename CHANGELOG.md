@@ -12,6 +12,8 @@ releases may include breaking changes.
 
 ### Added
 
+- 👷 Add Python and C++ coverage reports with separate Codecov checks and a local
+  `coverage` nox session ([#446]) ([**@marcelwa**])
 - ✨ Expose each ABC command wrapper's switch translation as `.cmd(...)`, which builds
   the `abc.Command` the wrapper would run instead of running it, so a parameterized
   command reaches `run_script` and `run_many` as itself rather than as a hand-written
@@ -250,6 +252,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#446]: https://github.com/marcelwa/aigverse/issues/446
 [#553]: https://github.com/marcelwa/aigverse/pull/553
 [#501]: https://github.com/marcelwa/aigverse/pull/501
 [#531]: https://github.com/marcelwa/aigverse/pull/531

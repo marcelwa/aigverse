@@ -1,0 +1,88 @@
+name: 📊 • Coverage
+
+on:
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-coverage
+  cancel-in-progress: true
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  coverage:
+    name: 📊 Python and C++
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write # Codecov OIDC for trusted runs; forks use tokenless uploads
+    env:
+      CC: gcc
+      CXX: g++
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Measure coverage twice to verify counter reset
+        run: |
+          uvx nox -s coverage -- --full -m 'not network'
+          touch build/coverage/stale-reset.gcda
+          uvx nox -s coverage -- --full -m 'not network'
+          test ! -e build/coverage/stale-reset.gcda
+
+      - name: Verify measured sources and installed-wheel path mapping
+        run: |
+          .nox/coverage/bin/python - <<'PY'
+          from pathlib import Path
+          from xml.etree import ElementTree
+
+          root = Path.cwd()
+          python = ElementTree.parse("build/coverage/python.xml")
+          sources = [Path(source.text) for source in python.findall("./sources/source")]
+          classes = python.findall(".//class")
+          assert classes, "Python report contains no sources"
+          for item in classes:
+              paths = [source / item.attrib["filename"] for source in sources]
+              assert any(path.resolve().is_relative_to(root / "python/aigverse") and path.is_file() for path in paths), paths
+              assert not item.attrib["filename"].endswith("_version.py")
+          assert any(int(line.attrib["hits"]) > 0 for line in python.findall(".//line")), "No executed Python lines"
+
+          native = ElementTree.parse("build/coverage/cpp.xml")
+          classes = native.findall(".//class")
+          assert classes, "Native report contains no sources"
+          for item in classes:
+              assert item.attrib["filename"].startswith("src/aigverse/"), item.attrib
+          for module in ("networks", "algorithms", "io", "generators", "utils"):
+              assert any(item.attrib["filename"].startswith(f"src/aigverse/{module}/") and any(int(line.attrib["hits"]) > 0 for line in item.findall(".//line")) for item in classes), module
+          PY
+
+      - name: Upload Python coverage
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: build/coverage/python.xml
+          flags: python
+          disable_search: true
+          fail_ci_if_error: true
+          use_oidc: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
+
+      - name: Upload C++ coverage
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: build/coverage/cpp.xml
+          flags: cpp
+          disable_search: true
+          fail_ci_if_error: true
+          use_oidc: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
