@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
-      contents: read
+      contents: read # required to check out the repository
       id-token: write # Codecov OIDC for trusted runs; forks use tokenless uploads
     env:
       CC: gcc

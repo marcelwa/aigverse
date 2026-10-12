@@ -44,8 +44,9 @@ void equivalence_checking(nanobind::module_& m)  // NOLINT(misc-use-internal-lin
             }
 
             mockturtle::equivalence_checking_params params{};
-            params.conflict_limit       = conflict_limit;
-            params.functional_reduction = functional_reduction;
+            params.conflict_limit = conflict_limit;
+            // Random simulation in functional reduction requires at least one primary input.
+            params.functional_reduction = functional_reduction && miter->num_pis() > 0;
             params.verbose              = verbose;
 
             return mockturtle::equivalence_checking(miter.value(), params);

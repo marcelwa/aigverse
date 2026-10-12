@@ -47,6 +47,8 @@ releases may include breaking changes.
 
 ### Fixed
 
+- 🐛 Allow equivalence checking of empty and constant AIGs in Debug builds
+  ([#554]) ([**@marcelwa**])
 - 🐛 Avoid MinGW GCC link-time optimization crashes when building the Python
   extensions ([#553]) ([**@marcelwa**])
 - 🐛 Hide C++ implementation symbols from Linux extensions while preserving
