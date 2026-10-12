@@ -216,7 +216,7 @@ build-frontend = "build[uv]"
 # so the network exclusion has to be repeated or wheel CI would download circuits
 test-command = 'pytest test/ -m "(torch or not torch) and not network"'
 test-groups = [ "test", "torch" ]
-test-sources = [ "test/", "noxfile.py" ]
+test-sources = [ "test/" ]
 
 [tool.cibuildwheel.macos]
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }

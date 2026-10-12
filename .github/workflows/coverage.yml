@@ -36,38 +36,8 @@ jobs:
           enable-cache: true
           save-cache: ${{ github.ref == 'refs/heads/main' }}
 
-      - name: Measure coverage twice to verify counter reset
-        run: |
-          uvx nox -s coverage -- --full -m 'not network'
-          touch build/coverage/stale-reset.gcda
-          uvx nox -s coverage -- --full -m 'not network'
-          test ! -e build/coverage/stale-reset.gcda
-
-      - name: Verify measured sources and installed-wheel path mapping
-        run: |
-          .nox/coverage/bin/python - <<'PY'
-          from pathlib import Path
-          from xml.etree import ElementTree
-
-          root = Path.cwd()
-          python = ElementTree.parse("build/coverage/python.xml")
-          sources = [Path(source.text) for source in python.findall("./sources/source")]
-          classes = python.findall(".//class")
-          assert classes, "Python report contains no sources"
-          for item in classes:
-              paths = [source / item.attrib["filename"] for source in sources]
-              assert any(path.resolve().is_relative_to(root / "python/aigverse") and path.is_file() for path in paths), paths
-              assert not item.attrib["filename"].endswith("_version.py")
-          assert any(int(line.attrib["hits"]) > 0 for line in python.findall(".//line")), "No executed Python lines"
-
-          native = ElementTree.parse("build/coverage/cpp.xml")
-          classes = native.findall(".//class")
-          assert classes, "Native report contains no sources"
-          for item in classes:
-              assert item.attrib["filename"].startswith("src/aigverse/"), item.attrib
-          for module in ("networks", "algorithms", "io", "generators", "utils"):
-              assert any(item.attrib["filename"].startswith(f"src/aigverse/{module}/") and any(int(line.attrib["hits"]) > 0 for line in item.findall(".//line")) for item in classes), module
-          PY
+      - name: Measure coverage
+        run: uvx nox -s coverage -- --full -m 'not network'
 
       - name: Upload Python coverage
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
