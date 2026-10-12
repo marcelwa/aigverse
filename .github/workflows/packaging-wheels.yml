@@ -36,6 +36,17 @@ jobs:
 
       - name: Set up MSVC development environment (Windows only)
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          # Defaults to x64; windows-11-arm needs telling explicitly.
+          arch: ${{ runner.arch == 'ARM64' && 'arm64' || 'x64' }}
+
+      # nanobind-backend, which the wheel needs at import time, has no cp310
+      # win_arm64 wheel, so a cp310 build's test run could never install. cp311
+      # builds the same `cp310-abi3` wheel (`wheel.py-api` in pyproject.toml) and
+      # can test it.
+      - if: runner.arch == 'ARM64' && runner.os == 'Windows'
+        name: Build with CPython 3.11 on Windows ARM64
+        run: echo "CIBW_BUILD=cp311-*" >> "$GITHUB_ENV"
 
       # No compiler cache here, deliberately. Wheels compile against nanobind
       # headers inside uv's build-isolation environment, a directory named
@@ -49,10 +60,10 @@ jobs:
 
       - if: runner.os == 'Linux'
         name: Setup mold
-        uses: rui314/setup-mold@7e4f20ad28a2e8ca6fd0892ccf72e2abb706b9c3 # v1
+        uses: rui314/setup-mold@10ca16bf91dc22e05ebdc935cad9c75ea248f621 # v1
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: false
 
@@ -62,7 +73,7 @@ jobs:
         uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e # v3.3
 
       - name: Upload wheel as an artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cibw-wheels-${{ inputs.runs-on }}
           path: wheelhouse/*.whl

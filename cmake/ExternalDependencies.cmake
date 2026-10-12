@@ -40,9 +40,9 @@ endif()
 
 find_package(nanobind CONFIG REQUIRED PATHS "${nanobind_ROOT}" NO_DEFAULT_PATH)
 
-# Fetch mockturtle library
+# Fetch mockturtle from the mnt branch.
 set(MOCKTURTLE_REV
-    "15e0da203aa1f93eeef754b9a1af4b662f2c76fe"
+    "42638d2b26be7977adcba18cfd0d2fb68590013e"
     CACHE STRING "mockturtle identifier (tag, branch or commit hash)")
 set(MOCKTURTLE_REPO_OWNER
     "marcelwa"
@@ -58,9 +58,6 @@ set(MOCKTURTLE_BUILD_EXPERIMENTS
 set(MOCKTURTLE_BUILD_TESTS
     OFF
     CACHE BOOL "" FORCE)
-# Ensure all static libraries built by mockturtle are position-independent This
-# is required for linking into Python extension modules (shared libraries)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 message(
   STATUS

@@ -47,13 +47,22 @@ jobs:
 
       - if: runner.os == 'Linux'
         name: Setup mold
-        uses: rui314/setup-mold@7e4f20ad28a2e8ca6fd0892ccf72e2abb706b9c3 # v1
+        uses: rui314/setup-mold@10ca16bf91dc22e05ebdc935cad9c75ea248f621 # v1
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: true
           save-cache: ${{ github.ref == 'refs/heads/main' }}
+
+      # numpy's win_arm64 wheels start at 3.11, and uv downloads an emulated x86_64
+      # interpreter on Windows ARM64 unless the native one is requested by name, so
+      # 3.10 drops out and 3.11 is installed explicitly.
+      - if: inputs.runs-on == 'windows-11-arm'
+        name: Restrict interpreters on Windows ARM64
+        run: |
+          uv python install cpython-3.11-windows-aarch64-none
+          echo "NOX_PYTHON=-p 3.11 3.12 3.13 3.14" >> "$GITHUB_ENV"
 
       # `nox -s tests` covers every supported Python version. The loader is pure
       # Python, and the cache path it builds is the sort of thing that differs
@@ -62,4 +71,6 @@ jobs:
       # Deliberately no pre-seeded benchmark cache: exercising the real download
       # path is the entire point of this job.
       - name: 📊 Test the benchmark loader
-        run: uvx nox -s tests --verbose -- -m network
+        run: |
+          # shellcheck disable=SC2086  # word-split into separate -p / version args
+          uvx nox -s tests ${NOX_PYTHON:-} --verbose -- -m network

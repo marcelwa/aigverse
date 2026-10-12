@@ -18,8 +18,11 @@ from aigverse.abc import (
     AbcError,
     AbcExecutionError,
     AbcTimeoutError,
+    balance,
     expand_script,
     gia,
+    refactor,
+    rewrite,
     run_many,
     run_script,
     set_abc_binary,
@@ -487,6 +490,24 @@ def test_gia_batch_uses_the_gia_transfer(and_aig: Aig, fake_abc: Callable[[str],
     assert isinstance(failure, AbcExecutionError)
     assert "&read in.aig" in failure.command
     assert "&write out.aig" in failure.command
+
+
+@requires_posix
+def test_a_batch_takes_the_commands_the_wrappers_build(and_aig: Aig, fake_abc: Callable[[str], Path]) -> None:
+    """A schedule of parameterized commands must reach ABC as one script.
+
+    Args:
+        and_aig: A small network to batch.
+        fake_abc: Builds the stand-in executable.
+    """
+    shim = fake_abc("print(\"** cmd error: unknown command 'nope'\")\nsys.exit(0)")
+    schedule = [balance.cmd(), rewrite.cmd(zero_cost=True), refactor.cmd(max_support=12)]
+
+    results = run_many([and_aig], schedule, binary=shim, return_exceptions=True)
+
+    failure = results[0]
+    assert isinstance(failure, AbcExecutionError)
+    assert "balance; rewrite -z; refactor -N 12" in failure.command
 
 
 @requires_posix
