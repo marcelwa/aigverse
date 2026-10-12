@@ -45,6 +45,8 @@ releases may include breaking changes.
 
 ### Fixed
 
+- 🐛 Avoid MinGW GCC link-time optimization crashes when building the Python
+  extensions ([**@marcelwa**])
 - 🐛 Hide C++ implementation symbols from Linux extensions while preserving
   nanobind's shared exception ABI ([#531]) ([**@marcelwa**])
 - 📝 Correct the README's Stable ABI and free-threading claims ([#489]) ([**@marcelwa**])
