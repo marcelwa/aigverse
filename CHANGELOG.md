@@ -45,6 +45,8 @@ releases may include breaking changes.
 
 ### Fixed
 
+- 🐛 Use a NumPy version with Python 3.15 wheels when resolving minimum dependencies ([#439])
+  ([**@marcelwa**])
 - 🐛 Hide C++ implementation symbols from Linux extensions while preserving
   nanobind's shared exception ABI ([#531]) ([**@marcelwa**])
 - 📝 Correct the README's Stable ABI and free-threading claims ([#489]) ([**@marcelwa**])
@@ -250,6 +252,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 [#501]: https://github.com/marcelwa/aigverse/pull/501
 [#531]: https://github.com/marcelwa/aigverse/pull/531
+[#439]: https://github.com/marcelwa/aigverse/pull/439
 [#513]: https://github.com/marcelwa/aigverse/pull/513
 [#490]: https://github.com/marcelwa/aigverse/pull/490
 [#489]: https://github.com/marcelwa/aigverse/pull/489
