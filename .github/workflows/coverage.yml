@@ -1,0 +1,58 @@
+name: 📊 • Coverage
+
+on:
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-coverage
+  cancel-in-progress: true
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  coverage:
+    name: 📊 Python and C++
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    permissions:
+      contents: read # required to check out the repository
+      id-token: write # Codecov OIDC for trusted runs; forks use tokenless uploads
+    env:
+      CC: gcc
+      CXX: g++
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Measure coverage
+        run: uvx nox -s coverage -- --full -m 'not network'
+
+      - name: Upload Python coverage
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: build/coverage/python.xml
+          flags: python
+          disable_search: true
+          fail_ci_if_error: true
+          use_oidc: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
+
+      - name: Upload C++ coverage
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: build/coverage/cpp.xml
+          flags: cpp
+          disable_search: true
+          fail_ci_if_error: true
+          use_oidc: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}

@@ -163,6 +163,8 @@ repos:
         priority: 0
       - id: check-readthedocs
         priority: 0
+      - id: check-codecov
+        priority: 0
       - id: check-renovate
         additional_dependencies: ["json5"]
         priority: 0

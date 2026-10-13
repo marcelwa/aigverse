@@ -405,6 +405,25 @@ hiccup at GitHub cannot redden an unrelated run.
 A plain local run is therefore not enough to conclude that a change to the `torch` floors is sound.
 :::
 
+### Coverage
+
+On Linux with GCC and Python 3.12, measure both the Python package and the C++ bindings with:
+
+```console
+$ uvx nox -s coverage -- --full -m "not network"
+```
+
+The session builds an instrumented Debug wheel in `build/coverage`, runs pytest serially, and writes
+`build/coverage/python.xml` and `build/coverage/cpp.xml`. Each run clears only this build's native counters, retaining
+the compiled objects and coverage notes. Its wheel cache is separate from ordinary test builds. Omit `--full` to
+skip PyTorch locally; CI includes it and excludes network downloads. Tests requiring an external ABC binary still
+skip when one is unavailable.
+
+Python reports map the installed wheel back to `python/aigverse` and omit generated `_version.py`. Native reports
+cover only `src/aigverse`, including unexecuted functions; vendored mockturtle, kitty, lorina, and nanobind code is
+outside the reported scope. Native coverage currently requires GCC on Linux. Codecov maintains separate Python
+and C++ flags with patch targets of 95% and 90% (1% tolerance) and project targets tracking the base (0.5% tolerance).
+
 ### Test Fixtures and Markers
 
 The test suite uses layered `pytest` fixtures to keep test setup reusable and localized:
