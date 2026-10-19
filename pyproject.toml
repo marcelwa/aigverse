@@ -45,7 +45,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
-dynamic = [ "version" ]
+dynamic = [ "import-names", "import-namespaces", "version" ]
 # Split-mode extensions resolve the compiled nanobind backend at import time.
 # Never pin or upper-bound it: two projects pinning different versions could not
 # be installed together.
