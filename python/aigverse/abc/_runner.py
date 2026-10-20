@@ -15,7 +15,7 @@ from ._errors import AbcExecutionError, AbcTimeoutError
 
 if TYPE_CHECKING:
     import os
-    from collections.abc import Callable, Sequence
+    from collections.abc import Sequence
 
 __all__ = ["Command", "CommandWrapper", "run_commands", "run_script"]
 
@@ -99,7 +99,7 @@ class CommandWrapper:
     ``repr()`` shows in place of an object address.
     """
 
-    cmd: Callable[..., Command]
+    cmd: staticmethod[..., Command]
     """Builds the wrapper's command without running it.
 
     Each wrapper declares its own options here; its ``__call__`` takes the same
