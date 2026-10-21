@@ -194,7 +194,7 @@ py-api = "cp310"
 components = [ "aigverse_Python" ]
 
 [tool.uv]
-required-version = ">=0.5.20"
+required-version = ">=0.13.4"
 cache-keys = [
     { file = "pyproject.toml" },
     { git = { commit = true, tags = true } },

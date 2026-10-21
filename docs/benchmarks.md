@@ -13,6 +13,21 @@ checked-in copy of the data.
 Nothing is bundled with `aigverse` and nothing is downloaded at import time — the first
 call that needs a file fetches it.
 
+## Download security
+
+`epfl` and `epfl_path` use `urllib` with Python's default HTTPS trust configuration.
+Before downloading, apply the [eMudhra incident's CA-store updates](https://emudhra.we-have-a-problem.com/)
+to the store used by your Python distribution. Inspect its default CA file and directory with
+`python -c "import ssl; print(ssl.get_default_verify_paths())"`; Windows can also load
+certificates from its system store. Some Python distributions use the Requests CA bundle,
+but upgrading that bundle alone does not update every Python installation's trust.
+Verify the actual store using the incident's test chains; until it is safe, use trusted
+local AIGER files with {py:func}`~aigverse.io.read_aiger_into_aig` instead of downloading.
+
+Cached files are not automatically authenticated or repaired, and a commit pinned in
+a URL does not authenticate the downloaded bytes. If tampering is suspected, compare
+with a trusted reference or use a fresh cache after remediating the trust store.
+
 ## The EPFL suite
 
 The [EPFL combinational benchmark suite](https://github.com/lsils/benchmarks) is the

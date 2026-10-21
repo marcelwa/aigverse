@@ -47,6 +47,8 @@ releases may include breaking changes.
 
 ### Fixed
 
+- 🔒 Require patched uv tooling and document CA trust updates needed to protect
+  downloads from the eMudhra compromise ([#PR]) ([**@marcelwa**])
 - 🐛 Allow equivalence checking of empty and constant AIGs in Debug builds
   ([#554]) ([**@marcelwa**])
 - 🐛 Avoid MinGW GCC link-time optimization crashes when building the Python
