@@ -194,7 +194,7 @@ py-api = "cp310"
 components = [ "aigverse_Python" ]
 
 [tool.uv]
-required-version = ">=0.5.20"
+required-version = ">=0.13.4"
 cache-keys = [
     { file = "pyproject.toml" },
     { git = { commit = true, tags = true } },
@@ -217,6 +217,11 @@ build-frontend = "build[uv]"
 test-command = 'pytest test/ -m "(torch or not torch) and not network"'
 test-groups = [ "test", "torch" ]
 test-sources = [ "test/" ]
+
+[tool.cibuildwheel.linux]
+# cibuildwheel's default images bundle uv older than the security floor.
+manylinux-x86_64-image = "quay.io/pypa/manylinux_2_28_x86_64:2026.10.21-1"
+manylinux-aarch64-image = "quay.io/pypa/manylinux_2_28_aarch64:2026.10.21-1"
 
 [tool.cibuildwheel.macos]
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }

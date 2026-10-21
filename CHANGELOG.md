@@ -47,6 +47,8 @@ releases may include breaking changes.
 
 ### Fixed
 
+- 🔒 Require patched uv tooling and document CA trust updates needed to protect
+  downloads from the eMudhra compromise ([#565]) ([**@marcelwa**])
 - 🐛 Allow equivalence checking of empty and constant AIGs in Debug builds
   ([#554]) ([**@marcelwa**])
 - 🐛 Avoid MinGW GCC link-time optimization crashes when building the Python
@@ -254,6 +256,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#565]: https://github.com/marcelwa/aigverse/pull/565
 [#554]: https://github.com/marcelwa/aigverse/pull/554
 [#553]: https://github.com/marcelwa/aigverse/pull/553
 [#501]: https://github.com/marcelwa/aigverse/pull/501

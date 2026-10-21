@@ -2,6 +2,22 @@
 
 Ready to contribute to the project? This guide will get you started.
 
+## Download security
+
+The [eMudhra intermediate CA compromise](https://emudhra.we-have-a-problem.com/)
+allows attackers to impersonate HTTPS servers to clients that still trust the affected
+certificates. This project requires `uv>=0.13.4`, which updates uv's bundled trust
+store. If your uv is older, first update the CA store used by your bootstrap client,
+then install uv through your package manager or the official installer. Do not use
+`uv self update` as the first step: it can download with the old, vulnerable trust store.
+Both uv-based pre-commit hooks use the patched version.
+
+For pip, Python, Git, and CMake, follow the incident report's client and CA-package
+update instructions and verify the trust configuration each tool actually uses.
+The locked [Requests CA bundle](https://pypi.org/project/certifi/) is updated to the
+report's recommended `2026.10.19`; this does not update every client's trust store.
+For Python benchmark downloads, see [the benchmark security guidance](benchmarks.md#download-security).
+
 ## Initial Setup
 
 1. Get the code
