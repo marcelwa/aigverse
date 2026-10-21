@@ -7,8 +7,10 @@ Ready to contribute to the project? This guide will get you started.
 The [eMudhra intermediate CA compromise](https://emudhra.we-have-a-problem.com/)
 allows attackers to impersonate HTTPS servers to clients that still trust the affected
 certificates. This project requires `uv>=0.13.4`, which updates uv's bundled trust
-store; run `uv self update` or update uv through your package manager before installing
-dependencies. Both uv-based pre-commit hooks use this patched version.
+store. If your uv is older, first update the CA store used by your bootstrap client,
+then install uv through your package manager or the official installer. Do not use
+`uv self update` as the first step: it can download with the old, vulnerable trust store.
+Both uv-based pre-commit hooks use the patched version.
 
 For pip, Python, Git, and CMake, follow the incident report's client and CA-package
 update instructions and verify the trust configuration each tool actually uses.
