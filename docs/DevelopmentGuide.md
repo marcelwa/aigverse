@@ -14,8 +14,8 @@ Both uv-based pre-commit hooks use the patched version.
 
 For pip, Python, Git, and CMake, follow the incident report's client and CA-package
 update instructions and verify the trust configuration each tool actually uses.
-The locked [Requests CA bundle](https://pypi.org/project/certifi/) is updated to the
-report's recommended `2026.10.19`; this does not update every client's trust store.
+The locked [Requests CA bundle](https://pypi.org/project/certifi/) meets the report's
+recommended minimum of `2026.10.19`; this does not update every client's trust store.
 For Python benchmark downloads, see [the benchmark security guidance](benchmarks.md#download-security).
 
 ## Initial Setup
