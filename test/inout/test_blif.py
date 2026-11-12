@@ -78,6 +78,61 @@ def test_blif_covers_comments_and_forward_references(tmp_path: Path) -> None:
         [False, False, True, False],
         [False, False, True, True],
     ]
+    assert all(not ntk.has_name(node) for node in ntk.gates())
+
+
+@pytest.mark.parametrize("separator", ["", "   ", "# comment"])
+def test_continuation_ends_at_next_physical_line(separator: str, tmp_path: Path) -> None:
+    path = tmp_path / "continued.blif"
+    path.write_text(f".model top\n.inputs a \\\n{separator}\n.outputs a\n.end", encoding="utf-8")
+    ntk = read_blif_into_klut(path)
+    assert ntk.num_pis == ntk.num_pos == 1
+    assert ntk.get_name(ntk.pi_at(0)) == ntk.get_output_name(0) == "a"
+    assert output_values(ntk) == [[False], [True]]
+
+
+def test_driver_names_and_leading_dots_round_trip(tmp_path: Path) -> None:
+    ntk = NamedKlut()
+    a = ntk.create_pi(".a")
+    ntk.create_po(a, ".a")
+    ntk.create_po(a, ".a")
+    ntk.create_po(0, "new_n0")
+    ntk.create_po(1, "new_n1")
+    path = tmp_path / "passthrough.blif"
+    write_blif(ntk, path)
+    restored = read_blif_into_klut(path)
+    assert [restored.get_output_name(i) for i in range(4)] == [".a", ".a", "new_n0", "new_n1"]
+    assert output_values(restored) == output_values(ntk)
+
+
+@pytest.mark.parametrize(
+    ("input_names", "output_names"),
+    [
+        (["", "pi2"], ["left", "right"]),
+        (["", "po0"], ["", "right"]),
+        (["", "b"], ["out", "pi2"]),
+        (["a", "b"], ["", "po0"]),
+    ],
+)
+def test_generated_interface_names_avoid_explicit_names(
+    input_names: list[str], output_names: list[str], tmp_path: Path
+) -> None:
+    ntk = NamedKlut()
+    for name in input_names:
+        ntk.create_pi(name)
+    for node, name in zip(ntk.pis(), output_names, strict=True):
+        ntk.create_po(node, name)
+    path = tmp_path / "default_names.blif"
+    write_blif(ntk, path)
+    restored = read_blif_into_klut(path)
+    actual_inputs = [restored.get_name(node) for node in restored.pis()]
+    actual_outputs = [restored.get_output_name(i) for i in range(restored.num_pos)]
+    assert len(set(actual_inputs)) == len(input_names)
+    assert len(set(actual_outputs)) == len(output_names)
+    for expected, actual in zip(input_names + output_names, actual_inputs + actual_outputs, strict=True):
+        if expected:
+            assert actual == expected
+    assert output_values(restored) == output_values(ntk)
 
 
 @pytest.mark.parametrize(

@@ -996,31 +996,31 @@ class Klut:
         """Creates a NOT function from existing signals."""
 
     def create_and(self, a: int, b: int) -> int:
-        """Creates a AND function from existing signals."""
+        """Creates an AND function from existing signals."""
 
     def create_nand(self, a: int, b: int) -> int:
         """Creates a NAND function from existing signals."""
 
     def create_or(self, a: int, b: int) -> int:
-        """Creates a OR function from existing signals."""
+        """Creates an OR function from existing signals."""
 
     def create_xor(self, a: int, b: int) -> int:
-        """Creates a XOR function from existing signals."""
+        """Creates an XOR function from existing signals."""
 
     def create_lt(self, a: int, b: int) -> int:
-        """Creates a LT function from existing signals."""
+        """Creates an LT function from existing signals."""
 
     def create_le(self, a: int, b: int) -> int:
-        """Creates a LE function from existing signals."""
+        """Creates an LE function from existing signals."""
 
     def create_maj(self, a: int, b: int, c: int) -> int:
         """Creates a MAJ function from existing signals."""
 
     def create_ite(self, cond: int, f_then: int, f_else: int) -> int:
-        """Creates a ITE function from existing signals."""
+        """Creates an ITE function from existing signals."""
 
     def create_xor3(self, a: int, b: int, c: int) -> int:
-        """Creates a XOR3 function from existing signals."""
+        """Creates an XOR3 function from existing signals."""
 
     def create_nary_and(self, fs: Sequence[int]) -> int:
         """Creates an n-ary AND as a tree of binary LUTs."""
@@ -1053,12 +1053,12 @@ class NamedKlut(Klut):
     """A k-LUT network view with signal and interface names."""
 
     @overload
-    def __init__(self) -> None:
-        """Creates an empty view."""
+    def __init__(self, ntk: NamedKlut) -> None:
+        """Copies names while sharing network storage. Use clone() for independence."""
 
     @overload
-    def __init__(self, ntk: NamedKlut) -> None:
-        """Copies a view, sharing its network storage. Use clone() for independence."""
+    def __init__(self) -> None:
+        """Creates an empty view."""
 
     @overload
     def __init__(self, ntk: Klut) -> None:
@@ -1111,10 +1111,6 @@ class DepthKlut(Klut):
         """Creates an empty view."""
 
     @overload
-    def __init__(self, ntk: DepthKlut) -> None:
-        """Copies a view, sharing its network storage. Use clone() for independence."""
-
-    @overload
     def __init__(self, ntk: Klut) -> None:
         """Creates a view sharing the network's storage. Use clone() for independence."""
 
@@ -1141,7 +1137,7 @@ class DepthKlut(Klut):
         """Recomputes levels and critical paths from current outputs."""
 
     def create_po(self, f: int) -> int:
-        """Creates an output and updates the network depth."""
+        """Creates an output and recomputes levels from all current outputs."""
 
 class FanoutKlut(Klut):
     """A k-LUT network view with gate fanout lists."""
@@ -1149,10 +1145,6 @@ class FanoutKlut(Klut):
     @overload
     def __init__(self) -> None:
         """Creates an empty view."""
-
-    @overload
-    def __init__(self, ntk: FanoutKlut) -> None:
-        """Copies a view, sharing its network storage. Use clone() for independence."""
 
     @overload
     def __init__(self, ntk: Klut) -> None:

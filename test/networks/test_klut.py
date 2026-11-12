@@ -204,3 +204,54 @@ def test_view_handle_validation(named_klut_basic: NamedKlut) -> None:
         DepthKlut(ntk).level(2**32)
     with pytest.raises(IndexError):
         FanoutKlut(ntk).fanouts(2**32)
+
+
+def test_named_view_copies_names_but_shares_structure(named_klut_basic: NamedKlut) -> None:
+    view = NamedKlut(named_klut_basic)
+    named_klut_basic.set_name(named_klut_basic.pi_at(0), "renamed")
+    assert view.get_name(view.pi_at(0)) == "a"
+    extra = named_klut_basic.create_pi("extra")
+    assert view.pi_at(2) == extra
+    assert not view.has_name(extra)
+    with pytest.raises(IndexError):
+        view.get_name(extra)
+
+
+def test_depth_output_after_refreshing_dangling_logic() -> None:
+    ntk = DepthKlut()
+    a = ntk.create_pi()
+    gate = ntk.create_not(ntk.create_not(a))
+    ntk.update_levels()
+    assert ntk.num_levels == 0
+    gate = ntk.create_not(gate)
+    ntk.create_po(gate)
+    assert ntk.num_levels == ntk.level(gate) == 3
+
+
+def test_depth_view_constructor_rebuilds_its_own_metadata() -> None:
+    original = DepthKlut()
+    a = original.create_pi()
+    original.create_po(original.create_not(a))
+    dangling = original.create_not(original.po_at(0))
+    assert original.level(dangling) == 2
+    view = DepthKlut(original)
+    assert view.level(dangling) == 0
+    view.create_po(dangling)
+    assert view.num_levels == 2
+    assert original.num_levels == 1
+    original.update_levels()
+    assert original.num_levels == 2
+
+
+def test_fanout_view_callbacks_have_independent_lifetimes() -> None:
+    original = FanoutKlut()
+    a = original.create_pi()
+    view = FanoutKlut(original)
+    first = original.create_and(a, a)
+    second = view.create_not(a)
+    view.update_fanout()
+    assert view.fanouts(a) == original.fanouts(a) == [first, second]
+    del view
+    gc.collect()
+    third = original.create_or(a, second)
+    assert original.fanouts(a) == [first, second, third]

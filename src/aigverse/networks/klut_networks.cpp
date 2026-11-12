@@ -97,10 +97,14 @@ std::unique_ptr<View> clone_view(const View& ntk)
 template <typename View>
 auto bind_view(nb::module_& m, const char* name, const char* doc)
 {
-    return nb::class_<View, klut>(m, name, doc)
-        .def(nb::init<>(), R"pb(Creates an empty view.)pb")
-        .def(nb::init<const View&>(), nb::arg("ntk"), nb::keep_alive<1, 2>(),
-             R"pb(Copies a view, sharing its network storage. Use clone() for independence.)pb")
+    auto view = nb::class_<View, klut>(m, name, doc);
+    // Native depth/fanout copies share node_map storage; base construction rebuilds private metadata.
+    if constexpr (std::is_same_v<View, named_klut>)
+    {
+        view.def(nb::init<const View&>(), nb::arg("ntk"), nb::keep_alive<1, 2>(),
+                 R"pb(Copies names while sharing network storage. Use clone() for independence.)pb");
+    }
+    return view.def(nb::init<>(), R"pb(Creates an empty view.)pb")
         .def(nb::init<const klut&>(), nb::arg("ntk"), nb::keep_alive<1, 2>(),
              R"pb(Creates a view sharing the network's storage. Use clone() for independence.)pb")
         .def("clone", &clone_view<View>, R"pb(Creates an independent network and rebuilds view metadata.)pb")
@@ -323,7 +327,7 @@ Raises:
             check_index(b, ntk.size());
             return ntk.create_and(a, b);
         },
-        nb::arg("a"), nb::arg("b"), R"pb(Creates a AND function from existing signals.)pb");
+        nb::arg("a"), nb::arg("b"), R"pb(Creates an AND function from existing signals.)pb");
     network.def(
         "create_nand",
         [](klut& ntk, const uint64_t a, const uint64_t b)
@@ -341,7 +345,7 @@ Raises:
             check_index(b, ntk.size());
             return ntk.create_or(a, b);
         },
-        nb::arg("a"), nb::arg("b"), R"pb(Creates a OR function from existing signals.)pb");
+        nb::arg("a"), nb::arg("b"), R"pb(Creates an OR function from existing signals.)pb");
     network.def(
         "create_xor",
         [](klut& ntk, const uint64_t a, const uint64_t b)
@@ -350,7 +354,7 @@ Raises:
             check_index(b, ntk.size());
             return ntk.create_xor(a, b);
         },
-        nb::arg("a"), nb::arg("b"), R"pb(Creates a XOR function from existing signals.)pb");
+        nb::arg("a"), nb::arg("b"), R"pb(Creates an XOR function from existing signals.)pb");
     network.def(
         "create_lt",
         [](klut& ntk, const uint64_t a, const uint64_t b)
@@ -359,7 +363,7 @@ Raises:
             check_index(b, ntk.size());
             return ntk.create_lt(a, b);
         },
-        nb::arg("a"), nb::arg("b"), R"pb(Creates a LT function from existing signals.)pb");
+        nb::arg("a"), nb::arg("b"), R"pb(Creates an LT function from existing signals.)pb");
     network.def(
         "create_le",
         [](klut& ntk, const uint64_t a, const uint64_t b)
@@ -368,7 +372,7 @@ Raises:
             check_index(b, ntk.size());
             return ntk.create_le(a, b);
         },
-        nb::arg("a"), nb::arg("b"), R"pb(Creates a LE function from existing signals.)pb");
+        nb::arg("a"), nb::arg("b"), R"pb(Creates an LE function from existing signals.)pb");
     network.def(
         "create_maj",
         [](klut& ntk, const uint64_t a, const uint64_t b, const uint64_t c)
@@ -388,7 +392,7 @@ Raises:
             check_index(f_else, ntk.size());
             return ntk.create_ite(cond, f_then, f_else);
         },
-        nb::arg("cond"), nb::arg("f_then"), nb::arg("f_else"), R"pb(Creates a ITE function from existing signals.)pb");
+        nb::arg("cond"), nb::arg("f_then"), nb::arg("f_else"), R"pb(Creates an ITE function from existing signals.)pb");
     network.def(
         "create_xor3",
         [](klut& ntk, const uint64_t a, const uint64_t b, const uint64_t c)
@@ -398,7 +402,7 @@ Raises:
             check_index(c, ntk.size());
             return ntk.create_xor3(a, b, c);
         },
-        nb::arg("a"), nb::arg("b"), nb::arg("c"), R"pb(Creates a XOR3 function from existing signals.)pb");
+        nb::arg("a"), nb::arg("b"), nb::arg("c"), R"pb(Creates an XOR3 function from existing signals.)pb");
     network.def(
         "create_nary_and",
         [](klut& ntk, const std::vector<uint64_t>& fs)
@@ -567,10 +571,11 @@ Raises:
             [](depth_klut& ntk, const uint64_t f)
             {
                 check_index(f, ntk.size());
-                ntk.resize_levels();
-                return ntk.create_po(f);
+                const auto index = ntk.klut::create_po(f);
+                ntk.update_levels();
+                return index;
             },
-            nb::arg("f"), R"pb(Creates an output and updates the network depth.)pb");
+            nb::arg("f"), R"pb(Creates an output and recomputes levels from all current outputs.)pb");
 
     auto fanout = bind_view<fanouts_klut>(m, "FanoutKlut", R"pb(A k-LUT network view with gate fanout lists.)pb");
     fanout.def("update_fanout", &fanouts_klut::update_fanout, R"pb(Recomputes fanout lists.)pb")

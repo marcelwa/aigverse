@@ -75,6 +75,16 @@ assert named.num_pos == 1
 View constructors share network storage with their argument, following the AIG view convention. After changing
 outputs through another shared object, call `update_levels()` to refresh depth metadata. Critical-path queries
 recompute levels. Gate fanout lists exclude primary outputs; `update_fanout()` rebuilds them explicitly.
+Depth and fanout constructors rebuild independent metadata, even when constructed from another view of the same type.
+Depth refreshes visit output cones; dangling nodes have level zero after a refresh.
+`NamedKlut(named)` copies the existing name maps: later name changes and names attached to new nodes are local
+to each view, even though the nodes themselves are shared. Use `has_name` and `has_output_name` before querying
+optional names; querying a missing name raises `IndexError`.
+
+`DepthKlut.create_po()` recomputes levels, including logic that was previously dangling. For networks with many
+outputs, build them in a plain `Klut` and construct a `DepthKlut` afterward to compute depth once. Repeated
+critical-path queries also recompute metadata; they are intended for individual queries rather than whole-network scans.
+
 `clone()`, `copy.copy()`, and `copy.deepcopy()` create independent networks and retain the view type; named
 copies preserve names. `Klut(view)` makes an independent plain network, discarding extra metadata.
 
@@ -99,10 +109,11 @@ assert restored.get_output_name(0) == "result"
 ```
 
 BLIF preserves primary-input and primary-output names and order, including repeated output drivers. Internal
-names are regenerated; the writer uses model name `top`. The reader accepts `.model`, `.inputs`, `.outputs`,
+nodes are unnamed on import and their names are regenerated on export; the writer uses model name `top`.
+The reader accepts `.model`, `.inputs`, `.outputs`,
 `.names`, and `.end`, comments, line continuations, and on-set or off-set covers. It rejects malformed covers,
 missing drivers, cycles, latches, hierarchy, and library cells with `RuntimeError`.
 
-The writer rejects names containing whitespace, control characters, `#`, or backslash, and names starting with
-`.`. One interface name cannot refer to different drivers. `new_n0` and `new_n1` are reserved for the native
+The writer rejects names containing whitespace, control characters, `#`, or backslash. Generated interface
+names avoid explicit names. One interface name cannot refer to different drivers. `new_n0` and `new_n1` are reserved for the native
 writer's constant nodes; an output may use one only when it references the corresponding constant.

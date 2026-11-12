@@ -74,14 +74,21 @@ blif_source validate_blif(std::istream& input)
         const auto last = line.find_last_not_of(" \t\r");
         if (last == std::string::npos)
         {
-            continue;
+            line.clear();
+            if (continued.empty())
+            {
+                continue;
+            }
         }
-        line.erase(last + 1);
-        if (line.back() == '\\')
+        else
         {
-            line.pop_back();
-            continued += line + ' ';
-            continue;
+            line.erase(last + 1);
+            if (line.back() == '\\')
+            {
+                line.pop_back();
+                continued += line + ' ';
+                continue;
+            }
         }
         line.insert(0, continued);
         continued.clear();
@@ -226,7 +233,7 @@ named_klut read_blif(const std::filesystem::path& filename)
 
 void check_name(const std::string& name)
 {
-    if (name.empty() || name.front() == '.' || name.find_first_of("#\\") != std::string::npos)
+    if (name.empty() || name.find_first_of("#\\") != std::string::npos)
     {
         throw nb::value_error("BLIF interface names must be nonempty tokens without # or backslash");
     }
@@ -245,60 +252,65 @@ void write_blif(const Ntk& ntk, const std::filesystem::path& filename)
     // Only interface names are serialized; generated internal names avoid all interface collisions.
     named_klut                                output(static_cast<const klut&>(ntk));
     std::unordered_map<std::string, uint64_t> drivers{{"new_n0", 0}, {"new_n1", 1}};
-    auto                                      define = [&](const std::string& name, const uint64_t signal)
+    if constexpr (std::is_same_v<Ntk, named_klut>)
     {
-        check_name(name);
-        const auto [it, inserted] = drivers.emplace(name, signal);
-        if (!inserted && it->second != signal)
+        const auto define = [&](const std::string& name, const uint64_t signal)
         {
-            throw nb::value_error("BLIF interface name has conflicting drivers");
+            check_name(name);
+            const auto [it, inserted] = drivers.emplace(name, signal);
+            if (!inserted && it->second != signal)
+            {
+                const auto message = fmt::format("BLIF interface name '{}' has conflicting drivers", name);
+                throw nb::value_error(message.c_str());
+            }
+        };
+        ntk.foreach_pi(
+            [&](const auto n)
+            {
+                if (ntk.has_name(n))
+                {
+                    const auto name = ntk.get_name(n);
+                    define(name, n);
+                    output.set_name(n, name);
+                }
+            });
+        ntk.foreach_po(
+            [&](const auto f, const auto index)
+            {
+                if (ntk.has_output_name(index))
+                {
+                    const auto name = ntk.get_output_name(index);
+                    define(name, f);
+                    output.set_output_name(index, name);
+                }
+            });
+    }
+    const auto fresh_name = [&](std::string name, const uint64_t signal)
+    {
+        while (drivers.count(name) != 0)
+        {
+            name += '_';
         }
+        drivers.emplace(name, signal);
+        return name;
     };
     ntk.foreach_pi(
         [&](const auto n)
         {
-            const auto name = [&]
+            if (!output.has_name(n))
             {
-                if constexpr (std::is_same_v<Ntk, named_klut>)
-                {
-                    if (ntk.has_name(n))
-                    {
-                        return ntk.get_name(n);
-                    }
-                }
-                return fmt::format("pi{}", n);
-            }();
-            define(name, n);
-            output.set_name(n, name);
+                output.set_name(n, fresh_name(fmt::format("pi{}", n), n));
+            }
         });
     ntk.foreach_po(
         [&](const auto f, const auto index)
         {
-            const auto name = [&]
+            if (!output.has_output_name(index))
             {
-                if constexpr (std::is_same_v<Ntk, named_klut>)
-                {
-                    if (ntk.has_output_name(index))
-                    {
-                        return ntk.get_output_name(index);
-                    }
-                }
-                return fmt::format("po{}", index);
-            }();
-            define(name, f);
-            output.set_output_name(index, name);
-        });
-    ntk.foreach_gate(
-        [&](const auto n)
-        {
-            auto name = fmt::format("new_n{}", n);
-            while (drivers.count(name) != 0)
-            {
-                name += '_';
+                output.set_output_name(index, fresh_name(fmt::format("po{}", index), f));
             }
-            drivers.emplace(name, n);
-            output.set_name(n, name);
         });
+    ntk.foreach_gate([&](const auto n) { output.set_name(n, fresh_name(fmt::format("new_n{}", n), n)); });
     std::ofstream stream(filename);
     if (!stream)
     {
