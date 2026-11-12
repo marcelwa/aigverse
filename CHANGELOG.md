@@ -30,6 +30,8 @@ releases may include breaking changes.
 
 ### Changed
 
+- 💥 Require Python 3.11 or newer and raise the ordinary Stable ABI wheel floor to Python 3.11 ([#439])
+  ([**@marcelwa**])
 - 🔧 Drop the global `CMAKE_POSITION_INDEPENDENT_CODE` override; mockturtle now builds its
   own archives as position-independent code ([#501]) ([**@marcelwa**])
 - 👷 Run native Linux CI and Read the Docs on Ubuntu 26.04 with the runner's default

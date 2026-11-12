@@ -2,6 +2,10 @@
 
 This document describes breaking changes and how to upgrade.
 
+## Unreleased
+
+Python 3.10 is no longer supported. Upgrade to Python 3.11 or newer before updating `aigverse`; no API migration is required.
+
 ## 0.1.0
 
 The `aigverse` library has been refactored into multiple extension modules to improve organization and scalability. If

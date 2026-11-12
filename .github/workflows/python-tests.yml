@@ -94,20 +94,17 @@ jobs:
       #
       # uv downloads an emulated x86_64 interpreter on Windows ARM64 unless the native
       # one is requested by name, and an x64 3.11 cannot load the arm64 extension, so
-      # install it explicitly. 3.10 has no native build at all and drops out.
+      # install it explicitly.
       #
       # `minimums` narrows further, to 3.14 and newer: numpy's win_arm64 wheels start at
       # 2.3.0, and only the 3.14+ floors (`adapters` in pyproject.toml) clear
       # that. The lower floors would fall back to a from-source numpy build, which
       # itself fails here, as Git's own `link.exe` shadows MSVC's on this image.
       - if: inputs.runs-on == 'windows-11-arm'
-        name: Restrict interpreters on Windows ARM64
+        name: Set up interpreters on Windows ARM64
         run: |
           uv python install cpython-3.11-windows-aarch64-none
-          {
-            echo "NOX_PYTHON_TESTS=-p 3.11 3.12 3.13 3.14 3.15 3.15t"
-            echo "NOX_PYTHON_MINIMUMS=-p 3.14 3.15 3.15t"
-          } >> "$GITHUB_ENV"
+          echo "NOX_PYTHON_MINIMUMS=-p 3.14 3.15 3.15t" >> "$GITHUB_ENV"
 
       # The declared floors are only a claim until something installs them, so
       # resolve every direct dependency down to its minimum and run the suite
@@ -136,9 +133,7 @@ jobs:
 
       - if: inputs.runs-on == 'windows-11-arm'
         name: 🐍 Test (Windows ARM64)
-        run: |
-          # shellcheck disable=SC2086  # word-split into separate -p / version args
-          uvx nox -s tests ${NOX_PYTHON_TESTS} --verbose -- -m "not network and not torch"
+        run: uvx nox -s tests --verbose -- -m "not network and not torch"
 
       # A hit rate is a fact; a step duration is a guess about one. The other
       # platforms get this from ccache-action's post step. `--show-stats` is left

@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 nox.needs_version = ">=2025.10.16"
 nox.options.default_venv_backend = "uv"
 
-PYTHON_ALL_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "3.15t"]
+PYTHON_ALL_VERSIONS = ["3.11", "3.12", "3.13", "3.14", "3.15", "3.15t"]
 
 if os.environ.get("CI", None):
     nox.options.error_on_missing_interpreters = True
@@ -152,7 +152,7 @@ def _wheel_tag(python: str) -> str:
     Returns:
         The tag identifying the wheel that interpreter builds.
     """
-    return "cp315-abi3t" if python.endswith("t") else "cp310-abi3"
+    return "cp315-abi3t" if python.endswith("t") else "cp311-abi3"
 
 
 def _venv_python(session: nox.Session) -> Path:
