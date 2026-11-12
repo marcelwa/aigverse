@@ -27,8 +27,7 @@ jobs:
     permissions:
       contents: read # required to check out the repository
 
-    # Exercise every supported interpreter against its shared abi3 or abi3t wheel;
-    # the wheel matrix only tests the oldest interpreter for each ABI.
+    # Exercise every supported interpreter against its shared abi3 or abi3t wheel.
     steps:
       - name: Clone Repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
