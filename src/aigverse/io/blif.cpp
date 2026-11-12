@@ -215,6 +215,7 @@ named_klut read_blif(const std::filesystem::path& filename)
     {
         throw std::runtime_error("Error opening BLIF file");
     }
+    // Normalized text has no blank lines/backslashes and ends with a newline, as pinned Lorina requires.
     const auto                source = validate_blif(input);
     std::istringstream        normalized(source.text);
     lorina::text_diagnostics  consumer;
@@ -330,6 +331,9 @@ void bind_write_blif(nb::module_& m)
     // topo_view mutates shared traversal flags, so writers retain the GIL.
     m.def("write_blif", &write_blif<Ntk>, nb::arg("ntk"), nb::arg("filename"),
           R"pb(Writes a combinational k-LUT network as BLIF.
+
+Very deep chains can overflow the native stack and terminate the process.
+The limit depends on the platform and thread stack.
 
 Args:
     ntk: Network to serialize. NamedKlut preserves PI/PO names and order; internal names are regenerated.

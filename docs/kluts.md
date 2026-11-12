@@ -85,6 +85,9 @@ optional names; querying a missing name raises `IndexError`.
 outputs, build them in a plain `Klut` and construct a `DepthKlut` afterward to compute depth once. Repeated
 critical-path queries also recompute metadata; they are intended for individual queries rather than whole-network scans.
 
+Native depth computation and BLIF writing use recursive traversals. Very deep chains can overflow the native
+stack and terminate the process. The limit depends on the platform and thread stack; there is no portable safe depth.
+
 `clone()`, `copy.copy()`, and `copy.deepcopy()` create independent networks and retain the view type; named
 copies preserve names. `Klut(view)` makes an independent plain network, discarding extra metadata.
 
@@ -110,9 +113,14 @@ assert restored.get_output_name(0) == "result"
 
 BLIF preserves primary-input and primary-output names and order, including repeated output drivers. Internal
 nodes are unnamed on import and their names are regenerated on export; the writer uses model name `top`.
+The writer omits gates that do not reach an output and may add buffer LUTs for primary outputs. Round trips
+preserve interface behavior, not gate counts or node identities.
 The reader accepts `.model`, `.inputs`, `.outputs`,
 `.names`, and `.end`, comments, line continuations, and on-set or off-set covers. It rejects malformed covers,
 missing drivers, cycles, latches, hierarchy, and library cells with `RuntimeError`.
+
+Compact BLIF covers expand into dense LUT truth tables whose space grows exponentially with fanin count.
+A small input file can therefore require a large amount of memory.
 
 The writer rejects names containing whitespace, control characters, `#`, or backslash. Generated interface
 names avoid explicit names. One interface name cannot refer to different drivers. `new_n0` and `new_n1` are reserved for the native

@@ -1104,7 +1104,11 @@ class NamedKlut(Klut):
         """Returns a primary output's name."""
 
 class DepthKlut(Klut):
-    """A k-LUT network view with unit-cost LUT levels."""
+    """A k-LUT network view with unit-cost LUT levels.
+
+    Very deep chains can overflow the native stack and terminate the process.
+    The limit depends on the platform and thread stack.
+    """
 
     @overload
     def __init__(self) -> None:

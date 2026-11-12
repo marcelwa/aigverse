@@ -61,6 +61,20 @@ def test_blif_round_trip(named_klut_basic: NamedKlut, tmp_path: Path, *, named: 
         ]
 
 
+def test_blif_round_trip_omits_dangling_logic(named_klut_basic: NamedKlut, tmp_path: Path) -> None:
+    ntk = named_klut_basic
+    dangling = ntk.pi_at(0)
+    for _ in range(3):
+        dangling = ntk.create_not(dangling)
+    path = tmp_path / "dangling.blif"
+    write_blif(ntk, path)
+    restored = read_blif_into_klut(path)
+    assert restored.num_gates < ntk.num_gates
+    assert output_values(restored) == output_values(ntk)
+    assert [restored.get_name(node) for node in restored.pis()] == ["a", "b"]
+    assert [restored.get_output_name(i) for i in range(restored.num_pos)] == ["out"]
+
+
 def test_blif_covers_comments_and_forward_references(tmp_path: Path) -> None:
     path = tmp_path / "covers.blif"
     path.write_text(

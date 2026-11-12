@@ -543,7 +543,10 @@ Raises:
             },
             nb::arg("index"), R"pb(Returns a primary output's name.)pb");
 
-    auto depth = bind_view<depth_klut>(m, "DepthKlut", R"pb(A k-LUT network view with unit-cost LUT levels.)pb");
+    auto depth = bind_view<depth_klut>(m, "DepthKlut", R"pb(A k-LUT network view with unit-cost LUT levels.
+
+Very deep chains can overflow the native stack and terminate the process.
+The limit depends on the platform and thread stack.)pb");
     depth
         .def_prop_ro("num_levels", &depth_klut::depth,
                      R"pb(Current depth in LUT levels; update_levels() refreshes shared changes.)pb")

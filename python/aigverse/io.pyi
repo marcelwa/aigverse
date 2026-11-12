@@ -143,6 +143,9 @@ def write_blif(ntk: aigverse.networks.NamedKlut, filename: str | os.PathLike) ->
 def write_blif(ntk: aigverse.networks.Klut, filename: str | os.PathLike) -> None:
     """Writes a combinational k-LUT network as BLIF.
 
+    Very deep chains can overflow the native stack and terminate the process.
+    The limit depends on the platform and thread stack.
+
     Args:
         ntk: Network to serialize. NamedKlut preserves PI/PO names and order; internal names are regenerated.
         filename: Destination path.
