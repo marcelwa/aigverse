@@ -137,6 +137,7 @@ void bind_mapping(nb::module_& m)
                 throw nb::value_error("window_size must be positive");
             }
 
+            // Clone with the GIL held so later Python mutations cannot affect mapping.
             const auto                   snapshot = detail::snapshot_network(ntk);
             const nb::gil_scoped_release release{};
             auto                         cleaned = mockturtle::cleanup_dangling(snapshot);
@@ -147,6 +148,7 @@ void bind_mapping(nb::module_& m)
             }
             else
             {
+                // Preserve the AIG's structural cuts through SAT recovery before materializing LUTs.
                 mockturtle::mapping_view<aig> mapping(cleaned);
                 if (cleaned.num_gates() != 0)
                 {
@@ -154,9 +156,10 @@ void bind_mapping(nb::module_& m)
                     classic.cut_enumeration_ps.cut_size = static_cast<uint32_t>(cut_size);
                     // Classic/SAT reserve one retained cut for the node itself.
                     classic.cut_enumeration_ps.cut_limit = static_cast<uint32_t>(cut_limit + 1);
-                    classic.rounds                       = modern.area_flow_rounds + 1;
-                    classic.rounds_ela                   = modern.ela_rounds;
-                    classic.verbose                      = verbose;
+                    // Native rounds include initialization; the public count is additional passes.
+                    classic.rounds     = modern.area_flow_rounds + 1;
+                    classic.rounds_ela = modern.ela_rounds;
+                    classic.verbose    = verbose;
                     mockturtle::lut_mapping(mapping, classic);
                     if (sat)
                     {
