@@ -28,6 +28,13 @@ def test_constants_and_arbitrary_lut() -> None:
     gate = ntk.create_node([a, b], table)
     ntk.create_po(gate)
     assert isinstance(gate, int)
+    assert ntk.get_node(gate) == ntk.make_signal(gate) == gate
+    assert ntk.node_to_index(gate) == ntk.index_to_node(gate) == gate
+    assert ntk.is_constant(0)
+    assert not ntk.is_constant(gate)
+    assert ntk.is_pi(a)
+    assert not ntk.is_pi(gate)
+    assert repr(ntk) == "Klut(pis=2, pos=1, gates=1, size=5)"
     assert ntk.fanins(gate) == [a, b]
     assert ntk.node_function(gate) == table
     assert ntk.create_node([a, b], table) == gate
@@ -255,3 +262,25 @@ def test_fanout_view_callbacks_have_independent_lifetimes() -> None:
     gc.collect()
     third = original.create_or(a, second)
     assert original.fanouts(a) == [first, second, third]
+
+
+def test_constant_output_network_is_nonempty() -> None:
+    ntk = Klut()
+    assert ntk.pis() == ntk.pos() == ntk.gates() == ntk.fanins(0) == []
+    ntk.create_po(0)
+    assert ntk
+
+
+def test_named_clone_preserves_optional_names() -> None:
+    ntk = NamedKlut()
+    a = ntk.create_pi("a")
+    b = ntk.create_pi()
+    ntk.create_po(a)
+    ntk.create_po(b, "out")
+    cloned = ntk.clone()
+    assert cloned.has_name(a)
+    assert not cloned.has_name(b)
+    assert not cloned.has_output_name(0)
+    assert cloned.has_output_name(1)
+    assert cloned.get_name(a) == "a"
+    assert cloned.get_output_name(1) == "out"

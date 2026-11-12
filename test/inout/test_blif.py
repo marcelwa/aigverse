@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
 
 import pytest
@@ -105,17 +106,18 @@ def test_continuation_ends_at_next_physical_line(separator: str, tmp_path: Path)
     assert output_values(ntk) == [[False], [True]]
 
 
-def test_driver_names_and_leading_dots_round_trip(tmp_path: Path) -> None:
+@pytest.mark.parametrize("name", [".a", "éclair"])
+def test_driver_names_round_trip(name: str, tmp_path: Path) -> None:
     ntk = NamedKlut()
-    a = ntk.create_pi(".a")
-    ntk.create_po(a, ".a")
-    ntk.create_po(a, ".a")
+    a = ntk.create_pi(name)
+    ntk.create_po(a, name)
+    ntk.create_po(a, name)
     ntk.create_po(0, "new_n0")
     ntk.create_po(1, "new_n1")
     path = tmp_path / "passthrough.blif"
     write_blif(ntk, path)
     restored = read_blif_into_klut(path)
-    assert [restored.get_output_name(i) for i in range(4)] == [".a", ".a", "new_n0", "new_n1"]
+    assert [restored.get_output_name(i) for i in range(4)] == [name, name, "new_n0", "new_n1"]
     assert output_values(restored) == output_values(ntk)
 
 
@@ -164,6 +166,8 @@ def test_generated_interface_names_avoid_explicit_names(
         ".names a out\n0 0\n1 1",
         ".names a out\n1 1 garbage",
         ".names out\n0\n1",
+        ".names out\n0 1",
+        "1",
         ".names a out\n1 1\n.names a out\n0 1",
         ".inputs a",
         ".names a\n1",
@@ -172,6 +176,7 @@ def test_generated_interface_names_avoid_explicit_names(
         ".names orphan\n1",
         ".model second",
         ".end\n.model second",
+        ".end extra",
     ],
 )
 def test_invalid_blif_is_rejected(body: str, tmp_path: Path) -> None:
@@ -202,7 +207,7 @@ def test_internal_names_do_not_collide(named_klut_basic: NamedKlut, tmp_path: Pa
     assert output_values(restored) == output_values(ntk)
 
 
-@pytest.mark.parametrize("name", ["new_n0", "new_n1", "a", "", "a b", "a#b", "a\\b", "a\n.inputs bad"])
+@pytest.mark.parametrize("name", ["new_n0", "new_n1", "a", "", "a b", "a#b", "a\\b", "a\n.inputs bad", "a\x01b"])
 def test_invalid_output_names_rejected(name: str, named_klut_basic: NamedKlut, tmp_path: Path) -> None:
     named_klut_basic.set_output_name(0, name)
     path = tmp_path / "output.blif"
@@ -236,5 +241,36 @@ def test_empty_and_direct_networks(tmp_path: Path) -> None:
 def test_blif_path_errors(named_klut_basic: NamedKlut, tmp_path: Path) -> None:
     with pytest.raises(RuntimeError, match="opening"):
         read_blif_into_klut(tmp_path / "missing.blif")
+    with pytest.raises(RuntimeError):
+        read_blif_into_klut(tmp_path)
     with pytest.raises(RuntimeError, match="opening"):
         write_blif(named_klut_basic, tmp_path / "missing" / "out.blif")
+
+
+@pytest.mark.parametrize("cover", ["", "0", "1"])
+def test_constant_covers_without_inputs(cover: str, tmp_path: Path) -> None:
+    path = tmp_path / "constant.blif"
+    path.write_text(f".model constant\n.inputs\n.outputs out\n.names out\n{cover}\n.end\n", encoding="utf-8")
+    ntk = read_blif_into_klut(path)
+    assert output_values(ntk) == [[cover == "1"]]
+    assert ntk.get_output_name(0) == "out"
+
+
+def test_empty_blif_directives_and_blank_logical_lines(tmp_path: Path) -> None:
+    path = tmp_path / "empty.blif"
+    path.write_text(".model empty\n\n# comment\n.inputs\n.outputs\n\\\n\n.end", encoding="utf-8")
+    assert not read_blif_into_klut(path)
+
+
+@pytest.mark.parametrize("header", [".model", ".model first second"])
+def test_invalid_model_header(header: str, tmp_path: Path) -> None:
+    path = tmp_path / "model.blif"
+    path.write_text(f"{header}\n.end\n", encoding="utf-8")
+    with pytest.raises(RuntimeError, match=r"one \.model name"):
+        read_blif_into_klut(path)
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Requires Linux /dev/full")
+def test_blif_reports_write_failure(named_klut_basic: NamedKlut) -> None:
+    with pytest.raises(RuntimeError, match="writing BLIF"):
+        write_blif(named_klut_basic, "/dev/full")

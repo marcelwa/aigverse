@@ -238,9 +238,10 @@ void check_name(const std::string& name)
     {
         throw nb::value_error("BLIF interface names must be nonempty tokens without # or backslash");
     }
-    for (const unsigned char c : name)
+    for (const char c : name)
     {
-        if (std::isspace(c) != 0 || std::iscntrl(c) != 0)
+        const auto value = static_cast<unsigned char>(c);
+        if (std::isspace(value) != 0 || std::iscntrl(value) != 0)
         {
             throw nb::value_error("BLIF interface names cannot contain whitespace or control characters");
         }
