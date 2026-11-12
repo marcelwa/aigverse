@@ -259,9 +259,8 @@ class Resub(CommandWrapper):
     ) -> Command:
         """Builds ABC's ``&resub`` command without running it.
 
-        ABC builds that use the former ``&resub2`` implementation for ``&resub``
-        limit ``max_inserts`` to 4 and require omitting ``max_support`` and
-        ``max_divisors``.
+        Newer ABC builds where ``&resub`` accepts ``-K`` cap ``max_inserts`` at 4
+        and reject ``max_support`` and ``max_divisors`` at execution time.
 
         Args:
             max_inserts: Limit on the number of nodes added (ABC's ``-N``, at least
