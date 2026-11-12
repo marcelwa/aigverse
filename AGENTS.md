@@ -247,6 +247,9 @@ reflow it. The wrap this repo's Markdown files use belongs to files in a tree, n
 
 ## Boundaries
 
+- **ABC CLI:** The Python ABC wrapper supports the CLI of the ABC revision pinned in CI. When an upstream CLI
+  change lands, update the wrapper, option bounds, tests, and documentation in the same change as the pin.
+  Remove obsolete flags and arguments. Do not add compatibility shims or keep legacy CLI variants.
 - **Always:** write the smallest diff that solves the problem (see [Code](#code)); run `uvx nox -s lint` and `uvx nox
 -s tests-3.12` before considering a change complete; regenerate stubs (`uvx nox -s stubs`) after touching any
   `bindings.cpp`; add/update tests under `test/` for behavior changes; update `CHANGELOG.md` for user-facing changes.

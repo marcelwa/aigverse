@@ -1,7 +1,6 @@
-"""Keeps the option bounds in sync with whatever ABC is installed.
+"""Keeps the option bounds in sync with the ABC revision pinned in CI.
 
-`aigverse` pins no ABC version, so :data:`aigverse.abc._options.BOUNDS` can only
-describe some ABC. Most of its entries are ranges ABC prints in a command's
+Most entries in :data:`aigverse.abc._options.BOUNDS` are ranges ABC prints in a command's
 ``-h`` output; these tests parse them back out of the resolved binary and fail if
 they moved, which is what makes the pinned-ABC CI job able to catch upstream
 drift. The rest are enforced by ABC's code without appearing in ``-h`` and are
@@ -75,48 +74,17 @@ _DOCUMENTED = [bound for bound in BOUNDS.values() if bound.documented]
 _UNDOCUMENTED = [bound for bound in BOUNDS.values() if not bound.documented]
 
 
-def _assert_documented_bound(bound: Bound, usage: str) -> None:
-    """Checks the bound against the command's usage text."""
-    ranges = _documented_ranges(usage)
-
-    # The replacement &resub command added -K and dropped -S and -D.
-    if bound.command == "&resub" and "K" in ranges:
-        if bound.switch == "N":
-            assert ranges.get("N") == (0, 4)
-        else:
-            assert not re.search(rf"^\s*-{bound.switch}\b", usage, re.MULTILINE)
-        return
+@pytest.mark.usefixtures("abc_available")
+@pytest.mark.parametrize("bound", _DOCUMENTED, ids=lambda b: f"{b.command}-{b.switch}")
+def test_documented_bounds_match_abc(bound: Bound) -> None:
+    """Every range this bridge encodes must still be the range ABC prints."""
+    ranges = _documented_ranges(_usage(bound.command))
 
     assert bound.switch in ranges, (
         f"ABC no longer documents a range for `{bound.command} -{bound.switch}`; "
         f"either it moved into the code or the switch is gone."
     )
     assert ranges[bound.switch] == (bound.low, bound.high)
-
-
-@pytest.mark.usefixtures("abc_available")
-@pytest.mark.parametrize("bound", _DOCUMENTED, ids=lambda b: f"{b.command}-{b.switch}")
-def test_documented_bounds_match_abc(bound: Bound) -> None:
-    """Every range this bridge encodes must still be the range ABC prints."""
-    _assert_documented_bound(bound, _usage(bound.command))
-
-
-@pytest.mark.parametrize(
-    "usage",
-    [
-        (
-            "-N num : the limit on added nodes (num >= 0)\n"
-            "-S num : the limit on support size (num > 0)\n"
-            "-D num : the limit on divisor count (num > 0)\n"
-        ),
-        "-K num : maximum cut size (4 to 16)\n-N num : maximum new nodes (0 to 4)\n",
-    ],
-    ids=["legacy", "current"],
-)
-def test_gia_resub_help_formats(usage: str) -> None:
-    """Both contracts remain covered when CI changes the pinned ABC revision."""
-    for switch in ("N", "S", "D"):
-        _assert_documented_bound(BOUNDS["&resub", switch], usage)
 
 
 @pytest.mark.usefixtures("abc_available")
@@ -171,7 +139,10 @@ def test_refactor_rejects_the_support_abc_rejects(and_aig: Aig) -> None:
         ("resub", "K", 17, "cut must be between 4 and 16"),
         ("resub", "N", 4, "inserts must be between 0 and 3"),
         ("refactor", "N", 16, "support must be between 1 and 15"),
-        ("&resub", "S", 0, "support must be at least 1"),
+        ("&resub", "K", 3, "max_cut_size must be between 4 and 16"),
+        ("&resub", "N", 5, "max_inserts must be between 0 and 4"),
+        ("&resub", "M", 0, "min_saved must be between 1 and 1000000"),
+        ("&resub", "M", 1_000_001, "min_saved must be between 1 and 1000000"),
         ("&deepsyn", "S", 101, "seed must be between 0 and 100"),
     ],
 )

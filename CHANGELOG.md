@@ -28,7 +28,8 @@ releases may include breaking changes.
 
 ### Changed
 
-- 📝 Document the option limits of the replacement ABC `&resub` command ([#584]) ([**@marcelwa**])
+- 💥 Update `abc.gia.resub` to ABC's current switches and remove `max_support` and `max_divisors`
+  ([#584]) ([**@marcelwa**])
 - 🔧 Drop the global `CMAKE_POSITION_INDEPENDENT_CODE` override; mockturtle now builds its
   own archives as position-independent code ([#501]) ([**@marcelwa**])
 - 👷 Run native Linux CI and Read the Docs on Ubuntu 26.04 with the runner's default

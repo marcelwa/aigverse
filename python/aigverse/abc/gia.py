@@ -253,22 +253,22 @@ class Resub(CommandWrapper):
     @staticmethod
     def cmd(
         *,
+        max_cut_size: int | None = None,
         max_inserts: int | None = None,
-        max_support: int | None = None,
-        max_divisors: int | None = None,
+        min_saved: int | None = None,
+        fast: bool = False,
+        preserve_levels: bool = True,
+        abc_verbose: bool = False,
     ) -> Command:
         """Builds ABC's ``&resub`` command without running it.
 
-        Newer ABC builds where ``&resub`` accepts ``-K`` cap ``max_inserts`` at 4
-        and reject ``max_support`` and ``max_divisors`` at execution time.
-
         Args:
-            max_inserts: Limit on the number of nodes added (ABC's ``-N``, at least
-                0), or ``None`` for ABC's default.
-            max_support: Limit on the support size (ABC's ``-S``, at least 1), or
-                ``None`` for ABC's default.
-            max_divisors: Limit on the divisor count (ABC's ``-D``, at least 1), or
-                ``None`` for ABC's default.
+            max_cut_size: Maximum cut size (4 to 16), or ``None`` for ABC's default of 8.
+            max_inserts: Maximum number of new nodes (0 to 4), or ``None`` for ABC's default of 1.
+            min_saved: Minimum number of nodes saved (1 to 1,000,000), or ``None`` for ABC's default of 1.
+            fast: If ``True``, use a faster search with reduced effort.
+            preserve_levels: If ``True``, preserve the number of levels.
+            abc_verbose: If ``True``, ask ABC to print resubstitution details.
 
         Returns:
             The command, ready for :obj:`run_script` or :obj:`run_many`.
@@ -278,40 +278,48 @@ class Resub(CommandWrapper):
         """
         command = "&resub"
         for switch, value, name in (
+            ("K", max_cut_size, "max_cut_size"),
             ("N", max_inserts, "max_inserts"),
-            ("S", max_support, "max_support"),
-            ("D", max_divisors, "max_divisors"),
+            ("M", min_saved, "min_saved"),
         ):
             if value is None:
                 continue
             check_option("&resub", switch, value, name=name)
             command += f" -{switch} {value}"
+        if fast:
+            command += " -f"
+        if not preserve_levels:
+            command += " -l"
+        if abc_verbose:
+            command += " -v"
         return Command(command)
 
     def __call__(
         self,
         ntk: AigT,
         *,
+        max_cut_size: int | None = None,
         max_inserts: int | None = None,
-        max_support: int | None = None,
-        max_divisors: int | None = None,
+        min_saved: int | None = None,
+        fast: bool = False,
+        preserve_levels: bool = True,
+        abc_verbose: bool = False,
         timeout: float | None = None,
         verbose: bool = False,
         binary: str | os.PathLike[str] | None = None,
     ) -> AigT:
         """Runs ABC's ``&resub`` command on a network.
 
-        The ``&``-space counterpart of :obj:`~aigverse.abc.resub`. See :meth:`cmd`
-        for the option limits on newer ABC builds.
+        The ``&``-space counterpart of :obj:`~aigverse.abc.resub`.
 
         Args:
             ntk: The network to optimize.
-            max_inserts: Limit on the number of nodes added (ABC's ``-N``, at least
-                0), or ``None`` for ABC's default.
-            max_support: Limit on the support size (ABC's ``-S``, at least 1), or
-                ``None`` for ABC's default.
-            max_divisors: Limit on the divisor count (ABC's ``-D``, at least 1), or
-                ``None`` for ABC's default.
+            max_cut_size: Maximum cut size (4 to 16), or ``None`` for ABC's default of 8.
+            max_inserts: Maximum number of new nodes (0 to 4), or ``None`` for ABC's default of 1.
+            min_saved: Minimum number of nodes saved (1 to 1,000,000), or ``None`` for ABC's default of 1.
+            fast: If ``True``, use a faster search with reduced effort.
+            preserve_levels: If ``True``, preserve the number of levels.
+            abc_verbose: If ``True``, ask ABC to print resubstitution details. Use ``verbose=True`` to display them.
             timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
             verbose: If ``True``, print everything ABC wrote.
             binary: Overrides the resolved ABC executable for this call only.
@@ -323,9 +331,12 @@ class Resub(CommandWrapper):
             ValueError: If a limit is outside the range ABC accepts.
         """
         command = self.cmd(
+            max_cut_size=max_cut_size,
             max_inserts=max_inserts,
-            max_support=max_support,
-            max_divisors=max_divisors,
+            min_saved=min_saved,
+            fast=fast,
+            preserve_levels=preserve_levels,
+            abc_verbose=abc_verbose,
         )
         return _run(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
