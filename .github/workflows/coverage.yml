@@ -18,6 +18,7 @@ jobs:
     name: 📊 Python ${{ matrix.python }} and C++
     runs-on: ubuntu-26.04
     strategy:
+      fail-fast: false
       matrix:
         python: ["3.12", "3.15t"]
     timeout-minutes: 60
@@ -40,7 +41,9 @@ jobs:
           save-cache: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Measure coverage
-        run: uvx nox -s coverage -p '${{ matrix.python }}' -- --full -m 'not network'
+        env:
+          COVERAGE_PYTHON: ${{ matrix.python }}
+        run: uvx nox -s coverage -p "$COVERAGE_PYTHON" -- --full -m 'not network'
 
       - name: Save coverage reports
         if: always()
@@ -48,8 +51,9 @@ jobs:
         with:
           name: coverage-${{ matrix.python }}
           path: |
-            build/coverage-${{ matrix.python }}/*.xml
-            build/coverage-${{ matrix.python }}/*.json
+            build/coverage-${{ matrix.python }}/python.xml
+            build/coverage-${{ matrix.python }}/cpp.xml
+            build/coverage-${{ matrix.python }}/cpp.json
 
       - name: Upload Python coverage
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
