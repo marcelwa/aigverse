@@ -48,7 +48,8 @@ releases may include breaking changes.
 ### Fixed
 
 - 🔒 Require a fixed Pillow release in contributor environments; the development,
-  documentation, and examples dependency groups now require Python 3.11 or newer.
+  documentation, and examples dependency groups now require Python 3.11 or newer
+  ([#588]) ([**@marcelwa**])
 - 🔒 Require patched uv tooling and document CA trust updates needed to protect
   downloads from the eMudhra compromise ([#565]) ([**@marcelwa**])
 - 🐛 Allow equivalence checking of empty and constant AIGs in Debug builds
@@ -258,6 +259,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#588]: https://github.com/marcelwa/aigverse/pull/588
 [#565]: https://github.com/marcelwa/aigverse/pull/565
 [#554]: https://github.com/marcelwa/aigverse/pull/554
 [#553]: https://github.com/marcelwa/aigverse/pull/553
