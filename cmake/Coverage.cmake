@@ -4,6 +4,6 @@ function(aigverse_enable_coverage target)
   endif()
   # Concurrent binding calls must not race on GCC's coverage counters.
   target_compile_options(${target} INTERFACE --coverage -fprofile-update=atomic
-                                             -O0 -g)
+                                             -Og -g)
   target_link_options(${target} INTERFACE --coverage)
 endfunction()
