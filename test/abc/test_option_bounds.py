@@ -120,7 +120,7 @@ def test_undocumented_bounds_state_their_evidence(bound: Bound) -> None:
 
 @pytest.mark.usefixtures("abc_available")
 def test_refactor_rejects_the_support_abc_rejects(and_aig: Aig) -> None:
-    """The one undocumented bound worth pinning against a real ABC.
+    """Checks an undocumented support limit against a real ABC.
 
     ABC prints no range for `refactor -N` but refuses a support above 15 at
     runtime. If that ever changes, the wrapper is needlessly strict rather than
@@ -130,6 +130,15 @@ def test_refactor_rejects_the_support_abc_rejects(and_aig: Aig) -> None:
 
     with pytest.raises(abc.AbcExecutionError, match="cone size"):
         abc.run_script(and_aig, "refactor -N 16")
+
+
+@pytest.mark.usefixtures("abc_available")
+def test_gia_resub_min_saved_matches_abc(and_aig: Aig) -> None:
+    """The pinned ABC enforces the minimum-savings range even though help omits it."""
+    abc.gia.resub(and_aig, min_saved=1_000_000)
+    for value in (0, 1_000_001):
+        with pytest.raises(abc.AbcExecutionError):
+            abc.gia.run_script(and_aig, f"&resub -M {value}")
 
 
 @pytest.mark.parametrize(
