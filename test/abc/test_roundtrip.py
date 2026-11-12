@@ -100,6 +100,15 @@ def test_gia_commands_preserve_equivalence(command: str) -> None:
     assert equivalence_checking(aig, result)
 
 
+def test_gia_resub_with_options_preserves_equivalence() -> None:
+    """The pinned ABC accepts all options exposed by the GIA resub wrapper."""
+    aig = ripple_carry_multiplier(4)
+    result = abc.gia.resub(
+        aig, max_cut_size=12, max_inserts=4, min_saved=2, fast=True, preserve_levels=False, abc_verbose=True
+    )
+    assert equivalence_checking(aig, result)
+
+
 def test_gia_synthesis_reaches_depth_the_classic_scripts_cannot() -> None:
     """On this design `&syn4` beats `resyn2` on depth, which the docs claim.
 

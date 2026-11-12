@@ -136,7 +136,12 @@ def test_out_of_range_options_are_rejected(build: Callable[[], Command], message
         (lambda: gia.balance.cmd(delay_only=True, and_only=True), "&b -d -a"),
         (lambda: gia.balance.cmd(max_fanout=64, strict_area=True), "&b -N 64 -s"),
         (gia.resub.cmd, "&resub"),
-        (lambda: gia.resub.cmd(max_inserts=2, max_support=6), "&resub -N 2 -S 6"),
+        (
+            lambda: gia.resub.cmd(
+                max_cut_size=12, max_inserts=0, min_saved=2, fast=True, preserve_levels=False, abc_verbose=True
+            ),
+            "&resub -K 12 -N 0 -M 2 -f -l -v",
+        ),
         (gia.dc2.cmd, "&dc2"),
         (lambda: gia.dc2.cmd(update_levels=False), "&dc2 -l"),
         (gia.syn2.cmd, "&syn2"),
@@ -180,7 +185,7 @@ def test_delay_relaxation_of_zero_is_not_dropped() -> None:
 @pytest.mark.parametrize(
     ("build", "message"),
     [
-        (lambda: gia.resub.cmd(max_inserts=-1), "max_inserts must be at least 0"),
+        (lambda: gia.resub.cmd(max_inserts=-1), "max_inserts must be between 0 and 4"),
         (lambda: gia.syn2.cmd(delay_relaxation=-1), "delay_relaxation must be at least 0"),
         (lambda: gia.fraig.cmd(conflict_limit=-1), "conflict_limit must be at least 0"),
     ],
@@ -330,7 +335,21 @@ def test_a_call_issues_the_command_it_builds(
     ("call", "build"),
     [
         (lambda ntk, exe: gia.balance(ntk, max_fanout=64, binary=exe), lambda: gia.balance.cmd(max_fanout=64)),
-        (lambda ntk, exe: gia.resub(ntk, max_inserts=2, binary=exe), lambda: gia.resub.cmd(max_inserts=2)),
+        (
+            lambda ntk, exe: gia.resub(
+                ntk,
+                max_cut_size=12,
+                max_inserts=2,
+                min_saved=2,
+                fast=True,
+                preserve_levels=False,
+                abc_verbose=True,
+                binary=exe,
+            ),
+            lambda: gia.resub.cmd(
+                max_cut_size=12, max_inserts=2, min_saved=2, fast=True, preserve_levels=False, abc_verbose=True
+            ),
+        ),
         (lambda ntk, exe: gia.dc2(ntk, update_levels=False, binary=exe), lambda: gia.dc2.cmd(update_levels=False)),
         (lambda ntk, exe: gia.syn2(ntk, delay_relaxation=0, binary=exe), lambda: gia.syn2.cmd(delay_relaxation=0)),
         (lambda ntk, exe: gia.syn3(ntk, binary=exe), gia.syn3.cmd),

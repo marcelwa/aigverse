@@ -4,8 +4,8 @@ Every wrapper validates its options against this table before ABC is started, so
 an out-of-range value is a :exc:`ValueError` naming the Python argument rather
 than an :exc:`~aigverse.abc.AbcExecutionError` carrying an ABC message.
 
-ABC is the authority on these ranges and `aigverse` pins no ABC version, so the
-table can only ever describe some ABC. Two things keep it honest:
+ABC is the authority on these ranges, and the table follows the ABC revision
+pinned in CI. Two things keep it honest:
 
 - Most ranges are printed by ABC itself in a command's ``-h`` output, e.g.
   ``-K <num> : the max cut size (4 <= num <= 16)``. Those carry
@@ -94,9 +94,16 @@ BOUNDS: Final[Mapping[tuple[str, str], Bound]] = _table(
         documented=False,
         evidence="ABC prints only a default of 1000000000 for the fanout limit.",
     ),
-    Bound("&resub", "N", low=0),
-    Bound("&resub", "S", low=1),
-    Bound("&resub", "D", low=1),
+    Bound("&resub", "K", low=4, high=16),
+    Bound("&resub", "N", low=0, high=4),
+    Bound(
+        "&resub",
+        "M",
+        low=1,
+        high=1_000_000,
+        documented=False,
+        evidence="Abc_CommandAbc9Resub rejects numeric values above 1000000 and requires -M to be at least 1.",
+    ),
     Bound("&syn2", "R", low=0),
     Bound(
         "&fraig",
