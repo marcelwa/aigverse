@@ -259,6 +259,10 @@ class Resub(CommandWrapper):
     ) -> Command:
         """Builds ABC's ``&resub`` command without running it.
 
+        ABC builds that use the former ``&resub2`` implementation for ``&resub``
+        limit ``max_inserts`` to 4 and require omitting ``max_support`` and
+        ``max_divisors``.
+
         Args:
             max_inserts: Limit on the number of nodes added (ABC's ``-N``, at least
                 0), or ``None`` for ABC's default.
@@ -298,7 +302,8 @@ class Resub(CommandWrapper):
     ) -> AigT:
         """Runs ABC's ``&resub`` command on a network.
 
-        The ``&``-space counterpart of :obj:`~aigverse.abc.resub`.
+        The ``&``-space counterpart of :obj:`~aigverse.abc.resub`. See :meth:`cmd`
+        for the option limits on newer ABC builds.
 
         Args:
             ntk: The network to optimize.
