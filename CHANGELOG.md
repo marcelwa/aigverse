@@ -13,7 +13,7 @@ releases may include breaking changes.
 ### Added
 
 - ✨ Add ABC `if`/`&if` LUT mapping and AIG/k-LUT transfer through raw scripts and batches
-  ([**@marcelwa**])
+  ([#591]) ([**@marcelwa**])
 - ✨ Add unified heuristic, classic, and SAT LUT mapping, k-LUT simulation and cleanup, AIG conversion,
   and cross-representation equivalence checking ([#590]) ([**@marcelwa**])
 - ✨ Add combinational k-LUT networks with named, depth, and fanout views and BLIF import/export
@@ -274,6 +274,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 <!-- PR links -->
 
 [#597]: https://github.com/marcelwa/aigverse/pull/597
+[#591]: https://github.com/marcelwa/aigverse/pull/591
 [#590]: https://github.com/marcelwa/aigverse/pull/590
 [#589]: https://github.com/marcelwa/aigverse/pull/589
 [#588]: https://github.com/marcelwa/aigverse/pull/588
