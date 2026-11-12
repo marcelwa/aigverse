@@ -52,7 +52,7 @@ jobs:
           name: coverage-${{ matrix.python }}
           path: |
             build/coverage-${{ matrix.python }}/python.xml
-            build/coverage-${{ matrix.python }}/cpp.xml
+            build/coverage-${{ matrix.python }}/cpp.info
             build/coverage-${{ matrix.python }}/cpp.json
 
       - name: Upload Python coverage
@@ -67,7 +67,7 @@ jobs:
       - name: Upload C++ coverage
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
-          files: build/coverage-${{ matrix.python }}/cpp.xml
+          files: build/coverage-${{ matrix.python }}/cpp.info
           flags: cpp
           disable_search: true
           fail_ci_if_error: true

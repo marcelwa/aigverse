@@ -8,10 +8,8 @@ coverage:
       default: false
 
 parsers:
-  gcov:
-    branch_detection:
-      conditional: no
-      loop: no
+  lcov:
+    partials_as_hits: true
 
 ignore:
   - "test/**"

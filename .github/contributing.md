@@ -72,12 +72,13 @@ To reproduce the separate Python and C++ coverage reports locally, use Linux wit
 uvx nox -s coverage -- --full -m "not network"
 ```
 
-The sessions run Python 3.12 and 3.15t serially against instrumented Debug wheels, write `python.xml`, `cpp.xml`, and
+The sessions run Python 3.12 and 3.15t serially against instrumented Debug wheels, write `python.xml`, `cpp.info`, and
 `cpp.json` under `build/coverage-<python>`, and reset native counters on each run while retaining the build cache.
 Use `-p 3.12` or `-p 3.15t` to select one interpreter. Omit `--full` for the cheaper local subset without PyTorch.
 Native coverage is limited to `src/aigverse`; vendored dependencies and
 generated version metadata are excluded. Codecov checks Python and C++ separately, requiring 95% and 90% patch
-coverage respectively, with a 1% tolerance; project coverage may drop by at most 0.5%.
+coverage respectively, with a 1% tolerance; project coverage may drop by at most 0.5%. The C++ gate uses line coverage;
+Python retains branch coverage, and `cpp.json` preserves native branch counts for inspection.
 
 ---
 

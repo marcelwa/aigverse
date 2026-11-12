@@ -430,11 +430,14 @@ $ uvx nox -s coverage -- --full -m "not network"
 ```
 
 The sessions build instrumented Debug wheels for Python 3.12 and 3.15t in `build/coverage-<python>`, run pytest serially,
-and write `python.xml`, `cpp.xml`, and `cpp.json` there. Each run clears only this build's native counters, retaining
+and write `python.xml`, `cpp.info`, and `cpp.json` there. Each run clears only this build's native counters, retaining
 the compiled objects and coverage notes. Their wheel cache is separate from ordinary test builds. Use `-p 3.12` or
 `-p 3.15t` to select one interpreter. Omit `--full` to
 skip PyTorch locally; CI includes it and excludes network downloads. Tests requiring an external ABC binary still
 skip when one is unavailable.
+
+The C++ Codecov gate uses LCOV line coverage; Python retains branch coverage through its XML report. The native JSON
+report preserves branch counts for inspection, including compiler-generated exception and cleanup paths.
 
 Python reports map the installed wheel back to `python/aigverse` and omit generated `_version.py`. Native reports
 cover only `src/aigverse`, including unexecuted functions; vendored mockturtle, kitty, lorina, and nanobind code is
