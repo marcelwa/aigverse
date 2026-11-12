@@ -28,6 +28,13 @@ function(add_aigverse_python_binding target_name)
   set_target_properties(${target_name} PROPERTIES INTERPROCEDURAL_OPTIMIZATION
                                                   OFF)
 
+  if(MINGW)
+    # MinGW GCC 16.2 crashes with LTO; override nanobind's per-config IPO.
+    set_target_properties(
+      ${target_name} PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE OFF
+                                INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL OFF)
+  endif()
+
   if(ARG_MODULE_NAME)
     set_target_properties(${target_name} PROPERTIES OUTPUT_NAME
                                                     ${ARG_MODULE_NAME})

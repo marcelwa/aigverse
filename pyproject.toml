@@ -45,7 +45,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
-dynamic = [ "version" ]
+dynamic = [ "import-names", "import-namespaces", "version" ]
 # Split-mode extensions resolve the compiled nanobind backend at import time.
 # Never pin or upper-bound it: two projects pinning different versions could not
 # be installed together.
@@ -125,14 +125,18 @@ build = [
     "scikit-build-core~=1.1.0",
     "vcs-versioning~=2.6.0",
 ]
+coverage = [
+    "gcovr>=8",
+    "pytest-cov>=7",
+]
 cpp-lint = [
     # `nox -s cpp-lint` configures the project to get a compilation database, so it needs
     # what a configure needs. `cpp-linter` is the package `cpp-linter-action` runs, and
     # `clang-tidy` is the wheel that ships the binary -- pinned together so a local run
     # reports what `.github/workflows/cpp-linter.yml` reports. Bump them with the action.
     { include-group = "build" },
-    "clang-tidy==22.1.8",
-    "cpp-linter==1.14.1",
+    "clang-tidy==23.1.4",
+    "cpp-linter==1.15.1",
 ]
 examples = [
     # what the standalone PEP 723 scripts under examples/ declare inline. Kept in
@@ -192,7 +196,7 @@ py-api = "cp310"
 components = [ "aigverse_Python" ]
 
 [tool.uv]
-required-version = ">=0.5.20"
+required-version = ">=0.13.4"
 cache-keys = [
     { file = "pyproject.toml" },
     { git = { commit = true, tags = true } },
@@ -220,14 +224,8 @@ test-sources = [ "test/" ]
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
 [tool.cibuildwheel.windows]
-before-build = "uv pip install delvewheel>=1.11.2"
+before-build = 'uv pip install "delvewheel>=1.11.2"'
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --ignore-existing"
-
-# every abi3 wheel: cp310 everywhere, cp311 on Windows ARM64 (see packaging-wheels.yml)
-[[tool.cibuildwheel.overrides]]
-select = "cp310-* cp311-win_arm64"
-repair-wheel-command = "uvx abi3audit --strict --report {wheel}"
-inherit.repair-wheel-command = "append"
 
 # torch publishes no win_arm64 wheel, so the wheel's own test run does without it
 [[tool.cibuildwheel.overrides]]
@@ -357,6 +355,14 @@ markers = [
 minversion = "9.0"
 strict = true
 testpaths = [ "test/" ]
+
+[tool.coverage.run]
+source = [ "aigverse" ]
+omit = [ "*/aigverse/_version.py" ]
+branch = true
+
+[tool.coverage.paths]
+source = [ "python/aigverse", "*/site-packages/aigverse" ]
 
 [[tool.dynamic-metadata]]
 provider = "vcs_versioning"

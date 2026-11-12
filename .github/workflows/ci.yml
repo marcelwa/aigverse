@@ -56,6 +56,15 @@ jobs:
     with:
       runs-on: ${{ matrix.runs-on }}
 
+  coverage:
+    name: 📊 Coverage
+    permissions:
+      contents: read # required to check out the repository
+      id-token: write # required for Codecov OIDC uploads
+    needs: change-detection
+    if: fromJSON(needs.change-detection.outputs.run-coverage)
+    uses: $/.github/workflows/coverage.yml
+
   python-linter:
     name: 🚨 Lint
     permissions:
@@ -167,6 +176,7 @@ jobs:
     needs:
       - change-detection
       - python-tests
+      - coverage
       - python-linter
       - cpp-linter
       - benchmark-tests
@@ -187,6 +197,8 @@ jobs:
           allowed-skips: >-
             ${{ !fromJSON(needs.change-detection.outputs.run-python-tests)
             && 'python-tests,' || '' }}
+            ${{ !fromJSON(needs.change-detection.outputs.run-coverage)
+            && 'coverage,' || '' }}
             ${{ !fromJSON(needs.change-detection.outputs.run-python-linter)
             && 'python-linter,' || '' }}
             ${{ !fromJSON(needs.change-detection.outputs.run-cpp-linter)

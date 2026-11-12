@@ -2,6 +2,22 @@
 
 Ready to contribute to the project? This guide will get you started.
 
+## Download security
+
+The [eMudhra intermediate CA compromise](https://emudhra.we-have-a-problem.com/)
+allows attackers to impersonate HTTPS servers to clients that still trust the affected
+certificates. This project requires `uv>=0.13.4`, which updates uv's bundled trust
+store. If your uv is older, first update the CA store used by your bootstrap client,
+then install uv through your package manager or the official installer. Do not use
+`uv self update` as the first step: it can download with the old, vulnerable trust store.
+Both uv-based pre-commit hooks use the patched version.
+
+For pip, Python, Git, and CMake, follow the incident report's client and CA-package
+update instructions and verify the trust configuration each tool actually uses.
+The locked [Requests CA bundle](https://pypi.org/project/certifi/) meets the report's
+recommended minimum of `2026.10.19`; this does not update every client's trust store.
+For Python benchmark downloads, see [the benchmark security guidance](benchmarks.md#download-security).
+
 ## Initial Setup
 
 1. Get the code
@@ -404,6 +420,25 @@ CI runs `--full -m "not network"` in the test matrix, keeping the circuit downlo
 hiccup at GitHub cannot redden an unrelated run.
 A plain local run is therefore not enough to conclude that a change to the `torch` floors is sound.
 :::
+
+### Coverage
+
+On Linux with GCC and Python 3.12, measure both the Python package and the C++ bindings with:
+
+```console
+$ uvx nox -s coverage -- --full -m "not network"
+```
+
+The session builds an instrumented Debug wheel in `build/coverage`, runs pytest serially, and writes
+`build/coverage/python.xml` and `build/coverage/cpp.xml`. Each run clears only this build's native counters, retaining
+the compiled objects and coverage notes. Its wheel cache is separate from ordinary test builds. Omit `--full` to
+skip PyTorch locally; CI includes it and excludes network downloads. Tests requiring an external ABC binary still
+skip when one is unavailable.
+
+Python reports map the installed wheel back to `python/aigverse` and omit generated `_version.py`. Native reports
+cover only `src/aigverse`, including unexecuted functions; vendored mockturtle, kitty, lorina, and nanobind code is
+outside the reported scope. Native coverage currently requires GCC on Linux. Codecov maintains separate Python
+and C++ flags with patch targets of 95% and 90% (1% tolerance) and project targets tracking the base (0.5% tolerance).
 
 ### Test Fixtures and Markers
 

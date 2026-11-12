@@ -12,6 +12,8 @@ releases may include breaking changes.
 
 ### Added
 
+- 👷 Add Python and C++ coverage reports with separate Codecov checks and a local
+  `coverage` nox session ([#554]) ([**@marcelwa**])
 - ✨ Expose each ABC command wrapper's switch translation as `.cmd(...)`, which builds
   the `abc.Command` the wrapper would run instead of running it, so a parameterized
   command reaches `run_script` and `run_many` as itself rather than as a hand-written
@@ -47,6 +49,12 @@ releases may include breaking changes.
 
 - 🐛 Use a NumPy version with Python 3.15 wheels when resolving minimum dependencies ([#439])
   ([**@marcelwa**])
+- 🔒 Require patched uv tooling and document CA trust updates needed to protect
+  downloads from the eMudhra compromise ([#565]) ([**@marcelwa**])
+- 🐛 Allow equivalence checking of empty and constant AIGs in Debug builds
+  ([#554]) ([**@marcelwa**])
+- 🐛 Avoid MinGW GCC link-time optimization crashes when building the Python
+  extensions ([#553]) ([**@marcelwa**])
 - 🐛 Hide C++ implementation symbols from Linux extensions while preserving
   nanobind's shared exception ABI ([#531]) ([**@marcelwa**])
 - 📝 Correct the README's Stable ABI and free-threading claims ([#489]) ([**@marcelwa**])
@@ -250,6 +258,9 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#565]: https://github.com/marcelwa/aigverse/pull/565
+[#554]: https://github.com/marcelwa/aigverse/pull/554
+[#553]: https://github.com/marcelwa/aigverse/pull/553
 [#501]: https://github.com/marcelwa/aigverse/pull/501
 [#531]: https://github.com/marcelwa/aigverse/pull/531
 [#439]: https://github.com/marcelwa/aigverse/pull/439

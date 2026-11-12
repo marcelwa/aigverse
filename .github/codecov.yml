@@ -1,0 +1,50 @@
+coverage:
+  precision: 1
+  range: 60..90
+  status:
+    project:
+      default: false
+    patch:
+      default: false
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: no
+      loop: no
+
+ignore:
+  - "test/**"
+  - "python/aigverse/_version.py"
+
+flag_management:
+  default_rules:
+    carryforward: true
+    statuses:
+      - type: project
+        target: auto
+        threshold: 0.5%
+        removed_code_behavior: adjust_base
+      - type: patch
+        target: 90%
+        threshold: 1%
+  individual_flags:
+    - name: cpp
+      paths:
+        - "src/aigverse/**"
+    - name: python
+      paths:
+        - "python/aigverse/**/*.py"
+      statuses:
+        - type: project
+          target: auto
+          threshold: 0.5%
+          removed_code_behavior: adjust_base
+        - type: patch
+          target: 95%
+          threshold: 1%
+
+comment:
+  layout: reach,diff,flags,files
+  require_changes: true
+  show_carryforward_flags: true
