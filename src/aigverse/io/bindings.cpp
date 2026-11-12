@@ -8,6 +8,7 @@ void bind_read_pla(nanobind::module_& m);
 void bind_read_verilog(nanobind::module_& m);
 void bind_write_verilog(nanobind::module_& m);
 void bind_write_dot(nanobind::module_& m);
+void bind_blif(nanobind::module_& m);
 }  // namespace aigverse
 
 NB_MODULE(io, m)
@@ -22,4 +23,5 @@ The module contains readers and writers for common file formats in the domain.)p
     aigverse::bind_read_verilog(m);
     aigverse::bind_write_verilog(m);
     aigverse::bind_write_dot(m);
+    aigverse::bind_blif(m);
 }

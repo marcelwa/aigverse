@@ -17,8 +17,8 @@ pipelines.
 
 Key features include:
 
-- Efficient logic representation using And-Inverter Graphs (AIGs)
-- Support for various file formats (AIGER, Verilog, Bench, PLA)
+- Efficient logic representation using And-Inverter Graphs (AIGs) and k-LUT networks
+- Support for various file formats (AIGER, Verilog, Bench, PLA, BLIF)
 - High-performance C++ backend with a Pythonic interface
 - Optional adapters for graph and numeric interoperability in machine learning and data science workflows
 - Comprehensive tools for logic synthesis and optimization
@@ -62,6 +62,7 @@ self
 
 installation
 aigs
+kluts
 truth_tables
 algorithms
 generators

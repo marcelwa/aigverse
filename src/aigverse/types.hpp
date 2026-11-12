@@ -6,6 +6,7 @@
 
 #include <kitty/dynamic_truth_table.hpp>
 #include <mockturtle/networks/aig.hpp>
+#include <mockturtle/networks/klut.hpp>
 #include <mockturtle/networks/sequential.hpp>
 #include <mockturtle/utils/index_list/index_list.hpp>
 #include <mockturtle/views/depth_view.hpp>
@@ -35,6 +36,13 @@ using fanouts_aig = mockturtle::fanout_view<aig>;
  * Alias for the sequential AIG.
  */
 using sequential_aig = mockturtle::sequential<aig>;
+/**
+ * Combinational k-LUT networks and their augmented views.
+ */
+using klut         = mockturtle::klut_network;
+using named_klut   = mockturtle::names_view<klut>;
+using depth_klut   = mockturtle::depth_view<klut>;
+using fanouts_klut = mockturtle::fanout_view<klut>;
 /**
  * Alias for the AIG index list.
  */

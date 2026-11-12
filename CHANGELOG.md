@@ -12,6 +12,8 @@ releases may include breaking changes.
 
 ### Added
 
+- ✨ Add combinational k-LUT networks with named, depth, and fanout views and BLIF import/export
+  ([**@marcelwa**])
 - ✨ Support Python 3.15, including free-threaded wheels and concurrent read-only network operations ([#439])
   ([**@marcelwa**])
 - 👷 Add Python and C++ coverage reports with separate Codecov checks and a local
