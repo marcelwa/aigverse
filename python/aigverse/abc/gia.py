@@ -16,9 +16,9 @@ prefix::
 The ``&``-space is **not** a mirror of the classic command set. There is no
 ``&rewrite`` and no ``&refactor``; ``&dc2`` is the heavy-rewriting equivalent, and
 ``&syn2``/``&syn3``/``&syn4`` are composite scripts rather than single commands.
-What the ``&``-space adds is a genuinely different optimization strategy: these
-commands map to LUTs internally and unmap again, which restructures far more
-aggressively than the classic commands do.
+The GIA optimizers map to LUTs internally and unmap again, which restructures
+far more aggressively than the classic commands do. ``if_`` instead returns
+the LUT mapping explicitly as a ``Klut`` or ``NamedKlut``.
 
 These are aimed at depth rather than area, but whether they deliver is strongly
 design-dependent and worth measuring rather than assuming. On a 4-bit ripple-carry
@@ -45,6 +45,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Final, overload
 
 from ._batch import run_many as _base_run_many
+from ._commands import If as ClassicIf
 from ._errors import AbcExecutionError, AbcTimeoutError
 from ._options import check_option
 from ._runner import (
@@ -65,7 +66,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
     from typing import Literal
 
-    from ..networks import Aig
+    from ..networks import Aig, Klut, NamedAig, NamedKlut
     from ._errors import AbcError
 
 __all__ = [
@@ -74,6 +75,7 @@ __all__ = [
     "Dc2",
     "Deepsyn",
     "Fraig",
+    "If",
     "Resub",
     "Syn2",
     "Syn3",
@@ -85,6 +87,7 @@ __all__ = [
     "dc2",
     "deepsyn",
     "fraig",
+    "if_",
     "resub",
     "run_many",
     "run_script",
@@ -154,7 +157,102 @@ def _run(
     Returns:
         The optimized network, of the same type as ``ntk``.
     """
+    check_supported(ntk)
     return _base_run_script(ntk, command, timeout=timeout, gia=True, verbose=verbose, binary=binary)
+
+
+class If(CommandWrapper):
+    """Maps a combinational AIG or k-LUT network using ABC's ``&if`` command."""
+
+    @staticmethod
+    def cmd(
+        *,
+        cut_size: int = 6,
+        cut_limit: int = 8,
+        area_oriented_mapping: bool = False,
+        area_flow_rounds: int | None = None,
+        ela_rounds: int | None = None,
+        delay_relaxation: int | None = None,
+    ) -> Command:
+        """Builds ABC's priority-cut LUT mapping command.
+
+        Args:
+            cut_size: Maximum LUT inputs (2 through 32).
+            cut_limit: Maximum priority cuts per node (1 through 4095).
+            area_oriented_mapping: Optimize area instead of delay.
+            area_flow_rounds: Area-flow recovery iterations (``-F``), at least
+                zero; ``None`` keeps ABC's default of 1.
+            ela_rounds: Exact-area recovery iterations (``-A``), at least zero;
+                ``None`` keeps ABC's default of 2.
+            delay_relaxation: Delay relaxation percentage (``-R``), at least
+                zero; ``None`` keeps ABC's default of 0.
+
+        Returns:
+            The command for a script requesting ``output_type='klut'``.
+
+        Raises:
+            ValueError: If an option is outside ABC's accepted integer range.
+        """
+        command = ClassicIf.cmd(
+            cut_size=cut_size,
+            cut_limit=cut_limit,
+            area_oriented_mapping=area_oriented_mapping,
+            area_flow_rounds=area_flow_rounds,
+            ela_rounds=ela_rounds,
+            delay_relaxation=delay_relaxation,
+        )
+        # &if refuses a mapped GIA; clear previous mapping when composing/remapping.
+        return Command(f"&st; &{command}")
+
+    def __call__(
+        self,
+        ntk: Aig | Klut,
+        *,
+        cut_size: int = 6,
+        cut_limit: int = 8,
+        area_oriented_mapping: bool = False,
+        area_flow_rounds: int | None = None,
+        ela_rounds: int | None = None,
+        delay_relaxation: int | None = None,
+        timeout: float | None = None,
+        verbose: bool = False,
+        binary: str | os.PathLike[str] | None = None,
+    ) -> Klut:
+        """Maps a network into k-LUTs without changing its source.
+
+        Args:
+            ntk: A combinational AIG or k-LUT network.
+            cut_size: Maximum LUT inputs (2 through 32).
+            cut_limit: Maximum priority cuts per node (1 through 4095).
+            area_oriented_mapping: Optimize area instead of delay.
+            area_flow_rounds: Area-flow recovery iterations, or ``None`` for 1.
+            ela_rounds: Exact-area recovery iterations, or ``None`` for 2.
+            delay_relaxation: Delay relaxation percentage, or ``None`` for 0.
+            timeout: Seconds to wait for ABC, or ``None`` for no limit.
+            verbose: Whether to print ABC's captured output.
+            binary: Optional executable override.
+
+        Returns:
+            A ``NamedKlut`` for a named input, otherwise a ``Klut``.
+
+        Raises:
+            ValueError: If an option is invalid or the input is sequential.
+        """
+        command = self.cmd(
+            cut_size=cut_size,
+            cut_limit=cut_limit,
+            area_oriented_mapping=area_oriented_mapping,
+            area_flow_rounds=area_flow_rounds,
+            ela_rounds=ela_rounds,
+            delay_relaxation=delay_relaxation,
+        )
+        return _base_run_script(
+            ntk, command, output_type="klut", gia=True, timeout=timeout, verbose=verbose, binary=binary
+        )
+
+
+if_: Final[If] = If()
+"""Maps to k-LUTs with ABC's ``&if`` command, or builds it; see :class:`If`."""
 
 
 class Balance(CommandWrapper):
@@ -1223,25 +1321,106 @@ def stats(
     return collect_stats(ntk, "&ps -x", gia=True, timeout=timeout, binary=binary)
 
 
+@overload
 def run_script(
     ntk: AigT,
     commands: str | Command | Sequence[str | Command],
     *,
+    output_type: Literal["aig"] = "aig",
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    verbose: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+) -> AigT: ...
+
+
+@overload
+def run_script(
+    ntk: NamedKlut,
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["aig"] = "aig",
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    verbose: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+) -> NamedAig: ...
+
+
+@overload
+def run_script(
+    ntk: Klut,
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["aig"] = "aig",
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    verbose: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+) -> Aig: ...
+
+
+@overload
+def run_script(
+    ntk: NamedAig | NamedKlut,
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["klut"],
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    verbose: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+) -> NamedKlut: ...
+
+
+@overload
+def run_script(
+    ntk: Aig | Klut,
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["klut"],
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    verbose: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+) -> Klut: ...
+
+
+@overload
+def run_script(
+    ntk: Aig | Klut,
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["aig", "klut"],
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    verbose: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+) -> Aig | Klut: ...
+
+
+def run_script(
+    ntk: Aig | Klut,
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["aig", "klut"] = "aig",
     timeout: float | None = None,
     use_init_file: bool = False,
     verbose: bool = False,
     binary: str | os.PathLike[str] | None = None,
-) -> AigT:
+) -> Aig | Klut:
     """Runs arbitrary ``&``-space commands on a network.
 
     The GIA counterpart of :func:`~aigverse.abc.run_script`: the network is
-    transferred with ``&read``/``&write`` so that ``&``-prefixed commands operate
-    on it directly. Equivalent to calling that function with ``gia=True``.
+    loaded into the GIA store so that ``&``-prefixed commands operate on it
+    directly. Equivalent to calling that function with ``gia=True``.
 
     Args:
         ntk: The network to optimize.
         commands: A single ``;``-separated ABC command string, a
             :class:`~aigverse.abc.Command`, or a sequence of individual commands.
+        output_type: ``'aig'`` (default) or ``'klut'``; see
+            :func:`~aigverse.abc.run_script` for transfer requirements.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
         use_init_file: If ``False`` (default), ABC is invoked with ``-s`` so that
             no ``abc.rc`` is read.
@@ -1249,12 +1428,13 @@ def run_script(
         binary: Overrides the resolved ABC executable for this call only.
 
     Returns:
-        The optimized network, of the same type as ``ntk``.
+        The requested representation, preserving whether the input was named.
 
     Raises:
-        TypeError: If ``ntk`` is not an ``Aig``.
-        ValueError: If no command was given, or if ``ntk`` has a register whose
-            reset value is undefined.
+        TypeError: If ``ntk`` is neither an ``Aig`` nor a ``Klut``.
+        ValueError: If the selector is invalid, LUT output is requested for a
+            sequential network, no command was given, or a register's reset
+            value is undefined.
         AbcNotFoundError: If no ABC executable could be located.
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or produced no usable output.
@@ -1262,6 +1442,7 @@ def run_script(
     return _base_run_script(
         ntk,
         commands,
+        output_type=output_type,
         timeout=timeout,
         use_init_file=use_init_file,
         gia=True,
@@ -1275,6 +1456,7 @@ def run_many(
     networks: Iterable[AigT],
     commands: str | Command | Sequence[str | Command],
     *,
+    output_type: Literal["aig"] = "aig",
     jobs: int | None = ...,
     timeout: float | None = ...,
     use_init_file: bool = ...,
@@ -1288,6 +1470,7 @@ def run_many(
     networks: Iterable[AigT],
     commands: str | Command | Sequence[str | Command],
     *,
+    output_type: Literal["aig"] = "aig",
     jobs: int | None = ...,
     timeout: float | None = ...,
     use_init_file: bool = ...,
@@ -1303,6 +1486,7 @@ def run_many(
     networks: Iterable[AigT],
     commands: str | Command | Sequence[str | Command],
     *,
+    output_type: Literal["aig"] = "aig",
     jobs: int | None = ...,
     timeout: float | None = ...,
     use_init_file: bool = ...,
@@ -1311,27 +1495,71 @@ def run_many(
 ) -> list[AigT] | list[AigT | AbcError]: ...
 
 
+@overload
 def run_many(
-    networks: Iterable[AigT],
+    networks: Iterable[Aig | Klut],
     commands: str | Command | Sequence[str | Command],
     *,
+    output_type: Literal["klut"],
+    jobs: int | None = ...,
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+    return_exceptions: Literal[False] = False,
+) -> list[Klut]: ...
+
+
+@overload
+def run_many(
+    networks: Iterable[Aig | Klut],
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["klut"],
+    jobs: int | None = ...,
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+    return_exceptions: bool,
+) -> list[Klut] | list[Klut | AbcError]: ...
+
+
+@overload
+def run_many(
+    networks: Iterable[Aig | Klut],
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["aig", "klut"] = "aig",
+    jobs: int | None = ...,
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+    return_exceptions: bool = False,
+) -> list[Aig | Klut] | list[Aig | Klut | AbcError]: ...
+
+
+def run_many(
+    networks: Iterable[Aig | Klut],
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["aig", "klut"] = "aig",
     jobs: int | None = None,
     timeout: float | None = None,
     use_init_file: bool = False,
     binary: str | os.PathLike[str] | None = None,
     return_exceptions: bool = False,
-) -> list[AigT] | list[AigT | AbcError]:
+) -> list[Aig | Klut] | list[Aig | Klut | AbcError]:
     """Runs arbitrary ``&``-space commands over many networks, in parallel.
 
     The GIA counterpart of :func:`~aigverse.abc.run_many`: every network is
-    transferred with ``&read``/``&write`` so that ``&``-prefixed commands operate
-    on it directly. Equivalent to calling that function with ``gia=True``.
+    loaded into the GIA store so that ``&``-prefixed commands operate on it
+    directly. Equivalent to calling that function with ``gia=True``.
 
     Args:
         networks: The networks to optimize. Consumed in full before any work starts.
         commands: A single ``;``-separated ABC command string, a
             :class:`~aigverse.abc.Command`, or a sequence of individual commands.
             The same script runs on every network.
+        output_type: ``'aig'`` (default) or ``'klut'`` for every result.
         jobs: How many ABC processes to keep running at once. ``None`` (default)
             uses the number of CPUs available to this process, capped at the number
             of networks; ``1`` runs inline without a thread pool.
@@ -1345,14 +1573,15 @@ def run_many(
             :exc:`~aigverse.abc.AbcError` in place of a result instead of aborting the batch.
 
     Returns:
-        The optimized networks, in input order, each of the same type as its input
+        The requested networks, in input order, preserving each input's namedness
         -- with :exc:`~aigverse.abc.AbcError` instances in place of the failures when
         ``return_exceptions`` is set.
 
     Raises:
-        TypeError: If any element of ``networks`` is not an ``Aig``.
-        ValueError: If ``jobs`` is below 1, if no command was given, or if a
-            network has a register whose reset value is undefined.
+        TypeError: If an element is neither an ``Aig`` nor a ``Klut``.
+        ValueError: If the selector is invalid, LUT output is requested for a
+            sequential network, ``jobs`` is below 1, no command was given, or a
+            register's reset value is undefined.
         AbcNotFoundError: If no ABC executable could be located.
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds for
             some network and ``return_exceptions`` is not set.
@@ -1362,6 +1591,7 @@ def run_many(
     return _base_run_many(
         networks,
         commands,
+        output_type=output_type,
         jobs=jobs,
         timeout=timeout,
         use_init_file=use_init_file,

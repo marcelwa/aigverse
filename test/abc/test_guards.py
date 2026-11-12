@@ -40,7 +40,7 @@ def test_non_network_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("AIGVERSE_ABC", raising=False)
     monkeypatch.setenv("PATH", "")
     with pytest.raises(TypeError, match="expected an Aig"):
-        run_script("not a network", "balance")  # ty: ignore[invalid-argument-type]
+        run_script("not a network", "balance")  # ty: ignore[no-matching-overload]
 
 
 def test_named_aig_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:

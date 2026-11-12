@@ -12,6 +12,8 @@ releases may include breaking changes.
 
 ### Added
 
+- ✨ Add ABC `if`/`&if` LUT mapping and AIG/k-LUT transfer through raw scripts and batches
+  ([**@marcelwa**])
 - ✨ Add unified heuristic, classic, and SAT LUT mapping, k-LUT simulation and cleanup, AIG conversion,
   and cross-representation equivalence checking ([#590]) ([**@marcelwa**])
 - ✨ Add combinational k-LUT networks with named, depth, and fanout views and BLIF import/export

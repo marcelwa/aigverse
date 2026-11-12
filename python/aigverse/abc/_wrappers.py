@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ._runner import AigT, run_script
+from ._runner import AigT, run_aig_script
 from ._scripts import expand_script
 
 if TYPE_CHECKING:
@@ -35,7 +35,7 @@ def resyn(
 
     The script is expanded into builtin ABC commands, so it does not depend on
     an ``abc.rc`` being present. See :data:`SCRIPTS` for the exact expansion.
-    Errors are reported the same way as by :func:`run_script`.
+    Errors are reported the same way as by :func:`~aigverse.abc.run_script`.
 
     Args:
         ntk: The network to optimize.
@@ -46,7 +46,7 @@ def resyn(
     Returns:
         The optimized network, of the same type as ``ntk``.
     """
-    return run_script(ntk, expand_script("resyn"), timeout=timeout, verbose=verbose, binary=binary)
+    return run_aig_script(ntk, expand_script("resyn"), timeout=timeout, verbose=verbose, binary=binary)
 
 
 def resyn2(
@@ -62,7 +62,7 @@ def resyn2(
 
     The script is expanded into builtin ABC commands, so it does not depend on
     an ``abc.rc`` being present. See :data:`SCRIPTS` for the exact expansion.
-    Errors are reported the same way as by :func:`run_script`.
+    Errors are reported the same way as by :func:`~aigverse.abc.run_script`.
 
     Args:
         ntk: The network to optimize.
@@ -73,7 +73,7 @@ def resyn2(
     Returns:
         The optimized network, of the same type as ``ntk``.
     """
-    return run_script(ntk, expand_script("resyn2"), timeout=timeout, verbose=verbose, binary=binary)
+    return run_aig_script(ntk, expand_script("resyn2"), timeout=timeout, verbose=verbose, binary=binary)
 
 
 def resyn3(
@@ -89,7 +89,7 @@ def resyn3(
 
     The script is expanded into builtin ABC commands, so it does not depend on
     an ``abc.rc`` being present. See :data:`SCRIPTS` for the exact expansion.
-    Errors are reported the same way as by :func:`run_script`.
+    Errors are reported the same way as by :func:`~aigverse.abc.run_script`.
 
     Args:
         ntk: The network to optimize.
@@ -100,7 +100,7 @@ def resyn3(
     Returns:
         The optimized network, of the same type as ``ntk``.
     """
-    return run_script(ntk, expand_script("resyn3"), timeout=timeout, verbose=verbose, binary=binary)
+    return run_aig_script(ntk, expand_script("resyn3"), timeout=timeout, verbose=verbose, binary=binary)
 
 
 def compress(
@@ -117,7 +117,7 @@ def compress(
 
     The script is expanded into builtin ABC commands, so it does not depend on
     an ``abc.rc`` being present. See :data:`SCRIPTS` for the exact expansion.
-    Errors are reported the same way as by :func:`run_script`.
+    Errors are reported the same way as by :func:`~aigverse.abc.run_script`.
 
     Args:
         ntk: The network to optimize.
@@ -128,7 +128,7 @@ def compress(
     Returns:
         The optimized network, of the same type as ``ntk``.
     """
-    return run_script(ntk, expand_script("compress"), timeout=timeout, verbose=verbose, binary=binary)
+    return run_aig_script(ntk, expand_script("compress"), timeout=timeout, verbose=verbose, binary=binary)
 
 
 def compress2(
@@ -145,7 +145,7 @@ def compress2(
 
     The script is expanded into builtin ABC commands, so it does not depend on
     an ``abc.rc`` being present. See :data:`SCRIPTS` for the exact expansion.
-    Errors are reported the same way as by :func:`run_script`.
+    Errors are reported the same way as by :func:`~aigverse.abc.run_script`.
 
     Args:
         ntk: The network to optimize.
@@ -156,7 +156,7 @@ def compress2(
     Returns:
         The optimized network, of the same type as ``ntk``.
     """
-    return run_script(ntk, expand_script("compress2"), timeout=timeout, verbose=verbose, binary=binary)
+    return run_aig_script(ntk, expand_script("compress2"), timeout=timeout, verbose=verbose, binary=binary)
 
 
 def resyn2rs(
@@ -172,7 +172,7 @@ def resyn2rs(
 
     The script is expanded into builtin ABC commands, so it does not depend on
     an ``abc.rc`` being present. See :data:`SCRIPTS` for the exact expansion.
-    Errors are reported the same way as by :func:`run_script`.
+    Errors are reported the same way as by :func:`~aigverse.abc.run_script`.
 
     Args:
         ntk: The network to optimize.
@@ -183,7 +183,7 @@ def resyn2rs(
     Returns:
         The optimized network, of the same type as ``ntk``.
     """
-    return run_script(ntk, expand_script("resyn2rs"), timeout=timeout, verbose=verbose, binary=binary)
+    return run_aig_script(ntk, expand_script("resyn2rs"), timeout=timeout, verbose=verbose, binary=binary)
 
 
 def compress2rs(
@@ -200,7 +200,7 @@ def compress2rs(
 
     The script is expanded into builtin ABC commands, so it does not depend on
     an ``abc.rc`` being present. See :data:`SCRIPTS` for the exact expansion.
-    Errors are reported the same way as by :func:`run_script`.
+    Errors are reported the same way as by :func:`~aigverse.abc.run_script`.
 
     Args:
         ntk: The network to optimize.
@@ -211,7 +211,7 @@ def compress2rs(
     Returns:
         The optimized network, of the same type as ``ntk``.
     """
-    return run_script(ntk, expand_script("compress2rs"), timeout=timeout, verbose=verbose, binary=binary)
+    return run_aig_script(ntk, expand_script("compress2rs"), timeout=timeout, verbose=verbose, binary=binary)
 
 
 def dc2(
@@ -227,7 +227,7 @@ def dc2(
 
     The script is expanded into builtin ABC commands, so it does not depend on
     an ``abc.rc`` being present. See :data:`SCRIPTS` for the exact expansion.
-    Errors are reported the same way as by :func:`run_script`.
+    Errors are reported the same way as by :func:`~aigverse.abc.run_script`.
 
     Args:
         ntk: The network to optimize.
@@ -238,4 +238,4 @@ def dc2(
     Returns:
         The optimized network, of the same type as ``ntk``.
     """
-    return run_script(ntk, expand_script("dc2"), timeout=timeout, verbose=verbose, binary=binary)
+    return run_aig_script(ntk, expand_script("dc2"), timeout=timeout, verbose=verbose, binary=binary)

@@ -23,23 +23,129 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Final
 
 from ._options import check_option
-from ._runner import AigT, Command, CommandWrapper, run_script
+from ._runner import AigT, Command, CommandWrapper, run_aig_script
+from ._runner import run_script as _run_script
 
 if TYPE_CHECKING:
     import os
 
+    from ..networks import Aig, Klut
+
 __all__ = [
     "Balance",
+    "If",
     "Orchestrate",
     "Refactor",
     "Resub",
     "Rewrite",
     "balance",
+    "if_",
     "orchestrate",
     "refactor",
     "resub",
     "rewrite",
 ]
+
+
+class If(CommandWrapper):
+    """Maps a combinational AIG or k-LUT network using ABC's ``if`` command."""
+
+    @staticmethod
+    def cmd(
+        *,
+        cut_size: int = 6,
+        cut_limit: int = 8,
+        area_oriented_mapping: bool = False,
+        area_flow_rounds: int | None = None,
+        ela_rounds: int | None = None,
+        delay_relaxation: int | None = None,
+    ) -> Command:
+        """Builds ABC's priority-cut LUT mapping command.
+
+        Args:
+            cut_size: Maximum LUT inputs (2 through 32).
+            cut_limit: Maximum priority cuts per node (1 through 4095).
+            area_oriented_mapping: Optimize area instead of delay.
+            area_flow_rounds: Area-flow recovery iterations (``-F``), at least
+                zero; ``None`` keeps ABC's default of 1.
+            ela_rounds: Exact-area recovery iterations (``-A``), at least zero;
+                ``None`` keeps ABC's default of 2.
+            delay_relaxation: Delay relaxation percentage (``-R``), at least
+                zero; ``None`` keeps ABC's default of 0.
+
+        Returns:
+            The command for a script requesting ``output_type='klut'``.
+
+        Raises:
+            ValueError: If an option is outside ABC's accepted integer range.
+        """
+        command = "if"
+        for switch, value, name in (
+            ("K", cut_size, "cut_size"),
+            ("C", cut_limit, "cut_limit"),
+            ("F", area_flow_rounds, "area_flow_rounds"),
+            ("A", ela_rounds, "ela_rounds"),
+            ("R", delay_relaxation, "delay_relaxation"),
+        ):
+            if value is None and switch not in {"K", "C"}:
+                continue
+            # ABC parses these switches with atoi into a signed 32-bit int.
+            if not isinstance(value, int) or isinstance(value, bool) or value > 2**31 - 1:
+                msg = f"{name} must be an integer no larger than {2**31 - 1}, got {value}"
+                raise ValueError(msg)
+            check_option("if", switch, value, name=name)
+            command += f" -{switch} {value}"
+        if area_oriented_mapping:
+            command += " -a"
+        return Command(command)
+
+    def __call__(
+        self,
+        ntk: Aig | Klut,
+        *,
+        cut_size: int = 6,
+        cut_limit: int = 8,
+        area_oriented_mapping: bool = False,
+        area_flow_rounds: int | None = None,
+        ela_rounds: int | None = None,
+        delay_relaxation: int | None = None,
+        timeout: float | None = None,
+        verbose: bool = False,
+        binary: str | os.PathLike[str] | None = None,
+    ) -> Klut:
+        """Maps a network into k-LUTs without changing its source.
+
+        Args:
+            ntk: A combinational AIG or k-LUT network.
+            cut_size: Maximum LUT inputs (2 through 32).
+            cut_limit: Maximum priority cuts per node (1 through 4095).
+            area_oriented_mapping: Optimize area instead of delay.
+            area_flow_rounds: Area-flow recovery iterations, or ``None`` for 1.
+            ela_rounds: Exact-area recovery iterations, or ``None`` for 2.
+            delay_relaxation: Delay relaxation percentage, or ``None`` for 0.
+            timeout: Seconds to wait for ABC, or ``None`` for no limit.
+            verbose: Whether to print ABC's captured output.
+            binary: Optional executable override.
+
+        Returns:
+            A ``NamedKlut`` for a named input, otherwise a ``Klut``.
+
+        Raises:
+            ValueError: If an option is invalid or the input is sequential.
+        """
+        command = self.cmd(
+            cut_size=cut_size,
+            cut_limit=cut_limit,
+            area_oriented_mapping=area_oriented_mapping,
+            area_flow_rounds=area_flow_rounds,
+            ela_rounds=ela_rounds,
+            delay_relaxation=delay_relaxation,
+        )
+        return _run_script(ntk, command, output_type="klut", timeout=timeout, verbose=verbose, binary=binary)
+
+
+if_: Final[If] = If()
+"""Maps to k-LUTs with ABC's ``if`` command, or builds it; see :class:`If`."""
 
 
 class Balance(CommandWrapper):
@@ -113,7 +219,7 @@ class Balance(CommandWrapper):
             duplicate=duplicate,
             duplicate_critical=duplicate_critical,
         )
-        return run_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
+        return run_aig_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
 balance: Final[Balance] = Balance()
@@ -170,7 +276,7 @@ class Rewrite(CommandWrapper):
             The optimized network, of the same type as ``ntk``.
         """
         command = self.cmd(preserve_levels=preserve_levels, zero_cost=zero_cost)
-        return run_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
+        return run_aig_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
 rewrite: Final[Rewrite] = Rewrite()
@@ -265,7 +371,7 @@ class Refactor(CommandWrapper):
             preserve_levels=preserve_levels,
             zero_cost=zero_cost,
         )
-        return run_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
+        return run_aig_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
 refactor: Final[Refactor] = Refactor()
@@ -382,7 +488,7 @@ class Resub(CommandWrapper):
             preserve_levels=preserve_levels,
             zero_cost=zero_cost,
         )
-        return run_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
+        return run_aig_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
 resub: Final[Resub] = Resub()
@@ -497,7 +603,7 @@ class Orchestrate(CommandWrapper):
             zero_cost_rewrite=zero_cost_rewrite,
             zero_cost_refactor=zero_cost_refactor,
         )
-        return run_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
+        return run_aig_script(ntk, command, timeout=timeout, verbose=verbose, binary=binary)
 
 
 orchestrate: Final[Orchestrate] = Orchestrate()

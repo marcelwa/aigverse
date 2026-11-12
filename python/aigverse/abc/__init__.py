@@ -1,7 +1,8 @@
 """Bridge to the external ABC logic synthesis system.
 
 `aigverse` does not ship ABC. This module drives an ABC executable that is
-already installed on the machine, transferring networks as binary AIGER files.
+already installed on the machine, transferring AIGs as binary AIGER and k-LUT
+networks as BLIF.
 Point it at an executable with the ``AIGVERSE_ABC`` environment variable or
 :func:`set_abc_binary`, or put ``abc`` on ``PATH``.
 
@@ -39,11 +40,13 @@ from ._binary import (
 )
 from ._commands import (
     Balance,
+    If,
     Orchestrate,
     Refactor,
     Resub,
     Rewrite,
     balance,
+    if_,
     orchestrate,
     refactor,
     resub,
@@ -78,6 +81,7 @@ __all__ = [
     "CecStatus",
     "Command",
     "CommandWrapper",
+    "If",
     "Orchestrate",
     "Refactor",
     "Resub",
@@ -93,6 +97,7 @@ __all__ = [
     "expand_script",
     "find_abc_binary",
     "gia",
+    "if_",
     "is_available",
     "orchestrate",
     "refactor",

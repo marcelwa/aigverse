@@ -114,6 +114,52 @@ print(f"{aig.num_gates} -> {result.num_gates} AND gates")
 Set `use_init_file=True` to let ABC load your own `abc.rc`, which makes your personal
 aliases available.
 
+### LUT mapping
+
+`abc.if_` and `abc.gia.if_` map combinational AIG or k-LUT inputs to `Klut` networks.
+Named inputs return `NamedKlut`, preserving primary-input and primary-output names
+and order. The source network is unchanged; sequential inputs are rejected.
+ABC requires distinct output labels, even when outputs share one driver. Repeated
+labels and completely empty networks (no inputs or outputs) fail with
+`AbcExecutionError`; direct outputs may share their own input's name.
+
+```{code-cell} ipython3
+mapped = abc.if_(aig, cut_size=6, cut_limit=8)
+remapped = abc.gia.if_(mapped, cut_size=4, area_oriented_mapping=True)
+assert equivalence_checking(aig, mapped)
+assert equivalence_checking(aig, remapped)
+print(f"{mapped.num_gates} 6-LUTs; {remapped.num_gates} 4-LUTs")
+
+results = abc.gia.run_many(
+    [aig, mapped], abc.gia.if_.cmd(cut_size=4), output_type="klut"
+)
+assert all(equivalence_checking(aig, result) for result in results)
+```
+
+The mapping wrappers expose ABC's own controls: `cut_size` is 2–32 and `cut_limit`
+is 1–4095, counting ABC's priority cuts. `area_flow_rounds` (`-F`) and `ela_rounds`
+(`-A`) set nonnegative recovery iteration counts; omitted values keep ABC's defaults
+of 1 and 2. `delay_relaxation` (`-R`) is a nonnegative percentage, defaulting to 0.
+These counts follow ABC's CLI directly and do not use the normalization of the
+built-in {py:func}`~aigverse.algorithms.lut_mapping` algorithms. Numeric options must
+be integers representable by ABC's signed 32-bit parser.
+
+Raw `run_script` and `run_many` calls accept `output_type="klut"` to read the result
+as BLIF. Their default remains `output_type="aig"`, including for LUT inputs:
+the script must explicitly leave an AIG, for example `abc.run_script(mapped,
+"strash")` or `abc.gia.run_script(mapped, "&st")`. Existing AIG optimization
+wrappers retain their AIG-only input contract.
+
+LUT input enters the classic store through `read_blif`, and the GIA store through
+`read_blif; &get -m -n`, preserving its mapping. GIA LUT output uses
+`&put; write_blif`. ABC's `&if` refuses an already mapped GIA, so
+`abc.gia.if_.cmd()` includes `&st; &if` to support remapping and composition.
+Other raw GIA scripts retain the incoming mapping until they explicitly clear it.
+
+BLIF stores dense node truth tables in `aigverse`; a large cut size can therefore
+require exponential space. Start with the default 6-input LUTs and increase the
+size only when the workload warrants it.
+
 ### The two network stores
 
 ABC keeps two independent network stores, and a command only ever sees its own. By
