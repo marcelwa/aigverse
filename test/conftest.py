@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from aigverse.generators import random_aig
 from aigverse.networks import Aig
 
 
@@ -32,6 +33,16 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             item.add_marker(pytest.mark.benchmarks)
         elif "/test/abc/" in test_path:
             item.add_marker(pytest.mark.abc)
+
+
+@pytest.fixture
+def race_prone_aig() -> Aig:
+    """Create a network large enough for concurrent traversals to overlap.
+
+    Returns:
+        A 600-gate random AIG network.
+    """
+    return random_aig(num_pis=10, num_gates=600, seed=42)
 
 
 @pytest.fixture

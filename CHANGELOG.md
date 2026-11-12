@@ -12,6 +12,8 @@ releases may include breaking changes.
 
 ### Added
 
+- ✨ Support Python 3.15, including free-threaded wheels and concurrent read-only network operations ([#439])
+  ([**@marcelwa**])
 - 👷 Add Python and C++ coverage reports with separate Codecov checks and a local
   `coverage` nox session ([#554]) ([**@marcelwa**])
 - ✨ Expose each ABC command wrapper's switch translation as `.cmd(...)`, which builds

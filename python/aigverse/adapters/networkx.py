@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Final
+import sysconfig
+from typing import Any, Final
 
 import networkx as nx
 import numpy as np
 
 from ..algorithms import simulate, simulate_nodes
-from ..networks import AigSignal, DepthAig, NamedAig
-
-if TYPE_CHECKING:
-    from ..networks import Aig
+from ..networks import Aig, AigSignal, DepthAig, NamedAig
 
 
 def to_networkx(
@@ -97,7 +95,8 @@ def to_networkx(
 
     # Conditionally compute levels if requested
     if levels:
-        depth_aig = DepthAig(self)
+        # DepthAig writes traversal state; Aig(self) also deep-copies augmented views.
+        depth_aig = DepthAig(Aig(self) if sysconfig.get_config_var("Py_GIL_DISABLED") else self)
 
     node_funcs = {}
     graph_funcs = []

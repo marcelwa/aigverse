@@ -46,7 +46,7 @@ jobs:
       # can test it.
       - if: runner.arch == 'ARM64' && runner.os == 'Windows'
         name: Build with CPython 3.11 on Windows ARM64
-        run: echo "CIBW_BUILD=cp311-*" >> "$GITHUB_ENV"
+        run: echo "CIBW_BUILD=cp311-* cp315t-*" >> "$GITHUB_ENV"
 
       # No compiler cache here, deliberately. Wheels compile against nanobind
       # headers inside uv's build-isolation environment, a directory named

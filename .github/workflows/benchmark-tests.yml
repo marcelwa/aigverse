@@ -62,7 +62,7 @@ jobs:
         name: Restrict interpreters on Windows ARM64
         run: |
           uv python install cpython-3.11-windows-aarch64-none
-          echo "NOX_PYTHON=-p 3.11 3.12 3.13 3.14" >> "$GITHUB_ENV"
+          echo "NOX_PYTHON=-p 3.11 3.12 3.13 3.14 3.15 3.15t" >> "$GITHUB_ENV"
 
       # `nox -s tests` covers every supported Python version. The loader is pure
       # Python, and the cache path it builds is the sort of thing that differs

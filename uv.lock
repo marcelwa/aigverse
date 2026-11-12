@@ -215,6 +215,7 @@ docs = [
     { name = "torch", specifier = ">=2.2.0" },
     { name = "torch", marker = "python_full_version >= '3.13'", specifier = ">=2.6.0" },
     { name = "torch", marker = "python_full_version >= '3.14'", specifier = ">=2.9.0" },
+    { name = "torch", marker = "python_full_version >= '3.15'", specifier = ">=2.15.0" },
 ]
 examples = [
     { name = "matplotlib", specifier = ">=3.8" },
@@ -242,6 +243,7 @@ torch = [
     { name = "torch", specifier = ">=2.2.0" },
     { name = "torch", marker = "python_full_version >= '3.13'", specifier = ">=2.6.0" },
     { name = "torch", marker = "python_full_version >= '3.14'", specifier = ">=2.9.0" },
+    { name = "torch", marker = "python_full_version >= '3.15'", specifier = ">=2.15.0" },
 ]
 
 [[package]]

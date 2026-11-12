@@ -40,6 +40,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -156,6 +157,7 @@ torch = [
     "torch>=2.2.0",
     "torch>=2.6.0; python_version>='3.13'",
     "torch>=2.9.0; python_version>='3.14'",
+    "torch>=2.15.0; python_version>='3.15'",
 ]
 
 [tool.scikit-build]
@@ -188,12 +190,16 @@ exclude = [
 install-dir = "aigverse"
 # Explicitly set the package directory
 packages = [ "python/aigverse" ]
-# One Stable ABI wheel per platform covers every supported CPython
+# One Stable ABI wheel per platform covers ordinary CPython 3.10 and newer
 py-api = "cp310"
 
 [tool.scikit-build.install]
 # Only install the Python package component
 components = [ "aigverse_Python" ]
+
+[[tool.scikit-build.overrides]]
+if.abi-flags = "t"
+wheel.py-api = "cp315t"
 
 [tool.uv]
 required-version = ">=0.13.4"
@@ -208,8 +214,8 @@ cache-keys = [
 aigverse = { workspace = true }
 
 [tool.cibuildwheel]
-# cp310 builds the one abi3 wheel that serves every supported CPython
-build = "cp310-*"
+# Separate Stable ABI wheels for ordinary and free-threaded CPython
+build = "cp310-* cp315t-*"
 # nanobind-backend publishes no musllinux wheels
 skip = [ "*-musllinux_*" ]
 archs = "auto64"

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from unittest import mock
 
 import pytest
@@ -70,6 +71,17 @@ def test_import(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.usefixtures("_import_adapters")
 class TestNetworkxAdapter:
     """Test suite for the NetworkX adapter functionality."""
+
+    @staticmethod
+    def test_concurrent_level_exports(race_prone_aig: Aig) -> None:
+        def export() -> list[int]:
+            return [attrs["level"] for _, attrs in race_prone_aig.to_networkx(levels=True).nodes(data=True)]
+
+        expected = export()
+        with ThreadPoolExecutor(8) as pool:
+            results = [future.result() for future in [pool.submit(export) for _ in range(32)]]
+
+        assert results == [expected] * 32
 
     @staticmethod
     def test_to_networkx_basic(simple_aig: Aig) -> None:
