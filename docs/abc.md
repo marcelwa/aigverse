@@ -549,11 +549,10 @@ for call in (
 ```
 
 :::{note}
-ABC is the authority on those ranges and `aigverse` pins no ABC version. The ranges ABC
-prints in its own `-h` output are checked against the installed binary by the test suite,
-so an upstream change is caught rather than guessed at. A few bounds ABC enforces without
-documenting — `refactor` refuses a support above 15 while printing no range at all — are
-recorded with the evidence for them.
+The ABC wrapper follows the CLI of the revision pinned in CI. The test suite checks
+the ranges that ABC prints in its own `-h` output against the wrapper. The option
+table records the evidence for bounds that ABC enforces without documenting, such
+as the maximum support of 15 for `refactor`.
 :::
 
 ## A worked study

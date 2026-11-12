@@ -2,6 +2,13 @@
 
 This document describes breaking changes and how to upgrade.
 
+## Unreleased
+
+`abc.gia.resub()` and `abc.gia.resub.cmd()` now use the current ABC `&resub` command. Use
+[ABC revision `bde1659`](https://github.com/berkeley-abc/abc/tree/bde1659cf7bf2b355624c3599cb58e9b6e474f13)
+or a build with the same CLI. Remove `max_support` and `max_divisors` from calls, and keep `max_inserts` between
+0 and 4. Use `max_cut_size` to limit the cut size.
+
 ## 0.1.0
 
 The `aigverse` library has been refactored into multiple extension modules to improve organization and scalability. If
