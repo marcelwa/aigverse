@@ -4,6 +4,7 @@ import pytest
 
 from aigverse import algorithms
 from aigverse.networks import Aig, DepthAig, DepthKlut, FanoutAig, Klut, NamedAig, NamedKlut, SequentialAig
+from aigverse.utils import TruthTable
 
 ALGORITHMS = ("heuristic", "classic", "sat", "sat_windowed")
 
@@ -172,10 +173,19 @@ def test_mapping_accepts_integer_boundaries_without_running_passes(options):
     assert algorithms.lut_mapping(Aig(), **options).num_gates == 0
 
 
-@pytest.mark.parametrize("map_network", [algorithms.lut_mapping])
-def test_mapping_controls_are_keyword_only(simple_and_aig, map_network):
+def test_mapping_controls_are_keyword_only(simple_and_aig):
     with pytest.raises(TypeError, match="incompatible function arguments"):
-        map_network(simple_and_aig, "classic")
+        vars(algorithms)["lut_mapping"](simple_and_aig, "classic")
+
+
+@pytest.mark.parametrize("option", ["cut_size", "relax_required"])
+@pytest.mark.parametrize(
+    ("value", "error"),
+    [(-(2**63) - 1, TypeError), (-(2**63), ValueError), (2**63 - 1, ValueError), (2**63, TypeError)],
+)
+def test_mapping_integer_conversion_boundary(simple_and_aig, option, value, error):
+    with pytest.raises(error, match=r".+"):
+        algorithms.lut_mapping(simple_and_aig, **{option: value})
 
 
 def test_mapping_rejects_sequential_input():
@@ -183,14 +193,19 @@ def test_mapping_rejects_sequential_input():
         algorithms.lut_mapping(SequentialAig())
 
 
-def test_mapping_rejects_relaxed_delay_overflow():
+@pytest.mark.parametrize(("relax_required", "accepted"), [(4252442766, True), (4252442767, False)])
+def test_mapping_relaxed_delay_boundary(relax_required, *, accepted):
     ntk = Aig()
     signal = ntk.create_pi()
     for _ in range(101):
         signal = ntk.create_and(signal, ntk.create_pi())
     ntk.create_po(signal)
-    with pytest.raises(ValueError, match="relax_required"):
-        algorithms.lut_mapping(ntk, cut_size=2, relax_required=2**32 - 1)
+    if accepted:
+        mapped = algorithms.lut_mapping(ntk, cut_size=2, relax_required=relax_required)
+        assert algorithms.equivalence_checking(ntk, mapped)
+    else:
+        with pytest.raises(ValueError, match="relax_required"):
+            algorithms.lut_mapping(ntk, cut_size=2, relax_required=relax_required)
 
 
 def test_klut_simulation_preserves_fanin_order(asymmetric_klut):
@@ -260,6 +275,7 @@ def test_cleanup_names_follow_retained_outputs():
     ntk.create_po(a, "direct")
     ntk.create_po(gate)
     ntk.create_po(ntk.get_constant(False), "constant")
+    ntk.create_po(ntk.get_constant(True), "one")
     ntk.create_po(gate, "retained")
     cleaned = algorithms.cleanup_dangling(ntk, remove_redundant_pos=True)
     assert cleaned.num_pos == 2
@@ -273,6 +289,21 @@ def test_conversion_preserves_asymmetric_function(asymmetric_klut):
     converted = algorithms.convert_klut_to_aig(asymmetric_klut)
     assert type(converted) is Aig
     assert algorithms.simulate(converted)[0].to_binary() == "0010"
+
+
+def test_conversion_decomposes_six_input_lut():
+    ntk = Klut()
+    inputs = [ntk.create_pi() for _ in range(6)]
+    function = TruthTable(6)
+    function.create_from_hex_string("e39a51c6872d04bf")
+    gate = ntk.create_node(inputs, function)
+    for signal in (gate, gate, ntk.create_not(gate), ntk.get_constant(False), ntk.get_constant(True)):
+        ntk.create_po(signal)
+    converted = algorithms.convert_klut_to_aig(ntk)
+    outputs = algorithms.simulate(converted)
+    assert outputs[:3] == [function, function, ~function]
+    assert outputs[3].is_const0()
+    assert outputs[4].is_const1()
 
 
 @pytest.mark.parametrize("functional_reduction", [True, False])

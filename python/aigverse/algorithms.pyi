@@ -44,6 +44,9 @@ def equivalence_checking(
 ) -> bool | None:
     """Checks functional equivalence between a specification and implementation network using SAT solving.
 
+    LUT fanin checks include dangling gates. The fewer-than-32-fanin bound is a representation limit,
+    not a practical resource limit: LUT truth tables and ISOP/CNF construction can require exponential space and time.
+
     Args:
         spec: The specification network.
         impl: The implementation network.
@@ -57,7 +60,7 @@ def equivalence_checking(
         procedure did not finish before the configured limit.
 
     Raises:
-        ValueError: For Aig/Klut or Klut/Klut comparisons, if an input is sequential or a LUT has 32 fanins.
+        ValueError: For Aig/Klut or Klut/Klut comparisons, if an input is sequential or any LUT has 32 or more fanins.
         RuntimeError: If miter construction fails due to incompatible interfaces (PI/PO count mismatch).
     """
 
@@ -223,6 +226,8 @@ def simulate(ntk: aigverse.networks.Aig) -> list[aigverse.utils.TruthTable]: ...
 def simulate(ntk: aigverse.networks.Klut) -> list[aigverse.utils.TruthTable]:
     """Simulates all primary outputs of a network as truth tables.
 
+    The GIL is released while reading the live network. The caller must not mutate it concurrently.
+
     Args:
         ntk: The input logic network.
 
@@ -239,6 +244,8 @@ def simulate_nodes(ntk: aigverse.networks.Aig) -> dict[int, aigverse.utils.Truth
 @overload
 def simulate_nodes(ntk: aigverse.networks.Klut) -> dict[int, aigverse.utils.TruthTable]:
     """Simulates all nodes of a network as truth tables.
+
+    The GIL is released while reading the live network. The caller must not mutate it concurrently.
 
     Args:
         ntk: The input logic network.
@@ -375,6 +382,7 @@ def lut_mapping(
         An independent Klut, or NamedKlut for NamedAig. The input is unchanged.
 
     Raises:
+        TypeError: If an integer control is outside the signed 64-bit range accepted by the binding.
         ValueError: If the input is sequential, a control is out of range, or controls are incompatible.
     """
 
@@ -435,6 +443,7 @@ def lut_mapping(
         An independent Klut, or NamedKlut for NamedAig. The input is unchanged.
 
     Raises:
+        TypeError: If an integer control is outside the signed 64-bit range accepted by the binding.
         ValueError: If the input is sequential, a control is out of range, or controls are incompatible.
     """
 

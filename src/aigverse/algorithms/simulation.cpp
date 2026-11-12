@@ -57,6 +57,8 @@ void simulation(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
         nb::arg("ntk"),
         R"pb(Simulates all primary outputs of a network as truth tables.
 
+The GIL is released while reading the live network. The caller must not mutate it concurrently.
+
 Args:
     ntk: The input logic network.
 
@@ -102,6 +104,8 @@ Raises:
         },
         nb::arg("ntk"),
         R"pb(Simulates all nodes of a network as truth tables.
+
+The GIL is released while reading the live network. The caller must not mutate it concurrently.
 
 Args:
     ntk: The input logic network.

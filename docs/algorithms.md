@@ -26,6 +26,7 @@ effectively generating truth tables for the network's outputs and internal nodes
 For simulating AIGs and k-LUT networks with truth tables, the {py:func}`~aigverse.algorithms.simulate` and
 {py:func}`~aigverse.algorithms.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes of an
 network. Full simulation needs space exponential in the primary-input count and rejects 32 or more inputs.
+Both functions release the GIL while reading the live network; callers must not mutate that network concurrently.
 
 ```{code-cell} ipython3
 from aigverse.networks import Aig
@@ -328,6 +329,8 @@ cuts per node: default 8, maximum 31 for heuristic and 24 for the other engines.
 reserve an additional slot for the trivial cut. `area_flow_rounds=1` means one additional area-flow pass after
 initialization for every engine. `ela_rounds=None` selects two exact local area passes for heuristic and one
 for classic/SAT. Round counts are nonnegative and their combined native counters must fit in 32 bits.
+Integer arguments outside the signed 64-bit range raise `TypeError` during binding conversion; representable
+values outside an option's supported range raise `ValueError`.
 
 `area_oriented_mapping=None` selects `False` for heuristic and `True` for the other engines. Classic and SAT
 reject explicit `False`. Heuristic-only controls use `None` to select the documented defaults below and are rejected
@@ -380,6 +383,8 @@ names for `NamedKlut`; its optional input/output removal flags apply as for AIGs
 
 {py:func}`~aigverse.algorithms.equivalence_checking` accepts AIG/AIG, AIG/Klut, Klut/AIG, and Klut/Klut pairs.
 Comparisons involving LUTs use a LUT miter and require combinational inputs and gates with fewer than 32 fanins.
+This guard also checks dangling gates before miter cleanup. It is a representation limit, not a practical
+complexity bound: LUT truth tables and ISOP/CNF construction can require exponential space and time.
 The `functional_reduction` option applies to the AIG/AIG path; native functional reduction is not run on LUT
 miters. SAT resource exhaustion retains the existing `None` result, distinct from `False` for inequivalence.
 

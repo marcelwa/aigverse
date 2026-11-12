@@ -85,6 +85,9 @@ void equivalence_checking(nanobind::module_& m)  // NOLINT(misc-use-internal-lin
         nb::arg("functional_reduction") = true, nb::arg("verbose") = false,
         R"pb(Checks functional equivalence between a specification and implementation network using SAT solving.
 
+LUT fanin checks include dangling gates. The fewer-than-32-fanin bound is a representation limit,
+not a practical resource limit: LUT truth tables and ISOP/CNF construction can require exponential space and time.
+
 Args:
     spec: The specification network.
     impl: The implementation network.
@@ -98,7 +101,7 @@ Returns:
     procedure did not finish before the configured limit.
 
 Raises:
-    ValueError: For Aig/Klut or Klut/Klut comparisons, if an input is sequential or a LUT has 32 fanins.
+    ValueError: For Aig/Klut or Klut/Klut comparisons, if an input is sequential or any LUT has 32 or more fanins.
     RuntimeError: If miter construction fails due to incompatible interfaces (PI/PO count mismatch).)pb");
 }
 

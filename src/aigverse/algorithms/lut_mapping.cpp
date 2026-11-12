@@ -66,8 +66,9 @@ void bind_mapping(nb::module_& m)
                 throw nb::value_error("cut_limit must be between 1 and 31 for heuristic, or 1 and 24 otherwise");
             }
             if (!heuristic &&
-                (compute_truth || minimize_truth_table || required_delay || relax_required || recompute_cuts ||
-                 area_share_rounds || edge_optimization || cut_expansion || remove_dominated_cuts))
+                (compute_truth.has_value() || minimize_truth_table.has_value() || required_delay.has_value() ||
+                 relax_required.has_value() || recompute_cuts.has_value() || area_share_rounds.has_value() ||
+                 edge_optimization.has_value() || cut_expansion.has_value() || remove_dominated_cuts.has_value()))
             {
                 throw nb::value_error("these controls are supported only by algorithm='heuristic'");
             }
@@ -75,11 +76,11 @@ void bind_mapping(nb::module_& m)
             {
                 throw nb::value_error("classic and SAT mapping require area_oriented_mapping=True");
             }
-            if (conflict_limit && !sat)
+            if (conflict_limit.has_value() && !sat)
             {
                 throw nb::value_error("conflict_limit is supported only by SAT mapping");
             }
-            if (window_size && algorithm != "sat_windowed")
+            if (window_size.has_value() && algorithm != "sat_windowed")
             {
                 throw nb::value_error("window_size is supported only by algorithm='sat_windowed'");
             }
@@ -108,7 +109,7 @@ void bind_mapping(nb::module_& m)
             {
                 throw nb::value_error("cut_expansion=True requires recompute_cuts=True and compute_truth=False");
             }
-            if (modern.area_oriented_mapping && (required_delay || relax_required))
+            if (modern.area_oriented_mapping && (required_delay.has_value() || relax_required.has_value()))
             {
                 throw nb::value_error("timing controls require area_oriented_mapping=False");
             }
@@ -230,6 +231,7 @@ Returns:
     An independent Klut, or NamedKlut for NamedAig. The input is unchanged.
 
 Raises:
+    TypeError: If an integer control is outside the signed 64-bit range accepted by the binding.
     ValueError: If the input is sequential, a control is out of range, or controls are incompatible.)pb");
 }
 }  // namespace
