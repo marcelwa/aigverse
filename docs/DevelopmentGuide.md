@@ -219,6 +219,9 @@ All source files related to C++-Python bindings are contained in the `src/aigver
 
 :::::{tab-item} uv _(recommended)_
 :sync: uv
+The default development group, documentation group, and examples group require Python 3.11 or newer.
+The library itself continues to support Python 3.10.
+
 Getting the project up and running locally using `uv` is as simple as running:
 
 ```console

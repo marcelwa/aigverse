@@ -195,12 +195,18 @@ components = [ "aigverse_Python" ]
 
 [tool.uv]
 required-version = ">=0.13.4"
+constraint-dependencies = [ "pillow>=13.0.0" ]
 cache-keys = [
     { file = "pyproject.toml" },
     { git = { commit = true, tags = true } },
     { file = "src/**/*.cpp" },
     { file = "python/**/*.py" },
 ]
+
+[tool.uv.dependency-groups]
+dev = { requires-python = ">=3.11" }
+docs = { requires-python = ">=3.11" }
+examples = { requires-python = ">=3.11" }
 
 [tool.uv.sources]
 aigverse = { workspace = true }

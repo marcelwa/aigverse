@@ -47,6 +47,8 @@ releases may include breaking changes.
 
 ### Fixed
 
+- 🔒 Require a fixed Pillow release in contributor environments; the development,
+  documentation, and examples dependency groups now require Python 3.11 or newer.
 - 🔒 Require patched uv tooling and document CA trust updates needed to protect
   downloads from the eMudhra compromise ([#565]) ([**@marcelwa**])
 - 🐛 Allow equivalence checking of empty and constant AIGs in Debug builds
