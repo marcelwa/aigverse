@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <istream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -47,12 +48,12 @@ blif_source validate_blif(std::istream& input)
     char                                         phase    = '\0';
     std::string                                  continued;
 
-    auto identifier = [&](const std::string& name)
+    const auto identifier = [&](const std::string& name)
     {
         // Lorina's unanchored directive regexes can also match inside user signal names.
         return identifiers.try_emplace(name, fmt::format("s{}", identifiers.size())).first->second;
     };
-    auto finish_cover = [&]()
+    const auto finish_cover = [&]
     {
         if (in_cover && phase == '\0')
         {
@@ -82,7 +83,7 @@ blif_source validate_blif(std::istream& input)
             continued += line + ' ';
             continue;
         }
-        line = continued + line;
+        line.insert(0, continued);
         continued.clear();
         std::istringstream       words(line);
         std::vector<std::string> tokens;
@@ -122,7 +123,7 @@ blif_source validate_blif(std::istream& input)
             {
                 throw std::runtime_error("BLIF requires one .model name");
             }
-            source.model = tokens[1];
+            source.model = tokens.at(1);
             source.text += ".model top\n";
         }
         else if (source.model.empty())
@@ -138,7 +139,7 @@ blif_source validate_blif(std::istream& input)
             source.text += directive;
             for (std::size_t i = 1; i < tokens.size(); ++i)
             {
-                const auto& name = tokens[i];
+                const auto& name = tokens.at(i);
                 if (directive == ".inputs")
                 {
                     if (!drivers.insert(name).second)
@@ -168,7 +169,7 @@ blif_source validate_blif(std::istream& input)
             source.text += ".names";
             for (std::size_t i = 1; i < tokens.size(); ++i)
             {
-                source.text += ' ' + identifier(tokens[i]);
+                source.text += ' ' + identifier(tokens.at(i));
             }
             source.text += '\n';
             in_cover = true;
@@ -256,28 +257,34 @@ void write_blif(const Ntk& ntk, const std::filesystem::path& filename)
     ntk.foreach_pi(
         [&](const auto n)
         {
-            auto name = fmt::format("pi{}", n);
-            if constexpr (std::is_same_v<Ntk, named_klut>)
+            const auto name = [&]
             {
-                if (ntk.has_name(n))
+                if constexpr (std::is_same_v<Ntk, named_klut>)
                 {
-                    name = ntk.get_name(n);
+                    if (ntk.has_name(n))
+                    {
+                        return ntk.get_name(n);
+                    }
                 }
-            }
+                return fmt::format("pi{}", n);
+            }();
             define(name, n);
             output.set_name(n, name);
         });
     ntk.foreach_po(
         [&](const auto f, const auto index)
         {
-            auto name = fmt::format("po{}", index);
-            if constexpr (std::is_same_v<Ntk, named_klut>)
+            const auto name = [&]
             {
-                if (ntk.has_output_name(index))
+                if constexpr (std::is_same_v<Ntk, named_klut>)
                 {
-                    name = ntk.get_output_name(index);
+                    if (ntk.has_output_name(index))
+                    {
+                        return ntk.get_output_name(index);
+                    }
                 }
-            }
+                return fmt::format("po{}", index);
+            }();
             define(name, f);
             output.set_output_name(index, name);
         });
