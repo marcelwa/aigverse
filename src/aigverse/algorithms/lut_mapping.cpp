@@ -226,9 +226,11 @@ Args:
     conflict_limit: SAT modes only; conflicts per solve (default 10000, 0 means unlimited), at most INT_MAX.
         This is neither a cumulative resource limit nor an optimality certificate.
     window_size: sat_windowed only; positive maximum number of original-network gates per window (default 32).
+        Cells whose mandatory pivot cone exceeds this limit are skipped, so the classic seed may be retained.
 
 Returns:
     An independent Klut, or NamedKlut for NamedAig. The input is unchanged.
+    SAT minimizes native mapped-cell count, which can differ from the materialized Klut gate count.
 
 Raises:
     TypeError: If an integer control is outside the signed 64-bit range accepted by the binding.

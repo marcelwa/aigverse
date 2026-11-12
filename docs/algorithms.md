@@ -355,7 +355,8 @@ without cut recomputation is invalid.
 
 SAT modes accept `conflict_limit` (default 10000, `0` for unlimited, maximum `INT_MAX`) **per solve**. It is not
 a cumulative budget or a timeout. `window_size` is supported only by `sat_windowed`, defaults to 32, and counts
-original-network gates rather than LUTs. SAT returns the best mapping retained by the native recovery process;
+original-network gates rather than LUTs. Cells whose mandatory pivot cone exceeds that limit are skipped, so
+the classic seed may be retained. SAT returns the best mapping retained by the native recovery process;
 the return value does not certify optimality. The objective counts native mapped cells, which can differ from
 the materialized `Klut.num_gates` because of constants and direct or complemented outputs; returned gate counts
 are not guaranteed to decrease. Retained cuts restrict the structural search space, and recovery
