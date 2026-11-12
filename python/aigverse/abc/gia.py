@@ -174,7 +174,10 @@ class If(CommandWrapper):
         ela_rounds: int | None = None,
         delay_relaxation: int | None = None,
     ) -> Command:
-        """Builds ABC's priority-cut LUT mapping command.
+        """Builds ``&st; &if`` for priority-cut LUT mapping.
+
+        ``&st`` clears existing mapping and choices. Use a raw ``&if`` command
+        to retain choices generated earlier in the same script.
 
         Args:
             cut_size: Maximum LUT inputs (2 through 32).

@@ -76,6 +76,63 @@ def test_lut_input_can_explicitly_unmap_to_aig(namespace, command, named_klut_ba
         assert result.get_output_name(0) == "out"
 
 
+@pytest.mark.usefixtures("abc_available")
+@pytest.mark.parametrize(("namespace", "command"), [(abc.gia, "&ps"), (abc.gia, "&b"), (abc, "print_stats")])
+@pytest.mark.parametrize("named", [False, True])
+def test_default_aig_output_follows_native_store_behavior(namespace, command, named_klut_basic, *, named):
+    source = named_klut_basic if named else Klut(named_klut_basic)
+    if namespace is abc:
+        with pytest.raises(abc.AbcExecutionError, match="structurally hashed"):
+            namespace.run_script(source, command)
+        return
+    result = namespace.run_script(source, command)
+    assert type(result) is (NamedAig if named else Aig)
+    assert algorithms.equivalence_checking(source, result)
+    if named:
+        assert [result.get_name(result.make_signal(result.pi_at(i))) for i in range(2)] == ["a", "b"]
+        assert result.get_output_name(0) == "out"
+
+
+@pytest.mark.parametrize(
+    ("namespace", "lut_input", "read_command"),
+    [
+        (abc, False, "read_aiger in.aig"),
+        (abc.gia, False, "&read in.aig"),
+        (abc, True, "read_blif in.blif"),
+        (abc.gia, True, "read_blif in.blif; &get -m -n"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("output_type", "classic_write", "gia_write"),
+    [("aig", "write_aiger -s out.aig", "&write out.aig"), ("klut", "write_blif out.blif", "&put; write_blif out.blif")],
+)
+def test_transfer_commands_without_abc(
+    namespace, read_command, output_type, classic_write, gia_write, and_aig, named_klut_basic, monkeypatch, *, lut_input
+):
+    from aigverse.io import read_aiger_into_aig, read_blif_into_klut, write_aiger, write_blif
+
+    source = named_klut_basic if lut_input else and_aig
+    write_command = classic_write if namespace is abc else gia_write
+    monkeypatch.delenv("AIGVERSE_ABC_RC", raising=False)
+
+    def transfer(argv, *, cwd, **_kwargs):
+        assert argv[-1] == f"{read_command}; version; {write_command}"
+        transferred = (
+            read_blif_into_klut(Path(cwd, "in.blif")) if lut_input else read_aiger_into_aig(Path(cwd, "in.aig"))
+        )
+        assert algorithms.equivalence_checking(source, transferred)
+        if output_type == "klut":
+            write_blif(named_klut_basic, Path(cwd, "out.blif"))
+        else:
+            write_aiger(algorithms.convert_klut_to_aig(named_klut_basic), Path(cwd, "out.aig"))
+        return subprocess.CompletedProcess(argv, 0, "")
+
+    monkeypatch.setattr(subprocess, "run", transfer)
+    result = namespace.run_script(source, "version", output_type=output_type, binary=sys.executable)
+    assert isinstance(result, Klut if output_type == "klut" else Aig)
+    assert algorithms.equivalence_checking(source, result)
+
+
 @pytest.mark.parametrize("namespace", [abc, abc.gia], ids=["classic", "gia"])
 @pytest.mark.parametrize("output_type", ["lut", "", None, 1, []])
 def test_output_selector_is_checked_before_discovery(namespace, output_type, and_aig, tmp_path):
@@ -188,7 +245,7 @@ def test_mapping_zero_gate_networks(namespace, network, shape):
             source.create_po(source.create_not(a))
     if shape == "empty":
         with pytest.raises(abc.AbcExecutionError):
-            namespace.if_(source)
+            namespace.if_(source, timeout=10)
         return
     result = namespace.if_(source)
     assert result.num_pis == source.num_pis
@@ -232,7 +289,7 @@ def test_duplicate_output_labels_report_native_abc_failure(namespace, network):
     source.create_po(gate, "duplicate")
     source.create_po(gate, "duplicate")
     with pytest.raises(abc.AbcExecutionError):
-        namespace.if_(source)
+        namespace.if_(source, timeout=10)
 
 
 @pytest.mark.usefixtures("abc_available")
@@ -253,7 +310,7 @@ def test_lut_input_reaches_binary_discovery(namespace, named_klut_basic, tmp_pat
 @pytest.mark.parametrize("jobs", [1, 2])
 def test_lut_batches_return_failures_in_place(namespace, and_aig, jobs):
     results = namespace.run_many(
-        [Aig(), and_aig], namespace.if_.cmd(), output_type="klut", jobs=jobs, return_exceptions=True
+        [Aig(), and_aig], namespace.if_.cmd(), output_type="klut", jobs=jobs, return_exceptions=True, timeout=10
     )
     assert isinstance(results[0], abc.AbcExecutionError)
     assert isinstance(results[1], Klut)

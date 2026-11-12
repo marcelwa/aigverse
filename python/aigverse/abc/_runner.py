@@ -498,8 +498,9 @@ def run_script(
     The result is an AIG by default, or a k-LUT network with ``output_type='klut'``.
     Named inputs yield named results with input/output names and order preserved.
     A ``SequentialAig`` can only produce AIG output and keeps its registers.
-    Scripts requesting AIG output must leave an AIG in the selected store;
-    mapped networks are not automatically unmapped.
+    Classic scripts requesting AIG output must leave a structurally hashed AIG.
+    GIA's ``&write`` also accepts a mapped graph: its underlying AIG is returned,
+    and its mapping metadata is not imported into the Python result.
 
     ABC keeps two independent network stores, and a command only ever sees the
     one it belongs to. By default the network is loaded with ``read_aiger`` into
@@ -523,6 +524,7 @@ def run_script(
         output_type: ``'aig'`` (default) or ``'klut'``. The script must produce
             a network that ABC can write in that representation.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
+            Network serialization and result parsing are outside this limit.
         use_init_file: If ``False`` (default), ABC is invoked with ``-s`` so that
             no ``abc.rc`` is read and results do not depend on the local install.
             A resource file registered with :func:`~aigverse.abc.set_abc_rc` is

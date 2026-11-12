@@ -48,7 +48,11 @@ __all__ = [
 
 
 class If(CommandWrapper):
-    """Maps a combinational AIG or k-LUT network using ABC's ``if`` command."""
+    """Maps a combinational AIG or k-LUT network using ABC's ``if`` command.
+
+    ABC strashes and balances k-LUT input before mapping; AIG input skips that
+    preprocessing.
+    """
 
     @staticmethod
     def cmd(

@@ -145,10 +145,12 @@ built-in {py:func}`~aigverse.algorithms.lut_mapping` algorithms. Numeric options
 be integers representable by ABC's signed 32-bit parser.
 
 Raw `run_script` and `run_many` calls accept `output_type="klut"` to read the result
-as BLIF. Their default remains `output_type="aig"`, including for LUT inputs:
-the script must explicitly leave an AIG, for example `abc.run_script(mapped,
-"strash")` or `abc.gia.run_script(mapped, "&st")`. Existing AIG optimization
-wrappers retain their AIG-only input contract.
+as BLIF. Their default remains `output_type="aig"`, including for LUT inputs.
+The classic store requires a structurally hashed AIG, for example
+`abc.run_script(mapped, "strash")`. GIA's `&write` also accepts a mapped graph:
+`abc.gia.run_script(mapped, "&ps")` returns its underlying AIG, without importing
+the LUT mapping metadata. Existing AIG optimization wrappers retain their AIG-only
+input contract.
 
 LUT input enters the classic store through `read_blif`, and the GIA store through
 `read_blif; &get -m -n`, preserving its mapping. GIA LUT output uses
@@ -156,9 +158,17 @@ LUT input enters the classic store through `read_blif`, and the GIA store throug
 `abc.gia.if_.cmd()` includes `&st; &if` to support remapping and composition.
 Other raw GIA scripts retain the incoming mapping until they explicitly clear it.
 
+Classic `if` strashes and balances LUT input before mapping; AIG input skips that
+preprocessing. GIA's `&st` performs delay-oriented unmapping of LUT input and
+rehashes an unmapped AIG, discarding any choices. To use choices generated earlier
+in a script, for example by `&synch2`, call raw `&if -K 6` with
+`output_type="klut"` instead of composing `abc.gia.if_.cmd()`.
+
 BLIF stores dense node truth tables in `aigverse`; a large cut size can therefore
 require exponential space. Start with the default 6-input LUTs and increase the
-size only when the workload warrants it.
+size only when the workload warrants it. `timeout` bounds the ABC subprocess only;
+network serialization and BLIF parsing can take exponential time and space outside
+that limit.
 
 ### The two network stores
 
