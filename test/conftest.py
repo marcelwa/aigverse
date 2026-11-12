@@ -1,11 +1,26 @@
 from __future__ import annotations
 
+import sys
+import sysconfig
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from aigverse.generators import random_aig
 from aigverse.networks import Aig
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _check_free_threading() -> Generator[None]:
+    if sysconfig.get_config_var("Py_GIL_DISABLED"):
+        assert not getattr(sys, "_is_gil_enabled", lambda: True)()
+    yield
+    if sysconfig.get_config_var("Py_GIL_DISABLED"):
+        assert not getattr(sys, "_is_gil_enabled", lambda: True)()
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:

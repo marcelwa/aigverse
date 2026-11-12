@@ -15,8 +15,11 @@ defaults:
 
 jobs:
   coverage:
-    name: 📊 Python and C++
+    name: 📊 Python ${{ matrix.python }} and C++
     runs-on: ubuntu-26.04
+    strategy:
+      matrix:
+        python: ["3.12", "3.15t"]
     timeout-minutes: 60
     permissions:
       contents: read # required to check out the repository
@@ -37,12 +40,21 @@ jobs:
           save-cache: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Measure coverage
-        run: uvx nox -s coverage -- --full -m 'not network'
+        run: uvx nox -s coverage -p '${{ matrix.python }}' -- --full -m 'not network'
+
+      - name: Save coverage reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-${{ matrix.python }}
+          path: |
+            build/coverage-${{ matrix.python }}/*.xml
+            build/coverage-${{ matrix.python }}/*.json
 
       - name: Upload Python coverage
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
-          files: build/coverage/python.xml
+          files: build/coverage-${{ matrix.python }}/python.xml
           flags: python
           disable_search: true
           fail_ci_if_error: true
@@ -51,7 +63,7 @@ jobs:
       - name: Upload C++ coverage
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
-          files: build/coverage/cpp.xml
+          files: build/coverage-${{ matrix.python }}/cpp.xml
           flags: cpp
           disable_search: true
           fail_ci_if_error: true

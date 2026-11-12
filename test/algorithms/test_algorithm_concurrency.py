@@ -15,6 +15,7 @@ from aigverse.algorithms import (
     simulate_nodes,
     sop_refactoring,
 )
+from aigverse.networks import NamedAig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -50,8 +51,9 @@ CASES: list[tuple[str, Callable[[Aig], Any]]] = [
 @pytest.mark.parametrize("call", [c for _, c in CASES], ids=[name for name, _ in CASES])
 def test_concurrent_calls_on_one_shared_network(call: Callable[[Aig], Any], race_prone_aig: Aig) -> None:
     expected = call(race_prone_aig)
+    networks = [race_prone_aig, NamedAig(race_prone_aig)] * (REPEATS // 2)
 
     with ThreadPoolExecutor(THREADS) as pool:
-        results = [f.result() for f in [pool.submit(call, race_prone_aig) for _ in range(REPEATS)]]
+        results = [f.result() for f in [pool.submit(call, network) for network in networks]]
 
     assert results == [expected] * REPEATS

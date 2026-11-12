@@ -10,7 +10,8 @@ from aigverse.networks import Aig, EdgeTensorEncoding, NodeTensorEncoding
 
 def test_concurrent_level_exports(race_prone_aig: Aig) -> None:
     def export() -> list[list[float]]:
-        return np.from_dlpack(race_prone_aig.to_graph_tensors(levels=True)["node_attr"]).tolist()
+        tensors = race_prone_aig.to_graph_tensors(levels=True, fanouts=True, node_tts=True)
+        return np.from_dlpack(tensors["node_attr"]).tolist()
 
     expected = export()
     with ThreadPoolExecutor(8) as pool:

@@ -378,12 +378,12 @@ def tests(session: nox.Session) -> None:
     _run_tests(session, group="tests")
 
 
-@nox.session(reuse_venv=True, python="3.12", default=False)
+@nox.session(reuse_venv=True, python=["3.12", "3.15t"], default=False)
 def coverage(session: nox.Session) -> None:
     """Measure Python and native coverage on Linux with GCC."""
     if sys.platform != "linux":
         session.error("Native coverage requires Linux and GCC.")
-    build_dir = Path(__file__).parent.resolve() / "build" / "coverage"
+    build_dir = Path(__file__).parent.resolve() / "build" / f"coverage-{session.python}"
     build_dir.mkdir(parents=True, exist_ok=True)
     for counter in build_dir.rglob("*.gcda"):
         counter.unlink()
@@ -410,6 +410,7 @@ def coverage(session: nox.Session) -> None:
         "--filter=src/aigverse/",
         "--include-internal-functions",
         f"--xml={build_dir / 'cpp.xml'}",
+        f"--json={build_dir / 'cpp.json'}",
         str(build_dir),
     )
 
