@@ -1,7 +1,6 @@
-"""Keeps the option bounds in sync with whatever ABC is installed.
+"""Keeps the option bounds in sync with the ABC revision pinned in CI.
 
-`aigverse` pins no ABC version, so :data:`aigverse.abc._options.BOUNDS` can only
-describe some ABC. Most of its entries are ranges ABC prints in a command's
+Most entries in :data:`aigverse.abc._options.BOUNDS` are ranges ABC prints in a command's
 ``-h`` output; these tests parse them back out of the resolved binary and fail if
 they moved, which is what makes the pinned-ABC CI job able to catch upstream
 drift. The rest are enforced by ABC's code without appearing in ``-h`` and are
@@ -22,8 +21,8 @@ from aigverse.abc._options import BOUNDS, Bound, check_option
 if TYPE_CHECKING:
     from aigverse.networks import Aig
 
-# `-K <num> : the max cut size (4 <= num <= 16) [default = 8]`
-_CLOSED = re.compile(r"-(?P<switch>[A-Za-z]) *<?num>? *:.*?\((?P<low>-?\d+) *<= *num *<= *(?P<high>-?\d+)\)")
+# ABC prints closed ranges as either `(4 <= num <= 16)` or `(4 to 16)`.
+_CLOSED = re.compile(r"-(?P<switch>[A-Za-z]) *<?num>? *:.*?\((?P<low>-?\d+) *(?:<= *num *<=|to) *(?P<high>-?\d+)\)")
 # `-N num   : the limit on added nodes (num >= 0) [default = 0]`
 _OPEN = re.compile(r"-(?P<switch>[A-Za-z]) *<?num>? *:.*?\(num *(?P<operator>>=|>) *(?P<low>-?\d+)\)")
 # `-M <num> : the min number of nodes saved after one step (0 <= num) [default = 1]`
@@ -121,7 +120,7 @@ def test_undocumented_bounds_state_their_evidence(bound: Bound) -> None:
 
 @pytest.mark.usefixtures("abc_available")
 def test_refactor_rejects_the_support_abc_rejects(and_aig: Aig) -> None:
-    """The one undocumented bound worth pinning against a real ABC.
+    """Checks an undocumented support limit against a real ABC.
 
     ABC prints no range for `refactor -N` but refuses a support above 15 at
     runtime. If that ever changes, the wrapper is needlessly strict rather than
@@ -133,6 +132,15 @@ def test_refactor_rejects_the_support_abc_rejects(and_aig: Aig) -> None:
         abc.run_script(and_aig, "refactor -N 16")
 
 
+@pytest.mark.usefixtures("abc_available")
+def test_gia_resub_min_saved_matches_abc(and_aig: Aig) -> None:
+    """The pinned ABC enforces the minimum-savings range even though help omits it."""
+    abc.gia.resub(and_aig, min_saved=1_000_000)
+    for value in (0, 1_000_001):
+        with pytest.raises(abc.AbcExecutionError):
+            abc.gia.run_script(and_aig, f"&resub -M {value}")
+
+
 @pytest.mark.parametrize(
     ("command", "switch", "value", "message"),
     [
@@ -140,7 +148,10 @@ def test_refactor_rejects_the_support_abc_rejects(and_aig: Aig) -> None:
         ("resub", "K", 17, "cut must be between 4 and 16"),
         ("resub", "N", 4, "inserts must be between 0 and 3"),
         ("refactor", "N", 16, "support must be between 1 and 15"),
-        ("&resub", "S", 0, "support must be at least 1"),
+        ("&resub", "K", 3, "max_cut_size must be between 4 and 16"),
+        ("&resub", "N", 5, "max_inserts must be between 0 and 4"),
+        ("&resub", "M", 0, "min_saved must be between 1 and 1000000"),
+        ("&resub", "M", 1_000_001, "min_saved must be between 1 and 1000000"),
         ("&deepsyn", "S", 101, "seed must be between 0 and 100"),
     ],
 )
