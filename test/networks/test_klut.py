@@ -186,6 +186,9 @@ def test_depth_and_fanout_primary_inputs() -> None:
     assert fanout.fanouts(a) == []
     gate = fanout.create_not(a)
     assert fanout.fanouts(a) == [gate]
+    repeated = fanout.create_and(a, a)
+    assert fanout.fanouts(a) == [gate, repeated]
+    assert fanout.clone().fanouts(a) == [gate, repeated]
 
 
 def test_view_handle_validation(named_klut_basic: NamedKlut) -> None:

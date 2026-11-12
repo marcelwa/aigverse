@@ -598,7 +598,15 @@ Raises:
                     }
                 }
                 result.reserve(count);
-                ntk.foreach_fanout(n, [&](const auto f) { result.push_back(f); });
+                // Gates are append-only, so repeated fanins produce consecutive duplicate fanouts.
+                ntk.foreach_fanout(n,
+                                   [&](const auto f)
+                                   {
+                                       if (result.empty() || result.back() != f)
+                                       {
+                                           result.push_back(f);
+                                       }
+                                   });
                 return result;
             },
             nb::arg("n"), R"pb(Returns the gate fanouts of a node; primary outputs are excluded.)pb");
