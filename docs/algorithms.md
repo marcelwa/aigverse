@@ -23,9 +23,9 @@ effectively generating truth tables for the network's outputs and internal nodes
 
 ### Functional Simulation
 
-For simulating AIGs with truth tables, the {py:func}`~aigverse.algorithms.simulate` and
+For simulating AIGs and k-LUT networks with truth tables, the {py:func}`~aigverse.algorithms.simulate` and
 {py:func}`~aigverse.algorithms.simulate_nodes` functions allow you to obtain truth tables for outputs and internal nodes of an
-AIG.
+network. Full simulation needs space exponential in the primary-input count and rejects 32 or more inputs.
 
 ```{code-cell} ipython3
 from aigverse.networks import Aig
@@ -293,7 +293,95 @@ When choosing this route, users are responsible to call {py:func}`~aigverse.algo
 structurally valid AIG.
 :::
 
+## LUT mapping and conversion
+
+{py:func}`~aigverse.algorithms.lut_mapping` maps a combinational AIG to a fresh
+{py:class}`~aigverse.networks.Klut`. A `NamedAig` produces a `NamedKlut` with its network name, primary-input
+names, output names, and interface order preserved. The original network is unchanged; depth and fanout AIG
+views are accepted, while `SequentialAig` is rejected.
+
+```{code-cell} ipython3
+from aigverse.algorithms import convert_klut_to_aig, equivalence_checking, lut_mapping
+from aigverse.networks import DepthKlut
+
+mapped = lut_mapping(aig, cut_size=6)
+assert simulate(mapped) == simulate(aig)
+assert equivalence_checking(aig, mapped)
+print("LUTs:", mapped.num_gates, "depth:", DepthKlut(mapped).num_levels)
+
+recovered = lut_mapping(aig, algorithm="sat_windowed", conflict_limit=10000, window_size=32)
+converted = convert_klut_to_aig(recovered)
+assert equivalence_checking(recovered, converted)
+```
+
+Choose the mapping engine with `algorithm`:
+
+| Selector                | Objective and controls                                                                        |
+| ----------------------- | --------------------------------------------------------------------------------------------- |
+| `"heuristic"` (default) | Native `lut_map`: depth-oriented mapping followed by area recovery; optionally area-oriented. |
+| `"classic"`             | Native `lut_mapping`: area-flow and exact local area passes over retained cuts.               |
+| `"sat"`                 | Classic seed followed by whole-network SAT area recovery on the original AIG.                 |
+| `"sat_windowed"`        | Classic seed followed by SAT area recovery in windows of original AIG gates.                  |
+
+All engines accept `cut_size` from 2 to 16 (default 6). `cut_limit` counts retained **nontrivial** candidate
+cuts per node: default 8, maximum 31 for heuristic and 24 for the other engines. Classic and SAT internally
+reserve an additional slot for the trivial cut. `area_flow_rounds=1` means one additional area-flow pass after
+initialization for every engine. `ela_rounds=None` selects two exact local area passes for heuristic and one
+for classic/SAT. Round counts are nonnegative and their combined native counters must fit in 32 bits.
+
+`area_oriented_mapping=None` selects `False` for heuristic and `True` for the other engines. Classic and SAT
+reject explicit `False`. Heuristic-only controls use `None` to select the documented defaults below and are rejected
+when explicitly supplied to another engine, even if their value matches a default:
+
+| Control                            | Default and meaning                                                                               |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `compute_truth`                    | `False`; compute truth tables during cut enumeration. Every returned LUT still has a truth table. |
+| `minimize_truth_table`             | Equal to `compute_truth`; minimize cut support, requiring truth computation when enabled.         |
+| `required_delay`, `relax_required` | `0`; absolute depth target or percentage relaxation, respectively.                                |
+| `recompute_cuts`                   | `True`; recompute cuts at each pass.                                                              |
+| `area_share_rounds`                | `2`; backward area-sharing passes.                                                                |
+| `edge_optimization`                | `True`; reduce LUT input edges.                                                                   |
+| `cut_expansion`                    | Enabled only when cuts are recomputed and truth computation is disabled.                          |
+| `remove_dominated_cuts`            | `True`; discard cuts contained in other candidates.                                               |
+
+Timing controls require delay orientation; their positive values cannot be combined. They are heuristic
+targets, not guaranteed maximum output depths. Extreme relaxation percentages are rejected when scaling the
+input gate count (a conservative depth bound) would exceed the native 32-bit depth range.
+Explicitly enabling cut expansion with truth computation or
+without cut recomputation is invalid.
+
+SAT modes accept `conflict_limit` (default 10000, `0` for unlimited, maximum `INT_MAX`) **per solve**. It is not
+a cumulative budget or a timeout. `window_size` is supported only by `sat_windowed`, defaults to 32, and counts
+original-network gates rather than LUTs. SAT returns the best mapping retained by the native recovery process;
+the return value does not certify optimality. The objective counts native mapped cells, which can differ from
+the materialized `Klut.num_gates` because of constants and direct or complemented outputs; returned gate counts
+are not guaranteed to decrease. Retained cuts restrict the structural search space, and recovery
+does not impose a delay-preservation constraint. A bounded whole-network search need not outperform windowed
+search. Increasing LUT size, retained cuts, or SAT windows can increase time and memory substantially; truth-table
+space is exponential in LUT fanin count.
+
+Classic mapping keeps a fixed cut set and generally has lower overhead. The modern heuristic spends additional
+passes and cut recomputation on depth and area tradeoffs. Whole-network SAT can take exponential time, with a
+fresh conflict allowance for each solve. Windowing limits each local solver instance but still pays for many
+windows and their setup. Choose the objective and check results on representative inputs; the fastest engine
+and the smallest or shallowest mapped network need not coincide.
+
+The [native mapping documentation](https://mockturtle.readthedocs.io/en/latest/algorithms/lut_mapping.html),
+[priority-cut mapping paper](https://people.eecs.berkeley.edu/~alanmi/publications/2007/iccad07_map.pdf), and
+[SAT LUT area-recovery paper](https://people.eecs.berkeley.edu/~alanmi/publications/2018/aspdac18_satlut.pdf)
+provide background on these methods. Structural cut mapping is different from unrestricted functional resynthesis.
+
+{py:func}`~aigverse.algorithms.convert_klut_to_aig` uses native disjoint-support decomposition, Shannon
+decomposition, and NPN resynthesis to produce an independent AIG. `NamedKlut` produces `NamedAig`, preserving
+the named interface. {py:func}`~aigverse.algorithms.cleanup_dangling` also accepts k-LUT networks and preserves
+names for `NamedKlut`; its optional input/output removal flags apply as for AIGs.
+
 ## Equivalence Checking
+
+{py:func}`~aigverse.algorithms.equivalence_checking` accepts AIG/AIG, AIG/Klut, Klut/AIG, and Klut/Klut pairs.
+Comparisons involving LUTs use a LUT miter and require combinational inputs and gates with fewer than 32 fanins.
+The `functional_reduction` option applies to the AIG/AIG path; native functional reduction is not run on LUT
+miters. SAT resource exhaustion retains the existing `None` result, distinct from `False` for inequivalence.
 
 Equivalence checking algorithms verify that two logic networks implement the same function, which is especially
 important after performing optimizations.

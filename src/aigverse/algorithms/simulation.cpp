@@ -32,6 +32,10 @@ void simulation(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
         "simulate",
         [](const Ntk& ntk) -> std::vector<kitty::dynamic_truth_table>
         {
+            if (ntk.num_pis() >= 32)
+            {
+                throw nb::value_error("full truth-table simulation requires fewer than 32 primary inputs");
+            }
             if (ntk.num_pis() > 16)
             {
                 std::cout << "[w] trying to simulate a network with more than 16 inputs; this might take while and "
@@ -60,6 +64,7 @@ Returns:
     A list containing one truth table per primary output.
 
 Raises:
+    ValueError: If there are 32 or more primary inputs.
     MemoryError: If the truth tables cannot be allocated due to memory limits.)pb",
         nb::call_guard<nb::gil_scoped_release>());
 
@@ -67,6 +72,10 @@ Raises:
         "simulate_nodes",
         [](const Ntk& ntk) -> std::unordered_map<uint64_t, kitty::dynamic_truth_table>
         {
+            if (ntk.num_pis() >= 32)
+            {
+                throw nb::value_error("full truth-table simulation requires fewer than 32 primary inputs");
+            }
             if (ntk.num_pis() > 16)
             {
                 std::cout << "[w] trying to simulate a network with more than 16 inputs; this might take while and "
@@ -101,6 +110,7 @@ Returns:
     A dictionary that maps node identifiers to truth tables.
 
 Raises:
+    ValueError: If there are 32 or more primary inputs.
     MemoryError: If the truth tables cannot be allocated due to memory limits.)pb",
         nb::call_guard<nb::gil_scoped_release>());
 }
@@ -113,6 +123,7 @@ template void simulation<aigverse::aig>(nanobind::module_& m);
 void bind_simulation(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::simulation<aigverse::aig>(m);
+    detail::simulation<aigverse::klut>(m);
 }
 
 }  // namespace aigverse

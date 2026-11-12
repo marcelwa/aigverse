@@ -12,6 +12,8 @@ releases may include breaking changes.
 
 ### Added
 
+- ✨ Add unified heuristic, classic, and SAT LUT mapping, k-LUT simulation and cleanup, AIG conversion,
+  and cross-representation equivalence checking ([**@marcelwa**])
 - ✨ Add combinational k-LUT networks with named, depth, and fanout views and BLIF import/export
   ([#589]) ([**@marcelwa**])
 - ✨ Support Python 3.15, including free-threaded wheels and concurrent read-only network operations ([#439])

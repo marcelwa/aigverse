@@ -4,6 +4,8 @@ add_aigverse_python_binding(
   balancing.cpp
   cleanup_dangling.cpp
   equivalence_checking.cpp
+  klut_conversion.cpp
+  lut_mapping.cpp
   refactoring.cpp
   resubstitution.cpp
   rewriting.cpp

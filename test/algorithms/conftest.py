@@ -4,13 +4,52 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from aigverse.networks import Aig
+from aigverse.networks import Aig, Klut, NamedAig
+from aigverse.utils import TruthTable
+
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
 @pytest.fixture
+def mapping_aig() -> NamedAig:
+    """Create named, repeated and complemented outputs plus dangling logic.
+
+    Returns:
+        A combinational network with a deliberately unused input and gate.
+    """
+    ntk = NamedAig()
+    ntk.set_network_name("mapping")
+    a, b, c, unused = [ntk.create_pi(name) for name in ("a", "b", "c", "unused")]
+    f = ntk.create_xor(ntk.create_and(a, ~b), c)
+    ntk.create_and(unused, b)
+    for signal, name in zip(
+        (f, ~f, f, a, ~a, ntk.get_constant(False), ntk.get_constant(True)),
+        ("f", "not_f", "again", "a_out", "not_a", "zero", "one"),
+        strict=True,
+    ):
+        ntk.create_po(signal, name)
+    return ntk
+
+
+@pytest.fixture
+def asymmetric_klut() -> Klut:
+    """Create a LUT whose function detects reversed fanin order.
+
+    Returns:
+        A network computing its first input AND NOT its second input.
+    """
+    ntk = Klut()
+    a, b = ntk.create_pi(), ntk.create_pi()
+    function = TruthTable(2)
+    function.create_from_binary_string("0010")
+    ntk.create_po(ntk.create_node([a, b], function))
+    return ntk
+
+
+@pytest.fixture
+
 def equivalent_two_output_aigs() -> tuple[Aig, Aig]:
     """Create two equivalent AIGs with two POs for equivalence-based tests.
 

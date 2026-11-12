@@ -4,21 +4,40 @@
 
 #include "aigverse/types.hpp"
 
+#include "transform_helpers.hpp"
+
 #include <mockturtle/algorithms/equivalence_checking.hpp>
 #include <mockturtle/algorithms/miter.hpp>
-#include <mockturtle/networks/aig.hpp>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/optional.h>  // NOLINT(misc-include-cleaner)
 
 #include <cstdint>
 #include <optional>
 #include <stdexcept>
+#include <type_traits>
 
 namespace aigverse
 {
 
 namespace detail
 {
+
+template <typename Ntk>
+static void check_cnf_fanins(const Ntk& ntk)
+{
+    if constexpr (std::is_same_v<typename Ntk::base_type, klut>)
+    {
+        ntk.foreach_gate(
+            [&](const auto n)
+            {
+                // kitty's CNF cubes need a 32-bit slot for the gate's output literal as well.
+                if (ntk.fanin_size(n) >= 32)
+                {
+                    throw nanobind::value_error("SAT equivalence requires LUT gates with fewer than 32 fanins");
+                }
+            });
+    }
+}
 
 template <typename Spec, typename Impl>
 void equivalence_checking(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
@@ -30,13 +49,24 @@ void equivalence_checking(nanobind::module_& m)  // NOLINT(misc-use-internal-lin
         [](const Spec& spec, const Impl& impl, const uint32_t conflict_limit = 0,
            const bool functional_reduction = true, const bool verbose = false) -> std::optional<bool>
         {
+            constexpr bool uses_klut =
+                std::is_same_v<typename Spec::base_type, klut> || std::is_same_v<typename Impl::base_type, klut>;
+            if constexpr (uses_klut)
+            {
+                require_combinational(spec);
+                require_combinational(impl);
+                check_cnf_fanins(spec);
+                check_cnf_fanins(impl);
+            }
             // `miter` runs `cleanup_dangling` over both networks, which builds a `topo_view` over each and writes into
             // its storage; run it on clones instead. The clones cost 2.1% of the call at 1k gates. See
             // `transform_helpers.hpp` for the rule.
-            const auto spec_snapshot = spec.clone();
-            const auto impl_snapshot = impl.clone();
+            const auto                   spec_snapshot = spec.clone();
+            const auto                   impl_snapshot = impl.clone();
+            const nb::gil_scoped_release release{};
 
-            const auto miter = mockturtle::miter<mockturtle::aig_network, Spec, Impl>(spec_snapshot, impl_snapshot);
+            using miter_ntk  = std::conditional_t<uses_klut, klut, aig>;
+            const auto miter = mockturtle::miter<miter_ntk, Spec, Impl>(spec_snapshot, impl_snapshot);
 
             if (!miter.has_value())
             {
@@ -59,7 +89,8 @@ Args:
     spec: The specification network.
     impl: The implementation network.
     conflict_limit: SAT conflict limit. A value of ``0`` means no limit.
-    functional_reduction: Whether to perform functional reduction of the miter before checking.
+    functional_reduction: Whether to perform functional reduction of an AIG/AIG miter before checking.
+        Native functional reduction is not applied when either input is a Klut.
     verbose: Whether to print verbose progress output.
 
 Returns:
@@ -67,8 +98,8 @@ Returns:
     procedure did not finish before the configured limit.
 
 Raises:
-    RuntimeError: If miter construction fails due to incompatible interfaces (PI/PO count mismatch).)pb",
-        nb::call_guard<nb::gil_scoped_release>());
+    ValueError: For Aig/Klut or Klut/Klut comparisons, if an input is sequential or a LUT has 32 fanins.
+    RuntimeError: If miter construction fails due to incompatible interfaces (PI/PO count mismatch).)pb");
 }
 
 // Explicit instantiation for AIG
@@ -79,6 +110,9 @@ template void equivalence_checking<aigverse::aig, aigverse::aig>(nanobind::modul
 void bind_equivalence_checking(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::equivalence_checking<aigverse::aig, aigverse::aig>(m);
+    detail::equivalence_checking<aigverse::aig, aigverse::klut>(m);
+    detail::equivalence_checking<aigverse::klut, aigverse::aig>(m);
+    detail::equivalence_checking<aigverse::klut, aigverse::klut>(m);
 }
 
 }  // namespace aigverse
