@@ -56,6 +56,14 @@ def test_mapping_round_trip(namespace, named_klut_basic, *, named):
 
 
 @pytest.mark.usefixtures("abc_available")
+@pytest.mark.parametrize("mapper", [abc.if_, abc.gia.if_], ids=["classic", "gia"])
+def test_mapping_named_return_types(mapper: abc.If | abc.gia.If, named_klut_basic: NamedKlut) -> None:
+    mapped: NamedKlut = mapper(algorithms.convert_klut_to_aig(named_klut_basic))
+    remapped: NamedKlut = mapper(named_klut_basic)
+    assert mapped.get_output_name(0) == remapped.get_output_name(0) == "out"
+
+
+@pytest.mark.usefixtures("abc_available")
 @pytest.mark.parametrize("namespace", [abc, abc.gia], ids=["classic", "gia"])
 def test_lut_batch_keeps_input_order_and_namedness(namespace, and_aig, named_klut_basic):
     results = namespace.run_many([and_aig, named_klut_basic], namespace.if_.cmd(), output_type="klut", jobs=2)

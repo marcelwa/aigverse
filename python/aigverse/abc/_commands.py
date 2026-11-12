@@ -20,7 +20,7 @@ that ``preserve_levels=False`` reads as what it does.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, overload
 
 from ._options import check_option
 from ._runner import AigT, Command, CommandWrapper, run_aig_script
@@ -29,7 +29,7 @@ from ._runner import run_script as _run_script
 if TYPE_CHECKING:
     import os
 
-    from ..networks import Aig, Klut
+    from ..networks import Aig, Klut, NamedAig, NamedKlut
 
 __all__ = [
     "Balance",
@@ -102,6 +102,38 @@ class If(CommandWrapper):
         if area_oriented_mapping:
             command += " -a"
         return Command(command)
+
+    @overload
+    def __call__(
+        self,
+        ntk: NamedAig | NamedKlut,
+        *,
+        cut_size: int = ...,
+        cut_limit: int = ...,
+        area_oriented_mapping: bool = ...,
+        area_flow_rounds: int | None = ...,
+        ela_rounds: int | None = ...,
+        delay_relaxation: int | None = ...,
+        timeout: float | None = ...,
+        verbose: bool = ...,
+        binary: str | os.PathLike[str] | None = ...,
+    ) -> NamedKlut: ...
+
+    @overload
+    def __call__(
+        self,
+        ntk: Aig | Klut,
+        *,
+        cut_size: int = ...,
+        cut_limit: int = ...,
+        area_oriented_mapping: bool = ...,
+        area_flow_rounds: int | None = ...,
+        ela_rounds: int | None = ...,
+        delay_relaxation: int | None = ...,
+        timeout: float | None = ...,
+        verbose: bool = ...,
+        binary: str | os.PathLike[str] | None = ...,
+    ) -> Klut: ...
 
     def __call__(
         self,

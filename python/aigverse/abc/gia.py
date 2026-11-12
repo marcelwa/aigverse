@@ -207,6 +207,38 @@ class If(CommandWrapper):
         # &if refuses a mapped GIA; clear previous mapping when composing/remapping.
         return Command(f"&st; &{command}")
 
+    @overload
+    def __call__(
+        self,
+        ntk: NamedAig | NamedKlut,
+        *,
+        cut_size: int = ...,
+        cut_limit: int = ...,
+        area_oriented_mapping: bool = ...,
+        area_flow_rounds: int | None = ...,
+        ela_rounds: int | None = ...,
+        delay_relaxation: int | None = ...,
+        timeout: float | None = ...,
+        verbose: bool = ...,
+        binary: str | os.PathLike[str] | None = ...,
+    ) -> NamedKlut: ...
+
+    @overload
+    def __call__(
+        self,
+        ntk: Aig | Klut,
+        *,
+        cut_size: int = ...,
+        cut_limit: int = ...,
+        area_oriented_mapping: bool = ...,
+        area_flow_rounds: int | None = ...,
+        ela_rounds: int | None = ...,
+        delay_relaxation: int | None = ...,
+        timeout: float | None = ...,
+        verbose: bool = ...,
+        binary: str | os.PathLike[str] | None = ...,
+    ) -> Klut: ...
+
     def __call__(
         self,
         ntk: Aig | Klut,
