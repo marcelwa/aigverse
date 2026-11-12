@@ -122,6 +122,6 @@ missing drivers, cycles, latches, hierarchy, and library cells with `RuntimeErro
 Compact BLIF covers expand into dense LUT truth tables whose space grows exponentially with fanin count.
 A small input file can therefore require a large amount of memory.
 
-The writer rejects names containing whitespace, control characters, `#`, or backslash. Generated interface
+The writer rejects names containing ASCII whitespace, ASCII control characters, `#`, or backslash. Generated interface
 names avoid explicit names. One interface name cannot refer to different drivers. `new_n0` and `new_n1` are reserved for the native
 writer's constant nodes; an output may use one only when it references the corresponding constant.

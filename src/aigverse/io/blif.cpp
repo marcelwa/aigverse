@@ -9,7 +9,6 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/filesystem.h>  // NOLINT(misc-include-cleaner)
 
-#include <cctype>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
@@ -39,6 +38,10 @@ struct blif_source
 
 blif_source validate_blif(std::istream& input)
 {
+    // Validate flat combinational BLIF before invoking the pinned readers, which assume
+    // well-formed covers and continuations. Normalized identifiers contain only safe ASCII
+    // so Lorina's unanchored directive regexes cannot match user signal names; interface
+    // names are retained separately for restoration after native parsing.
     blif_source                                  source;
     std::unordered_map<std::string, std::string> identifiers;
     std::unordered_set<std::string>              drivers;
@@ -111,10 +114,12 @@ blif_source validate_blif(std::istream& input)
         if (directive.front() != '.')
         {
             const auto& value = tokens.back();
-            if (!in_cover || tokens.size() != (fanins == 0 ? 1U : 2U) || (value != "0" && value != "1") ||
-                (phase != '\0' && (phase != value.front() || fanins == 0)) ||
-                (fanins != 0 &&
-                 (tokens.front().size() != fanins || tokens.front().find_first_not_of("01-") != std::string::npos)))
+            const bool  valid_grammar =
+                in_cover && tokens.size() == (fanins == 0 ? 1U : 2U) && (value == "0" || value == "1");
+            const bool valid_phase   = phase == '\0' || (valid_grammar && fanins != 0 && phase == value.front());
+            const bool valid_pattern = fanins == 0 || (tokens.front().size() == fanins &&
+                                                       tokens.front().find_first_not_of("01-") == std::string::npos);
+            if (!valid_grammar || !valid_phase || !valid_pattern)
             {
                 throw std::runtime_error("Invalid BLIF truth-table cover");
             }
@@ -241,7 +246,7 @@ void check_name(const std::string& name)
     for (const char c : name)
     {
         const auto value = static_cast<unsigned char>(c);
-        if (std::isspace(value) != 0 || std::iscntrl(value) != 0)
+        if (value <= 0x20 || value == 0x7f)
         {
             throw nb::value_error("BLIF interface names cannot contain whitespace or control characters");
         }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import locale
 import sys
 from typing import TYPE_CHECKING
 
@@ -106,7 +107,7 @@ def test_continuation_ends_at_next_physical_line(separator: str, tmp_path: Path)
     assert output_values(ntk) == [[False], [True]]
 
 
-@pytest.mark.parametrize("name", [".a", "éclair"])
+@pytest.mark.parametrize("name", [".a", "éclair", "à", "Í"])
 def test_driver_names_round_trip(name: str, tmp_path: Path) -> None:
     ntk = NamedKlut()
     a = ntk.create_pi(name)
@@ -207,7 +208,9 @@ def test_internal_names_do_not_collide(named_klut_basic: NamedKlut, tmp_path: Pa
     assert output_values(restored) == output_values(ntk)
 
 
-@pytest.mark.parametrize("name", ["new_n0", "new_n1", "a", "", "a b", "a#b", "a\\b", "a\n.inputs bad", "a\x01b"])
+@pytest.mark.parametrize(
+    "name", ["new_n0", "new_n1", "a", "", "a b", "a#b", "a\\b", "a\n.inputs bad", "a\x01b", "a\x7fb"]
+)
 def test_invalid_output_names_rejected(name: str, named_klut_basic: NamedKlut, tmp_path: Path) -> None:
     named_klut_basic.set_output_name(0, name)
     path = tmp_path / "output.blif"
@@ -274,3 +277,24 @@ def test_invalid_model_header(header: str, tmp_path: Path) -> None:
 def test_blif_reports_write_failure(named_klut_basic: NamedKlut) -> None:
     with pytest.raises(RuntimeError, match="writing BLIF"):
         write_blif(named_klut_basic, "/dev/full")
+
+
+@pytest.mark.parametrize("ctype_locale", ["French_France.1252", "fr_FR.ISO8859-1"])
+def test_utf8_names_ignore_ctype_locale(ctype_locale: str, tmp_path: Path) -> None:
+    previous = locale.setlocale(locale.LC_CTYPE)
+    try:
+        try:
+            locale.setlocale(locale.LC_CTYPE, ctype_locale)
+        except locale.Error:
+            pytest.skip(f"Locale {ctype_locale} is unavailable")
+        path = tmp_path / "locale.blif"
+        path.write_text(".model top\n.inputs à Í\n.outputs à Í\n.end\n", encoding="utf-8")
+        ntk = read_blif_into_klut(path)
+        assert [ntk.get_name(node) for node in ntk.pis()] == ["à", "Í"]
+        write_blif(ntk, path)
+        restored = read_blif_into_klut(path)
+        assert [restored.get_name(node) for node in restored.pis()] == ["à", "Í"]
+        assert [restored.get_output_name(i) for i in range(restored.num_pos)] == ["à", "Í"]
+        assert output_values(restored) == output_values(ntk)
+    finally:
+        locale.setlocale(locale.LC_CTYPE, previous)
