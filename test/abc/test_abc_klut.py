@@ -120,7 +120,7 @@ def test_default_aig_output_follows_native_store_behavior(namespace, command, na
 def test_transfer_commands_without_abc(
     namespace, read_command, output_type, classic_write, gia_write, and_aig, named_klut_basic, monkeypatch, *, lut_input
 ):
-    from aigverse.io import read_aiger_into_aig, read_blif_into_klut, write_aiger, write_blif
+    from aigverse.io import read_aiger_into_aig, read_blif, write_aiger, write_blif
 
     source = named_klut_basic if lut_input else and_aig
     write_command = classic_write if namespace is abc else gia_write
@@ -128,9 +128,7 @@ def test_transfer_commands_without_abc(
 
     def transfer(argv, *, cwd, **_kwargs):
         assert argv[-1] == f"{read_command}; version; {write_command}"
-        transferred = (
-            read_blif_into_klut(Path(cwd, "in.blif")) if lut_input else read_aiger_into_aig(Path(cwd, "in.aig"))
-        )
+        transferred = read_blif(Path(cwd, "in.blif")) if lut_input else read_aiger_into_aig(Path(cwd, "in.aig"))
         assert algorithms.equivalence_checking(source, transferred)
         if output_type == "klut":
             write_blif(named_klut_basic, Path(cwd, "out.blif"))

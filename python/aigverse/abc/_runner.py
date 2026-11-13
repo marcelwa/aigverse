@@ -558,7 +558,7 @@ def run_script(
     # successful result whenever the binary disappeared while ABC was running.
     executable = resolve_binary(binary)
 
-    from ..io import read_aiger_into_aig, read_aiger_into_sequential_aig, read_blif_into_klut, write_aiger, write_blif
+    from ..io import read_aiger_into_aig, read_aiger_into_sequential_aig, read_blif, write_aiger, write_blif
 
     # SequentialAig must be tested before Aig: it is registered as a subclass on
     # the C++ side, so an `isinstance` check against Aig would accept it and pick
@@ -602,7 +602,7 @@ def run_script(
             raise AbcExecutionError(msg, binary=str(executable), command=script, output=output)
 
         if output_type == "klut":
-            reader = read_blif_into_klut
+            reader = read_blif
         else:
             reader = read_aiger_into_sequential_aig if sequential else read_aiger_into_aig
         try:
