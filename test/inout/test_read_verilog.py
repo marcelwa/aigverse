@@ -3,6 +3,9 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+import pytest
+
+from aigverse.algorithms import simulate
 from aigverse.io import read_verilog_into_aig
 from aigverse.networks import AigSignal
 
@@ -37,3 +40,54 @@ def test_read_verilog_with_names() -> None:
     assert aig.num_pos == 1
     assert aig.has_output_name(0)
     assert aig.get_output_name(0) == "y1"
+
+
+@pytest.mark.parametrize(
+    "source",
+    ["", "module helper(x, q); input x; output q; assign q = x; endmodule"],
+    ids=["empty", "helper-only"],
+)
+def test_read_verilog_requires_top(source: str, tmp_path: Path) -> None:
+    verilog_path = tmp_path / "missing_top.v"
+    verilog_path.write_text(source)
+
+    with pytest.raises(RuntimeError, match="Error reading Verilog file"):
+        read_verilog_into_aig(verilog_path)
+
+
+def test_read_verilog_empty_top(tmp_path: Path) -> None:
+    verilog_path = tmp_path / "empty_top.v"
+    # Lorina requires at least one name in the module header.
+    verilog_path.write_text("module top(unused); endmodule")
+
+    aig = read_verilog_into_aig(verilog_path)
+
+    assert aig.get_network_name() == "top"
+    assert aig.num_pis == 0
+    assert aig.num_pos == 0
+    assert aig.num_gates == 0
+
+
+def test_read_verilog_top_followed_by_helper(tmp_path: Path) -> None:
+    verilog_path = tmp_path / "modules.v"
+    verilog_path.write_text(
+        """module top(b, a, y, z);
+input b, a;
+output y, z;
+assign y = a & b;
+assign z = a;
+endmodule
+module helper(x, q);
+input x;
+output q;
+assign q = ~x;
+endmodule
+"""
+    )
+
+    aig = read_verilog_into_aig(verilog_path)
+
+    assert aig.get_network_name() == "top"
+    assert [aig.get_name(AigSignal(pi, False)) for pi in aig.pis()] == ["b", "a"]
+    assert [aig.get_output_name(po) for po in range(aig.num_pos)] == ["y", "z"]
+    assert [tt.to_binary() for tt in simulate(aig)] == ["1000", "1100"]

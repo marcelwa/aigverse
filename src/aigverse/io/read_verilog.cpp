@@ -35,10 +35,11 @@ void read_verilog(nanobind::module_& m, const std::string& network_name)  // NOL
             lorina::text_diagnostics  consumer{};
             lorina::diagnostic_engine diag{&consumer};
 
-            const auto read_verilog_result =
-                lorina::read_verilog(filename.string(), mockturtle::verilog_reader<Ntk>(ntk), &diag);
+            mockturtle::verilog_reader<Ntk> reader(ntk);
+            const auto read_verilog_result = lorina::read_verilog(filename.string(), reader, &diag);
 
-            if (read_verilog_result != lorina::return_code::success)  // NOLINT(misc-include-cleaner)
+            if (read_verilog_result != lorina::return_code::success ||
+                !reader.found_top())  // NOLINT(misc-include-cleaner)
             {
                 throw std::runtime_error("Error reading Verilog file");
             }
@@ -48,6 +49,8 @@ void read_verilog(nanobind::module_& m, const std::string& network_name)  // NOL
         nb::arg("filename"),
         R"pb(Reads a synthesized gate-level Verilog netlist into a logic network.
 
+The file must contain a module named ``top``.
+
 Args:
     filename: Path to the Verilog file.
 
@@ -55,7 +58,8 @@ Returns:
     The parsed network instance.
 
 Raises:
-    RuntimeError: If parsing the Verilog file fails.)pb",
+    RuntimeError: If parsing fails or the file has no module named ``top``.
+    ValueError: If the netlist has invalid signal or module definitions.)pb",
         nb::call_guard<nb::gil_scoped_release>());
 }
 

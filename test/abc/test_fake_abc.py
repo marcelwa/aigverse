@@ -146,5 +146,5 @@ def test_gia_flag_switches_the_transfer_commands(and_aig: Aig, fake_abc: Callabl
         run_script(and_aig, "&syn2", gia=True, binary=shim)
 
     assert "&read in.aig" in excinfo.value.command
-    assert "&write out.aig" in excinfo.value.command
+    assert "&write -n out.aig" in excinfo.value.command
     assert "read_aiger" not in excinfo.value.command

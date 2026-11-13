@@ -487,7 +487,7 @@ def test_gia_batch_uses_the_gia_transfer(and_aig: Aig, fake_abc: Callable[[str],
     failure = results[0]
     assert isinstance(failure, AbcExecutionError)
     assert "&read in.aig" in failure.command
-    assert "&write out.aig" in failure.command
+    assert "&write -n out.aig" in failure.command
 
 
 @requires_posix
