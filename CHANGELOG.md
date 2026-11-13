@@ -53,7 +53,7 @@ releases may include breaking changes.
 
 ### Fixed
 
-- 🐛 Keep ABC GIA output compatible with the native AIGER reader and reject Verilog files without a `top` module ([#TODO])
+- 🐛 Keep ABC GIA output compatible with the native AIGER reader and reject Verilog files without a `top` module ([#597])
   ([**@marcelwa**])
 - 🔒 Require a fixed Pillow release in contributor environments ([#588]) ([**@marcelwa**])
 - 🐛 Use a NumPy version with Python 3.15 wheels when resolving minimum dependencies ([#439])
@@ -267,6 +267,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#597]: https://github.com/marcelwa/aigverse/pull/597
 [#588]: https://github.com/marcelwa/aigverse/pull/588
 [#584]: https://github.com/marcelwa/aigverse/pull/584
 [#565]: https://github.com/marcelwa/aigverse/pull/565
