@@ -58,9 +58,17 @@ def test_mapping_round_trip(namespace, named_klut_basic, *, named):
 @pytest.mark.usefixtures("abc_available")
 @pytest.mark.parametrize("mapper", [abc.if_, abc.gia.if_], ids=["classic", "gia"])
 def test_mapping_named_return_types(mapper: abc.If | abc.gia.If, named_klut_basic: NamedKlut) -> None:
+    named_klut_basic.set_name(named_klut_basic.pi_at(0), "new_n3")
+    named_klut_basic.set_name(named_klut_basic.pi_at(1), "pi0")
+    named_klut_basic.set_output_name(0, "n1")
+    named_klut_basic.create_po(named_klut_basic.po_at(0), "po0")
+    named_klut_basic.create_po(named_klut_basic.get_constant(False), "[0]")
     mapped: NamedKlut = mapper(algorithms.convert_klut_to_aig(named_klut_basic))
     remapped: NamedKlut = mapper(named_klut_basic)
-    assert mapped.get_output_name(0) == remapped.get_output_name(0) == "out"
+    for result in (mapped, remapped):
+        assert [result.get_name(n) for n in result.pis()] == ["new_n3", "pi0"]
+        assert [result.get_output_name(i) for i in range(result.num_pos)] == ["n1", "po0", "[0]"]
+        assert algorithms.simulate(result) == algorithms.simulate(named_klut_basic)
 
 
 @pytest.mark.usefixtures("abc_available")
