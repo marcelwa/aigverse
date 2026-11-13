@@ -224,7 +224,6 @@ def test_a_failure_aborts_the_batch_by_default(fake_abc: Callable[[str], Path]) 
 
 
 @requires_posix
-@pytest.mark.skipif(sys.version_info < (3, 11), reason="exception notes are 3.11+")
 def test_a_raised_failure_names_its_network(fake_abc: Callable[[str], Path]) -> None:
     """The raised error says which input it belongs to; the command alone does not.
 
@@ -406,7 +405,6 @@ def test_one_job_returns_failures_in_place_too(and_aig: Aig, fake_abc: Callable[
 
 
 @requires_posix
-@pytest.mark.skipif(sys.version_info < (3, 11), reason="exception notes are 3.11+")
 def test_one_job_names_the_failing_network_too(fake_abc: Callable[[str], Path]) -> None:
     """The index note is attached on the serial path as well.
 

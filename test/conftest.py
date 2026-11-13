@@ -1,10 +1,26 @@
 from __future__ import annotations
 
+import sys
+import sysconfig
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
+from aigverse.generators import random_aig
 from aigverse.networks import Aig
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _check_free_threading() -> Generator[None]:
+    if sysconfig.get_config_var("Py_GIL_DISABLED"):
+        assert not getattr(sys, "_is_gil_enabled", lambda: True)()
+    yield
+    if sysconfig.get_config_var("Py_GIL_DISABLED"):
+        assert not getattr(sys, "_is_gil_enabled", lambda: True)()
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
@@ -32,6 +48,16 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             item.add_marker(pytest.mark.benchmarks)
         elif "/test/abc/" in test_path:
             item.add_marker(pytest.mark.abc)
+
+
+@pytest.fixture
+def race_prone_aig() -> Aig:
+    """Create a network large enough for concurrent traversals to overlap.
+
+    Returns:
+        A 600-gate random AIG network.
+    """
+    return random_aig(num_pis=10, num_gates=600, seed=42)
 
 
 @pytest.fixture

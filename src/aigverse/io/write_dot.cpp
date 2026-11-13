@@ -21,16 +21,19 @@ void write_dot(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
-    // No GIL release here. A writer may only release it if it never builds a
-    // mockturtle view over the caller's network: every view shares that network's
-    // storage rather than copying it, so constructing one mutates state the caller
-    // still owns. `write_dot`'s default drawer lazily builds a `depth_view`, which
-    // registers an event on the shared event list and stamps `visited` across the
-    // shared node array. Two threads writing one network corrupt the heap.
-    // `write_aiger` builds no view and does release.
+    // The depth_view writes shared traversal state; retain the GIL or clone when there is no GIL to protect it.
     m.def(
-        "write_dot", [](const Ntk& ntk, const std::filesystem::path& filename)
-        { mockturtle::write_dot(ntk, filename.string()); }, nb::arg("ntk"), nb::arg("filename"),
+        "write_dot",
+        [](const Ntk& ntk, const std::filesystem::path& filename)
+        {
+#ifdef NB_FREE_THREADED
+            const auto snapshot = ntk.clone();
+#else
+            const auto& snapshot = ntk;
+#endif
+            mockturtle::write_dot(snapshot, filename.string());
+        },
+        nb::arg("ntk"), nb::arg("filename"),
         R"pb(Writes a logic network to a Graphviz DOT file for visualization.
 
     Args:

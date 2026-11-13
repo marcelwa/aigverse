@@ -15,6 +15,7 @@ from aigverse.algorithms import (
     simulate_nodes,
     sop_refactoring,
 )
+from aigverse.networks import NamedAig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -33,9 +34,8 @@ def shape(aig: Aig | None) -> tuple[int, int, int, int, list[int]]:
 
 
 # Every binding that takes a network. `spec` and `impl` are the same object here: a
-# network is equivalent to itself, so any False is a race. `cleanup_dangling` is trivially
-# correct while it keeps the GIL and is listed anyway, as the tripwire for a guard being
-# put back without a clone; see src/aigverse/algorithms/transform_helpers.hpp.
+# network is equivalent to itself, so any False is a race. View-building calls must
+# isolate traversal state when the GIL is absent; see src/aigverse/algorithms/transform_helpers.hpp.
 CASES: list[tuple[str, Callable[[Aig], Any]]] = [
     ("equivalence_checking", lambda aig: equivalence_checking(aig, aig)),
     ("aig_cut_rewriting", lambda aig: shape(aig_cut_rewriting(aig))),
@@ -51,8 +51,9 @@ CASES: list[tuple[str, Callable[[Aig], Any]]] = [
 @pytest.mark.parametrize("call", [c for _, c in CASES], ids=[name for name, _ in CASES])
 def test_concurrent_calls_on_one_shared_network(call: Callable[[Aig], Any], race_prone_aig: Aig) -> None:
     expected = call(race_prone_aig)
+    networks = [race_prone_aig, NamedAig(race_prone_aig)] * (REPEATS // 2)
 
     with ThreadPoolExecutor(THREADS) as pool:
-        results = [f.result() for f in [pool.submit(call, race_prone_aig) for _ in range(REPEATS)]]
+        results = [f.result() for f in [pool.submit(call, network) for network in networks]]
 
     assert results == [expected] * REPEATS

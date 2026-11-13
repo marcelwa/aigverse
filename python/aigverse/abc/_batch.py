@@ -45,10 +45,7 @@ def _attribute(exc: BaseException, index: int) -> None:
         exc: The failure raised for one network.
         index: Position of that network in the batch.
     """
-    # `add_note` is 3.11+, and the package still supports 3.10. The traceback
-    # machinery renders notes on its own, which an attribute would not.
-    if sys.version_info >= (3, 11):
-        exc.add_note(f"raised by run_many() for the network at index {index}")
+    exc.add_note(f"raised by run_many() for the network at index {index}")
 
 
 @overload

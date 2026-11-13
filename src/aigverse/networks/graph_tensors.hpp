@@ -386,8 +386,12 @@ nanobind::dict to_graph_tensors(const Ntk& ntk, const node_tensor_encoding node_
     std::optional<mockturtle::depth_view<Ntk>> depth_ntk{};
     if (levels)
     {
-        // Construct the depth view only when level features are requested.
+        // The depth view writes traversal state into its network.
+#ifdef NB_FREE_THREADED
+        depth_ntk.emplace(ntk.clone());
+#else
         depth_ntk.emplace(ntk);
+#endif
     }
 
     const auto* simulated_nodes = node_tts ? &node_truth_tables.value() : nullptr;

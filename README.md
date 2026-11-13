@@ -3,7 +3,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/marcelwa/aigverse/ci.yml?label=CI&logo=github&style=flat-square)](https://github.com/marcelwa/aigverse/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/readthedocs/aigverse?label=Docs&logo=readthedocs&style=flat-square)](https://aigverse.readthedocs.io/)
 [![PyPI](https://img.shields.io/static/v1?label=PyPI&message=aigverse&logo=pypi&color=informational&style=flat-square)](https://pypi.org/project/aigverse/)
-[![Python](https://img.shields.io/static/v1?label=Python&message=3.10%2B&logo=python&color=3776AB&style=flat-square)](https://www.python.org/downloads/)
+[![Python](https://img.shields.io/static/v1?label=Python&message=3.11%2B&logo=python&color=3776AB&style=flat-square)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/marcelwa/aigverse?label=License&style=flat-square)](https://github.com/marcelwa/aigverse/blob/main/LICENSE)
 [![Release](https://img.shields.io/github/v/release/marcelwa/aigverse?label=aigverse&style=flat-square)](https://github.com/marcelwa/aigverse/releases)
 
@@ -63,13 +63,18 @@ synthesis backends.
 
 ## 📦 Installation
 
-`aigverse` is available via PyPI for all major operating systems, with a single
-[Stable ABI](https://docs.python.org/3/c-api/stable.html) wheel per platform that covers every supported Python from
-3.10 up. Free-threaded interpreters are not supported yet, pending the stable ABI that Python 3.15 brings them.
+`aigverse` supports Python 3.11 through 3.15 on all major operating systems, including free-threaded Python 3.15.
+Each platform has separate [Stable ABI](https://docs.python.org/3/c-api/stable.html) wheels for ordinary Python
+(`abi3`, Python 3.11+) and free-threaded Python (`abi3t`, Python 3.15+).
 
 ```bash
 pip install aigverse
 ```
+
+Concurrent read-only algorithms and exports can share a network. Mutating a network requires caller synchronization,
+including in-place optimization and creating, updating, or destroying `DepthAig`, `FanoutAig`, and `AigCut` views that
+share its storage. The same synchronization must cover every alias of that network; use independent `Aig.clone()`
+copies when workers need to mutate their own networks.
 
 ### 🔌 Adapters
 

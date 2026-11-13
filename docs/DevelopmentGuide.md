@@ -219,9 +219,6 @@ All source files related to C++-Python bindings are contained in the `src/aigver
 
 :::::{tab-item} uv _(recommended)_
 :sync: uv
-The default development group, documentation group, and examples group require Python 3.11 or newer.
-The library itself continues to support Python 3.10.
-
 Getting the project up and running locally using `uv` is as simple as running:
 
 ```console
@@ -426,17 +423,21 @@ A plain local run is therefore not enough to conclude that a change to the `torc
 
 ### Coverage
 
-On Linux with GCC and Python 3.12, measure both the Python package and the C++ bindings with:
+On Linux with GCC, measure both the Python package and the C++ bindings with:
 
 ```console
 $ uvx nox -s coverage -- --full -m "not network"
 ```
 
-The session builds an instrumented Debug wheel in `build/coverage`, runs pytest serially, and writes
-`build/coverage/python.xml` and `build/coverage/cpp.xml`. Each run clears only this build's native counters, retaining
-the compiled objects and coverage notes. Its wheel cache is separate from ordinary test builds. Omit `--full` to
+The sessions build instrumented Debug wheels for Python 3.12 and 3.15t in `build/coverage-<python>`, run pytest serially,
+and write `python.xml`, `cpp.info`, and `cpp.json` there. Each run clears only this build's native counters, retaining
+the compiled objects and coverage notes. Their wheel cache is separate from ordinary test builds. Use `-p 3.12` or
+`-p 3.15t` to select one interpreter. Omit `--full` to
 skip PyTorch locally; CI includes it and excludes network downloads. Tests requiring an external ABC binary still
 skip when one is unavailable.
+
+The C++ Codecov gate uses LCOV line coverage; Python retains branch coverage through its XML report. The native JSON
+report preserves branch counts for inspection, including compiler-generated exception and cleanup paths.
 
 Python reports map the installed wheel back to `python/aigverse` and omit generated `_version.py`. Native reports
 cover only `src/aigverse`, including unexecuted functions; vendored mockturtle, kitty, lorina, and nanobind code is

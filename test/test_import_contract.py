@@ -1,6 +1,32 @@
 from __future__ import annotations
 
+import subprocess
 import sys
+import sysconfig
+
+import pytest
+
+
+@pytest.mark.skipif(not sysconfig.get_config_var("Py_GIL_DISABLED"), reason="Requires a free-threaded interpreter")
+def test_extension_imports_keep_gil_disabled() -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-E",
+            "-c",
+            (
+                "import importlib, sys; "
+                "assert not sys._is_gil_enabled(); "
+                "[importlib.import_module('aigverse.' + name) "
+                "for name in ('networks', 'algorithms', 'io', 'generators', 'utils')]; "
+                "assert not sys._is_gil_enabled()"
+            ),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def test_root_has_no_top_level_aig_export() -> None:

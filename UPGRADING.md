@@ -4,6 +4,8 @@ This document describes breaking changes and how to upgrade.
 
 ## Unreleased
 
+Python 3.10 is no longer supported. Upgrade to Python 3.11 or newer before updating `aigverse`.
+
 `abc.gia.resub()` and `abc.gia.resub.cmd()` now use the current ABC `&resub` command. Use
 [ABC revision `bde1659`](https://github.com/berkeley-abc/abc/tree/bde1659cf7bf2b355624c3599cb58e9b6e474f13)
 or a build with the same CLI. Remove `max_support` and `max_divisors` from calls, and keep `max_inserts` between

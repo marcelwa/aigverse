@@ -20,7 +20,7 @@ namespace aigverse::detail
  * rather than copying it, and the marking mutators (`incr_trav_id`, `set_visited`, `clear_values`) are `const` members
  * writing through that shared storage, so a `const Ntk&` is not a promise of read-only. A binding whose algorithm
  * builds a view therefore either runs on a clone, as this function and `balancing`, `aig_cut_rewriting`, and
- * `equivalence_checking` do, or keeps the GIL, as `cleanup_dangling` does.
+ * `equivalence_checking` do, or keeps the GIL. Free-threaded builds must always isolate that state.
  *
  * The in-place path writes to the caller's network by definition, so a network transformed in place must not be shared
  * across threads.

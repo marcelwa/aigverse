@@ -21,7 +21,7 @@ keywords = [
     "synthesis"
 ]
 license = { file = "LICENSE" }
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -35,11 +35,11 @@ classifiers = [
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -58,15 +58,12 @@ email = "marcel.walter@tum.de"
 [project.optional-dependencies]
 adapters = [
     "networkx>=3.0.0",
-    # 1.23.0 is the project's own floor; the marked ones raise it to the lowest
-    # numpy that still ships wheels for each newer interpreter. Below them
-    # `nox -s minimums` falls back to a source build of a numpy that predates the
-    # Python it is being built for, which fails.
-    "numpy>=1.23.0",
-    "numpy>=1.23.2; python_version>='3.11'",
+    # Keep each interpreter's floor at a numpy release that ships compatible wheels.
+    "numpy>=1.23.2",
     "numpy>=1.26.0; python_version>='3.12'",
     "numpy>=2.1.0; python_version>='3.13'",
     "numpy>=2.3.2; python_version>='3.14'",
+    "numpy>=2.5.2; python_version>='3.15'",
 ]
 
 [project.urls]
@@ -97,8 +94,7 @@ docs = [
     "matplotlib>=3.8",
     "myst-nb>=1.1.2",
     "pygraphviz>=1.9.0",
-    "sphinx>=8.1.3",
-    "sphinx>=8.2.3; python_version>='3.11'",
+    "sphinx>=8.2.3",
     "sphinx-autoapi>=3.3.3",
     "sphinx-copybutton>=0.5.2",
     "sphinx-design>=0.6.1",
@@ -108,15 +104,12 @@ docs = [
 ]
 adapters = [
     "networkx>=3.0.0",
-    # 1.23.0 is the project's own floor; the marked ones raise it to the lowest
-    # numpy that still ships wheels for each newer interpreter. Below them
-    # `nox -s minimums` falls back to a source build of a numpy that predates the
-    # Python it is being built for, which fails.
-    "numpy>=1.23.0",
-    "numpy>=1.23.2; python_version>='3.11'",
+    # Keep each interpreter's floor at a numpy release that ships compatible wheels.
+    "numpy>=1.23.2",
     "numpy>=1.26.0; python_version>='3.12'",
     "numpy>=2.1.0; python_version>='3.13'",
     "numpy>=2.3.2; python_version>='3.14'",
+    "numpy>=2.5.2; python_version>='3.15'",
 ]
 build = [
     "nanobind~=3.1.0",
@@ -154,6 +147,7 @@ torch = [
     "torch>=2.2.0",
     "torch>=2.6.0; python_version>='3.13'",
     "torch>=2.9.0; python_version>='3.14'",
+    "torch>=2.15.0; python_version>='3.15'",
 ]
 
 [tool.scikit-build]
@@ -186,12 +180,17 @@ exclude = [
 install-dir = "aigverse"
 # Explicitly set the package directory
 packages = [ "python/aigverse" ]
-# One Stable ABI wheel per platform covers every supported CPython
-py-api = "cp310"
+# One Stable ABI wheel per platform covers ordinary CPython 3.11 and newer
+py-api = "cp311"
 
 [tool.scikit-build.install]
 # Only install the Python package component
 components = [ "aigverse_Python" ]
+
+[[tool.scikit-build.overrides]]
+if.python-version = ">=3.15"
+if.abi-flags = "t"
+wheel.py-api = "cp315t"
 
 [tool.uv]
 required-version = ">=0.13.4"
@@ -203,21 +202,16 @@ cache-keys = [
     { file = "python/**/*.py" },
 ]
 
-[tool.uv.dependency-groups]
-dev = { requires-python = ">=3.11" }
-docs = { requires-python = ">=3.11" }
-examples = { requires-python = ">=3.11" }
-
 [tool.uv.sources]
 aigverse = { workspace = true }
 
 [tool.cibuildwheel]
-# cp310 builds the one abi3 wheel that serves every supported CPython
-build = "cp310-*"
-# nanobind-backend publishes no musllinux wheels
-skip = [ "*-musllinux_*" ]
+# Separate Stable ABI wheels for ordinary and free-threaded CPython
+build = "cp3*"
+# Free-threaded Stable ABI starts at 3.15; nanobind-backend lacks musllinux wheels.
+skip = [ "*-musllinux_*", "cp314t-*" ]
 archs = "auto64"
-build-frontend = "build[uv]"
+build-frontend = "uv"
 # the -m here replaces the one in [tool.pytest] addopts rather than adding to it,
 # so the network exclusion has to be repeated or wheel CI would download circuits
 test-command = 'pytest test/ -m "(torch or not torch) and not network"'

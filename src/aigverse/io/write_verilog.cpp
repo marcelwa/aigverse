@@ -21,15 +21,19 @@ void write_verilog(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
-    // No GIL release here, for the same reason as `write_dot`. The const network
-    // reference is not a promise of read-only: `write_verilog` builds a `topo_view`
-    // over it, and that view shares the caller's storage, so ordering the nodes bumps
-    // the shared traversal id and stamps `visited` across the shared node array. Two
-    // threads writing one network interleave those and silently emit a netlist with a
-    // dropped assignment and an empty operand -- corrupt output, not a crash.
+    // The topo_view writes shared traversal state; retain the GIL or clone when there is no GIL to protect it.
     m.def(
-        "write_verilog", [](const Ntk& ntk, const std::filesystem::path& filename)
-        { mockturtle::write_verilog(ntk, filename.string()); }, nb::arg("ntk"), nb::arg("filename"),
+        "write_verilog",
+        [](const Ntk& ntk, const std::filesystem::path& filename)
+        {
+#ifdef NB_FREE_THREADED
+            const auto snapshot = ntk.clone();
+#else
+            const auto& snapshot = ntk;
+#endif
+            mockturtle::write_verilog(snapshot, filename.string());
+        },
+        nb::arg("ntk"), nb::arg("filename"),
         R"pb(Writes a logic network to a Verilog netlist.
 
     Args:

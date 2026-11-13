@@ -1,12 +1,12 @@
 #!/usr/bin/env -S uv run --script --quiet
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.11"
 # dependencies = [
 #     "aigverse>=0.1.4",
 #     "matplotlib>=3.8",
 #     # same floor as aigverse's own `adapters` extra, so `nox -s minimums`
 #     # resolves one numpy for the whole repository
-#     "numpy>=1.23.0",
+#     "numpy>=1.23.2",
 # ]
 # ///
 """Is there one best ABC recipe, or does the right one depend on the design?
