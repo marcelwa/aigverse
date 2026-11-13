@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 nox.needs_version = ">=2025.10.16"
 nox.options.default_venv_backend = "uv"
 
-PYTHON_ALL_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14"]
+PYTHON_ALL_VERSIONS = ["3.11", "3.12", "3.13", "3.14", "3.15", "3.15t"]
 
 if os.environ.get("CI", None):
     nox.options.error_on_missing_interpreters = True
@@ -143,8 +143,8 @@ _BUILT_WHEELS: dict[tuple[str, str], Path] = {}
 def _wheel_tag(python: str) -> str:
     """Return the wheel tag a given interpreter builds.
 
-    Every supported interpreter builds one and the same abi3 wheel, so they
-    share a tag and it only needs building once.
+    Ordinary interpreters share an abi3 wheel; free-threaded interpreters
+    share a separate abi3t wheel.
 
     Args:
         python: The interpreter version, as nox spells it, e.g. "3.12".
@@ -152,8 +152,7 @@ def _wheel_tag(python: str) -> str:
     Returns:
         The tag identifying the wheel that interpreter builds.
     """
-    del python
-    return "cp310-abi3"
+    return "cp315-abi3t" if python.endswith("t") else "cp311-abi3"
 
 
 def _venv_python(session: nox.Session) -> Path:
@@ -379,12 +378,12 @@ def tests(session: nox.Session) -> None:
     _run_tests(session, group="tests")
 
 
-@nox.session(reuse_venv=True, python="3.12", default=False)
+@nox.session(reuse_venv=True, python=["3.12", "3.15t"], default=False)
 def coverage(session: nox.Session) -> None:
     """Measure Python and native coverage on Linux with GCC."""
     if sys.platform != "linux":
         session.error("Native coverage requires Linux and GCC.")
-    build_dir = Path(__file__).parent.resolve() / "build" / "coverage"
+    build_dir = Path(__file__).parent.resolve() / "build" / f"coverage-{session.python}"
     build_dir.mkdir(parents=True, exist_ok=True)
     for counter in build_dir.rglob("*.gcda"):
         counter.unlink()
@@ -410,7 +409,8 @@ def coverage(session: nox.Session) -> None:
         "--root=.",
         "--filter=src/aigverse/",
         "--include-internal-functions",
-        f"--xml={build_dir / 'cpp.xml'}",
+        f"--lcov={build_dir / 'cpp.info'}",
+        f"--json={build_dir / 'cpp.json'}",
         str(build_dir),
     )
 

@@ -15,6 +15,8 @@ from aigverse.io import (
     read_pla_into_aig,
     read_verilog_into_aig,
     write_aiger,
+    write_dot,
+    write_verilog,
 )
 
 if TYPE_CHECKING:
@@ -52,18 +54,14 @@ def test_concurrent_reads(reader: Callable[[str], Aig], resource: str):
     assert [shape(aig) for aig in aigs] == [expected] * REPEATS
 
 
-# write_aiger is the only writer here by design. write_dot and write_verilog build a
-# mockturtle view over the caller's network, so their bindings keep the GIL; see the
-# comment in src/aigverse/io/write_dot.cpp.
-@pytest.mark.parametrize(("writer", "suffix"), [(write_aiger, "aig")])
-def test_concurrent_writes(
-    writer: Callable[[Aig, str], None], suffix: str, three_input_and_chain_aig: Aig, tmp_path: Path
-):
+@pytest.mark.parametrize(("writer", "suffix"), [(write_aiger, "aig"), (write_dot, "dot"), (write_verilog, "v")])
+def test_concurrent_writes(writer: Callable[[Aig, str], None], suffix: str, race_prone_aig: Aig, tmp_path: Path):
     paths = [tmp_path / f"{i}.{suffix}" for i in range(REPEATS)]
+    serial = tmp_path / f"serial.{suffix}"
+    writer(race_prone_aig, str(serial))
+    expected = serial.read_bytes()
 
     with ThreadPoolExecutor(THREADS) as pool:
-        list(pool.map(lambda p: writer(three_input_and_chain_aig, str(p)), paths))
+        list(pool.map(lambda p: writer(race_prone_aig, str(p)), paths))
 
-    serial = tmp_path / f"serial.{suffix}"
-    writer(three_input_and_chain_aig, str(serial))
-    assert [p.read_bytes() for p in paths] == [serial.read_bytes()] * REPEATS
+    assert [p.read_bytes() for p in paths] == [expected] * REPEATS

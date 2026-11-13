@@ -12,6 +12,8 @@ releases may include breaking changes.
 
 ### Added
 
+- ✨ Support Python 3.15, including free-threaded wheels and concurrent read-only network operations ([#439])
+  ([**@marcelwa**])
 - 👷 Add Python and C++ coverage reports with separate Codecov checks and a local
   `coverage` nox session ([#554]) ([**@marcelwa**])
 - ✨ Expose each ABC command wrapper's switch translation as `.cmd(...)`, which builds
@@ -28,6 +30,8 @@ releases may include breaking changes.
 
 ### Changed
 
+- 💥 Require Python 3.11 or newer and raise the ordinary Stable ABI wheel floor to Python 3.11 ([#439])
+  ([**@marcelwa**])
 - 💥 Update `abc.gia.resub` to ABC's current switches and remove `max_support` and `max_divisors`
   ([#584]) ([**@marcelwa**])
 - 🔧 Drop the global `CMAKE_POSITION_INDEPENDENT_CODE` override; mockturtle now builds its
@@ -49,6 +53,8 @@ releases may include breaking changes.
 
 ### Fixed
 
+- 🐛 Use a NumPy version with Python 3.15 wheels when resolving minimum dependencies ([#439])
+  ([**@marcelwa**])
 - 🔒 Require patched uv tooling and document CA trust updates needed to protect
   downloads from the eMudhra compromise ([#565]) ([**@marcelwa**])
 - 🐛 Allow equivalence checking of empty and constant AIGs in Debug builds
@@ -264,6 +270,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 [#553]: https://github.com/marcelwa/aigverse/pull/553
 [#501]: https://github.com/marcelwa/aigverse/pull/501
 [#531]: https://github.com/marcelwa/aigverse/pull/531
+[#439]: https://github.com/marcelwa/aigverse/pull/439
 [#513]: https://github.com/marcelwa/aigverse/pull/513
 [#490]: https://github.com/marcelwa/aigverse/pull/490
 [#489]: https://github.com/marcelwa/aigverse/pull/489

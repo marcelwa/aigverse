@@ -18,15 +18,19 @@ void cleanup(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     namespace nb = nanobind;  // NOLINT(misc-unused-alias-decls)
 
-    // No GIL release here. `cleanup_dangling` builds a `topo_view` over the caller's network, which writes into that
-    // network's storage; see `transform_helpers.hpp` for the rule. The other three view-building bindings run on a
-    // clone instead and keep their guard, but this call is a single pass: a clone costs 75% of it at 10k gates and
-    // 3.7x at 1k, against a threaded gain that is 2.36x at 10k and 0.87x at 1k (#482).
+    // The topo_view writes shared traversal state; retain the GIL or clone when there is no GIL to protect it.
     m.def(
         "cleanup_dangling",
         [](const Ntk& ntk, const bool remove_dangling_pis = false, const bool remove_redundant_pos = false) -> Ntk
-        { return mockturtle::cleanup_dangling(ntk, remove_dangling_pis, remove_redundant_pos); }, nb::arg("ntk"),
-        nb::kw_only(), nb::arg("remove_dangling_pis") = false, nb::arg("remove_redundant_pos") = false,
+        {
+#ifdef NB_FREE_THREADED
+            const auto snapshot = ntk.clone();
+#else
+            const auto& snapshot = ntk;
+#endif
+            return mockturtle::cleanup_dangling(snapshot, remove_dangling_pis, remove_redundant_pos);
+        },
+        nb::arg("ntk"), nb::kw_only(), nb::arg("remove_dangling_pis") = false, nb::arg("remove_redundant_pos") = false,
         R"pb(Removes dangling logic (dead nodes) from a network.
 
 Args:

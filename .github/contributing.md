@@ -66,17 +66,19 @@ Here are some tips for finding the cause of certain failures:
 - If the `pre-commit.ci` check fails, some of the `pre-commit` checks failed and could not be fixed automatically by the _pre-commit.ci_ bot. Such failures are most likely related to the Python part of the code base. The individual log messages frequently provide helpful suggestions on how to fix the warnings.
 - If the `docs/readthedocs.org:\*` check fails, the documentation could not be built properly. Inspect the corresponding log file for any errors.
 
-To reproduce the separate Python and C++ coverage reports locally, use Linux with GCC and Python 3.12:
+To reproduce the separate Python and C++ coverage reports locally, use Linux with GCC:
 
 ```console
 uvx nox -s coverage -- --full -m "not network"
 ```
 
-The session runs pytest serially against an instrumented Debug wheel, writes `build/coverage/python.xml` and
-`build/coverage/cpp.xml`, and resets native counters on each run while retaining the build cache. Omit `--full` for
-the cheaper local subset without PyTorch. Native coverage is limited to `src/aigverse`; vendored dependencies and
+The sessions run Python 3.12 and 3.15t serially against instrumented Debug wheels, write `python.xml`, `cpp.info`, and
+`cpp.json` under `build/coverage-<python>`, and reset native counters on each run while retaining the build cache.
+Use `-p 3.12` or `-p 3.15t` to select one interpreter. Omit `--full` for the cheaper local subset without PyTorch.
+Native coverage is limited to `src/aigverse`; vendored dependencies and
 generated version metadata are excluded. Codecov checks Python and C++ separately, requiring 95% and 90% patch
-coverage respectively, with a 1% tolerance; project coverage may drop by at most 0.5%.
+coverage respectively, with a 1% tolerance; project coverage may drop by at most 0.5%. The C++ gate uses line coverage;
+Python retains branch coverage, and `cpp.json` preserves native branch counts for inspection.
 
 ---
 
