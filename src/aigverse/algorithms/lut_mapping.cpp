@@ -137,7 +137,7 @@ void bind_mapping(nb::module_& m)
                 throw nb::value_error("window_size must be positive");
             }
 
-            // Clone with the GIL held so later Python mutations cannot affect mapping.
+            // Mapping views write traversal state, so each call needs an independent network.
             const auto                   snapshot = detail::snapshot_network(ntk);
             const nb::gil_scoped_release release{};
             auto                         cleaned = mockturtle::cleanup_dangling(snapshot);

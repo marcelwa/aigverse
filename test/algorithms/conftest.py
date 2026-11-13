@@ -7,7 +7,6 @@ import pytest
 from aigverse.networks import Aig, Klut, NamedAig
 from aigverse.utils import TruthTable
 
-
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -49,7 +48,6 @@ def asymmetric_klut() -> Klut:
 
 
 @pytest.fixture
-
 def equivalent_two_output_aigs() -> tuple[Aig, Aig]:
     """Create two equivalent AIGs with two POs for equivalence-based tests.
 

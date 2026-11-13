@@ -74,7 +74,6 @@ void cleanup(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 #endif
                 return mockturtle::cleanup_dangling(snapshot, remove_dangling_pis, remove_redundant_pos);
             }
-
         },
         nb::arg("ntk"), nb::kw_only(), nb::arg("remove_dangling_pis") = false, nb::arg("remove_redundant_pos") = false,
         R"pb(Removes dangling logic (dead nodes) from a network.
