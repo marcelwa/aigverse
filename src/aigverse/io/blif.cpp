@@ -124,6 +124,7 @@ blif_source validate_blif(std::istream& input)
         }
         else if (directive == ".inputs" || directive == ".outputs")
         {
+            // Empty port directives still terminate the preceding .names cover.
             source.text += directive;
             for (std::size_t i = 1; i < tokens.size(); ++i)
             {
