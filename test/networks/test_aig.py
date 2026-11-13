@@ -128,7 +128,9 @@ def test_aig_unary_operations(aig_with_single_pi: tuple[Aig, AigSignal], method:
     aig, x1 = aig_with_single_pi
     assert aig.size == 2
 
-    assert getattr(aig, method)(x1) == (x1 ^ complement)
+    result = getattr(aig, method)(x1)
+    assert result.index == x1.index
+    assert result.complement is complement
     assert aig.size == 2
 
 
