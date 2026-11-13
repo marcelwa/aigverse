@@ -306,7 +306,6 @@ from aigverse.algorithms import convert_klut_to_aig, equivalence_checking, lut_m
 from aigverse.networks import DepthKlut
 
 mapped = lut_mapping(aig, cut_size=6)
-assert simulate(mapped) == simulate(aig)
 assert equivalence_checking(aig, mapped)
 print("LUTs:", mapped.num_gates, "depth:", DepthKlut(mapped).num_levels)
 
@@ -376,7 +375,8 @@ The [native mapping documentation](https://mockturtle.readthedocs.io/en/latest/a
 provide background on these methods. Structural cut mapping is different from unrestricted functional resynthesis.
 
 {py:func}`~aigverse.algorithms.convert_klut_to_aig` uses native disjoint-support decomposition, Shannon
-decomposition, and NPN resynthesis to produce an independent AIG. `NamedKlut` produces `NamedAig`, preserving
+decomposition, and NPN resynthesis to produce an independent AIG. Its worst-case runtime and output size grow
+exponentially with LUT fanin count. `NamedKlut` produces `NamedAig`, preserving
 the named interface. {py:func}`~aigverse.algorithms.cleanup_dangling` also accepts k-LUT networks and preserves
 names for `NamedKlut`; its optional input/output removal flags apply as for AIGs.
 

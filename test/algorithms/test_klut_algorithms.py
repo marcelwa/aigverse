@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from hashlib import shake_256
+
 import pytest
 
 from aigverse import algorithms
 from aigverse.networks import Aig, DepthAig, DepthKlut, FanoutAig, Klut, NamedAig, NamedKlut, SequentialAig
-from aigverse.utils import TruthTable
+from aigverse.utils import TruthTable, cofactor0, cofactor1
 
 ALGORITHMS = ("heuristic", "classic", "sat", "sat_windowed")
 
@@ -291,11 +293,17 @@ def test_conversion_preserves_asymmetric_function(asymmetric_klut):
     assert algorithms.simulate(converted)[0].to_binary() == "0010"
 
 
-def test_conversion_decomposes_six_input_lut():
+@pytest.mark.parametrize(
+    ("num_inputs", "hexadecimal"),
+    [(6, "e39a51c6872d04bf"), (12, shake_256(b"aigverse wide LUT conversion").hexdigest(512))],
+    ids=["six-input", "twelve-input"],
+)
+def test_conversion_decomposes_wide_lut(num_inputs, hexadecimal):
     ntk = Klut()
-    inputs = [ntk.create_pi() for _ in range(6)]
-    function = TruthTable(6)
-    function.create_from_hex_string("e39a51c6872d04bf")
+    inputs = [ntk.create_pi() for _ in range(num_inputs)]
+    function = TruthTable(num_inputs)
+    function.create_from_hex_string(hexadecimal)
+    assert all(cofactor0(function, i) != cofactor1(function, i) for i in range(num_inputs))
     gate = ntk.create_node(inputs, function)
     for signal in (gate, gate, ntk.create_not(gate), ntk.get_constant(False), ntk.get_constant(True)):
         ntk.create_po(signal)
