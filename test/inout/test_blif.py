@@ -77,16 +77,17 @@ def test_blif_round_trip_omits_dangling_logic(named_klut_basic: NamedKlut, tmp_p
     assert [restored.get_output_name(i) for i in range(restored.num_pos)] == ["out"]
 
 
-def test_blif_covers_comments_and_forward_references(tmp_path: Path) -> None:
+@pytest.mark.parametrize("model", ["test", "topà", "topÍ", "top\u0085", "top\u00a0"])
+def test_blif_covers_comments_and_forward_references(model: str, tmp_path: Path) -> None:
     path = tmp_path / "covers.blif"
     path.write_text(
-        ".model test\n.inputs names \\\n end\n.outputs out empty one direct\n"
+        f".model {model}\n.inputs names \\\n end\n.outputs out empty one direct\n"
         ".names internal out\n0 1 # invert\n.names names end internal\n00 0\n"
         ".names names end empty\n.names one\n1\n.names names direct\n1 1\n.end\n",
         encoding="utf-8",
     )
     ntk = read_blif(path)
-    assert ntk.get_network_name() == "test"
+    assert ntk.get_network_name() == model
     assert [ntk.get_name(node) for node in ntk.pis()] == ["names", "end"]
     assert output_values(ntk) == [
         [True, False, True, False],
@@ -159,6 +160,11 @@ def test_generated_interface_names_avoid_explicit_names(
         ".subckt child a=a out=out",
         ".gate AND a=a Y=out",
         ".blackbox",
+        ".names a out\n1 1\n.exdc",
+        ".names a out\n1 1\n.mlatch a out",
+        ".names a out\n1 1\n.clock c",
+        ".names a out\n1 1\n.default_input_arrival 0 0",
+        ".names a out\n1 1\n.search child.blif",
         ".names missing out\n1 1",
         ".names missing out",
         ".names out internal\n1 1\n.names internal out\n1 1",
