@@ -12,6 +12,19 @@ ALGORITHMS = ("heuristic", "classic", "sat", "sat_windowed")
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
+def test_mapping_removes_non_prefix_support(algorithm):
+    ntk = Aig()
+    a, b = ntk.create_pi(), ntk.create_pi()
+    ntk.create_po(ntk.create_or(ntk.create_and(a, b), ntk.create_and(~a, b)))
+
+    mapped = algorithms.lut_mapping(ntk, algorithm=algorithm)
+
+    assert all(mapped.node_function(n).num_vars() == mapped.fanin_size(n) for n in mapped.gates())
+    assert algorithms.simulate(mapped) == algorithms.simulate(ntk)
+    assert algorithms.equivalence_checking(ntk, mapped)
+
+
+@pytest.mark.parametrize("algorithm", ALGORITHMS)
 @pytest.mark.parametrize("cut_size", [2, 6, 16])
 def test_mapping_preserves_function_interface_and_source(mapping_aig, algorithm, cut_size):
     before = algorithms.simulate(mapping_aig)
