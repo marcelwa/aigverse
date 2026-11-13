@@ -117,6 +117,8 @@ auto bind_view(nb::module_& m, const char* name, const char* doc)
 
 void bind_klut_networks(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
+    // Integer handles carry no network identity; validation establishes only the local index range.
+    // Native copies share storage, so Python copy construction explicitly clones.
     auto network =
         nb::class_<klut>(m, "Klut", R"pb(A combinational network of arbitrary truth-table gates.
 
@@ -159,6 +161,7 @@ Returns:
 Raises:
     ValueError: If the fanin count exceeds 32 or differs from the truth-table dimension.
     IndexError: If a fanin does not exist.)pb")
+            // Signal conversion preserves the handle; inversion requires a LUT instead of a phase bit.
             .def(
                 "get_node",
                 [](const klut& ntk, const uint64_t s)
@@ -228,6 +231,7 @@ Raises:
                     return index;
                 },
                 nb::arg("s"), R"pb(Returns the first primary-output position driven by a signal.)pb")
+            // Materialize traversals so Python iteration does not borrow native storage.
             .def("nodes", &nodes, R"pb(Returns all nodes in creation order.)pb")
             .def(
                 "gates",
@@ -270,6 +274,7 @@ Raises:
                     return result;
                 },
                 nb::arg("n"), R"pb(Returns the ordered fanin signals of a node.)pb")
+            // Return by value so Python cannot mutate the shared truth-table cache.
             .def(
                 "node_function",
                 [](const klut& ntk, const uint64_t n)
@@ -303,6 +308,7 @@ Raises:
                 },
                 R"pb(Returns a developer-friendly network summary.)pb");
 
+    // Native gate constructors assume existing operands; validate before invoking them.
     network.def(
         "create_buf",
         [](klut& ntk, const uint64_t a)
@@ -403,6 +409,7 @@ Raises:
             return ntk.create_xor3(a, b, c);
         },
         nb::arg("a"), nb::arg("b"), nb::arg("c"), R"pb(Creates an XOR3 function from existing signals.)pb");
+    // N-ary builders form binary trees, so their argument lists need no single-LUT fanin limit.
     network.def(
         "create_nary_and",
         [](klut& ntk, const std::vector<uint64_t>& fs)
@@ -480,6 +487,7 @@ Raises:
         },
         nb::arg("n"), R"pb(Returns the Boolean value of a constant node.)pb");
 
+    // Output names use interface positions, allowing duplicated drivers to retain distinct names.
     auto named = bind_view<named_klut>(m, "NamedKlut", R"pb(A k-LUT network view with signal and interface names.)pb");
     named
         .def("create_pi", &named_klut::create_pi, nb::arg("name") = "",
@@ -574,12 +582,14 @@ The limit depends on the platform and thread stack.)pb");
             [](depth_klut& ntk, const uint64_t f)
             {
                 check_index(f, ntk.size());
+                // Recompute all levels because a new output can expose previously dangling logic.
                 const auto index = ntk.klut::create_po(f);
                 ntk.update_levels();
                 return index;
             },
             nb::arg("f"), R"pb(Creates an output and recomputes levels from all current outputs.)pb");
 
+    // Native reference counts include outputs; the fanout view lists gates only.
     auto fanout = bind_view<fanouts_klut>(m, "FanoutKlut", R"pb(A k-LUT network view with gate fanout lists.)pb");
     fanout.def("update_fanout", &fanouts_klut::update_fanout, R"pb(Recomputes fanout lists.)pb")
         .def(
