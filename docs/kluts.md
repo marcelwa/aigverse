@@ -120,8 +120,9 @@ The reader accepts `.model`, `.inputs`, `.outputs`,
 `.names`, and `.end`, comments, line continuations, and on-set or off-set covers. It rejects malformed covers,
 missing drivers, cycles, latches, hierarchy, and library cells with `RuntimeError`.
 
-Compact BLIF covers expand into dense LUT truth tables whose space grows exponentially with fanin count.
+Nonempty BLIF covers expand into dense LUT truth tables whose space grows exponentially with fanin count.
 A small input file can therefore require a large amount of memory.
+BLIF cover generation and output size can also grow exponentially with LUT fanin count.
 
 The writer rejects names containing ASCII whitespace, ASCII control characters, `#`, or backslash. Generated interface
 names avoid explicit names. One interface name cannot refer to different drivers. `new_n0` and `new_n1` are reserved for the native

@@ -126,6 +126,8 @@ def write_dot(ntk: aigverse.networks.Aig, filename: str | os.PathLike) -> None:
 def read_blif(filename: str | os.PathLike) -> aigverse.networks.NamedKlut:
     """Reads a flat combinational BLIF model into a NamedKlut.
 
+    Nonempty covers expand to dense truth tables whose memory grows exponentially with fanin count.
+
     Args:
         filename: Source path. Only .model, .inputs, .outputs, .names, and .end are supported.
 
@@ -143,6 +145,7 @@ def write_blif(ntk: aigverse.networks.NamedKlut, filename: str | os.PathLike) ->
 def write_blif(ntk: aigverse.networks.Klut, filename: str | os.PathLike) -> None:
     """Writes a combinational k-LUT network as BLIF.
 
+    Cover generation and output size can grow exponentially with LUT fanin count.
     Very deep chains can overflow the native stack and terminate the process.
     The limit depends on the platform and thread stack.
 

@@ -300,6 +300,7 @@ void bind_write_blif(nb::module_& m)
     m.def("write_blif", &write_blif<Ntk>, nb::arg("ntk"), nb::arg("filename"),
           R"pb(Writes a combinational k-LUT network as BLIF.
 
+Cover generation and output size can grow exponentially with LUT fanin count.
 Very deep chains can overflow the native stack and terminate the process.
 The limit depends on the platform and thread stack.
 
@@ -317,6 +318,8 @@ void bind_blif(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     m.def("read_blif", &read_blif, nb::arg("filename"),
           R"pb(Reads a flat combinational BLIF model into a NamedKlut.
+
+Nonempty covers expand to dense truth tables whose memory grows exponentially with fanin count.
 
 Args:
     filename: Source path. Only .model, .inputs, .outputs, .names, and .end are supported.

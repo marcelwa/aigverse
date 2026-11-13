@@ -57,6 +57,27 @@ def test_concurrent_reads(reader: Callable[[str], Aig], resource: str):
     assert [shape(aig) for aig in aigs] == [expected] * REPEATS
 
 
+def test_concurrent_blif_reads(named_klut_basic: NamedKlut, tmp_path: Path) -> None:
+    path = tmp_path / "shared.blif"
+    write_blif(named_klut_basic, path)
+    expected = read_blif(path)
+    expected_gates = [(expected.fanins(n), expected.node_function(n)) for n in expected.gates()]
+
+    with ThreadPoolExecutor(THREADS) as pool:
+        networks = list(pool.map(read_blif, [path] * REPEATS))
+
+    for ntk in networks:
+        assert shape(ntk) == shape(expected)
+        assert [(ntk.fanins(n), ntk.node_function(n)) for n in ntk.gates()] == expected_gates
+        assert [ntk.get_name(n) for n in ntk.pis()] == ["a", "b"]
+        assert [ntk.get_output_name(i) for i in range(ntk.num_pos)] == ["out"]
+
+    networks[0].create_po(0, "extra")
+    networks[0].set_name(networks[0].pi_at(0), "private")
+    assert [ntk.num_pos for ntk in networks] == [2] + [1] * (REPEATS - 1)
+    assert [ntk.get_name(ntk.pi_at(0)) for ntk in networks] == ["private"] + ["a"] * (REPEATS - 1)
+
+
 @pytest.mark.parametrize(("writer", "suffix"), [(write_aiger, "aig"), (write_dot, "dot"), (write_verilog, "v")])
 def test_concurrent_writes(writer: Callable[[Aig, str], None], suffix: str, race_prone_aig: Aig, tmp_path: Path):
     paths = [tmp_path / f"{i}.{suffix}" for i in range(REPEATS)]
