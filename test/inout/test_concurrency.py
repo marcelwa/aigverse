@@ -12,7 +12,7 @@ from aigverse.io import (
     read_aiger_into_sequential_aig,
     read_ascii_aiger_into_aig,
     read_ascii_aiger_into_sequential_aig,
-    read_blif_into_klut,
+    read_blif,
     read_pla_into_aig,
     read_verilog_into_aig,
     write_aiger,
@@ -97,6 +97,6 @@ def test_concurrent_blif_writes(tmp_path: Path, *, named: bool) -> None:
     assert [source.get_output_name(i) for i in range(source.num_pos)] == [f"output{i}" for i in range(10)]
     assert source.get_name(nodes[-1]) == "internal"
     if named:
-        restored = read_blif_into_klut(serial)
+        restored = read_blif(serial)
         assert [restored.get_name(n) for n in restored.pis()] == [f"input{i}" for i in range(10)]
         assert [restored.get_output_name(i) for i in range(restored.num_pos)] == [f"output{i}" for i in range(10)]

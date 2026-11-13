@@ -37,11 +37,20 @@ using fanouts_aig = mockturtle::fanout_view<aig>;
  */
 using sequential_aig = mockturtle::sequential<aig>;
 /**
- * Combinational k-LUT networks and their augmented views.
+ * Alias for the combinational k-LUT network.
  */
-using klut         = mockturtle::klut_network;
-using named_klut   = mockturtle::names_view<klut>;
-using depth_klut   = mockturtle::depth_view<klut>;
+using klut = mockturtle::klut_network;
+/**
+ * Alias for the named k-LUT network.
+ */
+using named_klut = mockturtle::names_view<klut>;
+/**
+ * Alias for the depth k-LUT network.
+ */
+using depth_klut = mockturtle::depth_view<klut>;
+/**
+ * Alias for the fanout k-LUT network.
+ */
 using fanouts_klut = mockturtle::fanout_view<klut>;
 /**
  * Alias for the AIG index list.

@@ -123,7 +123,7 @@ def write_dot(ntk: aigverse.networks.Aig, filename: str | os.PathLike) -> None:
             filename: Destination path for the DOT file.
     """
 
-def read_blif_into_klut(filename: str | os.PathLike) -> aigverse.networks.NamedKlut:
+def read_blif(filename: str | os.PathLike) -> aigverse.networks.NamedKlut:
     """Reads a flat combinational BLIF model into a NamedKlut.
 
     Args:

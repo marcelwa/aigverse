@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from aigverse.io import read_blif_into_klut, write_blif
+from aigverse.io import read_blif, write_blif
 from aigverse.networks import DepthKlut, Klut, NamedKlut
 from aigverse.utils import TruthTable
 
@@ -51,7 +51,7 @@ def test_blif_round_trip(named_klut_basic: NamedKlut, tmp_path: Path, *, named: 
     original = ntk if named else Klut(ntk)
     path = tmp_path / "roundtrip.blif"
     write_blif(original, path)
-    restored = read_blif_into_klut(path)
+    restored = read_blif(path)
     assert isinstance(restored, NamedKlut)
     assert restored.num_pis == original.num_pis
     assert restored.num_pos == original.num_pos
@@ -70,7 +70,7 @@ def test_blif_round_trip_omits_dangling_logic(named_klut_basic: NamedKlut, tmp_p
         dangling = ntk.create_not(dangling)
     path = tmp_path / "dangling.blif"
     write_blif(ntk, path)
-    restored = read_blif_into_klut(path)
+    restored = read_blif(path)
     assert restored.num_gates < ntk.num_gates
     assert output_values(restored) == output_values(ntk)
     assert [restored.get_name(node) for node in restored.pis()] == ["a", "b"]
@@ -85,7 +85,7 @@ def test_blif_covers_comments_and_forward_references(tmp_path: Path) -> None:
         ".names names end empty\n.names one\n1\n.names names direct\n1 1\n.end\n",
         encoding="utf-8",
     )
-    ntk = read_blif_into_klut(path)
+    ntk = read_blif(path)
     assert ntk.get_network_name() == "test"
     assert [ntk.get_name(node) for node in ntk.pis()] == ["names", "end"]
     assert output_values(ntk) == [
@@ -101,7 +101,7 @@ def test_blif_covers_comments_and_forward_references(tmp_path: Path) -> None:
 def test_continuation_ends_at_next_physical_line(separator: str, tmp_path: Path) -> None:
     path = tmp_path / "continued.blif"
     path.write_text(f".model top\n.inputs a \\\n{separator}\n.outputs a\n.end", encoding="utf-8")
-    ntk = read_blif_into_klut(path)
+    ntk = read_blif(path)
     assert ntk.num_pis == ntk.num_pos == 1
     assert ntk.get_name(ntk.pi_at(0)) == ntk.get_output_name(0) == "a"
     assert output_values(ntk) == [[False], [True]]
@@ -117,7 +117,7 @@ def test_driver_names_round_trip(name: str, tmp_path: Path) -> None:
     ntk.create_po(1, "new_n1")
     path = tmp_path / "passthrough.blif"
     write_blif(ntk, path)
-    restored = read_blif_into_klut(path)
+    restored = read_blif(path)
     assert [restored.get_output_name(i) for i in range(4)] == [name, name, "new_n0", "new_n1"]
     assert output_values(restored) == output_values(ntk)
 
@@ -141,7 +141,7 @@ def test_generated_interface_names_avoid_explicit_names(
         ntk.create_po(node, name)
     path = tmp_path / "default_names.blif"
     write_blif(ntk, path)
-    restored = read_blif_into_klut(path)
+    restored = read_blif(path)
     actual_inputs = [restored.get_name(node) for node in restored.pis()]
     actual_outputs = [restored.get_output_name(i) for i in range(restored.num_pos)]
     assert len(set(actual_inputs)) == len(input_names)
@@ -193,7 +193,7 @@ def test_invalid_blif_is_rejected(body: str, tmp_path: Path) -> None:
     path = tmp_path / "invalid.blif"
     path.write_text(f".model top\n.inputs a\n.outputs out\n{body}\n.end\n", encoding="utf-8")
     with pytest.raises(RuntimeError):
-        read_blif_into_klut(path)
+        read_blif(path)
 
 
 @pytest.mark.parametrize("text", ["", ".inputs a\n.end\n", ".model top\n", ".model top\n.inputs a \\\n"])
@@ -201,21 +201,21 @@ def test_incomplete_blif_is_rejected(text: str, tmp_path: Path) -> None:
     path = tmp_path / "incomplete.blif"
     path.write_text(text, encoding="utf-8")
     with pytest.raises(RuntimeError):
-        read_blif_into_klut(path)
+        read_blif(path)
 
 
 def test_blank_continuation_does_not_consume_bare_record(tmp_path: Path) -> None:
     path = tmp_path / "continued.blif"
     path.write_text(".model top\n.inputs a \\\n\nb\n.outputs a\n.end\n", encoding="utf-8")
     with pytest.raises(RuntimeError):
-        read_blif_into_klut(path)
+        read_blif(path)
 
 
 @pytest.mark.parametrize("separator", [" ", "\t", "\f", "\v", "\r"])
 def test_cover_whitespace(separator: str, tmp_path: Path) -> None:
     path = tmp_path / "whitespace.blif"
     path.write_text(f".model top\n.inputs a\n.outputs out\n.names a out\n1{separator}1\n.end\n", encoding="utf-8")
-    assert output_values(read_blif_into_klut(path)) == [[False], [True]]
+    assert output_values(read_blif(path)) == [[False], [True]]
 
 
 def test_empty_cover_at_fanin_limit(tmp_path: Path) -> None:
@@ -223,7 +223,7 @@ def test_empty_cover_at_fanin_limit(tmp_path: Path) -> None:
     names = " ".join(inputs)
     path = tmp_path / "wide_empty.blif"
     path.write_text(f".model top\n.inputs {names}\n.outputs out\n.names {names} out\n.end\n", encoding="utf-8")
-    ntk = read_blif_into_klut(path)
+    ntk = read_blif(path)
     assert [ntk.get_name(node) for node in ntk.pis()] == inputs
     assert ntk.num_pos == 1
     assert ntk.po_at(0) == ntk.get_constant(False)
@@ -237,7 +237,7 @@ def test_internal_names_do_not_collide(named_klut_basic: NamedKlut, tmp_path: Pa
     ntk.create_po(ntk.po_at(0), "out")
     path = tmp_path / "names.blif"
     write_blif(ntk, path)
-    restored = read_blif_into_klut(path)
+    restored = read_blif(path)
     assert restored.get_name(restored.pi_at(0)) == "new_n4"
     assert restored.get_output_name(1) == "out"
     assert output_values(restored) == output_values(ntk)
@@ -269,18 +269,18 @@ def test_empty_and_direct_networks(tmp_path: Path) -> None:
     ntk = DepthKlut()
     path = tmp_path / "empty.blif"
     write_blif(ntk, path)
-    assert not read_blif_into_klut(path)
+    assert not read_blif(path)
     pi = ntk.create_pi()
     ntk.create_po(pi)
     write_blif(ntk, path)
-    assert output_values(read_blif_into_klut(path)) == [[False], [True]]
+    assert output_values(read_blif(path)) == [[False], [True]]
 
 
 def test_blif_path_errors(named_klut_basic: NamedKlut, tmp_path: Path) -> None:
     with pytest.raises(RuntimeError, match="opening"):
-        read_blif_into_klut(tmp_path / "missing.blif")
+        read_blif(tmp_path / "missing.blif")
     with pytest.raises(RuntimeError):
-        read_blif_into_klut(tmp_path)
+        read_blif(tmp_path)
     with pytest.raises(RuntimeError, match="opening"):
         write_blif(named_klut_basic, tmp_path / "missing" / "out.blif")
 
@@ -289,7 +289,7 @@ def test_blif_path_errors(named_klut_basic: NamedKlut, tmp_path: Path) -> None:
 def test_constant_covers_without_inputs(cover: str, tmp_path: Path) -> None:
     path = tmp_path / "constant.blif"
     path.write_text(f".model constant\n.inputs\n.outputs out\n.names out\n{cover}\n.end\n", encoding="utf-8")
-    ntk = read_blif_into_klut(path)
+    ntk = read_blif(path)
     assert output_values(ntk) == [[cover == "1"]]
     assert ntk.get_output_name(0) == "out"
 
@@ -297,7 +297,7 @@ def test_constant_covers_without_inputs(cover: str, tmp_path: Path) -> None:
 def test_empty_blif_directives_and_blank_logical_lines(tmp_path: Path) -> None:
     path = tmp_path / "empty.blif"
     path.write_text(".model empty\n\n# comment\n.inputs\n.outputs\n\\\n\n.end", encoding="utf-8")
-    assert not read_blif_into_klut(path)
+    assert not read_blif(path)
 
 
 @pytest.mark.parametrize("header", [".model", ".model first second"])
@@ -305,7 +305,7 @@ def test_invalid_model_header(header: str, tmp_path: Path) -> None:
     path = tmp_path / "model.blif"
     path.write_text(f"{header}\n.end\n", encoding="utf-8")
     with pytest.raises(RuntimeError, match=r"one \.model name"):
-        read_blif_into_klut(path)
+        read_blif(path)
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="Requires Linux /dev/full")
@@ -324,10 +324,10 @@ def test_utf8_names_ignore_ctype_locale(ctype_locale: str, tmp_path: Path) -> No
             pytest.skip(f"Locale {ctype_locale} is unavailable")
         path = tmp_path / "locale.blif"
         path.write_text(".model top\n.inputs à Í\n.outputs à Í\n.end\n", encoding="utf-8")
-        ntk = read_blif_into_klut(path)
+        ntk = read_blif(path)
         assert [ntk.get_name(node) for node in ntk.pis()] == ["à", "Í"]
         write_blif(ntk, path)
-        restored = read_blif_into_klut(path)
+        restored = read_blif(path)
         assert [restored.get_name(node) for node in restored.pis()] == ["à", "Í"]
         assert [restored.get_output_name(i) for i in range(restored.num_pos)] == ["à", "Í"]
         assert output_values(restored) == output_values(ntk)

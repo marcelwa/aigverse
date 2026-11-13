@@ -315,7 +315,7 @@ Raises:
 
 void bind_blif(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
-    m.def("read_blif_into_klut", &read_blif, nb::arg("filename"),
+    m.def("read_blif", &read_blif, nb::arg("filename"),
           R"pb(Reads a flat combinational BLIF model into a NamedKlut.
 
 Args:

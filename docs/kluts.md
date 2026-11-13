@@ -93,7 +93,7 @@ copies preserve names. `Klut(view)` makes an independent plain network, discardi
 
 ## BLIF import and export
 
-{py:func}`~aigverse.io.read_blif_into_klut` reads one complete flat combinational BLIF model ending with `.end`
+{py:func}`~aigverse.io.read_blif` reads one complete flat combinational BLIF model ending with `.end`
 and returns a `NamedKlut`.
 {py:func}`~aigverse.io.write_blif` writes a `Klut` or one of its views.
 
@@ -101,12 +101,12 @@ and returns a `NamedKlut`.
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from aigverse.io import read_blif_into_klut, write_blif
+from aigverse.io import read_blif, write_blif
 
 with TemporaryDirectory() as directory:
     path = Path(directory) / "network.blif"
     write_blif(named, path)
-    restored = read_blif_into_klut(path)
+    restored = read_blif(path)
 
 assert restored.get_name(restored.pi_at(0)) == "x"
 assert restored.get_output_name(0) == "result"
