@@ -93,7 +93,8 @@ copies preserve names. `Klut(view)` makes an independent plain network, discardi
 
 ## BLIF import and export
 
-{py:func}`~aigverse.io.read_blif_into_klut` reads a flat combinational BLIF model and returns a `NamedKlut`.
+{py:func}`~aigverse.io.read_blif_into_klut` reads one complete flat combinational BLIF model ending with `.end`
+and returns a `NamedKlut`.
 {py:func}`~aigverse.io.write_blif` writes a `Klut` or one of its views.
 
 ```{code-cell} ipython3

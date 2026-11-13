@@ -19,7 +19,6 @@
 #include <string>
 #include <type_traits>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace aigverse
@@ -38,33 +37,15 @@ struct blif_source
 
 blif_source validate_blif(std::istream& input)
 {
-    // Validate flat combinational BLIF before invoking the pinned readers, which assume
-    // well-formed covers and continuations. Normalized identifiers contain only safe ASCII
-    // so Lorina's unanchored directive regexes cannot match user signal names; interface
-    // names are retained separately for restoration after native parsing.
+    // Enforce one complete flat model and normalize whitespace before native validation.
+    // ASCII identifiers avoid Lorina's locale-sensitive trimming of UTF-8 name bytes.
     blif_source                                  source;
     std::unordered_map<std::string, std::string> identifiers;
-    std::unordered_set<std::string>              drivers;
-    bool                                         ended    = false;
-    bool                                         in_cover = false;
-    std::size_t                                  fanins   = 0;
-    char                                         phase    = '\0';
+    bool                                         ended = false;
     std::string                                  continued;
 
     const auto identifier = [&](const std::string& name)
-    {
-        // Lorina's unanchored directive regexes can also match inside user signal names.
-        return identifiers.try_emplace(name, fmt::format("s{}", identifiers.size())).first->second;
-    };
-    const auto finish_cover = [&]
-    {
-        if (in_cover && phase == '\0')
-        {
-            // mockturtle requires a row for nonconstant nodes, including empty (constant-0) covers.
-            source.text += fanins == 0 ? "0\n" : std::string(fanins, '-') + " 0\n";
-        }
-        in_cover = false;
-    };
+    { return identifiers.try_emplace(name, fmt::format("s{}", identifiers.size())).first->second; };
 
     std::string line;
     while (std::getline(input, line))
@@ -113,22 +94,21 @@ blif_source validate_blif(std::istream& input)
         const auto& directive = tokens.front();
         if (directive.front() != '.')
         {
-            const auto& value = tokens.back();
-            const bool  valid_grammar =
-                in_cover && tokens.size() == (fanins == 0 ? 1U : 2U) && (value == "0" || value == "1");
-            const bool valid_phase   = phase == '\0' || (valid_grammar && fanins != 0 && phase == value.front());
-            const bool valid_pattern = fanins == 0 || (tokens.front().size() == fanins &&
-                                                       tokens.front().find_first_not_of("01-") == std::string::npos);
-            if (!valid_grammar || !valid_phase || !valid_pattern)
+            for (const auto& token : tokens)
             {
-                throw std::runtime_error("Invalid BLIF truth-table cover");
+                for (const char c : token)
+                {
+                    if (static_cast<unsigned char>(c) >= 0x80)
+                    {
+                        throw std::runtime_error("BLIF covers require ASCII tokens");
+                    }
+                }
+                source.text += token + ' ';
             }
-            phase = value.front();
-            source.text += fanins == 0 ? value + '\n' : tokens.front() + ' ' + value + '\n';
+            source.text.back() = '\n';
             continue;
         }
 
-        finish_cover();
         if (directive == ".model")
         {
             if (!source.model.empty() || tokens.size() != 2)
@@ -144,20 +124,12 @@ blif_source validate_blif(std::istream& input)
         }
         else if (directive == ".inputs" || directive == ".outputs")
         {
-            if (tokens.size() == 1)
-            {
-                continue;
-            }
             source.text += directive;
             for (std::size_t i = 1; i < tokens.size(); ++i)
             {
                 const auto& name = tokens.at(i);
                 if (directive == ".inputs")
                 {
-                    if (!drivers.insert(name).second)
-                    {
-                        throw std::runtime_error("Duplicate BLIF signal driver");
-                    }
                     source.inputs.push_back(name);
                 }
                 else
@@ -174,19 +146,12 @@ blif_source validate_blif(std::istream& input)
             {
                 throw std::runtime_error("BLIF .names requires one output and at most 32 fanins");
             }
-            if (!drivers.insert(tokens.back()).second)
-            {
-                throw std::runtime_error("Duplicate BLIF signal driver");
-            }
             source.text += ".names";
             for (std::size_t i = 1; i < tokens.size(); ++i)
             {
                 source.text += ' ' + identifier(tokens.at(i));
             }
             source.text += '\n';
-            in_cover = true;
-            fanins   = tokens.size() - 2;
-            phase    = '\0';
         }
         else if (directive == ".end" && tokens.size() == 1)
         {
@@ -203,13 +168,6 @@ blif_source validate_blif(std::istream& input)
     {
         throw std::runtime_error("Incomplete BLIF file");
     }
-    for (const auto& name : source.outputs)
-    {
-        if (drivers.count(name) == 0)
-        {
-            throw std::runtime_error("BLIF output has no driver: " + name);
-        }
-    }
     return source;
 }
 
@@ -220,16 +178,15 @@ named_klut read_blif(const std::filesystem::path& filename)
     {
         throw std::runtime_error("Error opening BLIF file");
     }
-    // Normalized text has no blank lines/backslashes and ends with a newline, as pinned Lorina requires.
     const auto                source = validate_blif(input);
     std::istringstream        normalized(source.text);
     lorina::text_diagnostics  consumer;
     lorina::diagnostic_engine diag{&consumer};
     named_klut                ntk;
-    const auto                result = lorina::read_blif(normalized, mockturtle::blif_reader<named_klut>(ntk), &diag);
+    const auto result = lorina::read_blif_model(normalized, mockturtle::blif_reader<named_klut>(ntk), &diag);
     if (result != lorina::return_code::success)
     {
-        throw std::runtime_error("Error reading BLIF file: missing drivers or cyclic logic");
+        throw std::runtime_error("Error reading BLIF file");
     }
     ntk.set_network_name(source.model);
     ntk.foreach_pi([&](const auto n, const auto index) { ntk.set_name(n, source.inputs.at(index)); });
@@ -256,8 +213,13 @@ void check_name(const std::string& name)
 template <typename Ntk>
 void write_blif(const Ntk& ntk, const std::filesystem::path& filename)
 {
+    // topo_view writes shared traversal state, so free-threaded writers need private node storage.
+#ifdef NB_FREE_THREADED
+    named_klut output(static_cast<const klut&>(ntk).clone());
+#else
+    named_klut output(static_cast<const klut&>(ntk));
+#endif
     // Only interface names are serialized; generated internal names avoid all interface collisions.
-    named_klut                                output(static_cast<const klut&>(ntk));
     std::unordered_map<std::string, uint64_t> drivers{{"new_n0", 0}, {"new_n1", 1}};
     if constexpr (std::is_same_v<Ntk, named_klut>)
     {
@@ -334,7 +296,7 @@ void write_blif(const Ntk& ntk, const std::filesystem::path& filename)
 template <typename Ntk>
 void bind_write_blif(nb::module_& m)
 {
-    // topo_view mutates shared traversal flags, so writers retain the GIL.
+    // Normal builds retain the GIL to protect topo_view's shared traversal flags.
     m.def("write_blif", &write_blif<Ntk>, nb::arg("ntk"), nb::arg("filename"),
           R"pb(Writes a combinational k-LUT network as BLIF.
 

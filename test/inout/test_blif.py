@@ -107,7 +107,7 @@ def test_continuation_ends_at_next_physical_line(separator: str, tmp_path: Path)
     assert output_values(ntk) == [[False], [True]]
 
 
-@pytest.mark.parametrize("name", [".a", "éclair", "à", "Í"])
+@pytest.mark.parametrize("name", [".a", ".model", ".inputs", ".outputs", ".names", ".end", "éclair", "à", "Í"])
 def test_driver_names_round_trip(name: str, tmp_path: Path) -> None:
     ntk = NamedKlut()
     a = ntk.create_pi(name)
@@ -160,23 +160,32 @@ def test_generated_interface_names_avoid_explicit_names(
         ".gate AND a=a Y=out",
         ".blackbox",
         ".names missing out\n1 1",
+        ".names missing out",
         ".names out internal\n1 1\n.names internal out\n1 1",
+        ".names out internal\n.names internal out",
         ".names a out\n11 1",
         ".names a out\nx 1",
+        ".names a out\né 1",
+        ".names a out\n1 é",
+        ".names a out\n1 1é",
         ".names a out\n1 -",
         ".names a out\n0 0\n1 1",
         ".names a out\n1 1 garbage",
+        ".names a out\n1 1\n.inputs\n0 1",
+        ".names a out\n1 1\n.outputs\n0 1",
         ".names out\n0\n1",
         ".names out\n0 1",
         "1",
         ".names a out\n1 1\n.names a out\n0 1",
-        ".inputs a",
-        ".names a\n1",
+        ".inputs a\n.names a out\n1 1",
+        ".names a\n1\n.names a out\n1 1",
         ".names",
         ".names " + " ".join(["a"] * 33) + " out\n" + "1" * 33 + " 1",
+        ".names " + " ".join(["a"] * 33) + " out",
         ".names orphan\n1",
-        ".model second",
-        ".end\n.model second",
+        ".names a out\n1 1\n.model second\n.inputs b\n.outputs b",
+        ".names a out\n1 1\n.end\n.model second\n.inputs b\n.outputs b",
+        ".names a out\n1 1\n.end\n.names unused\n1",
         ".end extra",
     ],
 )
@@ -193,6 +202,32 @@ def test_incomplete_blif_is_rejected(text: str, tmp_path: Path) -> None:
     path.write_text(text, encoding="utf-8")
     with pytest.raises(RuntimeError):
         read_blif_into_klut(path)
+
+
+def test_blank_continuation_does_not_consume_bare_record(tmp_path: Path) -> None:
+    path = tmp_path / "continued.blif"
+    path.write_text(".model top\n.inputs a \\\n\nb\n.outputs a\n.end\n", encoding="utf-8")
+    with pytest.raises(RuntimeError):
+        read_blif_into_klut(path)
+
+
+@pytest.mark.parametrize("separator", [" ", "\t", "\f", "\v", "\r"])
+def test_cover_whitespace(separator: str, tmp_path: Path) -> None:
+    path = tmp_path / "whitespace.blif"
+    path.write_text(f".model top\n.inputs a\n.outputs out\n.names a out\n1{separator}1\n.end\n", encoding="utf-8")
+    assert output_values(read_blif_into_klut(path)) == [[False], [True]]
+
+
+def test_empty_cover_at_fanin_limit(tmp_path: Path) -> None:
+    inputs = [f"i{i}" for i in range(32)]
+    names = " ".join(inputs)
+    path = tmp_path / "wide_empty.blif"
+    path.write_text(f".model top\n.inputs {names}\n.outputs out\n.names {names} out\n.end\n", encoding="utf-8")
+    ntk = read_blif_into_klut(path)
+    assert [ntk.get_name(node) for node in ntk.pis()] == inputs
+    assert ntk.num_pos == 1
+    assert ntk.po_at(0) == ntk.get_constant(False)
+    assert ntk.get_output_name(0) == "out"
 
 
 def test_internal_names_do_not_collide(named_klut_basic: NamedKlut, tmp_path: Path) -> None:

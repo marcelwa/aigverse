@@ -75,7 +75,6 @@ def named_klut_basic() -> NamedKlut:
     return ntk
 
 
-
 @pytest.fixture
 def simple_and_aig() -> Aig:
     """Create a simple AIG with 2 PIs, 1 AND gate, and 1 PO.
