@@ -5,6 +5,7 @@
 #include "aigverse/types.hpp"
 
 #include <fmt/format.h>
+#include <lorina/common.hpp>
 #include <lorina/diagnostics.hpp>
 #include <lorina/verilog.hpp>
 #include <mockturtle/io/verilog_reader.hpp>
@@ -35,11 +36,10 @@ void read_verilog(nanobind::module_& m, const std::string& network_name)  // NOL
             lorina::text_diagnostics  consumer{};
             lorina::diagnostic_engine diag{&consumer};
 
-            mockturtle::verilog_reader<Ntk> reader(ntk);
+            const mockturtle::verilog_reader<Ntk> reader(ntk);
             const auto read_verilog_result = lorina::read_verilog(filename.string(), reader, &diag);
 
-            if (read_verilog_result != lorina::return_code::success ||
-                !reader.found_top())  // NOLINT(misc-include-cleaner)
+            if (read_verilog_result != lorina::return_code::success || !reader.found_top())
             {
                 throw std::runtime_error("Error reading Verilog file");
             }
@@ -59,7 +59,8 @@ Returns:
 
 Raises:
     RuntimeError: If parsing fails or the file has no module named ``top``.
-    ValueError: If the netlist has invalid signal or module definitions.)pb",
+    ValueError: If the netlist has invalid signal or module definitions.
+    IndexError: If an arithmetic literal or its width is out of range.)pb",
         nb::call_guard<nb::gil_scoped_release>());
 }
 

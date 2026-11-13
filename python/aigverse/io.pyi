@@ -104,6 +104,7 @@ def read_verilog_into_aig(filename: str | os.PathLike) -> aigverse.networks.Name
     Raises:
         RuntimeError: If parsing fails or the file has no module named ``top``.
         ValueError: If the netlist has invalid signal or module definitions.
+        IndexError: If an arithmetic literal or its width is out of range.
     """
 
 def write_verilog(ntk: aigverse.networks.Aig, filename: str | os.PathLike) -> None:
