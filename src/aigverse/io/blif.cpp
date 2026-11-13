@@ -30,7 +30,6 @@ namespace nb = nanobind;
 struct blif_source
 {
     std::string              text;
-    std::string              model;
     std::vector<std::string> inputs;
     std::vector<std::string> outputs;
 };
@@ -41,7 +40,8 @@ blif_source validate_blif(std::istream& input)
     // ASCII identifiers avoid Lorina's locale-sensitive trimming of UTF-8 name bytes.
     blif_source                                  source;
     std::unordered_map<std::string, std::string> identifiers;
-    bool                                         ended = false;
+    bool                                         seen_model = false;
+    bool                                         ended      = false;
     std::string                                  continued;
 
     const auto identifier = [&](const std::string& name)
@@ -92,54 +92,17 @@ blif_source validate_blif(std::istream& input)
         }
 
         const auto& directive = tokens.front();
-        if (directive.front() != '.')
-        {
-            for (const auto& token : tokens)
-            {
-                for (const char c : token)
-                {
-                    if (static_cast<unsigned char>(c) >= 0x80)
-                    {
-                        throw std::runtime_error("BLIF covers require ASCII tokens");
-                    }
-                }
-                source.text += token + ' ';
-            }
-            source.text.back() = '\n';
-            continue;
-        }
-
         if (directive == ".model")
         {
-            if (!source.model.empty() || tokens.size() != 2)
+            if (seen_model || tokens.size() != 2)
             {
                 throw std::runtime_error("BLIF requires one .model name");
             }
-            source.model = tokens.at(1);
-            source.text += ".model top\n";
+            seen_model = true;
         }
-        else if (source.model.empty())
+        else if (directive.front() == '.' && !seen_model)
         {
             throw std::runtime_error("BLIF must start with .model");
-        }
-        else if (directive == ".inputs" || directive == ".outputs")
-        {
-            // Empty port directives still terminate the preceding .names cover.
-            source.text += directive;
-            for (std::size_t i = 1; i < tokens.size(); ++i)
-            {
-                const auto& name = tokens.at(i);
-                if (directive == ".inputs")
-                {
-                    source.inputs.push_back(name);
-                }
-                else
-                {
-                    source.outputs.push_back(name);
-                }
-                source.text += ' ' + identifier(name);
-            }
-            source.text += '\n';
         }
         else if (directive == ".names")
         {
@@ -147,23 +110,33 @@ blif_source validate_blif(std::istream& input)
             {
                 throw std::runtime_error("BLIF .names requires one output and at most 32 fanins");
             }
-            source.text += ".names";
-            for (std::size_t i = 1; i < tokens.size(); ++i)
-            {
-                source.text += ' ' + identifier(tokens.at(i));
-            }
-            source.text += '\n';
         }
         else if (directive == ".end" && tokens.size() == 1)
         {
             ended = true;
-            source.text += ".end\n";
         }
-        else
+        else if (directive == ".latch")
         {
             throw std::runtime_error("Unsupported BLIF directive: " + directive +
                                      "; only flat combinational .names models are supported");
         }
+
+        if (directive == ".inputs")
+        {
+            source.inputs.insert(source.inputs.end(), tokens.begin() + 1, tokens.end());
+        }
+        else if (directive == ".outputs")
+        {
+            source.outputs.insert(source.outputs.end(), tokens.begin() + 1, tokens.end());
+        }
+        const bool has_identifiers = directive == ".inputs" || directive == ".outputs" || directive == ".names";
+        // Empty port directives still terminate the preceding .names cover.
+        for (std::size_t i = 0; i < tokens.size(); ++i)
+        {
+            const auto& token = tokens.at(i);
+            source.text += (has_identifiers && i > 0 ? identifier(token) : token) + ' ';
+        }
+        source.text.back() = '\n';
     }
     if (input.bad() || !continued.empty() || !ended)
     {
@@ -189,7 +162,6 @@ named_klut read_blif(const std::filesystem::path& filename)
     {
         throw std::runtime_error("Error reading BLIF file");
     }
-    ntk.set_network_name(source.model);
     ntk.foreach_pi([&](const auto n, const auto index) { ntk.set_name(n, source.inputs.at(index)); });
     ntk.foreach_po([&](const auto, const auto index) { ntk.set_output_name(index, source.outputs.at(index)); });
     return ntk;

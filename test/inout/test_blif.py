@@ -315,7 +315,8 @@ def test_blif_reports_write_failure(named_klut_basic: NamedKlut) -> None:
 
 
 @pytest.mark.parametrize("ctype_locale", ["French_France.1252", "fr_FR.ISO8859-1"])
-def test_utf8_names_ignore_ctype_locale(ctype_locale: str, tmp_path: Path) -> None:
+@pytest.mark.parametrize("model", ["topà", "topÍ"])
+def test_utf8_names_ignore_ctype_locale(ctype_locale: str, model: str, tmp_path: Path) -> None:
     previous = locale.setlocale(locale.LC_CTYPE)
     try:
         try:
@@ -323,8 +324,9 @@ def test_utf8_names_ignore_ctype_locale(ctype_locale: str, tmp_path: Path) -> No
         except locale.Error:
             pytest.skip(f"Locale {ctype_locale} is unavailable")
         path = tmp_path / "locale.blif"
-        path.write_text(".model top\n.inputs à Í\n.outputs à Í\n.end\n", encoding="utf-8")
+        path.write_text(f".model {model}\n.inputs à Í\n.outputs à Í\n.end\n", encoding="utf-8")
         ntk = read_blif(path)
+        assert ntk.get_network_name() == model
         assert [ntk.get_name(node) for node in ntk.pis()] == ["à", "Í"]
         write_blif(ntk, path)
         restored = read_blif(path)
