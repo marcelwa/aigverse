@@ -11,13 +11,16 @@ from aigverse.utils import TruthTable, cofactor0, cofactor1
 ALGORITHMS = ("heuristic", "classic", "sat", "sat_windowed")
 
 
-@pytest.mark.parametrize("algorithm", ALGORITHMS)
-def test_mapping_removes_non_prefix_support(algorithm):
+@pytest.mark.parametrize(
+    ("algorithm", "compute_truth"),
+    [("heuristic", False), ("heuristic", True), ("classic", None), ("sat", None), ("sat_windowed", None)],
+)
+def test_mapping_removes_non_prefix_support(algorithm, compute_truth):
     ntk = Aig()
     a, b = ntk.create_pi(), ntk.create_pi()
     ntk.create_po(ntk.create_or(ntk.create_and(a, b), ntk.create_and(~a, b)))
 
-    mapped = algorithms.lut_mapping(ntk, algorithm=algorithm)
+    mapped = algorithms.lut_mapping(ntk, algorithm=algorithm, compute_truth=compute_truth)
 
     assert all(mapped.node_function(n).num_vars() == mapped.fanin_size(n) for n in mapped.gates())
     assert algorithms.simulate(mapped) == algorithms.simulate(ntk)

@@ -365,7 +365,8 @@ space is exponential in LUT fanin count.
 
 Classic mapping keeps a fixed cut set and generally has lower overhead. The modern heuristic spends additional
 passes and cut recomputation on depth and area tradeoffs. Whole-network SAT can take exponential time, with a
-fresh conflict allowance for each solve. Windowing limits each local solver instance but still pays for many
+fresh conflict allowance for each solve. SAT encoding is built before solving, so the conflict limit does not
+bound encoding time or memory. Windowing limits each local solver instance but still pays for many
 windows and their setup. Choose the objective and check results on representative inputs; the fastest engine
 and the smallest or shallowest mapped network need not coincide.
 
