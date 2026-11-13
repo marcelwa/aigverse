@@ -10,6 +10,9 @@ resolution-markers = [
     "python_full_version < '3.11.5'",
 ]
 
+[manifest]
+constraints = [{ name = "pillow", specifier = ">=13.0.0" }]
+
 [[package]]
 name = "accessible-pygments"
 version = "0.0.5"

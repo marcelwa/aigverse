@@ -426,7 +426,7 @@ def minimums(session: nox.Session) -> None:
             pytest_run_args=["-Wdefault"],
         )
         env = {"UV_PROJECT_ENVIRONMENT": session.virtualenv.location}
-        session.run("uv", "tree", "--frozen", env=env)
+        session.run("uv", "pip", "list", "--python", str(_venv_python(session)), env=env)
         session.run("uv", "lock", "--refresh", env=env)
 
 
