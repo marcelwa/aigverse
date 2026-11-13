@@ -14,6 +14,30 @@ releases may include breaking changes.
 
 - ✨ Support Python 3.15, including free-threaded wheels and concurrent read-only network operations ([#439])
   ([**@marcelwa**])
+
+### Changed
+
+- 💥 Require Python 3.11 or newer and raise the ordinary Stable ABI wheel floor to Python 3.11 ([#439])
+  ([**@marcelwa**])
+- 💥 Update `abc.gia.resub` to ABC's current switches and remove `max_support` and `max_divisors`
+  ([#584]) ([**@marcelwa**])
+
+### Fixed
+
+- 🐛 Use a NumPy version with Python 3.15 wheels when resolving minimum dependencies ([#439])
+  ([**@marcelwa**])
+
+## [0.1.7] - 2026-10-21
+
+### Fixed
+
+- 🔒 Require patched uv tooling and document CA trust updates needed to protect
+  downloads from the eMudhra compromise ([#565]) ([**@marcelwa**])
+
+## [0.1.6] - 2026-10-13
+
+### Added
+
 - 👷 Add Python and C++ coverage reports with separate Codecov checks and a local
   `coverage` nox session ([#554]) ([**@marcelwa**])
 - ✨ Expose each ABC command wrapper's switch translation as `.cmd(...)`, which builds
@@ -30,15 +54,10 @@ releases may include breaking changes.
 
 ### Changed
 
-- 💥 Require Python 3.11 or newer and raise the ordinary Stable ABI wheel floor to Python 3.11 ([#439])
-  ([**@marcelwa**])
-- 💥 Update `abc.gia.resub` to ABC's current switches and remove `max_support` and `max_divisors`
-  ([#584]) ([**@marcelwa**])
 - 🔧 Drop the global `CMAKE_POSITION_INDEPENDENT_CODE` override; mockturtle now builds its
   own archives as position-independent code ([#501]) ([**@marcelwa**])
 - 👷 Run native Linux CI and Read the Docs on Ubuntu 26.04 with the runner's default
   compiler ([#513]) ([**@marcelwa**])
-
 - 🔧 Stop the extensions from re-exporting the internals of the static libraries they
   embed ([#490]) ([**@marcelwa**])
 - ⚡️ Run `examples/abc_recipe_study.py`'s sweep as one batch per recipe instead of one
@@ -53,10 +72,6 @@ releases may include breaking changes.
 
 ### Fixed
 
-- 🐛 Use a NumPy version with Python 3.15 wheels when resolving minimum dependencies ([#439])
-  ([**@marcelwa**])
-- 🔒 Require patched uv tooling and document CA trust updates needed to protect
-  downloads from the eMudhra compromise ([#565]) ([**@marcelwa**])
 - 🐛 Allow equivalence checking of empty and constant AIGs in Debug builds
   ([#554]) ([**@marcelwa**])
 - 🐛 Avoid MinGW GCC link-time optimization crashes when building the Python
@@ -254,7 +269,9 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- Version links -->
 
-[unreleased]: https://github.com/marcelwa/aigverse/compare/v0.1.5...HEAD
+[unreleased]: https://github.com/marcelwa/aigverse/compare/v0.1.7...HEAD
+[0.1.7]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.7
+[0.1.6]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.6
 [0.1.5]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.5
 [0.1.4]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.4
 [0.1.3]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.3
