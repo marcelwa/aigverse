@@ -24,8 +24,7 @@ releases may include breaking changes.
 
 ### Fixed
 
-- 🐛 Use a NumPy version with Python 3.15 wheels when resolving minimum dependencies ([#439])
-  ([**@marcelwa**])
+- 🔒 Require a fixed Pillow release in contributor environments ([#588]) ([**@marcelwa**])
 
 ## [0.1.7] - 2026-10-21
 
@@ -281,6 +280,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#588]: https://github.com/marcelwa/aigverse/pull/588
 [#584]: https://github.com/marcelwa/aigverse/pull/584
 [#565]: https://github.com/marcelwa/aigverse/pull/565
 [#554]: https://github.com/marcelwa/aigverse/pull/554
