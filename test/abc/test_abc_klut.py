@@ -112,7 +112,10 @@ def test_default_aig_output_follows_native_store_behavior(namespace, command, na
 )
 @pytest.mark.parametrize(
     ("output_type", "classic_write", "gia_write"),
-    [("aig", "write_aiger -s out.aig", "&write out.aig"), ("klut", "write_blif out.blif", "&put; write_blif out.blif")],
+    [
+        ("aig", "write_aiger -s out.aig", "&write -n out.aig"),
+        ("klut", "write_blif out.blif", "&put; write_blif out.blif"),
+    ],
 )
 def test_transfer_commands_without_abc(
     namespace, read_command, output_type, classic_write, gia_write, and_aig, named_klut_basic, monkeypatch, *, lut_input

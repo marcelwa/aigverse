@@ -581,7 +581,6 @@ def run_script(
             # Classic -s keeps symbols; GIA -n adds the required AIGER comment separator.
             write_cmd = f"{'&write -n' if gia else 'write_aiger -s'} {output_file}"
 
-
         # ABC tokenizes the command string itself, so a temporary directory
         # containing a space would break the file names. Running with cwd set to
         # the temporary directory keeps them bare and relative.
