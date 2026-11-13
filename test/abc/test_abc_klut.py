@@ -230,8 +230,34 @@ def test_mapping_invalid_options_precede_discovery(namespace, option, value, and
 
 @pytest.mark.parametrize(
     "call",
-    [abc.balance, abc.resyn2, abc.gia.dc2, abc.stats, abc.gia.stats],
-    ids=["balance", "resyn2", "gia-dc2", "stats", "gia-stats"],
+    [
+        abc.balance,
+        abc.resyn,
+        abc.resyn2,
+        abc.resyn3,
+        abc.compress,
+        abc.compress2,
+        abc.resyn2rs,
+        abc.compress2rs,
+        abc.dc2,
+        abc.gia.dc2,
+        abc.stats,
+        abc.gia.stats,
+    ],
+    ids=[
+        "balance",
+        "resyn",
+        "resyn2",
+        "resyn3",
+        "compress",
+        "compress2",
+        "resyn2rs",
+        "compress2rs",
+        "dc2",
+        "gia-dc2",
+        "stats",
+        "gia-stats",
+    ],
 )
 def test_existing_aig_wrappers_keep_their_input_contract(call, named_klut_basic, tmp_path):
     with pytest.raises(TypeError, match="expected an Aig"):
