@@ -15,6 +15,7 @@
 #include <iostream>
 #include <new>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace aigverse
@@ -75,14 +76,14 @@ Raises:
 
             try
             {
-                const auto n_map = mockturtle::simulate_nodes<kitty::dynamic_truth_table>(
+                auto n_map = mockturtle::simulate_nodes<kitty::dynamic_truth_table>(
                     ntk,
                     mockturtle::default_simulator<kitty::dynamic_truth_table>{static_cast<unsigned>(ntk.num_pis())});
 
                 std::unordered_map<mockturtle::node<Ntk>, kitty::dynamic_truth_table> node_to_tt{};
 
-                // convert vector implementation to unordered_map
-                ntk.foreach_node([&n_map, &node_to_tt](const auto& n) { node_to_tt[n] = n_map[n]; });
+                ntk.foreach_node([&n_map, &node_to_tt](const auto& n)
+                                 { node_to_tt.emplace(n, std::move(n_map.at(n))); });
                 return node_to_tt;
             }
             catch (const std::bad_alloc&)
