@@ -93,6 +93,9 @@ copies preserve names. `Klut(view)` makes an independent plain network, discardi
 
 ## BLIF import and export
 
+For AIG mapping, truth-table simulation, SAT equivalence checking, cleanup, and conversion back to AIGs,
+see [LUT mapping and conversion](algorithms.md#lut-mapping-and-conversion).
+
 {py:func}`~aigverse.io.read_blif` reads one complete flat combinational BLIF model ending with `.end`
 and returns a `NamedKlut`.
 {py:func}`~aigverse.io.write_blif` writes a `Klut` or one of its views.

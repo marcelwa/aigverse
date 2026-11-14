@@ -15,6 +15,7 @@
 #include <iostream>
 #include <new>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace aigverse
@@ -32,6 +33,10 @@ void simulation(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
         "simulate",
         [](const Ntk& ntk) -> std::vector<kitty::dynamic_truth_table>
         {
+            if (ntk.num_pis() >= 32)
+            {
+                throw nb::value_error("full truth-table simulation requires fewer than 32 primary inputs");
+            }
             if (ntk.num_pis() > 16)
             {
                 std::cout << "[w] trying to simulate a network with more than 16 inputs; this might take while and "
@@ -53,6 +58,8 @@ void simulation(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
         nb::arg("ntk"),
         R"pb(Simulates all primary outputs of a network as truth tables.
 
+The GIL is released while reading the live network. The caller must not mutate it concurrently.
+
 Args:
     ntk: The input logic network.
 
@@ -60,6 +67,7 @@ Returns:
     A list containing one truth table per primary output.
 
 Raises:
+    ValueError: If there are 32 or more primary inputs.
     MemoryError: If the truth tables cannot be allocated due to memory limits.)pb",
         nb::call_guard<nb::gil_scoped_release>());
 
@@ -67,6 +75,10 @@ Raises:
         "simulate_nodes",
         [](const Ntk& ntk) -> std::unordered_map<uint64_t, kitty::dynamic_truth_table>
         {
+            if (ntk.num_pis() >= 32)
+            {
+                throw nb::value_error("full truth-table simulation requires fewer than 32 primary inputs");
+            }
             if (ntk.num_pis() > 16)
             {
                 std::cout << "[w] trying to simulate a network with more than 16 inputs; this might take while and "
@@ -75,14 +87,15 @@ Raises:
 
             try
             {
-                const auto n_map = mockturtle::simulate_nodes<kitty::dynamic_truth_table>(
+                auto n_map = mockturtle::simulate_nodes<kitty::dynamic_truth_table>(
                     ntk,
                     mockturtle::default_simulator<kitty::dynamic_truth_table>{static_cast<unsigned>(ntk.num_pis())});
 
                 std::unordered_map<mockturtle::node<Ntk>, kitty::dynamic_truth_table> node_to_tt{};
 
                 // convert vector implementation to unordered_map
-                ntk.foreach_node([&n_map, &node_to_tt](const auto& n) { node_to_tt[n] = n_map[n]; });
+                ntk.foreach_node([&n_map, &node_to_tt](const auto& n)
+                                 { node_to_tt.emplace(n, std::move(n_map.at(n))); });
                 return node_to_tt;
             }
             catch (const std::bad_alloc&)
@@ -94,6 +107,8 @@ Raises:
         nb::arg("ntk"),
         R"pb(Simulates all nodes of a network as truth tables.
 
+The GIL is released while reading the live network. The caller must not mutate it concurrently.
+
 Args:
     ntk: The input logic network.
 
@@ -101,6 +116,7 @@ Returns:
     A dictionary that maps node identifiers to truth tables.
 
 Raises:
+    ValueError: If there are 32 or more primary inputs.
     MemoryError: If the truth tables cannot be allocated due to memory limits.)pb",
         nb::call_guard<nb::gil_scoped_release>());
 }
@@ -113,6 +129,7 @@ template void simulation<aigverse::aig>(nanobind::module_& m);
 void bind_simulation(nanobind::module_& m)  // NOLINT(misc-use-internal-linkage)
 {
     detail::simulation<aigverse::aig>(m);
+    detail::simulation<aigverse::klut>(m);
 }
 
 }  // namespace aigverse

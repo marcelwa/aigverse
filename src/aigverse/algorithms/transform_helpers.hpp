@@ -4,13 +4,34 @@
 
 #pragma once
 
+#include "aigverse/types.hpp"
+
 #include <mockturtle/algorithms/cleanup.hpp>
+#include <nanobind/nanobind.h>
 
 #include <optional>
 #include <utility>
 
 namespace aigverse::detail
 {
+
+template <typename Ntk>
+Ntk snapshot_network(const Ntk& ntk)
+{
+    // names_view inherits clone(), which returns its base network and drops the names.
+    auto snapshot                                   = ntk;
+    static_cast<typename Ntk::base_type&>(snapshot) = ntk.clone();
+    return snapshot;
+}
+
+template <typename Ntk>
+void require_combinational(const Ntk& ntk)
+{
+    if (nanobind::isinstance<sequential_aig>(nanobind::find(&ntk)))
+    {
+        throw nanobind::value_error("this algorithm requires a combinational network");
+    }
+}
 
 /**
  * @brief Helper function to run a transformation either in-place or on a copy of the input network.

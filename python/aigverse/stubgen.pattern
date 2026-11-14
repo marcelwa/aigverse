@@ -22,6 +22,57 @@
     ) -> aigverse.networks.Aig:
         \doc
 
+^aigverse\.algorithms\.lut_mapping$:
+    @overload
+    def lut_mapping(
+        ntk: aigverse.networks.NamedAig,
+        *,
+        algorithm: Literal["heuristic", "classic", "sat", "sat_windowed"] = "heuristic",
+        cut_size: int = 6,
+        cut_limit: int = 8,
+        area_oriented_mapping: bool | None = None,
+        area_flow_rounds: int = 1,
+        ela_rounds: int | None = None,
+        verbose: bool = False,
+        compute_truth: bool | None = None,
+        minimize_truth_table: bool | None = None,
+        required_delay: int | None = None,
+        relax_required: int | None = None,
+        recompute_cuts: bool | None = None,
+        area_share_rounds: int | None = None,
+        edge_optimization: bool | None = None,
+        cut_expansion: bool | None = None,
+        remove_dominated_cuts: bool | None = None,
+        conflict_limit: int | None = None,
+        window_size: int | None = None,
+    ) -> aigverse.networks.NamedKlut:
+        \doc
+
+    @overload
+    def lut_mapping(
+        ntk: aigverse.networks.Aig,
+        *,
+        algorithm: Literal["heuristic", "classic", "sat", "sat_windowed"] = "heuristic",
+        cut_size: int = 6,
+        cut_limit: int = 8,
+        area_oriented_mapping: bool | None = None,
+        area_flow_rounds: int = 1,
+        ela_rounds: int | None = None,
+        verbose: bool = False,
+        compute_truth: bool | None = None,
+        minimize_truth_table: bool | None = None,
+        required_delay: int | None = None,
+        relax_required: int | None = None,
+        recompute_cuts: bool | None = None,
+        area_share_rounds: int | None = None,
+        edge_optimization: bool | None = None,
+        cut_expansion: bool | None = None,
+        remove_dominated_cuts: bool | None = None,
+        conflict_limit: int | None = None,
+        window_size: int | None = None,
+    ) -> aigverse.networks.Klut:
+        \doc
+
 ^aigverse\.networks\.Aig\.to_index_list$:
     def to_index_list(self) -> AigIndexList:
         \doc
