@@ -57,6 +57,31 @@ def _table(*bounds: Bound) -> Mapping[tuple[str, str], Bound]:
 
 BOUNDS: Final[Mapping[tuple[str, str], Bound]] = _table(
     # -- classic space ----------------------------------------------------
+    *(
+        bound
+        for command in ("if", "&if")
+        for bound in (
+            Bound(
+                command,
+                "K",
+                low=2,
+                high=32,
+                documented=False,
+                evidence="Abc_CommandIf and Abc_CommandAbc9If accept 2..32; help incorrectly excludes 2.",
+            ),
+            Bound(
+                command,
+                "C",
+                low=1,
+                high=4095,
+                documented=False,
+                evidence="Both mapping commands reject fewer than 1 or at least 1<<12 cuts; help uses 2^12.",
+            ),
+            Bound(command, "F", low=0),
+            Bound(command, "A", low=0),
+            Bound(command, "R", low=0),
+        )
+    ),
     Bound(
         "refactor",
         "N",

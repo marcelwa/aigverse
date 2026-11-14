@@ -21,6 +21,7 @@ from aigverse.abc import (
     CommandWrapper,
     balance,
     gia,
+    if_,
     orchestrate,
     refactor,
     resub,
@@ -411,12 +412,14 @@ def test_a_call_rejects_an_out_of_range_option_before_it_needs_abc(
 
 
 _WRAPPERS = {
+    "if_": if_,
     "balance": balance,
     "rewrite": rewrite,
     "refactor": refactor,
     "resub": resub,
     "orchestrate": orchestrate,
     "gia.balance": gia.balance,
+    "gia.if_": gia.if_,
     "gia.resub": gia.resub,
     "gia.dc2": gia.dc2,
     "gia.syn2": gia.syn2,

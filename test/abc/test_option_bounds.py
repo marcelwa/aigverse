@@ -30,16 +30,17 @@ _OPEN_REVERSED = re.compile(r"-(?P<switch>[A-Za-z]) *<?num>? *:.*?\((?P<low>-?\d
 
 
 def _usage(command: str) -> str:
-    """Returns ABC's ``-h`` output for a command.
+    """Returns ABC's help output for a command.
 
     Args:
         command: The ABC command, as typed.
 
     Returns:
-        Everything ABC printed for ``<command> -h``.
+        Everything ABC printed for ``-h``, or ``-?`` for ``&if`` whose ``-h``
+        switch instead enables rehashing.
     """
     completed = subprocess.run(
-        [str(abc.abc_binary()), "-s", "-q", f"{command} -h"],
+        [str(abc.abc_binary()), "-s", "-q", f"{command} {'-?' if command == '&if' else '-h'}"],
         capture_output=True,
         text=True,
         check=False,

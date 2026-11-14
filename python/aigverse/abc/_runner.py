@@ -6,20 +6,23 @@ import shlex
 import subprocess
 import tempfile
 from dataclasses import dataclass
+from keyword import iskeyword
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeVar, cast
+from typing import TYPE_CHECKING, TypeVar, overload
 
-from ..networks import Aig, NamedAig, SequentialAig
+from ..networks import Aig, Klut, NamedAig, NamedKlut, SequentialAig
 from ._binary import abc_binary, abc_rc, validate_binary
 from ._errors import AbcExecutionError, AbcTimeoutError
 
 if TYPE_CHECKING:
     import os
     from collections.abc import Sequence
+    from typing import Literal
 
 __all__ = ["Command", "CommandWrapper", "run_commands", "run_script"]
 
 AigT = TypeVar("AigT", bound=Aig)
+NetworkT = TypeVar("NetworkT", bound=Aig | Klut)
 
 _INPUT_FILE = "in.aig"
 _OUTPUT_FILE = "out.aig"
@@ -48,6 +51,11 @@ _ERROR_MARKERS = (
     # emitted when the script left a mapped netlist or a LUT network behind,
     # which ABC refuses to write as AIGER
     "only possible for structurally hashed",
+    "current aig has mapping",
+    "fpga mapping has failed",
+    "mapping of gia has failed",
+    "incorrect lut size",
+    "incorrect number of cuts",
 )
 
 
@@ -95,8 +103,9 @@ class CommandWrapper:
     """What every wrapper is: callable on a network, with a ``cmd()`` that only builds.
 
     ``abc.rewrite`` and its siblings are module-level instances of one subclass each,
-    so a subclass's lowercased name is the instance's public name, which is what
-    ``repr()`` shows in place of an object address.
+    so a subclass's lowercased name is the instance's public name, with an
+    underscore appended for Python keywords. ``repr()`` shows that name in
+    place of an object address.
     """
 
     cmd: staticmethod[..., Command]
@@ -113,7 +122,8 @@ class CommandWrapper:
             The dotted name, e.g. ``aigverse.abc.rewrite`` or ``aigverse.abc.gia.dc2``.
         """
         module = type(self).__module__.removesuffix("._commands")
-        return f"{module}.{type(self).__name__.lower()}"
+        name = type(self).__name__.lower()
+        return f"{module}.{name}{'_' if iskeyword(name) else ''}"
 
 
 def join_commands(commands: str | Command | Sequence[str | Command]) -> str:
@@ -230,6 +240,67 @@ def check_gia_supported(ntk: Aig) -> None:
             raise ValueError(msg)
 
 
+def check_transfer(ntk: Aig | Klut, output_type: Literal["aig", "klut"], *, gia: bool) -> None:
+    """Validates a network and its requested transfer representation.
+
+    Args:
+        ntk: The input network.
+        output_type: The requested output representation.
+        gia: Whether the script uses the GIA store.
+
+    Raises:
+        TypeError: If the input is neither an AIG nor a k-LUT network.
+        ValueError: If LUT output was requested for a sequential network or the
+            GIA store cannot represent a register's reset.
+    """
+    if not isinstance(ntk, (Aig, Klut)):
+        msg = f"expected an Aig or Klut, got {type(ntk).__name__}"
+        raise TypeError(msg)
+    if output_type == "klut" and isinstance(ntk, SequentialAig):
+        msg = "LUT output requires a combinational network"
+        raise ValueError(msg)
+    if gia and isinstance(ntk, Aig):
+        check_gia_supported(ntk)
+
+
+def check_output_type(output_type: Literal["aig", "klut"]) -> None:
+    """Validates the representation selector, including for an empty batch.
+
+    Args:
+        output_type: The requested output representation.
+
+    Raises:
+        ValueError: If the selector is not ``'aig'`` or ``'klut'``.
+    """
+    if not isinstance(output_type, str) or output_type not in {"aig", "klut"}:
+        msg = "output_type must be 'aig' or 'klut'"
+        raise ValueError(msg)
+
+
+def run_aig_script(
+    ntk: AigT,
+    commands: str | Command | Sequence[str | Command],
+    *,
+    timeout: float | None = None,
+    verbose: bool = False,
+    binary: str | os.PathLike[str] | None = None,
+) -> AigT:
+    """Runs an AIG-only optimization wrapper without widening its input contract.
+
+    Args:
+        ntk: The AIG to optimize.
+        commands: The optimization script.
+        timeout: Seconds to wait for ABC, or ``None`` for no limit.
+        verbose: Whether to print the captured output.
+        binary: Optional executable override.
+
+    Returns:
+        The optimized AIG with its original network type.
+    """
+    check_supported(ntk)
+    return run_script(ntk, commands, timeout=timeout, verbose=verbose, binary=binary)
+
+
 def run_commands(
     commands: str | Command | Sequence[str | Command],
     *,
@@ -326,24 +397,110 @@ def run_commands(
     return output
 
 
+@overload
 def run_script(
     ntk: AigT,
     commands: str | Command | Sequence[str | Command],
     *,
+    output_type: Literal["aig"] = "aig",
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    gia: bool = ...,
+    verbose: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+) -> AigT: ...
+
+
+@overload
+def run_script(
+    ntk: NamedKlut,
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["aig"] = "aig",
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    gia: bool = ...,
+    verbose: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+) -> NamedAig: ...
+
+
+@overload
+def run_script(
+    ntk: Klut,
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["aig"] = "aig",
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    gia: bool = ...,
+    verbose: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+) -> Aig: ...
+
+
+@overload
+def run_script(
+    ntk: NamedAig | NamedKlut,
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["klut"],
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    gia: bool = ...,
+    verbose: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+) -> NamedKlut: ...
+
+
+@overload
+def run_script(
+    ntk: Aig | Klut,
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["klut"],
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    gia: bool = ...,
+    verbose: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+) -> Klut: ...
+
+
+@overload
+def run_script(
+    ntk: Aig | Klut,
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["aig", "klut"],
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    gia: bool = ...,
+    verbose: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+) -> Aig | Klut: ...
+
+
+def run_script(
+    ntk: Aig | Klut,
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["aig", "klut"] = "aig",
     timeout: float | None = None,
     use_init_file: bool = False,
     gia: bool = False,
     verbose: bool = False,
     binary: str | os.PathLike[str] | None = None,
-) -> AigT:
-    """Optimizes a network by piping it through an external ABC process.
+) -> Aig | Klut:
+    """Runs a network through an external ABC process.
 
-    The network is written to a temporary binary AIGER file, ABC is invoked with
-    a read command, the given commands, and a write command, and the result is
-    read back. The returned network has the same type as ``ntk``: an ``Aig``
-    yields an ``Aig``, a ``NamedAig`` yields a ``NamedAig`` with its input and
-    output names preserved, and a ``SequentialAig`` yields a ``SequentialAig``
-    with its registers and their reset values intact.
+    AIG input is transferred as binary AIGER; k-LUT input as combinational BLIF.
+    The result is an AIG by default, or a k-LUT network with ``output_type='klut'``.
+    Named inputs yield named results with input/output names and order preserved.
+    A ``SequentialAig`` can only produce AIG output and keeps its registers.
+    Classic scripts requesting AIG output must leave a structurally hashed AIG.
+    GIA's ``&write`` also accepts a mapped graph: its underlying AIG is returned,
+    and its mapping metadata is not imported into the Python result.
 
     ABC keeps two independent network stores, and a command only ever sees the
     one it belongs to. By default the network is loaded with ``read_aiger`` into
@@ -352,8 +509,8 @@ def run_script(
     :data:`~aigverse.abc.SCRIPTS`). The ``&``-prefixed commands of ABC9 operate
     on a separate store, the GIA, which stays empty in that mode -- a script such
     as ``"&syn2"`` fails with *there is no AIG* unless it starts with ``&get``.
-    Set ``gia=True`` to load the network straight into the GIA with ``&read``
-    instead, which is the cheaper and lossless way to run a ``&`` script.
+    Set ``gia=True`` to load AIG input straight into the GIA with ``&read``;
+    LUT input uses ``read_blif; &get -m -n`` to preserve its mapping and names.
 
     ``commands`` must not contain the read and write steps; they are added
     automatically. Only commands the resolved ABC binary knows are valid --
@@ -364,37 +521,36 @@ def run_script(
         ntk: The network to optimize.
         commands: A single ``;``-separated ABC command string, a
             :class:`Command`, or a sequence of individual commands.
+        output_type: ``'aig'`` (default) or ``'klut'``. The script must produce
+            a network that ABC can write in that representation.
         timeout: Seconds to wait for ABC to terminate, or ``None`` for no limit.
+            Network serialization and result parsing are outside this limit.
         use_init_file: If ``False`` (default), ABC is invoked with ``-s`` so that
             no ``abc.rc`` is read and results do not depend on the local install.
             A resource file registered with :func:`~aigverse.abc.set_abc_rc` is
             loaded regardless, making its aliases available.
-        gia: If ``True``, transfer the network through ``&read``/``&write`` so it
-            lands in ABC9's GIA store and ``&``-prefixed commands can be used
-            directly. The classic commands then see nothing instead. Mixing the
-            two within one script is possible with ``&get``/``&put``, but those
-            do not carry I/O names across, whereas ``&read``/``&write`` do.
+        gia: If ``True``, load into ABC9's GIA store. AIG input uses ``&read``;
+            LUT input uses ``read_blif; &get -m -n`` to retain mapping and names.
+            LUT output uses ``&put; write_blif``; AIG output uses ``&write``.
         verbose: If ``True``, print everything ABC wrote. This is the captured
             output, not ABC's own ``-v`` reporting -- that differs per command and
             is left to the caller to add to ``commands``.
         binary: Overrides the resolved ABC executable for this call only.
 
     Returns:
-        The optimized network, of the same type as ``ntk``.
+        The requested representation, preserving whether the input was named.
 
     Raises:
-        TypeError: If ``ntk`` is not an ``Aig``.
-        ValueError: If no command was given, or if ``gia`` is set and ``ntk`` has
-            a register whose reset value is undefined.
+        TypeError: If ``ntk`` is neither an ``Aig`` nor a ``Klut``.
+        ValueError: If the selector is invalid, LUT output is requested for a
+            sequential network, no command was given, or the GIA store cannot
+            represent a register's reset value.
         AbcNotFoundError: If no ABC executable could be located.
         AbcTimeoutError: If ABC did not terminate within ``timeout`` seconds.
         AbcExecutionError: If ABC reported an error or produced no usable output.
     """
-    # Guard before resolving the binary, so an unsupported network type reports
-    # that rather than "ABC not found" on a machine without ABC.
-    check_supported(ntk)
-    if gia:
-        check_gia_supported(ntk)
+    check_output_type(output_type)
+    check_transfer(ntk, output_type, gia=gia)
     command = join_commands(commands)
 
     # Resolved once, up front: discovery walks PATH, and the error paths below need
@@ -402,7 +558,7 @@ def run_script(
     # successful result whenever the binary disappeared while ABC was running.
     executable = resolve_binary(binary)
 
-    from ..io import read_aiger_into_aig, read_aiger_into_sequential_aig, write_aiger
+    from ..io import read_aiger_into_aig, read_aiger_into_sequential_aig, read_blif, write_aiger, write_blif
 
     # SequentialAig must be tested before Aig: it is registered as a subclass on
     # the C++ side, so an `isinstance` check against Aig would accept it and pick
@@ -411,16 +567,24 @@ def run_script(
 
     with tempfile.TemporaryDirectory(prefix="aigverse-abc-") as tmpdir:
         directory = Path(tmpdir)
-        write_aiger(ntk, directory / _INPUT_FILE)
-
-        # `write_aiger` drops the symbol table unless -s is given, while `&write`
-        # always keeps it; -n adds the comment separator required by the AIGER reader.
-        read_cmd, write_cmd = ("&read", "&write -n") if gia else ("read_aiger", "write_aiger -s")
+        if isinstance(ntk, Klut):
+            write_blif(ntk, directory / "in.blif")
+            read_cmd = "read_blif in.blif" + ("; &get -m -n" if gia else "")
+        else:
+            write_aiger(ntk, directory / _INPUT_FILE)
+            read_cmd = f"{'&read' if gia else 'read_aiger'} {_INPUT_FILE}"
+        if output_type == "klut":
+            output_file = "out.blif"
+            write_cmd = ("&put; " if gia else "") + f"write_blif {output_file}"
+        else:
+            output_file = _OUTPUT_FILE
+            # Classic -s keeps symbols; GIA -n adds the required AIGER comment separator.
+            write_cmd = f"{'&write -n' if gia else 'write_aiger -s'} {output_file}"
 
         # ABC tokenizes the command string itself, so a temporary directory
         # containing a space would break the file names. Running with cwd set to
         # the temporary directory keeps them bare and relative.
-        script = f"{read_cmd} {_INPUT_FILE}; {command}; {write_cmd} {_OUTPUT_FILE}"
+        script = f"{read_cmd}; {command}; {write_cmd}"
         output = run_commands(
             script,
             timeout=timeout,
@@ -432,21 +596,23 @@ def run_script(
         if verbose:
             print(output)  # ruff: ignore[print]
 
-        result_path = directory / _OUTPUT_FILE
+        result_path = directory / output_file
         if not result_path.is_file() or result_path.stat().st_size == 0:
             msg = "ABC produced no output network"
             raise AbcExecutionError(msg, binary=str(executable), command=script, output=output)
 
-        try:
+        if output_type == "klut":
+            reader = read_blif
+        else:
             reader = read_aiger_into_sequential_aig if sequential else read_aiger_into_aig
+        try:
             result = reader(result_path)
         except RuntimeError as exc:
             msg = f"could not read the network ABC produced: {exc}"
             raise AbcExecutionError(msg, binary=str(executable), command=script, output=output) from exc
 
-    # read_aiger_into_sequential_aig already yields a SequentialAig, and
-    # read_aiger_into_aig yields a NamedAig; narrow the latter back to a plain Aig
-    # when that is what came in, so the bridge is type-preserving.
-    if sequential or isinstance(ntk, NamedAig):
-        return cast("AigT", result)
-    return cast("AigT", Aig(result))
+    if sequential or isinstance(ntk, (NamedAig, NamedKlut)):
+        return result
+    if isinstance(result, Klut):
+        return Klut(result)
+    return Aig(result)

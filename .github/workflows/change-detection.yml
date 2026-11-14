@@ -151,15 +151,20 @@ jobs:
               - ".github/workflows/change-detection.yml"
               - ".github/workflows/benchmark-tests.yml"
 
-            # The bridge hands AIGER files to ABC and reads them back, so the two I/O
-            # translation units and the name bookkeeping they depend on are in scope.
+            # The bridge transfers AIGER/BLIF and checks cross-representation results.
             run-abc-tests:
               - "python/aigverse/abc/**"
               - "test/abc/**"
               - "examples/**"
               - "src/aigverse/io/read_aiger.cpp"
               - "src/aigverse/io/write_aiger.cpp"
+              - "src/aigverse/io/blif.cpp"
+              - "src/aigverse/io/bindings.cpp"
               - "src/aigverse/networks/logic_networks.cpp"
+              - "src/aigverse/networks/klut_networks.cpp"
+              - "src/aigverse/networks/bindings.cpp"
+              - "src/aigverse/algorithms/**"
+              - "src/aigverse/types.hpp"
               - "test/conftest.py"
               - "noxfile.py"
               - "pyproject.toml"

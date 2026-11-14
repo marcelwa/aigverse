@@ -8,13 +8,14 @@ from concurrent.futures import ALL_COMPLETED, FIRST_EXCEPTION, ThreadPoolExecuto
 from typing import TYPE_CHECKING, overload
 
 from ._errors import AbcError
-from ._runner import AigT, check_gia_supported, check_supported, join_commands, resolve_binary, run_script
+from ._runner import AigT, NetworkT, check_output_type, check_transfer, join_commands, resolve_binary, run_script
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
     from concurrent.futures import Future
     from typing import Literal
 
+    from ..networks import Aig, Klut
     from ._runner import Command
 
 __all__ = ["run_many"]
@@ -53,6 +54,7 @@ def run_many(
     networks: Iterable[AigT],
     commands: str | Command | Sequence[str | Command],
     *,
+    output_type: Literal["aig"] = "aig",
     jobs: int | None = ...,
     timeout: float | None = ...,
     use_init_file: bool = ...,
@@ -67,6 +69,7 @@ def run_many(
     networks: Iterable[AigT],
     commands: str | Command | Sequence[str | Command],
     *,
+    output_type: Literal["aig"] = "aig",
     jobs: int | None = ...,
     timeout: float | None = ...,
     use_init_file: bool = ...,
@@ -83,6 +86,7 @@ def run_many(
     networks: Iterable[AigT],
     commands: str | Command | Sequence[str | Command],
     *,
+    output_type: Literal["aig"] = "aig",
     jobs: int | None = ...,
     timeout: float | None = ...,
     use_init_file: bool = ...,
@@ -92,17 +96,63 @@ def run_many(
 ) -> list[AigT] | list[AigT | AbcError]: ...
 
 
+@overload
 def run_many(
-    networks: Iterable[AigT],
+    networks: Iterable[Aig | Klut],
     commands: str | Command | Sequence[str | Command],
     *,
+    output_type: Literal["klut"],
+    jobs: int | None = ...,
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    gia: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+    return_exceptions: Literal[False] = False,
+) -> list[Klut]: ...
+
+
+@overload
+def run_many(
+    networks: Iterable[Aig | Klut],
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["klut"],
+    jobs: int | None = ...,
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    gia: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+    return_exceptions: bool,
+) -> list[Klut] | list[Klut | AbcError]: ...
+
+
+@overload
+def run_many(
+    networks: Iterable[Aig | Klut],
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["aig", "klut"] = "aig",
+    jobs: int | None = ...,
+    timeout: float | None = ...,
+    use_init_file: bool = ...,
+    gia: bool = ...,
+    binary: str | os.PathLike[str] | None = ...,
+    return_exceptions: bool = False,
+) -> list[Aig | Klut] | list[Aig | Klut | AbcError]: ...
+
+
+def run_many(
+    networks: Iterable[Aig | Klut],
+    commands: str | Command | Sequence[str | Command],
+    *,
+    output_type: Literal["aig", "klut"] = "aig",
     jobs: int | None = None,
     timeout: float | None = None,
     use_init_file: bool = False,
     gia: bool = False,
     binary: str | os.PathLike[str] | None = None,
     return_exceptions: bool = False,
-) -> list[AigT] | list[AigT | AbcError]:
+) -> list[Aig | Klut] | list[Aig | Klut | AbcError]:
     """Runs one ABC script over many networks, in parallel.
 
     The same script is applied to every network, each in its own ABC process. The
@@ -127,6 +177,8 @@ def run_many(
             The same script runs on every network. The canonical scripts are
             reachable through :func:`~aigverse.abc.expand_script`, and a
             parameterized one through each wrapper's ``cmd()``.
+        output_type: ``'aig'`` (default) or ``'klut'`` for every result. See
+            :func:`~aigverse.abc.run_script` for the transfer requirements.
         jobs: How many ABC processes to keep running at once. ``None`` (default)
             uses the number of CPUs available to this process, capped at the number
             of networks; ``1`` runs inline without a thread pool. On large designs
@@ -137,8 +189,8 @@ def run_many(
             for the batch as a whole, or ``None`` for no limit.
         use_init_file: If ``False`` (default), ABC is invoked with ``-s`` so that
             no ``abc.rc`` is read and results do not depend on the local install.
-        gia: If ``True``, transfer each network through ``&read``/``&write`` so it
-            lands in ABC9's GIA store, as :func:`~aigverse.abc.run_script` does.
+        gia: If ``True``, use ABC9's GIA store, following the AIGER/BLIF transfer
+            rules of :func:`~aigverse.abc.run_script`.
         binary: Overrides the resolved ABC executable for this call only. It is
             resolved once for the whole batch.
         return_exceptions: If ``False`` (default), the first failure aborts the
@@ -151,14 +203,15 @@ def run_many(
             rather than per-item ABC failures.
 
     Returns:
-        The optimized networks, in input order, each of the same type as its input
+        The requested networks, in input order, preserving each input's namedness
         -- with :exc:`AbcError` instances in place of the failures when
         ``return_exceptions`` is set.
 
     Raises:
-        TypeError: If any element of ``networks`` is not an ``Aig``.
-        ValueError: If ``jobs`` is below 1, if no command was given, or if ``gia``
-            is set and a network has a register whose reset value is undefined.
+        TypeError: If an element is neither an ``Aig`` nor a ``Klut``.
+        ValueError: If the selector is invalid, LUT output is requested for a
+            sequential network, ``jobs`` is below 1, no command was given, or
+            the GIA store cannot represent a register's reset value.
         AbcNotFoundError: If no ABC executable could be located. Resolution
             happens once before any network is run, so this is raised whatever
             ``return_exceptions`` says.
@@ -181,6 +234,7 @@ def run_many(
         does not -- ``run_commands`` keeps no handle on what it spawned, so ``timeout``
         is what bounds those.
     """
+    check_output_type(output_type)
     items = list(networks)
 
     # Everything the caller got wrong is reported before a single process starts,
@@ -189,9 +243,7 @@ def run_many(
         msg = f"jobs must be at least 1, got {jobs}"
         raise ValueError(msg)
     for ntk in items:
-        check_supported(ntk)
-        if gia:
-            check_gia_supported(ntk)
+        check_transfer(ntk, output_type, gia=gia)
     command = join_commands(commands)
 
     # Before resolving the binary, so an empty batch is a no-op on a machine
@@ -201,7 +253,7 @@ def run_many(
 
     executable = resolve_binary(binary)
 
-    def optimize(ntk: AigT) -> AigT:
+    def optimize(ntk: Aig | Klut) -> Aig | Klut:
         """Runs the batch's script on one network.
 
         Args:
@@ -213,6 +265,7 @@ def run_many(
         return run_script(
             ntk,
             command,
+            output_type=output_type,
             timeout=timeout,
             use_init_file=use_init_file,
             gia=gia,
@@ -240,11 +293,11 @@ def run_many(
 
 
 def _run_serially(
-    items: list[AigT],
-    optimize: Callable[[AigT], AigT],
+    items: list[NetworkT],
+    optimize: Callable[[NetworkT], NetworkT],
     *,
     return_exceptions: bool,
-) -> list[AigT] | list[AigT | AbcError]:
+) -> list[NetworkT] | list[NetworkT | AbcError]:
     """Runs a batch inline, without a thread pool.
 
     Keeps ``jobs=1`` a genuine drop-in for a serial loop: no worker frame in the
@@ -265,12 +318,12 @@ def _run_serially(
 
 
 def _attempt(
-    optimize: Callable[[AigT], AigT],
-    ntk: AigT,
+    optimize: Callable[[NetworkT], NetworkT],
+    ntk: NetworkT,
     index: int,
     *,
     return_exceptions: bool,
-) -> AigT | AbcError:
+) -> NetworkT | AbcError:
     """Runs the batch's script on one network, inline.
 
     Args:
@@ -295,7 +348,7 @@ def _attempt(
         return exc
 
 
-def _collect(futures: list[Future[AigT]]) -> list[AigT | AbcError]:
+def _collect(futures: list[Future[NetworkT]]) -> list[NetworkT | AbcError]:
     """Gathers a completed batch, keeping each ABC failure in place.
 
     Args:
@@ -308,7 +361,7 @@ def _collect(futures: list[Future[AigT]]) -> list[AigT | AbcError]:
         BaseException: Whatever a worker raised that was not an ``AbcError``, since
             a disk filling up is not a per-network ABC failure.
     """
-    results: list[AigT | AbcError] = []
+    results: list[NetworkT | AbcError] = []
     for future in futures:
         exc = future.exception()
         if exc is None:
@@ -320,7 +373,7 @@ def _collect(futures: list[Future[AigT]]) -> list[AigT | AbcError]:
     return results
 
 
-def _collect_or_raise(futures: list[Future[AigT]]) -> list[AigT]:
+def _collect_or_raise(futures: list[Future[NetworkT]]) -> list[NetworkT]:
     """Gathers a completed batch, raising the lowest-indexed failure it holds.
 
     Args:
