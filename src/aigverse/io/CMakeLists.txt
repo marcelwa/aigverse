@@ -1,6 +1,7 @@
 add_aigverse_python_binding(
   aigverse-io
   bindings.cpp
+  blif.cpp
   read_aiger.cpp
   write_aiger.cpp
   read_pla.cpp

@@ -12,6 +12,8 @@ releases may include breaking changes.
 
 ### Added
 
+- ✨ Add combinational k-LUT networks with named, depth, and fanout views and BLIF import/export
+  ([#589]) ([**@marcelwa**])
 - ✨ Support Python 3.15, including free-threaded wheels and concurrent read-only network operations ([#439])
   ([**@marcelwa**])
 - 👷 Add Python and C++ coverage reports with separate Codecov checks and a local
@@ -268,6 +270,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 <!-- PR links -->
 
 [#597]: https://github.com/marcelwa/aigverse/pull/597
+[#589]: https://github.com/marcelwa/aigverse/pull/589
 [#588]: https://github.com/marcelwa/aigverse/pull/588
 [#584]: https://github.com/marcelwa/aigverse/pull/584
 [#565]: https://github.com/marcelwa/aigverse/pull/565

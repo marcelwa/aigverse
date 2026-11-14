@@ -8,6 +8,8 @@ import enum
 from collections.abc import Iterator, Sequence
 from typing import TYPE_CHECKING, NoReturn, overload
 
+import aigverse.utils
+
 if TYPE_CHECKING:
     import networkx as nx
     import numpy as np
@@ -864,6 +866,308 @@ class SequentialAig(Aig):
 
     def registers(self) -> list[tuple[AigSignal, int]]:
         """Returns all register pairs as ``(ri_signal, ro_node)`` tuples."""
+
+class Klut:
+    """A combinational network of arbitrary truth-table gates.
+
+    Signals and nodes are integer handles. Constants 0 and 1 are distinct nodes;
+    inversion uses create_not(), not complemented edges. A LUT has at most 32 fanins.
+    """
+
+    @overload
+    def __init__(self) -> None:
+        """Creates an empty k-LUT network."""
+
+    @overload
+    def __init__(self, ntk: Klut) -> None:
+        """Creates an independent structural copy, discarding augmented view metadata."""
+
+    def clone(self) -> Klut:
+        """Creates an independent structural copy."""
+
+    def __copy__(self) -> Klut:
+        """Returns an independent structural copy."""
+
+    def __deepcopy__(self, memo: dict) -> Klut:
+        """Returns an independent structural copy."""
+
+    @property
+    def size(self) -> int:
+        """Number of nodes, including both constants."""
+
+    @property
+    def num_gates(self) -> int:
+        """Number of LUT gates."""
+
+    @property
+    def num_pis(self) -> int:
+        """Number of primary inputs."""
+
+    @property
+    def num_pos(self) -> int:
+        """Number of primary outputs."""
+
+    @property
+    def is_combinational(self) -> bool:
+        """Whether the network is combinational."""
+
+    def get_constant(self, value: bool) -> int:
+        """Returns the Boolean constant signal."""
+
+    def create_pi(self) -> int:
+        """Creates a primary input signal."""
+
+    def create_po(self, f: int) -> int:
+        """Creates a primary output from an existing signal."""
+
+    def create_node(self, children: Sequence[int], function: aigverse.utils.TruthTable) -> int:
+        """Creates a LUT with the given ordered fanins and truth table.
+
+        Args:
+            children: Existing signals, at most 32. The first fanin is truth-table variable 0.
+            function: A truth table with one variable per fanin; zero fanins create a constant.
+
+        Returns:
+            The signal of the structurally hashed LUT.
+
+        Raises:
+            ValueError: If the fanin count exceeds 32 or differs from the truth-table dimension.
+            IndexError: If a fanin does not exist.
+        """
+
+    def get_node(self, s: int) -> int:
+        """Returns the node referenced by a signal."""
+
+    def make_signal(self, n: int) -> int:
+        """Returns the signal for a node."""
+
+    def node_to_index(self, n: int) -> int:
+        """Returns the integer index of a node."""
+
+    def index_to_node(self, index: int) -> int:
+        """Returns the node for an existing index."""
+
+    def is_complemented(self, s: int) -> bool:
+        """Returns False: k-LUT signals have no complemented edges."""
+
+    def pi_at(self, index: int) -> int:
+        """Returns the primary input node at index."""
+
+    def po_at(self, index: int) -> int:
+        """Returns the primary output signal at index."""
+
+    def po_index(self, s: int) -> int:
+        """Returns the first primary-output position driven by a signal."""
+
+    def nodes(self) -> list[int]:
+        """Returns all nodes in creation order."""
+
+    def gates(self) -> list[int]:
+        """Returns all LUT nodes in creation order."""
+
+    def pis(self) -> list[int]:
+        """Returns primary input nodes in interface order."""
+
+    def pos(self) -> list[int]:
+        """Returns primary output signals in interface order."""
+
+    def fanins(self, n: int) -> list[int]:
+        """Returns the ordered fanin signals of a node."""
+
+    def node_function(self, n: int) -> aigverse.utils.TruthTable:
+        """Returns an independent copy of the node's local truth table."""
+
+    def __len__(self) -> int:
+        """Returns the number of nodes."""
+
+    def __bool__(self) -> bool:
+        """Returns whether the network has inputs, gates, or outputs."""
+
+    def __iter__(self) -> Iterator[int]:
+        """Iterates over all nodes."""
+
+    def __contains__(self, value: object) -> bool:
+        """Returns whether an integer handle belongs to this network."""
+
+    def create_buf(self, a: int) -> int:
+        """Creates a BUF function from existing signals."""
+
+    def create_not(self, a: int) -> int:
+        """Creates a NOT function from existing signals."""
+
+    def create_and(self, a: int, b: int) -> int:
+        """Creates an AND function from existing signals."""
+
+    def create_nand(self, a: int, b: int) -> int:
+        """Creates a NAND function from existing signals."""
+
+    def create_or(self, a: int, b: int) -> int:
+        """Creates an OR function from existing signals."""
+
+    def create_xor(self, a: int, b: int) -> int:
+        """Creates an XOR function from existing signals."""
+
+    def create_lt(self, a: int, b: int) -> int:
+        """Creates an LT function from existing signals."""
+
+    def create_le(self, a: int, b: int) -> int:
+        """Creates an LE function from existing signals."""
+
+    def create_maj(self, a: int, b: int, c: int) -> int:
+        """Creates a MAJ function from existing signals."""
+
+    def create_ite(self, cond: int, f_then: int, f_else: int) -> int:
+        """Creates an ITE function from existing signals."""
+
+    def create_xor3(self, a: int, b: int, c: int) -> int:
+        """Creates an XOR3 function from existing signals."""
+
+    def create_nary_and(self, fs: Sequence[int]) -> int:
+        """Creates an n-ary AND as a tree of binary LUTs."""
+
+    def create_nary_or(self, fs: Sequence[int]) -> int:
+        """Creates an n-ary OR as a tree of binary LUTs."""
+
+    def create_nary_xor(self, fs: Sequence[int]) -> int:
+        """Creates an n-ary XOR as a tree of binary LUTs."""
+
+    def fanin_size(self, n: int) -> int:
+        """Returns the number of fanins."""
+
+    def fanout_size(self, n: int) -> int:
+        """Returns the reference count, including primary outputs."""
+
+    def is_constant(self, n: int) -> bool:
+        """Returns whether the node is a Boolean constant."""
+
+    def is_pi(self, n: int) -> bool:
+        """Returns whether the node is a primary input."""
+
+    def is_function(self, n: int) -> bool:
+        """Returns whether the node is a LUT gate."""
+
+    def constant_value(self, n: int) -> bool:
+        """Returns the Boolean value of a constant node."""
+
+class NamedKlut(Klut):
+    """A k-LUT network view with signal and interface names."""
+
+    @overload
+    def __init__(self, ntk: NamedKlut) -> None:
+        """Copies names while sharing network storage. Use clone() for independence."""
+
+    @overload
+    def __init__(self) -> None:
+        """Creates an empty view."""
+
+    @overload
+    def __init__(self, ntk: Klut) -> None:
+        """Creates a view sharing the network's storage. Use clone() for independence."""
+
+    def clone(self) -> NamedKlut:
+        """Creates an independent network and rebuilds view metadata."""
+
+    def __copy__(self) -> NamedKlut:
+        """Returns an independent copy of the view."""
+
+    def __deepcopy__(self, memo: dict) -> NamedKlut:
+        """Returns an independent copy of the view."""
+
+    def create_pi(self, name: str = "") -> int:
+        """Creates an optionally named primary input."""
+
+    def create_po(self, f: int, name: str = "") -> int:
+        """Creates an optionally named primary output."""
+
+    def set_network_name(self, name: str) -> None:
+        """Sets the network name."""
+
+    def get_network_name(self) -> str:
+        """Returns the network name."""
+
+    def has_name(self, s: int) -> bool:
+        """Returns whether the signal has a name."""
+
+    def set_name(self, s: int, name: str) -> None:
+        """Sets a signal's name."""
+
+    def get_name(self, s: int) -> str:
+        """Returns a signal's name."""
+
+    def has_output_name(self, index: int) -> bool:
+        """Returns whether the primary output has a name."""
+
+    def set_output_name(self, index: int, name: str) -> None:
+        """Sets a primary output's name."""
+
+    def get_output_name(self, index: int) -> str:
+        """Returns a primary output's name."""
+
+class DepthKlut(Klut):
+    """A k-LUT network view with unit-cost LUT levels.
+
+    Very deep chains can overflow the native stack and terminate the process.
+    The limit depends on the platform and thread stack.
+    """
+
+    @overload
+    def __init__(self) -> None:
+        """Creates an empty view."""
+
+    @overload
+    def __init__(self, ntk: Klut) -> None:
+        """Creates a view sharing the network's storage. Use clone() for independence."""
+
+    def clone(self) -> DepthKlut:
+        """Creates an independent network and rebuilds view metadata."""
+
+    def __copy__(self) -> DepthKlut:
+        """Returns an independent copy of the view."""
+
+    def __deepcopy__(self, memo: dict) -> DepthKlut:
+        """Returns an independent copy of the view."""
+
+    @property
+    def num_levels(self) -> int:
+        """Current depth in LUT levels; update_levels() refreshes shared changes."""
+
+    def level(self, n: int) -> int:
+        """Returns the level of a node."""
+
+    def is_on_critical_path(self, n: int) -> bool:
+        """Recomputes levels and returns whether a node lies on a critical path."""
+
+    def update_levels(self) -> None:
+        """Recomputes levels and critical paths from current outputs."""
+
+    def create_po(self, f: int) -> int:
+        """Creates an output and recomputes levels from all current outputs."""
+
+class FanoutKlut(Klut):
+    """A k-LUT network view with gate fanout lists."""
+
+    @overload
+    def __init__(self) -> None:
+        """Creates an empty view."""
+
+    @overload
+    def __init__(self, ntk: Klut) -> None:
+        """Creates a view sharing the network's storage. Use clone() for independence."""
+
+    def clone(self) -> FanoutKlut:
+        """Creates an independent network and rebuilds view metadata."""
+
+    def __copy__(self) -> FanoutKlut:
+        """Returns an independent copy of the view."""
+
+    def __deepcopy__(self, memo: dict) -> FanoutKlut:
+        """Returns an independent copy of the view."""
+
+    def update_fanout(self) -> None:
+        """Recomputes fanout lists."""
+
+    def fanouts(self, n: int) -> list[int]:
+        """Returns the gate fanouts of a node; primary outputs are excluded."""
 
 class AigEdge:
     """Represents a directed edge in a logic network graph. A weight attribute may encode inversion."""

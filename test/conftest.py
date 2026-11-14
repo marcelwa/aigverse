@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from aigverse.generators import random_aig
-from aigverse.networks import Aig
+from aigverse.networks import Aig, NamedKlut
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -58,6 +58,21 @@ def race_prone_aig() -> Aig:
         A 600-gate random AIG network.
     """
     return random_aig(num_pis=10, num_gates=600, seed=42)
+
+
+@pytest.fixture
+def named_klut_basic() -> NamedKlut:
+    """Create a named two-input k-LUT network with an AND output.
+
+    Returns:
+        The named k-LUT network.
+    """
+    ntk = NamedKlut()
+    ntk.set_network_name("top")
+    a = ntk.create_pi("a")
+    b = ntk.create_pi("b")
+    ntk.create_po(ntk.create_and(a, b), "out")
+    return ntk
 
 
 @pytest.fixture

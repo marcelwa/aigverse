@@ -3,6 +3,7 @@
 namespace aigverse
 {
 void bind_logic_networks(nanobind::module_& m);
+void bind_klut_networks(nanobind::module_& m);
 void bind_ntk_edge_list(nanobind::module_& m);
 void bind_ntk_index_list(nanobind::module_& m);
 }  // namespace aigverse
@@ -13,7 +14,9 @@ NB_MODULE(networks, m)
 
 This module includes network types, edge and index list utilities, and helper
 objects for structural manipulation.)pb";
+    nanobind::module_::import_("aigverse.utils");  // register local truth tables before exposing node_function
     aigverse::bind_logic_networks(m);
+    aigverse::bind_klut_networks(m);
     aigverse::bind_ntk_edge_list(m);
     aigverse::bind_ntk_index_list(m);
 }

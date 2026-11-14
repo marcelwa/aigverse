@@ -409,6 +409,7 @@ def coverage(session: nox.Session) -> None:
         "--root=.",
         "--filter=src/aigverse/",
         "--include-internal-functions",
+        "--exclude-throw-branches",
         f"--lcov={build_dir / 'cpp.info'}",
         f"--json={build_dir / 'cpp.json'}",
         str(build_dir),
