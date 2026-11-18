@@ -414,8 +414,8 @@ def run_script(
         write_aiger(ntk, directory / _INPUT_FILE)
 
         # `write_aiger` drops the symbol table unless -s is given, while `&write`
-        # always keeps it.
-        read_cmd, write_cmd = ("&read", "&write") if gia else ("read_aiger", "write_aiger -s")
+        # always keeps it; -n adds the comment separator required by the AIGER reader.
+        read_cmd, write_cmd = ("&read", "&write -n") if gia else ("read_aiger", "write_aiger -s")
 
         # ABC tokenizes the command string itself, so a temporary directory
         # containing a space would break the file names. Running with cwd set to
