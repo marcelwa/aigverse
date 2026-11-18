@@ -62,8 +62,8 @@ def test_constants_and_arbitrary_lut() -> None:
         ("create_nand", 2, "0111"),
         ("create_or", 2, "1110"),
         ("create_xor", 2, "0110"),
-        ("create_lt", 2, "0010"),
-        ("create_le", 2, "1011"),
+        ("create_lt", 2, "0100"),
+        ("create_le", 2, "1101"),
         ("create_maj", 3, "11101000"),
         ("create_ite", 3, "11011000"),
         ("create_xor3", 3, "10010110"),
@@ -192,6 +192,10 @@ def test_depth_and_fanout_primary_inputs() -> None:
     fanout.create_po(a)
     assert fanout.fanouts(a) == []
     gate = fanout.create_not(a)
+    late_pi = fanout.create_pi()
+    for driver in (gate, late_pi, 0):
+        fanout.create_po(driver)
+        assert fanout.fanouts(driver) == []
     assert fanout.fanouts(a) == [gate]
     repeated = fanout.create_and(a, a)
     assert fanout.fanouts(a) == [gate, repeated]

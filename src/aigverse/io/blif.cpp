@@ -9,7 +9,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/filesystem.h>  // NOLINT(misc-include-cleaner)
 
-#include <cstddef>
+#include <algorithm>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -21,15 +21,52 @@
 #include <unordered_map>
 #include <vector>
 
+#include <pyerrors.h>
+
 namespace aigverse
 {
 namespace
 {
 namespace nb = nanobind;
 
+bool valid_name(const std::string& name)
+{
+    return !name.empty() && std::none_of(name.begin(), name.end(),
+                                         [](const char c)
+                                         {
+                                             const auto byte = static_cast<unsigned char>(c);
+                                             return byte <= 0x20 || byte == 0x7f || c == '#' || c == '\\';
+                                         });
+}
+
+void check_name_encoding(const std::vector<const std::string*>& names)
+{
+    if (names.empty())
+    {
+        return;
+    }
+    const nb::gil_scoped_acquire acquire;
+    for (const auto* name : names)
+    {
+        try
+        {
+            static_cast<void>(nb::str(name->data(), name->size()));
+        }
+        catch (const nb::python_error& error)
+        {
+            if (!error.matches(PyExc_UnicodeDecodeError))
+            {
+                throw;
+            }
+            throw std::runtime_error("Invalid UTF-8 in BLIF name");
+        }
+    }
+}
+
 struct blif_source
 {
     std::string              text;
+    std::string              model;
     std::vector<std::string> inputs;
     std::vector<std::string> outputs;
 };
@@ -40,12 +77,33 @@ blif_source validate_blif(std::istream& input)
     // ASCII identifiers avoid Lorina's locale-sensitive trimming of UTF-8 name bytes.
     blif_source                                  source;
     std::unordered_map<std::string, std::string> identifiers;
-    bool                                         seen_model = false;
-    bool                                         ended      = false;
+    bool                                         ended = false;
     std::string                                  continued;
+    std::string                                  input_line = ".inputs";
+    std::vector<const std::string*>              unicode_names;
 
-    const auto identifier = [&](const std::string& name)
-    { return identifiers.try_emplace(name, fmt::format("s{}", identifiers.size())).first->second; };
+    const auto check_input_name = [&](const std::string& name)
+    {
+        if (!valid_name(name))
+        {
+            throw std::runtime_error("Invalid BLIF name");
+        }
+        if (std::any_of(name.begin(), name.end(), [](const char c) { return static_cast<unsigned char>(c) >= 0x80; }))
+        {
+            unicode_names.push_back(&name);
+        }
+    };
+    const auto identifier = [&](const std::string& name) -> const std::string&
+    {
+        const auto [it, inserted] = identifiers.try_emplace(name);
+        if (inserted)
+        {
+            // Rehashing does not invalidate references to keys.
+            check_input_name(it->first);
+            it->second = fmt::format("s{}", identifiers.size());
+        }
+        return it->second;
+    };
 
     std::string line;
     while (std::getline(input, line))
@@ -94,17 +152,19 @@ blif_source validate_blif(std::istream& input)
         const auto& directive = tokens.front();
         if (directive == ".model")
         {
-            if (seen_model || tokens.size() != 2)
+            if (!source.model.empty() || tokens.size() != 2)
             {
                 throw std::runtime_error("BLIF requires one .model name");
             }
-            seen_model = true;
+            source.model = tokens.at(1);
+            check_input_name(source.model);
+            continue;
         }
-        else if (directive.front() == '.' && !seen_model)
+        if (source.model.empty())
         {
             throw std::runtime_error("BLIF must start with .model");
         }
-        else if (directive == ".names")
+        if (directive == ".names")
         {
             if (tokens.size() < 2 || tokens.size() - 2 > klut::max_fanin_size)
             {
@@ -123,25 +183,35 @@ blif_source validate_blif(std::istream& input)
 
         if (directive == ".inputs")
         {
-            source.inputs.insert(source.inputs.end(), tokens.begin() + 1, tokens.end());
+            for (auto it = tokens.begin() + 1; it != tokens.end(); ++it)
+            {
+                source.inputs.push_back(*it);
+                input_line += ' ';
+                input_line += identifier(*it);
+            }
+            // Keep a cover boundary here, but declare the inputs before Lorina sees any gates.
+            source.text += ".inputs\n";
+            continue;
         }
-        else if (directive == ".outputs")
+        if (directive == ".outputs")
         {
             source.outputs.insert(source.outputs.end(), tokens.begin() + 1, tokens.end());
         }
-        const bool has_identifiers = directive == ".inputs" || directive == ".outputs" || directive == ".names";
-        // Empty port directives still terminate the preceding .names cover.
-        for (std::size_t i = 0; i < tokens.size(); ++i)
+        const bool has_identifiers = directive == ".outputs" || directive == ".names";
+        source.text += directive;
+        for (auto it = tokens.begin() + 1; it != tokens.end(); ++it)
         {
-            const auto& token = tokens.at(i);
-            source.text += (has_identifiers && i > 0 ? identifier(token) : token) + ' ';
+            source.text += ' ';
+            source.text += has_identifiers ? identifier(*it) : *it;
         }
-        source.text.back() = '\n';
+        source.text += '\n';
     }
     if (input.bad() || !continued.empty() || !ended)
     {
         throw std::runtime_error("Incomplete BLIF file");
     }
+    check_name_encoding(unicode_names);
+    source.text.insert(0, ".model top\n" + input_line + '\n');
     return source;
 }
 
@@ -156,49 +226,37 @@ named_klut read_blif(const std::filesystem::path& filename)
     std::istringstream        normalized(source.text);
     lorina::text_diagnostics  consumer;
     lorina::diagnostic_engine diag{&consumer};
-    named_klut                ntk;
-    const auto result = lorina::read_blif_model(normalized, mockturtle::blif_reader<named_klut>(ntk), &diag);
+    klut                      network;
+    const auto result = lorina::read_blif_model(normalized, mockturtle::blif_reader<klut>(network), &diag);
     if (result != lorina::return_code::success)
     {
         throw std::runtime_error("Error reading BLIF file");
     }
+    named_klut ntk(network, source.model);
     ntk.foreach_pi([&](const auto n, const auto index) { ntk.set_name(n, source.inputs.at(index)); });
     ntk.foreach_po([&](const auto, const auto index) { ntk.set_output_name(index, source.outputs.at(index)); });
     return ntk;
 }
 
-void check_name(const std::string& name)
-{
-    if (name.empty() || name.find_first_of("#\\") != std::string::npos)
-    {
-        throw nb::value_error("BLIF interface names must be nonempty tokens without # or backslash");
-    }
-    for (const char c : name)
-    {
-        const auto value = static_cast<unsigned char>(c);
-        if (value <= 0x20 || value == 0x7f)
-        {
-            throw nb::value_error("BLIF interface names cannot contain whitespace or control characters");
-        }
-    }
-}
-
 template <typename Ntk>
-void write_blif(const Ntk& ntk, const std::filesystem::path& filename)
+auto blif_output(const Ntk& ntk)
 {
     // topo_view writes shared traversal state, so free-threaded writers need private node storage.
 #ifdef NB_FREE_THREADED
-    named_klut output(static_cast<const klut&>(ntk).clone());
+    const auto network = static_cast<const klut&>(ntk).clone();
 #else
-    named_klut output(static_cast<const klut&>(ntk));
+    const auto& network = static_cast<const klut&>(ntk);
 #endif
-    // Only interface names are serialized; generated internal names avoid all interface collisions.
-    std::unordered_map<std::string, uint64_t> drivers{{"new_n0", 0}, {"new_n1", 1}};
     if constexpr (std::is_same_v<Ntk, named_klut>)
     {
-        const auto define = [&](const std::string& name, const uint64_t signal)
+        named_klut                                output(network);
+        std::unordered_map<std::string, uint64_t> drivers{{"new_n0", 0}, {"new_n1", 1}};
+        const auto                                define = [&](const std::string& name, const uint64_t signal)
         {
-            check_name(name);
+            if (!valid_name(name))
+            {
+                throw nb::value_error("Invalid BLIF interface name");
+            }
             const auto [it, inserted] = drivers.emplace(name, signal);
             if (!inserted && it->second != signal)
             {
@@ -226,33 +284,51 @@ void write_blif(const Ntk& ntk, const std::filesystem::path& filename)
                     output.set_output_name(index, name);
                 }
             });
+        // Native default names are distinct. Only override names that collide with an explicit name.
+        const auto avoid_collision = [&](std::string name, const auto& set_name)
+        {
+            if (drivers.count(name) != 0)
+            {
+                name += '_';
+                while (drivers.count(name) != 0)
+                {
+                    name += '_';
+                }
+                set_name(name);
+            }
+        };
+        ntk.foreach_pi(
+            [&](const auto n)
+            {
+                if (!output.has_name(n))
+                {
+                    avoid_collision(fmt::format("pi{}", n), [&](const auto& name) { output.set_name(n, name); });
+                }
+            });
+        ntk.foreach_po(
+            [&](const auto, const auto index)
+            {
+                if (!output.has_output_name(index))
+                {
+                    avoid_collision(fmt::format("po{}", index),
+                                    [&](const auto& name) { output.set_output_name(index, name); });
+                }
+            });
+        ntk.foreach_gate(
+            [&](const auto n)
+            { avoid_collision(fmt::format("new_n{}", n), [&](const auto& name) { output.set_name(n, name); }); });
+        return output;
     }
-    const auto fresh_name = [&](std::string name, const uint64_t signal)
+    else
     {
-        while (drivers.count(name) != 0)
-        {
-            name += '_';
-        }
-        drivers.emplace(name, signal);
-        return name;
-    };
-    ntk.foreach_pi(
-        [&](const auto n)
-        {
-            if (!output.has_name(n))
-            {
-                output.set_name(n, fresh_name(fmt::format("pi{}", n), n));
-            }
-        });
-    ntk.foreach_po(
-        [&](const auto f, const auto index)
-        {
-            if (!output.has_output_name(index))
-            {
-                output.set_output_name(index, fresh_name(fmt::format("po{}", index), f));
-            }
-        });
-    ntk.foreach_gate([&](const auto n) { output.set_name(n, fresh_name(fmt::format("new_n{}", n), n)); });
+        return network;
+    }
+}
+
+template <typename Ntk>
+void write_blif(const Ntk& ntk, const std::filesystem::path& filename)
+{
+    const auto    output = blif_output(ntk);
     std::ofstream stream(filename);
     if (!stream)
     {

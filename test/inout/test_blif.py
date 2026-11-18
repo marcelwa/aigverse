@@ -210,6 +210,30 @@ def test_incomplete_blif_is_rejected(text: str, tmp_path: Path) -> None:
         read_blif(path)
 
 
+def test_blif_input_can_be_declared_after_use(tmp_path: Path) -> None:
+    path = tmp_path / "late-input.blif"
+    path.write_text(".model top\n.inputs b\n.outputs y\n.names a b y\n10 1\n.inputs a\n.end\n", encoding="utf-8")
+    ntk = read_blif(path)
+    assert [ntk.get_name(n) for n in ntk.pis()] == ["b", "a"]
+    assert output_values(ntk) == [[False], [False], [True], [False]]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        b".model \xff\n.end\n",
+        b".model top\n.inputs \xff\n.outputs \xff\n.end\n",
+        b".model top\n.inputs a\x00b\n.outputs a\x00b\n.end\n",
+        b".model top\n.inputs a\\b\n.outputs a\\b\n.end\n",
+    ],
+)
+def test_blif_rejects_invalid_name_bytes(text: bytes, tmp_path: Path) -> None:
+    path = tmp_path / "invalid-name.blif"
+    path.write_bytes(text)
+    with pytest.raises(RuntimeError):
+        read_blif(path)
+
+
 def test_blank_continuation_does_not_consume_bare_record(tmp_path: Path) -> None:
     path = tmp_path / "continued.blif"
     path.write_text(".model top\n.inputs a \\\n\nb\n.outputs a\n.end\n", encoding="utf-8")

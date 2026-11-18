@@ -1,6 +1,7 @@
 #include "aigverse/types.hpp"
 
 #include <fmt/format.h>
+#include <kitty/constructors.hpp>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>      // NOLINT(misc-include-cleaner)
 #include <nanobind/stl/unique_ptr.h>  // NOLINT(misc-include-cleaner)
@@ -11,6 +12,7 @@
 #include <numeric>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace aigverse
@@ -50,6 +52,25 @@ uint64_t create_node(klut& ntk, const std::vector<uint64_t>& children, const tru
     return ntk.create_node(children, function);
 }
 
+template <typename... Signals>
+auto checked_gate(uint64_t (klut::*create)(Signals...))
+{
+    return [create](klut& ntk, Signals... signals)
+    {
+        (check_index(signals, ntk.size()), ...);
+        return (ntk.*create)(signals...);
+    };
+}
+
+auto comparison_gate(const char* binary)
+{
+    // The native comparators at the pinned revision reverse the ordered truth-table variables.
+    truth_table function(2);
+    kitty::create_from_binary_string(function, binary);
+    return [function = std::move(function)](klut& ntk, const uint64_t a, const uint64_t b)
+    { return create_node(ntk, {a, b}, function); };
+}
+
 std::vector<uint64_t> nodes(const klut& ntk)
 {
     std::vector<uint64_t> result(ntk.size());
@@ -63,27 +84,7 @@ std::unique_ptr<View> clone_view(const View& ntk)
     // Default construction keeps node_map's network pointer on the final, heap-owned view.
     auto result      = std::make_unique<View>();
     result->_storage = ntk.klut::clone()._storage;
-    if constexpr (std::is_same_v<View, named_klut>)
-    {
-        result->set_network_name(ntk.get_network_name());
-        ntk.foreach_node(
-            [&](const auto n)
-            {
-                if (ntk.has_name(n))
-                {
-                    result->set_name(n, ntk.get_name(n));
-                }
-            });
-        ntk.foreach_po(
-            [&](const auto, const auto index)
-            {
-                if (ntk.has_output_name(index))
-                {
-                    result->set_output_name(index, ntk.get_output_name(index));
-                }
-            });
-    }
-    else if constexpr (std::is_same_v<View, depth_klut>)
+    if constexpr (std::is_same_v<View, depth_klut>)
     {
         result->update_levels();
     }
@@ -91,6 +92,14 @@ std::unique_ptr<View> clone_view(const View& ntk)
     {
         result->update_fanout();
     }
+    return result;
+}
+
+template <>
+std::unique_ptr<named_klut> clone_view(const named_klut& ntk)
+{
+    auto result                 = std::make_unique<named_klut>(ntk);
+    static_cast<klut&>(*result) = ntk.klut::clone();
     return result;
 }
 
@@ -289,7 +298,7 @@ Raises:
                 R"pb(Returns whether the network has inputs, gates, or outputs.)pb")
             .def(
                 "__iter__",
-                [](const klut& ntk) { return nb::module_::import_("builtins").attr("iter")(nb::cast(nodes(ntk))); },
+                [](const klut& ntk) { return nb::iter(nb::module_::import_("builtins").attr("range")(ntk.size())); },
                 R"pb(Iterates over all nodes.)pb", nb::sig("def __iter__(self) -> Iterator[int]"))
             .def(
                 "__contains__",
@@ -309,106 +318,28 @@ Raises:
                 R"pb(Returns a developer-friendly network summary.)pb");
 
     // Native gate constructors assume existing operands; validate before invoking them.
-    network.def(
-        "create_buf",
-        [](klut& ntk, const uint64_t a)
-        {
-            check_index(a, ntk.size());
-            return ntk.create_buf(a);
-        },
-        nb::arg("a"), R"pb(Creates a BUF function from existing signals.)pb");
-    network.def(
-        "create_not",
-        [](klut& ntk, const uint64_t a)
-        {
-            check_index(a, ntk.size());
-            return ntk.create_not(a);
-        },
-        nb::arg("a"), R"pb(Creates a NOT function from existing signals.)pb");
-    network.def(
-        "create_and",
-        [](klut& ntk, const uint64_t a, const uint64_t b)
-        {
-            check_index(a, ntk.size());
-            check_index(b, ntk.size());
-            return ntk.create_and(a, b);
-        },
-        nb::arg("a"), nb::arg("b"), R"pb(Creates an AND function from existing signals.)pb");
-    network.def(
-        "create_nand",
-        [](klut& ntk, const uint64_t a, const uint64_t b)
-        {
-            check_index(a, ntk.size());
-            check_index(b, ntk.size());
-            return ntk.create_nand(a, b);
-        },
-        nb::arg("a"), nb::arg("b"), R"pb(Creates a NAND function from existing signals.)pb");
-    network.def(
-        "create_or",
-        [](klut& ntk, const uint64_t a, const uint64_t b)
-        {
-            check_index(a, ntk.size());
-            check_index(b, ntk.size());
-            return ntk.create_or(a, b);
-        },
-        nb::arg("a"), nb::arg("b"), R"pb(Creates an OR function from existing signals.)pb");
-    network.def(
-        "create_xor",
-        [](klut& ntk, const uint64_t a, const uint64_t b)
-        {
-            check_index(a, ntk.size());
-            check_index(b, ntk.size());
-            return ntk.create_xor(a, b);
-        },
-        nb::arg("a"), nb::arg("b"), R"pb(Creates an XOR function from existing signals.)pb");
-    network.def(
-        "create_lt",
-        [](klut& ntk, const uint64_t a, const uint64_t b)
-        {
-            check_index(a, ntk.size());
-            check_index(b, ntk.size());
-            return ntk.create_lt(a, b);
-        },
-        nb::arg("a"), nb::arg("b"), R"pb(Creates an LT function from existing signals.)pb");
-    network.def(
-        "create_le",
-        [](klut& ntk, const uint64_t a, const uint64_t b)
-        {
-            check_index(a, ntk.size());
-            check_index(b, ntk.size());
-            return ntk.create_le(a, b);
-        },
-        nb::arg("a"), nb::arg("b"), R"pb(Creates an LE function from existing signals.)pb");
-    network.def(
-        "create_maj",
-        [](klut& ntk, const uint64_t a, const uint64_t b, const uint64_t c)
-        {
-            check_index(a, ntk.size());
-            check_index(b, ntk.size());
-            check_index(c, ntk.size());
-            return ntk.create_maj(a, b, c);
-        },
-        nb::arg("a"), nb::arg("b"), nb::arg("c"), R"pb(Creates a MAJ function from existing signals.)pb");
-    network.def(
-        "create_ite",
-        [](klut& ntk, const uint64_t cond, const uint64_t f_then, const uint64_t f_else)
-        {
-            check_index(cond, ntk.size());
-            check_index(f_then, ntk.size());
-            check_index(f_else, ntk.size());
-            return ntk.create_ite(cond, f_then, f_else);
-        },
-        nb::arg("cond"), nb::arg("f_then"), nb::arg("f_else"), R"pb(Creates an ITE function from existing signals.)pb");
-    network.def(
-        "create_xor3",
-        [](klut& ntk, const uint64_t a, const uint64_t b, const uint64_t c)
-        {
-            check_index(a, ntk.size());
-            check_index(b, ntk.size());
-            check_index(c, ntk.size());
-            return ntk.create_xor3(a, b, c);
-        },
-        nb::arg("a"), nb::arg("b"), nb::arg("c"), R"pb(Creates an XOR3 function from existing signals.)pb");
+    network.def("create_buf", checked_gate(&klut::create_buf), nb::arg("a"),
+                R"pb(Creates a BUF function from existing signals.)pb");
+    network.def("create_not", checked_gate(&klut::create_not), nb::arg("a"),
+                R"pb(Creates a NOT function from existing signals.)pb");
+    network.def("create_and", checked_gate(&klut::create_and), nb::arg("a"), nb::arg("b"),
+                R"pb(Creates an AND function from existing signals.)pb");
+    network.def("create_nand", checked_gate(&klut::create_nand), nb::arg("a"), nb::arg("b"),
+                R"pb(Creates a NAND function from existing signals.)pb");
+    network.def("create_or", checked_gate(&klut::create_or), nb::arg("a"), nb::arg("b"),
+                R"pb(Creates an OR function from existing signals.)pb");
+    network.def("create_xor", checked_gate(&klut::create_xor), nb::arg("a"), nb::arg("b"),
+                R"pb(Creates an XOR function from existing signals.)pb");
+    network.def("create_lt", comparison_gate("0100"), nb::arg("a"), nb::arg("b"),
+                R"pb(Creates a LUT computing a < b.)pb");
+    network.def("create_le", comparison_gate("1101"), nb::arg("a"), nb::arg("b"),
+                R"pb(Creates a LUT computing a <= b.)pb");
+    network.def("create_maj", checked_gate(&klut::create_maj), nb::arg("a"), nb::arg("b"), nb::arg("c"),
+                R"pb(Creates a MAJ function from existing signals.)pb");
+    network.def("create_ite", checked_gate(&klut::create_ite), nb::arg("cond"), nb::arg("f_then"), nb::arg("f_else"),
+                R"pb(Creates an ITE function from existing signals.)pb");
+    network.def("create_xor3", checked_gate(&klut::create_xor3), nb::arg("a"), nb::arg("b"), nb::arg("c"),
+                R"pb(Creates an XOR3 function from existing signals.)pb");
     // N-ary builders form binary trees, so their argument lists need no single-LUT fanin limit.
     network.def(
         "create_nary_and",
@@ -599,23 +530,24 @@ The limit depends on the platform and thread stack.)pb");
                 check_index(n, ntk.size());
                 std::vector<uint64_t> result;
                 auto                  count = ntk.fanout_size(n);
+                if (count == 0)
+                {
+                    return result;
+                }
                 // Native PI creation does not resize fanout metadata until a gate uses the PI.
-                if (count <= ntk.num_pos())
+                if (count <= ntk.num_pos() && !ntk.is_constant(n) && ntk.fanin_size(n) == 0)
                 {
                     ntk.foreach_po(
                         [&](const auto f)
                         {
-                            if (f == n)
-                            {
-                                --count;
-                            }
+                            count -= static_cast<uint32_t>(f == n);
+                            return count != 0;
                         });
                     if (count == 0)
                     {
                         return result;
                     }
                 }
-                result.reserve(count);
                 // Gates are append-only, so repeated fanins produce consecutive duplicate fanouts.
                 ntk.foreach_fanout(n,
                                    [&](const auto f)

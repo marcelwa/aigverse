@@ -1008,10 +1008,10 @@ class Klut:
         """Creates an XOR function from existing signals."""
 
     def create_lt(self, a: int, b: int) -> int:
-        """Creates an LT function from existing signals."""
+        """Creates a LUT computing a < b."""
 
     def create_le(self, a: int, b: int) -> int:
-        """Creates an LE function from existing signals."""
+        """Creates a LUT computing a <= b."""
 
     def create_maj(self, a: int, b: int, c: int) -> int:
         """Creates a MAJ function from existing signals."""

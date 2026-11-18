@@ -116,9 +116,9 @@ BLIF preserves primary-input and primary-output names and order, including repea
 nodes are unnamed on import and their names are regenerated on export; the writer uses model name `top`.
 The writer omits gates that do not reach an output and may add buffer LUTs for primary outputs. Round trips
 preserve interface behavior, not gate counts or node identities.
-The reader accepts `.model`, `.inputs`, `.outputs`,
-`.names`, and `.end`, comments, line continuations, and on-set or off-set covers. It rejects malformed covers,
-missing drivers, cycles, latches, hierarchy, and library cells with `RuntimeError`.
+The reader accepts `.model`, `.inputs`, `.outputs`, `.names`, and `.end`, comments, line continuations,
+and on-set or off-set covers. Gates can refer to inputs declared later. Names must be valid UTF-8 tokens.
+Malformed covers, missing drivers, cycles, latches, hierarchy, and library cells raise `RuntimeError`.
 
 Nonempty BLIF covers expand into dense LUT truth tables whose space grows exponentially with fanin count.
 A small input file can therefore require a large amount of memory.
