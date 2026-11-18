@@ -32,6 +32,9 @@ releases may include breaking changes.
 
 ### Changed
 
+- ⚡ Avoid copying truth tables when returning results from `simulate_nodes` ([#601])
+  ([**@marcelwa**])
+
 - 💥 Require Python 3.11 or newer and raise the ordinary Stable ABI wheel floor to Python 3.11 ([#439])
   ([**@marcelwa**])
 - 💥 Update `abc.gia.resub` to ABC's current switches and remove `max_support` and `max_divisors`
@@ -269,6 +272,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#601]: https://github.com/marcelwa/aigverse/pull/601
 [#597]: https://github.com/marcelwa/aigverse/pull/597
 [#589]: https://github.com/marcelwa/aigverse/pull/589
 [#588]: https://github.com/marcelwa/aigverse/pull/588
