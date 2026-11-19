@@ -122,3 +122,38 @@ def write_dot(ntk: aigverse.networks.Aig, filename: str | os.PathLike) -> None:
             ntk: The network to serialize.
             filename: Destination path for the DOT file.
     """
+
+def read_blif(filename: str | os.PathLike) -> aigverse.networks.NamedKlut:
+    """Reads a flat combinational BLIF model into a NamedKlut.
+
+    Nonempty covers expand to dense truth tables whose memory grows exponentially with fanin count.
+
+    Args:
+        filename: Source path. Only .model, .inputs, .outputs, .names, and .end are supported.
+
+    Returns:
+        The parsed network with primary-input and primary-output names and order preserved.
+
+    Raises:
+        RuntimeError: If the file is malformed, has missing drivers, or uses unsupported
+            directives such as latches or hierarchy.
+    """
+
+@overload
+def write_blif(ntk: aigverse.networks.NamedKlut, filename: str | os.PathLike) -> None: ...
+@overload
+def write_blif(ntk: aigverse.networks.Klut, filename: str | os.PathLike) -> None:
+    """Writes a combinational k-LUT network as BLIF.
+
+    Cover generation and output size can grow exponentially with LUT fanin count.
+    Very deep chains can overflow the native stack and terminate the process.
+    The limit depends on the platform and thread stack.
+
+    Args:
+        ntk: Network to serialize. NamedKlut preserves PI/PO names and order; internal names are regenerated.
+        filename: Destination path.
+
+    Raises:
+        ValueError: If interface names are invalid or assign one name to different drivers.
+        RuntimeError: If the destination cannot be opened or written.
+    """
