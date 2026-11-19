@@ -122,6 +122,9 @@ def test_invalid_construction(named_klut_basic: NamedKlut) -> None:
         ntk.create_node([0] * 33, TruthTable(0))
     with pytest.raises(IndexError):
         ntk.create_node([2**32], TruthTable(1))
+    for invalid in (-1, 2**64):
+        with pytest.raises(TypeError):
+            ntk.create_node([invalid], TruthTable(1))
     with pytest.raises(IndexError):
         ntk.create_and(ntk.pi_at(0), 2**32)
     with pytest.raises(IndexError):
@@ -233,8 +236,11 @@ def test_depth_output_after_refreshing_dangling_logic() -> None:
     a = ntk.create_pi()
     gate = ntk.create_not(ntk.create_not(a))
     ntk.update_levels()
-    assert ntk.num_levels == 0
+    assert (ntk.num_levels, ntk.level(gate)) == (0, 2)
     gate = ntk.create_not(gate)
+    assert ntk.level(gate) == 3
+    assert not ntk.is_on_critical_path(gate)
+    assert ntk.level(gate) == 3
     ntk.create_po(gate)
     assert ntk.num_levels == ntk.level(gate) == 3
 
@@ -246,12 +252,24 @@ def test_depth_view_constructor_rebuilds_its_own_metadata() -> None:
     dangling = original.create_not(original.po_at(0))
     assert original.level(dangling) == 2
     view = DepthKlut(original)
-    assert view.level(dangling) == 0
+    assert view.level(dangling) == 2
+    assert view.clone().level(dangling) == 2
     view.create_po(dangling)
     assert view.num_levels == 2
     assert original.num_levels == 1
     original.update_levels()
     assert original.num_levels == 2
+
+
+def test_depth_output_after_alias_additions() -> None:
+    original = Klut()
+    view = DepthKlut(original)
+    a = original.create_pi()
+    gate = original.create_not(original.create_not(a))
+    original.create_po(gate)
+    later = original.create_pi()
+    view.create_po(later)
+    assert view.num_levels == 2
 
 
 def test_fanout_view_callbacks_have_independent_lifetimes() -> None:
@@ -266,6 +284,20 @@ def test_fanout_view_callbacks_have_independent_lifetimes() -> None:
     gc.collect()
     third = original.create_or(a, second)
     assert original.fanouts(a) == [first, second, third]
+
+
+def test_fanouts_after_alias_adds_trailing_inputs() -> None:
+    original = Klut()
+    a = original.create_pi()
+    view = FanoutKlut(original)
+    gate = original.create_and(a, a)
+    b, c = original.create_pi(), original.create_pi()
+    original.create_po(b)
+    original.create_po(c)
+    assert [view.fanouts(n) for n in (a, b, c, gate)] == [[gate], [], [], []]
+
+    second = original.create_and(b, b)
+    assert [view.fanouts(n) for n in (a, b, c, second)] == [[gate], [second], [], []]
 
 
 def test_constant_output_network_is_nonempty() -> None:

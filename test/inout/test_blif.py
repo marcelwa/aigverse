@@ -108,6 +108,15 @@ def test_continuation_ends_at_next_physical_line(separator: str, tmp_path: Path)
     assert output_values(ntk) == [[False], [True]]
 
 
+@pytest.mark.parametrize("trailing_space", [" ", "\t", "\f", "\v"])
+def test_continuation_allows_trailing_space(trailing_space: str, tmp_path: Path) -> None:
+    path = tmp_path / "continued.blif"
+    path.write_text(f".model top\n.inputs a \\{trailing_space}\nb\n.outputs b\n.end\n", encoding="utf-8")
+    ntk = read_blif(path)
+    assert [ntk.get_name(node) for node in ntk.pis()] == ["a", "b"]
+    assert output_values(ntk) == [[False], [False], [True], [True]]
+
+
 @pytest.mark.parametrize("name", [".a", ".model", ".inputs", ".outputs", ".names", ".end", "éclair", "à", "Í"])
 def test_driver_names_round_trip(name: str, tmp_path: Path) -> None:
     ntk = NamedKlut()

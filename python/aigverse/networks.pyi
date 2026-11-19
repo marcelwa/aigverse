@@ -932,7 +932,8 @@ class Klut:
 
         Raises:
             ValueError: If the fanin count exceeds 32 or differs from the truth-table dimension.
-            IndexError: If a fanin does not exist.
+            IndexError: If a fanin in the unsigned 64-bit range does not exist.
+            TypeError: If a fanin cannot be converted to an unsigned 64-bit integer.
         """
 
     def get_node(self, s: int) -> int:
@@ -1135,13 +1136,13 @@ class DepthKlut(Klut):
         """Returns the level of a node."""
 
     def is_on_critical_path(self, n: int) -> bool:
-        """Recomputes levels and returns whether a node lies on a critical path."""
+        """Recomputes critical paths and returns whether a node lies on one."""
 
     def update_levels(self) -> None:
-        """Recomputes levels and critical paths from current outputs."""
+        """Refreshes the network depth from current outputs."""
 
     def create_po(self, f: int) -> int:
-        """Creates an output and recomputes levels from all current outputs."""
+        """Creates an output and refreshes the network depth."""
 
 class FanoutKlut(Klut):
     """A k-LUT network view with gate fanout lists."""

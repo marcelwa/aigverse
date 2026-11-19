@@ -76,14 +76,14 @@ View constructors share network storage with their argument, following the AIG v
 outputs through another shared object, call `update_levels()` to refresh depth metadata. Critical-path queries
 recompute levels. Gate fanout lists exclude primary outputs; `update_fanout()` rebuilds them explicitly.
 Depth and fanout constructors rebuild independent metadata, even when constructed from another view of the same type.
-Depth refreshes visit output cones; dangling nodes have level zero after a refresh.
+Node levels include dangling logic. Network depth is the maximum level reached by an output, or zero without outputs.
 `NamedKlut(named)` copies the existing name maps: later name changes and names attached to new nodes are local
 to each view, even though the nodes themselves are shared. Use `has_name` and `has_output_name` before querying
 optional names; querying a missing name raises `IndexError`.
 
-`DepthKlut.create_po()` recomputes levels, including logic that was previously dangling. For networks with many
-outputs, build them in a plain `Klut` and construct a `DepthKlut` afterward to compute depth once. Repeated
-critical-path queries also recompute metadata; they are intended for individual queries rather than whole-network scans.
+`DepthKlut.create_po()` refreshes the depth from all current outputs. For networks with many outputs, build them
+in a plain `Klut` and construct a `DepthKlut` afterward to compute depth once. Critical-path queries recompute
+output-cone metadata and are intended for individual queries rather than whole-network scans.
 
 Native depth computation and BLIF writing use recursive traversals. Very deep chains can overflow the native
 stack and terminate the process. The limit depends on the platform and thread stack; there is no portable safe depth.

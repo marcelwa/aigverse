@@ -2,11 +2,13 @@
 
 #include <fmt/format.h>
 #include <kitty/constructors.hpp>
+#include <mockturtle/views/depth_view.hpp>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>      // NOLINT(misc-include-cleaner)
 #include <nanobind/stl/unique_ptr.h>  // NOLINT(misc-include-cleaner)
 #include <nanobind/stl/vector.h>      // NOLINT(misc-include-cleaner)
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <numeric>
@@ -78,6 +80,59 @@ std::vector<uint64_t> nodes(const klut& ntk)
     return result;
 }
 
+class depth_klut final : public mockturtle::depth_view<klut>
+{
+  public:
+    depth_klut() = default;
+
+    explicit depth_klut(const klut& ntk) : depth_view(ntk)
+    {
+        initialize_levels();
+    }
+
+    depth_klut(const depth_klut&)            = delete;
+    depth_klut(depth_klut&&)                 = delete;
+    depth_klut& operator=(const depth_klut&) = delete;
+    depth_klut& operator=(depth_klut&&)      = delete;
+    ~depth_klut()                            = default;
+
+    void initialize_levels()
+    {
+        resize_levels();
+        // Fanins precede their gates in an append-only k-LUT network.
+        foreach_node(
+            [&](const auto n)
+            {
+                if (fanin_size(n) != 0 && depth_view::level(n) == 0)
+                {
+                    set_level(n, compute_level(n));
+                }
+            });
+        refresh_depth();
+    }
+
+    [[nodiscard]] uint32_t structural_level(const uint64_t n) const
+    {
+        // Adding a PI does not resize the native level map.
+        return fanin_size(n) == 0 ? 0 : depth_view::level(n);
+    }
+
+    void refresh_depth()
+    {
+        uint32_t output_depth = 0;
+        foreach_po([&](const auto f) { output_depth = std::max(output_depth, structural_level(f)); });
+        set_depth(output_depth);
+    }
+
+    bool on_critical_path(const uint64_t n)
+    {
+        // Native critical-path recomputation clears levels outside the output cones.
+        const depth_view output_view(static_cast<const klut&>(*this));
+        set_depth(output_view.depth());
+        return output_view.is_on_critical_path(n);
+    }
+};
+
 template <typename View>
 std::unique_ptr<View> clone_view(const View& ntk)
 {
@@ -86,7 +141,7 @@ std::unique_ptr<View> clone_view(const View& ntk)
     result->_storage = ntk.klut::clone()._storage;
     if constexpr (std::is_same_v<View, depth_klut>)
     {
-        result->update_levels();
+        result->initialize_levels();
     }
     else
     {
@@ -169,7 +224,8 @@ Returns:
 
 Raises:
     ValueError: If the fanin count exceeds 32 or differs from the truth-table dimension.
-    IndexError: If a fanin does not exist.)pb")
+    IndexError: If a fanin in the unsigned 64-bit range does not exist.
+    TypeError: If a fanin cannot be converted to an unsigned 64-bit integer.)pb")
             // Signal conversion preserves the handle; inversion requires a LUT instead of a phase bit.
             .def(
                 "get_node",
@@ -494,7 +550,7 @@ The limit depends on the platform and thread stack.)pb");
             [](const depth_klut& ntk, const uint64_t n)
             {
                 check_index(n, ntk.size());
-                return ntk.fanin_size(n) == 0 ? 0 : ntk.level(n);
+                return ntk.structural_level(n);
             },
             nb::arg("n"), R"pb(Returns the level of a node.)pb")
         .def(
@@ -502,23 +558,20 @@ The limit depends on the platform and thread stack.)pb");
             [](depth_klut& ntk, const uint64_t n)
             {
                 check_index(n, ntk.size());
-                ntk.update_levels();
-                return ntk.is_on_critical_path(n);
+                return ntk.on_critical_path(n);
             },
-            nb::arg("n"), R"pb(Recomputes levels and returns whether a node lies on a critical path.)pb")
-        .def("update_levels", &depth_klut::update_levels,
-             R"pb(Recomputes levels and critical paths from current outputs.)pb")
+            nb::arg("n"), R"pb(Recomputes critical paths and returns whether a node lies on one.)pb")
+        .def("update_levels", &depth_klut::refresh_depth, R"pb(Refreshes the network depth from current outputs.)pb")
         .def(
             "create_po",
             [](depth_klut& ntk, const uint64_t f)
             {
                 check_index(f, ntk.size());
-                // Recompute all levels because a new output can expose previously dangling logic.
                 const auto index = ntk.klut::create_po(f);
-                ntk.update_levels();
+                ntk.refresh_depth();
                 return index;
             },
-            nb::arg("f"), R"pb(Creates an output and recomputes levels from all current outputs.)pb");
+            nb::arg("f"), R"pb(Creates an output and refreshes the network depth.)pb");
 
     // Native reference counts include outputs; the fanout view lists gates only.
     auto fanout = bind_view<fanouts_klut>(m, "FanoutKlut", R"pb(A k-LUT network view with gate fanout lists.)pb");
@@ -529,24 +582,11 @@ The limit depends on the platform and thread stack.)pb");
             {
                 check_index(n, ntk.size());
                 std::vector<uint64_t> result;
-                auto                  count = ntk.fanout_size(n);
-                if (count == 0)
+                const auto            non_inputs = ntk.size() - ntk.num_pis();
+                // Subtracting all non-inputs gives a PI's index only when no gate follows it.
+                if (n >= non_inputs && ntk.pi_at(static_cast<uint32_t>(n - non_inputs)) == n)
                 {
                     return result;
-                }
-                // Native PI creation does not resize fanout metadata until a gate uses the PI.
-                if (count <= ntk.num_pos() && !ntk.is_constant(n) && ntk.fanin_size(n) == 0)
-                {
-                    ntk.foreach_po(
-                        [&](const auto f)
-                        {
-                            count -= static_cast<uint32_t>(f == n);
-                            return count != 0;
-                        });
-                    if (count == 0)
-                    {
-                        return result;
-                    }
                 }
                 // Gates are append-only, so repeated fanins produce consecutive duplicate fanouts.
                 ntk.foreach_fanout(n,

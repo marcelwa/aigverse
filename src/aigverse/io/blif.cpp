@@ -113,7 +113,7 @@ blif_source validate_blif(std::istream& input)
         {
             line.erase(comment);
         }
-        const auto last = line.find_last_not_of(" \t\r");
+        const auto last = line.find_last_not_of(" \t\r\f\v");
         if (last == std::string::npos)
         {
             line.clear();

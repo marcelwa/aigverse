@@ -45,10 +45,6 @@ using klut = mockturtle::klut_network;
  */
 using named_klut = mockturtle::names_view<klut>;
 /**
- * Alias for the depth k-LUT network.
- */
-using depth_klut = mockturtle::depth_view<klut>;
-/**
  * Alias for the fanout k-LUT network.
  */
 using fanouts_klut = mockturtle::fanout_view<klut>;
