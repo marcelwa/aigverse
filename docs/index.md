@@ -35,7 +35,7 @@ at [marcelwa/aigverse](https://github.com/marcelwa/aigverse), while pre-built bi
 via [PyPI](https://pypi.org/project/aigverse/) for all major operating systems and all modern Python versions.
 
 ````{seealso}
-For the design and technical details of `aigverse`, see our [ASPDAC 2027 paper](https://doi.org/10.1145/3840404.3848264).
+For the design and technical details of `aigverse`, see our [ASPDAC 2027 paper](https://github.com/cda-tum/webpage/blob/main/publications/papers/2027_aspdac_aigverse_unified_infrastructure_for_machine_learning_driven_logic_synthesis.pdf).
 If you use `aigverse` in your research, please cite:
 
 ```bibtex
