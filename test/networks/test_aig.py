@@ -124,13 +124,20 @@ def test_aig_primary_outputs(aig_with_single_pi: tuple[Aig, AigSignal]) -> None:
 
 
 @pytest.mark.parametrize(("method", "complement"), [("create_buf", False), ("create_not", True)], ids=["buf", "not"])
-def test_aig_unary_operations(aig_with_single_pi: tuple[Aig, AigSignal], method: str, *, complement: bool) -> None:
+@pytest.mark.parametrize("input_complement", [False, True], ids=["positive", "complemented"])
+def test_aig_unary_operations(
+    aig_with_single_pi: tuple[Aig, AigSignal], method: str, *, complement: bool, input_complement: bool
+) -> None:
     aig, x1 = aig_with_single_pi
+    if input_complement:
+        x1 = ~x1
+    index, phase = x1.index, x1.complement
     assert aig.size == 2
 
     result = getattr(aig, method)(x1)
-    assert result.index == x1.index
-    assert result.complement is complement
+    assert result.index == index
+    assert result.complement is (phase != complement)
+    assert (x1.index, x1.complement) == (index, phase)
     assert aig.size == 2
 
 
