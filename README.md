@@ -513,16 +513,21 @@ with open("tt.pkl", "rb") as f:
     unpickled_tt = pickle.load(f)
 ```
 
-## 🎤 Learn More
+## 📄 Paper and Citation
 
-For a deeper dive into the vision and technical details behind `aigverse`, check out the presentation from the
-[Free Silicon Conference (FSiC) 2025](https://wiki.f-si.org/index.php?title=FSiC2025):
+For the design and technical details of `aigverse`, see our [ASPDAC 2027 paper](https://www.cda.cit.tum.de/files/eda/2027_aspdac_aigverse_unified_infrastructure_for_machine_learning_driven_logic_synthesis.pdf).
+If you use `aigverse` in your research, please cite:
 
-**"aigverse: Toward machine learning-driven logic synthesis"**
-📄 [Slides available on the FSiC wiki](https://wiki.f-si.org/index.php?title=Aigverse:_Toward_machine_learning-driven_logic_synthesis)
-
-This talk presents the same core infrastructure thesis: closing the software gap between high-performance synthesis
-tooling and Python-first ML workflows.
+```bibtex
+@inproceedings{walter2027aigverse,
+  author    = {Marcel Walter and Isabella Venancia Gardner and Robert Wille},
+  title     = {{aigverse}: A Unified Infrastructure for Machine Learning-Driven Logic Synthesis},
+  booktitle = {32nd Asia and South Pacific Design Automation Conference (ASPDAC '27)},
+  year      = {2027},
+  publisher = {Association for Computing Machinery},
+  doi       = {10.1145/3840404.3848264}
+}
+```
 
 ## 🙌 Contributing
 

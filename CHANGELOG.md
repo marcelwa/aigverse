@@ -12,6 +12,7 @@ releases may include breaking changes.
 
 ### Added
 
+- 📝 Link the ASPDAC paper and provide its BibTeX citation ([#609]) ([**@marcelwa**])
 - ✨ Support Python 3.15, including free-threaded wheels and concurrent read-only network operations ([#439])
   ([**@marcelwa**])
 - 👷 Add Python and C++ coverage reports with separate Codecov checks and a local
@@ -270,6 +271,7 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#609]: https://github.com/marcelwa/aigverse/pull/609
 [#601]: https://github.com/marcelwa/aigverse/pull/601
 [#597]: https://github.com/marcelwa/aigverse/pull/597
 [#588]: https://github.com/marcelwa/aigverse/pull/588
