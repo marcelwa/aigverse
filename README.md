@@ -515,7 +515,7 @@ with open("tt.pkl", "rb") as f:
 
 ## 📄 Paper and Citation
 
-For the design and technical details of `aigverse`, see our [ASPDAC 2027 paper](https://github.com/cda-tum/webpage/blob/main/publications/papers/2027_aspdac_aigverse_unified_infrastructure_for_machine_learning_driven_logic_synthesis.pdf).
+For the design and technical details of `aigverse`, see our [ASPDAC 2027 paper](https://www.cda.cit.tum.de/files/eda/2027_aspdac_aigverse_unified_infrastructure_for_machine_learning_driven_logic_synthesis.pdf).
 If you use `aigverse` in your research, please cite:
 
 ```bibtex
