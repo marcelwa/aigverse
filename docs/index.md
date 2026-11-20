@@ -40,7 +40,7 @@ If you use `aigverse` in your research, please cite:
 
 ```bibtex
 @inproceedings{walter2027aigverse,
-  author    = {Marcel Walter and Isabella Venancia Gardner and Robert Will},
+  author    = {Marcel Walter and Isabella Venancia Gardner and Robert Wille},
   title     = {{aigverse}: A Unified Infrastructure for Machine Learning-Driven Logic Synthesis},
   booktitle = {32nd Asia and South Pacific Design Automation Conference (ASPDAC '27)},
   year      = {2027},
