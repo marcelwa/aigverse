@@ -32,8 +32,8 @@ aigverse_apply_options()
 
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-target_compile_features(aigverse_options
-                        INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
+target_compile_features(
+  aigverse_options INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
 # Alias for the options target
 add_library(aigverse::aigverse_options ALIAS aigverse_options)

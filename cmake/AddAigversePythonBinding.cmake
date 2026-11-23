@@ -25,8 +25,8 @@ function(add_aigverse_python_binding target_name)
   # Disable global IPO on extension modules: cross-module LTO can cause heap
   # corruption on Windows when shared_ptr-based types are passed between
   # separate extension modules.
-  set_target_properties(${target_name} PROPERTIES INTERPROCEDURAL_OPTIMIZATION
-                                                  OFF)
+  set_target_properties(
+    ${target_name} PROPERTIES INTERPROCEDURAL_OPTIMIZATION OFF)
 
   if(MINGW)
     # MinGW GCC 16.2 crashes with LTO; override nanobind's per-config IPO.
@@ -36,8 +36,8 @@ function(add_aigverse_python_binding target_name)
   endif()
 
   if(ARG_MODULE_NAME)
-    set_target_properties(${target_name} PROPERTIES OUTPUT_NAME
-                                                    ${ARG_MODULE_NAME})
+    set_target_properties(
+      ${target_name} PROPERTIES OUTPUT_NAME ${ARG_MODULE_NAME})
     set(module_name ${ARG_MODULE_NAME})
   else()
     set(module_name ${target_name})
@@ -48,8 +48,8 @@ function(add_aigverse_python_binding target_name)
   # archives keep default visibility, so each extension re-exported them for the
   # dynamic linker to interpose across all five. Ported from scpd.
   if(APPLE)
-    target_link_options(${target_name} PRIVATE
-                        "LINKER:-exported_symbol,_PyInit_${module_name}")
+    target_link_options(
+      ${target_name} PRIVATE "LINKER:-exported_symbol,_PyInit_${module_name}")
   elseif(UNIX)
     target_link_options(${target_name} PRIVATE "LINKER:--exclude-libs,ALL")
 
@@ -57,8 +57,8 @@ function(add_aigverse_python_binding target_name)
       # --exclude-libs does not hide symbols from the module's own objects. Keep
       # only the entry point and nanobind's shared exception ABI visible.
       set(export_map "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/aigverse.exports.map")
-      target_link_options(${target_name} PRIVATE
-                          "LINKER:--version-script,${export_map}")
+      target_link_options(
+        ${target_name} PRIVATE "LINKER:--version-script,${export_map}")
       set_property(
         TARGET ${target_name}
         APPEND
@@ -75,7 +75,7 @@ function(add_aigverse_python_binding target_name)
     target_link_options(
       ${target_name}
       PRIVATE
-      "$<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>,$<CONFIG:RelWithDebInfo>>:LINKER:--gc-sections>"
+        "$<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>,$<CONFIG:RelWithDebInfo>>:LINKER:--gc-sections>"
     )
   endif()
 

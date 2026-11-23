@@ -2,15 +2,19 @@ include(CheckCXXCompilerFlag)
 include(FetchContent)
 
 macro(aigverse_supports_sanitizers)
-  if((CMAKE_CXX_COMPILER_ID MATCHES ".*Clang.*" OR CMAKE_CXX_COMPILER_ID MATCHES
-                                                   ".*GNU.*") AND NOT WIN32)
+  if(
+    (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang.*" OR CMAKE_CXX_COMPILER_ID MATCHES
+                                                   ".*GNU.*")
+    AND NOT WIN32)
     set(SUPPORTS_UBSAN ON)
   else()
     set(SUPPORTS_UBSAN OFF)
   endif()
 
-  if((CMAKE_CXX_COMPILER_ID MATCHES ".*Clang.*" OR CMAKE_CXX_COMPILER_ID MATCHES
-                                                   ".*GNU.*") AND WIN32)
+  if(
+    (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang.*" OR CMAKE_CXX_COMPILER_ID MATCHES
+                                                   ".*GNU.*")
+    AND WIN32)
     set(SUPPORTS_ASAN OFF)
   else()
     set(SUPPORTS_ASAN ON)
@@ -35,8 +39,8 @@ macro(aigverse_apply_options)
   add_library(aigverse_options INTERFACE)
 
   include(cmake/CompilerWarnings.cmake)
-  aigverse_set_project_warnings(aigverse_warnings
-                                ${AIGVERSE_WARNINGS_AS_ERRORS} "" "" "" "")
+  aigverse_set_project_warnings(aigverse_warnings ${AIGVERSE_WARNINGS_AS_ERRORS}
+                                "" "" "" "")
 
   include(cmake/Sanitizers.cmake)
   aigverse_supports_sanitizers()

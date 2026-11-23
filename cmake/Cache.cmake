@@ -8,8 +8,7 @@ function(aigverse_enable_cache)
     set(CACHE_OPTION_DEFAULT "ccache")
   endif()
 
-  set(CACHE_OPTION
-      ${CACHE_OPTION_DEFAULT}
+  set(CACHE_OPTION ${CACHE_OPTION_DEFAULT}
       CACHE STRING "Compiler cache to be used")
   set(CACHE_OPTION_VALUES "ccache" "sccache")
   set_property(CACHE CACHE_OPTION PROPERTY STRINGS ${CACHE_OPTION_VALUES})
@@ -30,8 +29,9 @@ function(aigverse_enable_cache)
     list(REMOVE_ITEM CACHE_OPTION_VALUES ${CACHE_OPTION})
     find_program(CACHE_BINARY NAMES ${CACHE_OPTION_VALUES})
     if(CACHE_BINARY)
-      message(STATUS "${CACHE_OPTION} was not found, falling back to "
-                     "${CACHE_BINARY}")
+      message(
+        STATUS "${CACHE_OPTION} was not found, falling back to "
+               "${CACHE_BINARY}")
     endif()
   endif()
 
@@ -46,11 +46,9 @@ function(aigverse_enable_cache)
           "(or set CMAKE_GENERATOR=Ninja) to make the cache effective.")
     endif()
     message(STATUS "${CACHE_BINARY} found and enabled")
-    set(CMAKE_CXX_COMPILER_LAUNCHER
-        ${CACHE_BINARY}
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CACHE_BINARY}
         CACHE FILEPATH "CXX compiler cache used")
-    set(CMAKE_C_COMPILER_LAUNCHER
-        ${CACHE_BINARY}
+    set(CMAKE_C_COMPILER_LAUNCHER ${CACHE_BINARY}
         CACHE FILEPATH "C compiler cache used")
   else()
     unset(CMAKE_CXX_COMPILER_LAUNCHER CACHE)

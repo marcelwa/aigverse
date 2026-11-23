@@ -4,7 +4,7 @@ function(aigverse_enable_coverage target)
   endif()
   # Concurrent binding calls must not race on GCC's coverage counters. Debug
   # optimization removes unreachable cleanup blocks from line coverage.
-  target_compile_options(${target} INTERFACE --coverage -fprofile-update=atomic
-                                             -Og -g)
+  target_compile_options(
+    ${target} INTERFACE --coverage -fprofile-update=atomic -Og -g)
   target_link_options(${target} INTERFACE --coverage)
 endfunction()

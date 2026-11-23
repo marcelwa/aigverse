@@ -17,7 +17,7 @@ worktree, opening a PR, and cleaning up afterwards, see [WORKFLOW.md](WORKFLOW.m
 uvx nox -s lint
 ```
 
-Runs the full `prek` hook set (ruff, ty, clang-format, cmake-format, typos, etc.). To run a single hook or file
+Runs the full `prek` hook set (ruff, ty, clang-format, cmakefmt, typos, etc.). To run a single hook or file
 directly instead: `uvx prek run --all-files` or `uvx prek run <hook-id> --files <path>`.
 
 ### Clang-Tidy (C++ static analysis)

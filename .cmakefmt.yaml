@@ -1,0 +1,9 @@
+format:
+  command_case: unchanged
+  keyword_case: unchanged
+  max_hanging_wrap_groups: 2
+  enable_sort: true
+markup:
+  first_comment_is_literal: false
+  fence_pattern: '^\s*([`~]{3}[`~]*)(.*)$'
+  ruler_pattern: '^\s*[^\w\s]{3}.*[^\w\s]{3}$'
