@@ -7,8 +7,20 @@ format:
   command_case: unchanged
   keyword_case: unchanged
   max_hanging_wrap_groups: 2
+  # Allow longer hanging layouts to keep legacy wrapping.
+  max_hanging_wrap_lines: 6
+  max_rows_cmdline: 6
   enable_sort: true
 markup:
   first_comment_is_literal: false
   fence_pattern: '^\s*([`~]{3}[`~]*)(.*)$'
   ruler_pattern: '^\s*[^\w\s]{3}.*[^\w\s]{3}$'
+
+# Keep the first argument attached in wrapped conditions and feature declarations.
+per_command_overrides:
+  if:
+    wrap_after_first_arg: true
+  elseif:
+    wrap_after_first_arg: true
+  target_compile_features:
+    wrap_after_first_arg: true
