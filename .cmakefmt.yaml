@@ -1,4 +1,9 @@
 format:
+  line_width: 80
+  tab_size: 2
+  line_ending: unix
+  dangle_parens: false
+  # cmakefmt has no canonical mode. Keep the existing spelling of commands.
   command_case: unchanged
   keyword_case: unchanged
   max_hanging_wrap_groups: 2
