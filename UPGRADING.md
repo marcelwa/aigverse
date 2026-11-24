@@ -2,7 +2,7 @@
 
 This document describes breaking changes and how to upgrade.
 
-## Unreleased
+## 0.1.8
 
 Python 3.10 is no longer supported. Upgrade to Python 3.11 or newer before updating `aigverse`.
 
