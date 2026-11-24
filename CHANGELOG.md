@@ -10,6 +10,8 @@ releases may include breaking changes.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-24
+
 ### Added
 
 - 📝 Link the ASPDAC paper and provide its BibTeX citation ([#609]) ([**@marcelwa**])
@@ -275,7 +277,8 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- Version links -->
 
-[unreleased]: https://github.com/marcelwa/aigverse/compare/v0.1.7...HEAD
+[unreleased]: https://github.com/marcelwa/aigverse/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/marcelwa/aigverse/releases/tag/v0.2.0
 [0.1.7]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.7
 [0.1.6]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.6
 [0.1.5]: https://github.com/marcelwa/aigverse/releases/tag/v0.1.5
