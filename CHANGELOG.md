@@ -12,7 +12,6 @@ releases may include breaking changes.
 
 ## [0.1.8] - 2026-11-24
 
-This patch release includes breaking changes as a one-time exception to the versioning policy.
 See the [upgrade guide](UPGRADING.md#018) for migration instructions.
 
 ### Added
