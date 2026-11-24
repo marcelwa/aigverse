@@ -30,6 +30,8 @@ releases may include breaking changes.
 - 🐛 Keep ABC GIA output compatible with the native AIGER reader and reject Verilog files without a `top` module ([#597])
   ([**@marcelwa**])
 - 🔒 Require a fixed Pillow release in contributor environments ([#588]) ([**@marcelwa**])
+- 🐛 Use a NumPy version with Python 3.15 wheels when resolving minimum dependencies ([#439])
+  ([**@marcelwa**])
 
 ## [0.1.7] - 2026-10-21
 
