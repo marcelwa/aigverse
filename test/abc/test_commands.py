@@ -389,7 +389,7 @@ def test_a_gia_call_issues_its_command_through_the_gia_transfer(
     # prepends a `source` step to what ABC is actually asked to run.
     assert "&read in.aig" in script
     assert "read_aiger" not in script
-    assert script.endswith("&write out.aig")
+    assert script.endswith("&write -n out.aig")
 
 
 def test_a_call_rejects_an_out_of_range_option_before_it_needs_abc(

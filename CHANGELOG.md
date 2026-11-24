@@ -12,11 +12,14 @@ releases may include breaking changes.
 
 ### Added
 
+- 📝 Link the ASPDAC paper and provide its BibTeX citation ([#609]) ([**@marcelwa**])
 - ✨ Support Python 3.15, including free-threaded wheels and concurrent read-only network operations ([#439])
   ([**@marcelwa**])
 
 ### Changed
 
+- ⚡ Avoid copying truth tables when returning results from `simulate_nodes` ([#601])
+  ([**@marcelwa**])
 - 💥 Require Python 3.11 or newer and raise the ordinary Stable ABI wheel floor to Python 3.11 ([#439])
   ([**@marcelwa**])
 - 💥 Update `abc.gia.resub` to ABC's current switches and remove `max_support` and `max_divisors`
@@ -24,6 +27,8 @@ releases may include breaking changes.
 
 ### Fixed
 
+- 🐛 Keep ABC GIA output compatible with the native AIGER reader and reject Verilog files without a `top` module ([#597])
+  ([**@marcelwa**])
 - 🔒 Require a fixed Pillow release in contributor environments ([#588]) ([**@marcelwa**])
 
 ## [0.1.7] - 2026-10-21
@@ -280,6 +285,9 @@ _If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md#010)._
 
 <!-- PR links -->
 
+[#609]: https://github.com/marcelwa/aigverse/pull/609
+[#601]: https://github.com/marcelwa/aigverse/pull/601
+[#597]: https://github.com/marcelwa/aigverse/pull/597
 [#588]: https://github.com/marcelwa/aigverse/pull/588
 [#584]: https://github.com/marcelwa/aigverse/pull/584
 [#565]: https://github.com/marcelwa/aigverse/pull/565

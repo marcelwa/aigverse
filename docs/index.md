@@ -34,9 +34,21 @@ The source code of `aigverse` is publicly available on GitHub
 at [marcelwa/aigverse](https://github.com/marcelwa/aigverse), while pre-built binaries are available
 via [PyPI](https://pypi.org/project/aigverse/) for all major operating systems and all modern Python versions.
 
-```{seealso}
-For a deeper dive into the vision and technical details behind `aigverse`, see the presentation **"aigverse: Toward machine learning-driven logic synthesis"** from the [Free Silicon Conference (FSiC) 2025](https://wiki.f-si.org/index.php?title=FSiC2025). The [slides are available on the FSiC wiki](https://wiki.f-si.org/index.php?title=Aigverse:_Toward_machine_learning-driven_logic_synthesis) and cover the motivation, architecture, and future directions of the `aigverse` project.
+````{seealso}
+For the design and technical details of `aigverse`, see our [ASPDAC 2027 paper](https://www.cda.cit.tum.de/files/eda/2027_aspdac_aigverse_unified_infrastructure_for_machine_learning_driven_logic_synthesis.pdf).
+If you use `aigverse` in your research, please cite:
+
+```bibtex
+@inproceedings{walter2027aigverse,
+  author    = {Marcel Walter and Isabella Venancia Gardner and Robert Wille},
+  title     = {{aigverse}: A Unified Infrastructure for Machine Learning-Driven Logic Synthesis},
+  booktitle = {32nd Asia and South Pacific Design Automation Conference (ASPDAC '27)},
+  year      = {2027},
+  publisher = {Association for Computing Machinery},
+  doi       = {10.1145/3840404.3848264}
+}
 ```
+````
 
 ````{only} latex
 ```{note}

@@ -41,7 +41,7 @@ def test_the_name_sets_are_immutable() -> None:
     assert isinstance(EPFL_RANDOM_CONTROL, frozenset)
     assert isinstance(EPFL_BENCHMARKS, frozenset)
     with pytest.raises(AttributeError):
-        EPFL_ARITHMETIC.add("nope")  # ty: ignore[unresolved-attribute]
+        EPFL_ARITHMETIC.add("nope")  # ty: ignore[missing-attribute]
 
 
 def test_names_are_listed_sorted_and_by_category() -> None:

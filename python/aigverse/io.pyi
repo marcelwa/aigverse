@@ -93,6 +93,8 @@ def read_pla_into_aig(filename: str | os.PathLike) -> aigverse.networks.Aig:
 def read_verilog_into_aig(filename: str | os.PathLike) -> aigverse.networks.NamedAig:
     """Reads a synthesized gate-level Verilog netlist into a logic network.
 
+    The file must contain a module named ``top``.
+
     Args:
         filename: Path to the Verilog file.
 
@@ -100,7 +102,9 @@ def read_verilog_into_aig(filename: str | os.PathLike) -> aigverse.networks.Name
         The parsed network instance.
 
     Raises:
-        RuntimeError: If parsing the Verilog file fails.
+        RuntimeError: If parsing fails or the file has no module named ``top``.
+        ValueError: If the netlist has invalid signal or module definitions.
+        IndexError: If an arithmetic literal or its width is out of range.
     """
 
 def write_verilog(ntk: aigverse.networks.Aig, filename: str | os.PathLike) -> None:

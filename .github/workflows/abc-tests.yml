@@ -28,7 +28,7 @@ env:
   # tests run against. Tracking a moving `main` would make a red run ambiguous
   # between our change and an upstream one, so this is bumped deliberately.
   # Kept up to date by the `berkeley-abc/abc` custom manager in renovate.json5.
-  ABC_REV: bde1659cf7bf2b355624c3599cb58e9b6e474f13
+  ABC_REV: c2c7046d26bb2471c594085599c9e7d4d774fabb
 
 jobs:
   abc-tests:
@@ -77,7 +77,7 @@ jobs:
           } >> "${GITHUB_ENV}"
 
       - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
+        uses: hendrikmuhs/ccache-action@e91f31892a1d1b8c44424b1a94c0b7f52d337168 # v1.2
         with:
           key: "${{ inputs.runs-on }}-aigverse"
           save: ${{ github.ref == 'refs/heads/main' }}
@@ -88,7 +88,7 @@ jobs:
         uses: rui314/setup-mold@339e96b4ff1f3bd865856ba4cbbe8818a7acb038 # v1
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           enable-cache: true
           save-cache: ${{ github.ref == 'refs/heads/main' }}
