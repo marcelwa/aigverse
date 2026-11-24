@@ -3,19 +3,18 @@
 include(FetchContent)
 include(CMakeDependentOption)
 
-set(Python_FIND_VIRTUALENV
-    FIRST
+set(Python_FIND_VIRTUALENV FIRST
     CACHE STRING "Give precedence to virtualenvs when searching for Python")
-set(Python_FIND_FRAMEWORK
-    LAST
+set(Python_FIND_FRAMEWORK LAST
     CACHE STRING "Prefer Brew/Conda to Apple framework Python")
-set(Python_ARTIFACTS_INTERACTIVE
-    ON
+set(Python_ARTIFACTS_INTERACTIVE ON
     CACHE BOOL
           "Prevent multiple searches for Python and instead cache the results.")
 
-find_package(Python REQUIRED COMPONENTS Interpreter Development.Module
-                                        ${SKBUILD_SABI_COMPONENT})
+find_package(
+  Python
+  REQUIRED
+  COMPONENTS Interpreter Development.Module ${SKBUILD_SABI_COMPONENT})
 
 if(Python_EXECUTABLE)
   message(STATUS "Python executable: ${Python_EXECUTABLE}")
@@ -27,8 +26,7 @@ endif()
 execute_process(
   COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
   RESULT_VARIABLE nanobind_exec_result
-  ERROR_VARIABLE nanobind_exec_err
-  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_VARIABLE nanobind_exec_err OUTPUT_STRIP_TRAILING_WHITESPACE
   OUTPUT_VARIABLE nanobind_ROOT)
 
 if(NOT nanobind_exec_result EQUAL 0)
@@ -41,23 +39,15 @@ endif()
 find_package(nanobind CONFIG REQUIRED PATHS "${nanobind_ROOT}" NO_DEFAULT_PATH)
 
 # Fetch mockturtle from the mnt branch.
-set(MOCKTURTLE_REV
-    "7b7c0aed68424468b27400aa2619869757e5bf96"
+set(MOCKTURTLE_REV "7b7c0aed68424468b27400aa2619869757e5bf96"
     CACHE STRING "mockturtle identifier (tag, branch or commit hash)")
-set(MOCKTURTLE_REPO_OWNER
-    "marcelwa"
+set(MOCKTURTLE_REPO_OWNER "marcelwa"
     CACHE STRING "mockturtle repository owner (change when using a fork)")
 
 # Configure mockturtle options before fetching
-set(MOCKTURTLE_BUILD_EXAMPLES
-    OFF
-    CACHE BOOL "" FORCE)
-set(MOCKTURTLE_BUILD_EXPERIMENTS
-    OFF
-    CACHE BOOL "" FORCE)
-set(MOCKTURTLE_BUILD_TESTS
-    OFF
-    CACHE BOOL "" FORCE)
+set(MOCKTURTLE_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(MOCKTURTLE_BUILD_EXPERIMENTS OFF CACHE BOOL "" FORCE)
+set(MOCKTURTLE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 
 message(
   STATUS

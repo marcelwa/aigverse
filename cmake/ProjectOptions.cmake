@@ -35,8 +35,8 @@ macro(aigverse_apply_options)
   add_library(aigverse_options INTERFACE)
 
   include(cmake/CompilerWarnings.cmake)
-  aigverse_set_project_warnings(aigverse_warnings
-                                ${AIGVERSE_WARNINGS_AS_ERRORS} "" "" "" "")
+  aigverse_set_project_warnings(aigverse_warnings ${AIGVERSE_WARNINGS_AS_ERRORS}
+                                "" "" "" "")
 
   include(cmake/Sanitizers.cmake)
   aigverse_supports_sanitizers()
