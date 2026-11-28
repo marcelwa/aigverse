@@ -97,7 +97,7 @@ repos:
 
   # Ensure uv lock file is up-to-date
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.13.9
+    rev: 0.13.10
     hooks:
       - id: uv-lock
         priority: 0
@@ -114,7 +114,7 @@ repos:
 
   # Check Python types with ty
   - repo: https://github.com/astral-sh/ty-pre-commit
-    rev: v0.0.109
+    rev: v0.0.112
     hooks:
       - id: ty
         args: [--only-dev]
@@ -171,7 +171,7 @@ repos:
 
   # Check the pyproject.toml file
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2026.11.20
+    rev: 2026.11.27
     hooks:
       - id: validate-pyproject
         priority: 0
